@@ -1,0 +1,173 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  expenseCategories  ExpenseCategory[]
+  expenses    Expense[]
+  scheduledExpenses ScheduledExpense[]
+  income      Income[]
+  todos       Todo[]
+  wishes      Wish[]
+  achievements Achievement[]
+  events      Event[]
+  habits      Habit[]
+  habitCheckIns HabitCheckIn[]
+  goals       Goal[]
+}
+
+model ExpenseCategory {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  color     String   // hex, np. "#ff00d4"
+  createdAt DateTime @default(now())
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+model Expense {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  amount    Float
+  category  String
+  date      DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([userId, date])
+}
+
+model ScheduledExpense {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name       String
+  amount     Float
+  category   String
+  dayOfMonth Int      // 1-31, dzień miesiąca
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Income {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  source    String
+  amount    Float
+  date      DateTime
+  recurring Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([userId, date])
+}
+
+model Todo {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  text      String
+  done      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Wish {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  estimatedPrice Float
+  priority       Int      @default(2)
+  stage          String   @default("pomysl")  // pomysl | chce_kupic | odkladam | kupione
+  savedAmount    Float    @default(0)
+  notes          String?
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Achievement {
+  id          String    @id @default(cuid())
+  userId      String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String  // np. "first_expense", "savings_1000"
+  unlockedAt  DateTime @default(now())
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+}
+
+model Event {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  date      DateTime
+  time      String?  // np. "14:00"
+  category  String?  // Praca, Prywatne, Zdrowie, Rozrywka, Inne
+  color     String?  // hex, np. "#00e5ff"
+  notes     String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([userId, date])
+}
+
+model Habit {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  createdAt DateTime @default(now())
+  checkIns  HabitCheckIn[]
+
+  @@index([userId])
+}
+
+model HabitCheckIn {
+  id        String   @id @default(cuid())
+  habitId   String
+  habit     Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      DateTime
+  createdAt DateTime @default(now())
+
+  @@unique([habitId, date])
+  @@index([userId])
+  @@index([habitId, date])
+}
+
+model Goal {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  target    Float
+  current   Float    @default(0)
+  unit      String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
