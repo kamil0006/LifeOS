@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext'
 import { achievementsApi } from '../lib/api'
 import { queryKeys } from '../lib/queryKeys'
 import { useAuthenticatedQueryEnabled } from '../hooks/useAuthenticatedQueryEnabled'
+import { AchievementsPageSkeleton } from '../components/skeletons'
 
 type Rarity = 'common' | 'rare' | 'epic' | 'legend'
 
@@ -66,11 +67,7 @@ export function Achievements() {
   const unlockedCount = achievements.filter((a) => a.unlocked).length
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[200px] text-base text-(--text-muted)">
-        Ładowanie...
-      </div>
-    )
+    return <AchievementsPageSkeleton />
   }
 
   return (

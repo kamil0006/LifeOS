@@ -6,6 +6,7 @@ import { useDemoData, DEMO_EXPENSES, DEMO_INCOME, DEMO_SCHEDULED_EXPENSES } from
 import { mergeExpensesWithScheduled } from '../../lib/expensesUtils'
 import { useMonth, inMonth } from '../../context/MonthContext'
 import { useFinanceListsQuery } from '../../hooks/useFinanceListsQuery'
+import { OverviewSkeleton } from '../../components/skeletons'
 
 const monthNames = ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień']
 
@@ -67,11 +68,7 @@ export function Overview() {
   }, [effectiveExpenses, effectiveScheduled, effectiveIncome, selectedMonth, selectedYear])
 
   if (loading) {
-    return (
-      <div className="flex justify-center min-h-[200px] items-center text-base text-(--text-muted)">
-        Ładowanie...
-      </div>
-    )
+    return <OverviewSkeleton />
   }
 
   const prevMonthName = monthNames[selectedMonth === 0 ? 11 : selectedMonth - 1]

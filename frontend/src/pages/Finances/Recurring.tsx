@@ -9,6 +9,7 @@ import { useDemoData, DEMO_SCHEDULED_EXPENSES } from '../../context/DemoDataCont
 import { useFinanceCategories } from '../../context/FinanceCategoriesContext'
 import { scheduledExpensesApi } from '../../lib/api'
 import { useFinanceListsQuery } from '../../hooks/useFinanceListsQuery'
+import { FinanceListPageSkeleton } from '../../components/skeletons'
 import { invalidateFinanceQueries } from '../../lib/invalidateFinanceQueries'
 
 export function Recurring() {
@@ -49,11 +50,7 @@ export function Recurring() {
   }
 
   if (loading) {
-    return (
-      <div className="flex justify-center min-h-[200px] items-center text-base text-(--text-muted)">
-        Ładowanie...
-      </div>
-    )
+    return <FinanceListPageSkeleton rows={5} />
   }
 
   return (

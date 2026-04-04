@@ -25,6 +25,7 @@ import { mergeExpensesWithScheduled, type MergedExpense } from '../../lib/expens
 import { useMonth, parseDate } from '../../context/MonthContext'
 import { useFinanceCategories } from '../../context/FinanceCategoriesContext'
 import { useFinanceListsQuery } from '../../hooks/useFinanceListsQuery'
+import { AnalyticsPageSkeleton } from '../../components/skeletons'
 
 const monthNames = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru']
 const dayNames = ['Nd', 'Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb']
@@ -299,11 +300,7 @@ export function Analytics() {
   }, [effectiveExpenses, effectiveScheduled, chartMonth, chartYear, chartPeriod])
 
   if (loading) {
-    return (
-      <div className="flex justify-center min-h-[200px] items-center text-base text-(--text-muted)">
-        Ładowanie...
-      </div>
-    )
+    return <AnalyticsPageSkeleton />
   }
 
   return (

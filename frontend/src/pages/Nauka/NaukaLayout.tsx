@@ -16,12 +16,12 @@ const contentVariants = {
   visible: {
     opacity: 1,
     clipPath: 'inset(0 0 0 0)',
-    transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] },
+    transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] as const },
   },
   exit: {
     opacity: 0,
     clipPath: 'inset(0 0 100% 0)',
-    transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] },
+    transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] as const },
   },
 }
 
@@ -37,14 +37,14 @@ export function NaukaLayout() {
         </p>
       </div>
 
-      <nav className="flex flex-wrap gap-2">
+      <nav className="-mx-1 flex flex-nowrap gap-2 overflow-x-auto px-1 pb-1 scrollbar-theme md:flex-wrap">
         {subNavItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             end={item.end}
             className={({ isActive }) =>
-              `flex items-center gap-2 px-4 py-2 rounded-lg transition-[background-color,color,border-color,box-shadow] duration-200 ease-out font-gaming tracking-wide text-sm ${
+              `flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 transition-[background-color,color,border-color,box-shadow] duration-200 ease-out font-gaming tracking-wide text-sm ${
                 isActive
                   ? 'bg-(--glow-cyan) text-(--accent-cyan) border border-(--accent-cyan)/40 shadow-[0_0_15px_rgba(0,229,255,0.2)]'
                   : 'text-(--text-muted) hover:bg-(--bg-card-hover) hover:text-(--text-primary) border border-transparent'

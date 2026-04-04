@@ -18,13 +18,17 @@ export function Card({ children, className = '', title, action }: CardProps) {
     >
       <div className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-(--accent-cyan)/40 to-transparent" />
       {(title || action) && (
-        <div className={`flex items-center gap-4 mb-3 ${action ? 'justify-between' : ''}`}>
+        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           {title && (
-            <h3 className="text-base font-semibold text-(--text-primary) font-gaming tracking-wider">
+            <h3
+              className={`text-base font-semibold text-(--text-primary) font-gaming tracking-wider ${action ? 'min-w-0 sm:pr-2' : ''}`}
+            >
               {title}
             </h3>
           )}
-          {action}
+          {action && (
+            <div className="min-w-0 w-full shrink-0 sm:w-auto sm:max-w-full">{action}</div>
+          )}
         </div>
       )}
       {children}

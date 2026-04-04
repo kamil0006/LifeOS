@@ -108,7 +108,7 @@ export function Onboarding() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-9998 flex items-start justify-start pt-8 lg:pt-10 pl-68 pr-4 sm:pr-6 pb-4 bg-black/25"
+        className="fixed inset-0 z-9998 flex items-start justify-center px-4 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6 lg:items-start lg:justify-start lg:pl-68 lg:pr-6 lg:pt-10"
         onClick={handleDismiss}
       >
         <motion.div
@@ -116,9 +116,9 @@ export function Onboarding() {
           initial={{ opacity: 0, x: -24 }}
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -24 }}
-          transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] as const }}
           onClick={(e) => e.stopPropagation()}
-          className="relative w-full min-w-[min(100%,20rem)] max-w-md rounded-xl border border-(--border) bg-(--bg-card) p-6 shadow-xl"
+          className="relative w-full max-w-lg rounded-xl border border-(--border) bg-(--bg-card) p-5 shadow-xl sm:p-6 lg:max-w-md"
         >
           <button
             onClick={handleDismiss}
@@ -129,8 +129,8 @@ export function Onboarding() {
           </button>
 
           <div className="flex flex-col items-center text-center pt-2">
-            <div className="w-14 h-14 rounded-xl bg-(--accent-cyan)/15 border border-(--accent-cyan)/40 flex items-center justify-center mb-4">
-              <Icon className="w-7 h-7 text-(--accent-cyan)" />
+            <div className="mb-4 grid size-14 place-items-center rounded-xl border border-(--accent-cyan)/40 bg-(--accent-cyan)/15">
+              <Icon className="size-7 shrink-0 text-(--accent-cyan) [stroke-linecap:round] [stroke-linejoin:round]" aria-hidden />
             </div>
             <h2 className="text-xl font-bold text-(--text-primary) font-gaming tracking-wider">
               {current.title}
@@ -140,41 +140,45 @@ export function Onboarding() {
             </p>
           </div>
 
-          <div className="flex items-center justify-between mt-8 gap-3 min-w-0">
-            <button
-              type="button"
-              onClick={handlePrev}
-              disabled={isFirst}
-              className={`shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-lg font-gaming transition-colors ${
-                isFirst
-                  ? 'text-(--text-muted)/50 cursor-not-allowed'
-                  : 'text-(--text-muted) hover:text-(--accent-cyan) hover:bg-(--accent-cyan)/10 border border-(--border)'
-              }`}
-            >
-              <ChevronLeft className="w-4 h-4" />
-              Wstecz
-            </button>
+          <div className="mt-8 grid grid-cols-2 grid-rows-[auto_auto] gap-x-2 gap-y-3 sm:grid-cols-[1fr_auto_1fr] sm:grid-rows-1 sm:items-center sm:gap-x-3">
+            <div className="col-start-1 row-start-1 flex min-w-0 justify-start self-center">
+              <button
+                type="button"
+                onClick={handlePrev}
+                disabled={isFirst}
+                className={`flex min-w-0 max-w-full items-center gap-1 rounded-lg px-3 py-2.5 text-sm font-gaming transition-colors sm:gap-1.5 sm:px-4 sm:text-base ${
+                  isFirst
+                    ? 'cursor-not-allowed text-(--text-muted)/50'
+                    : 'border border-(--border) text-(--text-muted) hover:bg-(--accent-cyan)/10 hover:text-(--accent-cyan)'
+                }`}
+              >
+                <ChevronLeft className="h-4 w-4 shrink-0" />
+                <span className="truncate">Wstecz</span>
+              </button>
+            </div>
 
-            <div className="flex gap-1.5 shrink min-w-0 justify-center">
+            <div className="col-start-2 row-start-1 flex min-w-0 justify-end self-center sm:col-start-3">
+              <button
+                type="button"
+                onClick={handleNext}
+                className="flex min-w-0 max-w-full items-center justify-center gap-1 rounded-lg border border-(--accent-cyan)/40 bg-(--accent-cyan)/20 px-3 py-2.5 text-sm font-gaming text-(--accent-cyan) transition-colors hover:bg-(--accent-cyan)/30 sm:gap-1.5 sm:px-5 sm:text-base"
+              >
+                <span className="truncate">{isLast ? 'Zakończ' : 'Dalej'}</span>
+                <ChevronRight className="h-4 w-4 shrink-0" />
+              </button>
+            </div>
+
+            <div className="col-span-2 row-start-2 flex flex-wrap justify-center gap-1.5 sm:col-span-1 sm:col-start-2 sm:row-start-1 sm:max-w-none">
               {STEPS.map((_, i) => (
                 <span
                   key={i}
-                  className={`w-2 h-2 shrink-0 rounded-full transition-colors ${
+                  className={`h-2 w-2 shrink-0 rounded-full transition-colors ${
                     i === step ? 'bg-(--accent-cyan)' : 'bg-(--border)'
                   }`}
                   aria-hidden
                 />
               ))}
             </div>
-
-            <button
-              type="button"
-              onClick={handleNext}
-              className="shrink-0 flex items-center justify-center gap-1.5 min-w-29 px-5 py-2.5 rounded-lg bg-(--accent-cyan)/20 text-(--accent-cyan) border border-(--accent-cyan)/40 font-gaming hover:bg-(--accent-cyan)/30 transition-colors whitespace-nowrap"
-            >
-              {isLast ? 'Zakończ' : 'Dalej'}
-              <ChevronRight className="w-4 h-4 shrink-0" />
-            </button>
           </div>
         </motion.div>
       </motion.div>

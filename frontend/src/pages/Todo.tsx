@@ -5,6 +5,7 @@ import { Plus, Trash2, Circle, CheckCircle2, ClipboardList } from 'lucide-react'
 import { EmptyState } from '../components/EmptyState'
 import { useAuth } from '../context/AuthContext'
 import { useTodos } from '../context/TodosContext'
+import { SimplePageSkeleton } from '../components/skeletons'
 import type { TodoItem } from '../context/TodosContext'
 
 const KANBAN_COLUMNS = [
@@ -93,11 +94,7 @@ export function Todo() {
   )
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[200px] text-base text-(--text-muted)">
-        Ładowanie...
-      </div>
-    )
+    return <SimplePageSkeleton titleWidth="w-32" />
   }
 
   return (

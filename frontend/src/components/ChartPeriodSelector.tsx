@@ -11,8 +11,8 @@ export function ChartPeriodSelector() {
   const { periodType, period, setPeriodType, setMonth, setQuarter, setYear, monthOptions, quarterOptions, yearOptions } = ctx
 
   return (
-    <div className="flex items-center gap-2 rounded-lg border border-(--border) bg-(--bg-dark) p-1">
-      <div className="flex rounded-md p-0.5 bg-(--bg-card)/50">
+    <div className="flex w-full max-w-full flex-nowrap items-center gap-2 overflow-x-auto rounded-lg border border-(--border) bg-(--bg-dark) p-1 [-webkit-overflow-scrolling:touch] scrollbar-theme">
+      <div className="flex shrink-0 rounded-md bg-(--bg-card)/50 p-0.5">
         <button
           type="button"
           onClick={() => {
@@ -21,7 +21,7 @@ export function ChartPeriodSelector() {
             }
             setPeriodType('month')
           }}
-          className={`px-2 py-1.5 rounded text-sm font-gaming transition-colors ${
+          className={`shrink-0 whitespace-nowrap px-2 py-1.5 rounded text-sm font-gaming transition-colors ${
             periodType === 'month'
               ? 'bg-(--accent-cyan) text-(--bg-dark)'
               : 'text-(--text-muted) hover:text-(--text-primary)'
@@ -32,7 +32,7 @@ export function ChartPeriodSelector() {
         <button
           type="button"
           onClick={() => setPeriodType('quarter')}
-          className={`px-2 py-1.5 rounded text-sm font-gaming transition-colors ${
+          className={`shrink-0 whitespace-nowrap px-2 py-1.5 rounded text-sm font-gaming transition-colors ${
             periodType === 'quarter'
               ? 'bg-(--accent-cyan) text-(--bg-dark)'
               : 'text-(--text-muted) hover:text-(--text-primary)'
@@ -43,7 +43,7 @@ export function ChartPeriodSelector() {
         <button
           type="button"
           onClick={() => setPeriodType('year')}
-          className={`px-2 py-1.5 rounded text-sm font-gaming transition-colors ${
+          className={`shrink-0 whitespace-nowrap px-2 py-1.5 rounded text-sm font-gaming transition-colors ${
             periodType === 'year'
               ? 'bg-(--accent-cyan) text-(--bg-dark)'
               : 'text-(--text-muted) hover:text-(--text-primary)'
@@ -61,7 +61,7 @@ export function ChartPeriodSelector() {
             monthCtx?.setSelectedMonth(m)
             monthCtx?.setSelectedYear(y)
           }}
-          className="px-2.5 py-1.5 rounded-md bg-(--bg-card) border border-(--border) text-(--text-primary) font-gaming text-sm focus:border-(--accent-cyan) focus:outline-none cursor-pointer min-w-[120px]"
+          className="shrink-0 cursor-pointer rounded-md border border-(--border) bg-(--bg-card) px-2.5 py-1.5 font-gaming text-sm text-(--text-primary) focus:border-(--accent-cyan) focus:outline-none min-w-[120px]"
         >
           {monthOptions.map((opt) => (
             <option key={`${opt.month}-${opt.year}`} value={`${opt.month}-${opt.year}`}>
@@ -79,7 +79,7 @@ export function ChartPeriodSelector() {
             setQuarter(q, y)
             monthCtx?.setSelectedYear(y)
           }}
-          className="px-2.5 py-1.5 rounded-md bg-(--bg-card) border border-(--border) text-(--text-primary) font-gaming text-sm focus:border-(--accent-cyan) focus:outline-none cursor-pointer min-w-[100px]"
+          className="shrink-0 cursor-pointer rounded-md border border-(--border) bg-(--bg-card) px-2.5 py-1.5 font-gaming text-sm text-(--text-primary) focus:border-(--accent-cyan) focus:outline-none min-w-[100px]"
         >
           {quarterOptions.map((opt) => (
             <option key={`Q${opt.quarter}-${opt.year}`} value={`Q${opt.quarter}-${opt.year}`}>
@@ -95,7 +95,7 @@ export function ChartPeriodSelector() {
             setYear(y)
             monthCtx?.setSelectedYear(y)
           }}
-          className="px-2.5 py-1.5 rounded-md bg-(--bg-card) border border-(--border) text-(--text-primary) font-gaming text-sm focus:border-(--accent-cyan) focus:outline-none cursor-pointer min-w-[80px]"
+          className="shrink-0 cursor-pointer rounded-md border border-(--border) bg-(--bg-card) px-2.5 py-1.5 font-gaming text-sm text-(--text-primary) focus:border-(--accent-cyan) focus:outline-none min-w-[80px]"
         >
           {yearOptions.map((opt) => (
             <option key={opt.year} value={opt.year}>

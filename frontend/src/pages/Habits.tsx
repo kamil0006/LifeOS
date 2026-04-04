@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Trash2, Flame, Pencil, Check, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useHabits } from '../context/HabitsContext'
+import { SimplePageSkeleton } from '../components/skeletons'
 
 const GRID_DAYS = 14
 const DAY_LETTERS = ['N', 'P', 'W', 'Ś', 'C', 'P', 'S'] // niedziela, pon, wt, śr, czw, pt, sob
@@ -103,11 +104,7 @@ export function Habits() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[200px] text-base text-(--text-muted)">
-        Ładowanie...
-      </div>
-    )
+    return <SimplePageSkeleton titleWidth="w-44" />
   }
 
   return (

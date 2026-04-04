@@ -6,6 +6,7 @@ import { EventModal } from '../components/EventModal'
 import { useEvents, type DemoEvent } from '../context/EventsContext'
 import { getPolishHolidays } from '../lib/polishHolidays'
 import { EVENT_CATEGORIES, getCategoryColor } from '../lib/eventCategories'
+import { SimplePageSkeleton } from '../components/skeletons'
 
 const monthNames = ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień']
 const dayNames = ['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb', 'Nd']
@@ -112,11 +113,7 @@ export function Calendar() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[300px] text-base text-(--text-muted)">
-        Ładowanie...
-      </div>
-    )
+    return <SimplePageSkeleton titleWidth="w-36" />
   }
 
   return (

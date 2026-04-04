@@ -9,6 +9,7 @@ import { useMonth, inMonth } from '../context/MonthContext'
 import { MonthSelector } from '../components/MonthSelector'
 import { incomeApi } from '../lib/api'
 import { useFinanceListsQuery } from '../hooks/useFinanceListsQuery'
+import { FinanceListPageSkeleton } from '../components/skeletons'
 import { invalidateFinanceQueries } from '../lib/invalidateFinanceQueries'
 
 export function Income() {
@@ -56,11 +57,7 @@ export function Income() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[200px] text-base text-(--text-muted)">
-        Ładowanie...
-      </div>
-    )
+    return <FinanceListPageSkeleton />
   }
 
   return (

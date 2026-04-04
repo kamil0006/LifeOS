@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, type ReactNode } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { useAuth } from './AuthContext'
 import { todosApi } from '../lib/api'
 import { queryKeys } from '../lib/queryKeys'
@@ -33,11 +33,12 @@ export function TodosProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient()
   const userId = user?.id ?? ''
   const queryEnabled = useAuthenticatedQueryEnabled() && !!userId
+  const todosKey = queryKeys.todos(userId)
 
   const [demoTodos, setDemoTodos] = useState<TodoItem[]>(DEMO_TODOS)
 
   const { data: apiTodos = [], isPending } = useQuery({
-    queryKey: queryKeys.todos(userId),
+    queryKey: todosKey,
     queryFn: () =>
       todosApi.getAll().then((data) =>
         data.map((t) => ({ ...t, createdAt: t.createdAt?.split('T')[0] ?? '' }))
@@ -48,11 +49,63 @@ export function TodosProvider({ children }: { children: ReactNode }) {
   const todos = isDemoMode ? demoTodos : apiTodos
   const loading = !isDemoMode && isPending
 
-  const invalidate = () => {
-    if (userId) queryClient.invalidateQueries({ queryKey: queryKeys.todos(userId) })
-  }
+  const addMutation = useMutation({
+    mutationFn: (text: string) => todosApi.create(text),
+    onMutate: async (text) => {
+      await queryClient.cancelQueries({ queryKey: todosKey })
+      const previous = queryClient.getQueryData<TodoItem[]>(todosKey)
+      const optimistic: TodoItem = {
+        id: `optimistic-${Date.now()}`,
+        text: text.trim(),
+        done: false,
+        createdAt: new Date().toISOString().split('T')[0],
+      }
+      queryClient.setQueryData<TodoItem[]>(todosKey, (old) => [...(old ?? []), optimistic])
+      return { previous }
+    },
+    onError: (_err, _text, ctx) => {
+      if (ctx?.previous !== undefined) queryClient.setQueryData(todosKey, ctx.previous)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: todosKey })
+    },
+  })
 
-  const addTodo = async (text: string) => {
+  const toggleMutation = useMutation({
+    mutationFn: ({ id, done }: { id: string; done: boolean }) => todosApi.toggle(id, done),
+    onMutate: async ({ id, done }) => {
+      await queryClient.cancelQueries({ queryKey: todosKey })
+      const previous = queryClient.getQueryData<TodoItem[]>(todosKey)
+      queryClient.setQueryData<TodoItem[]>(todosKey, (old) =>
+        (old ?? []).map((t) => (t.id === id ? { ...t, done } : t))
+      )
+      return { previous }
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous !== undefined) queryClient.setQueryData(todosKey, ctx.previous)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: todosKey })
+    },
+  })
+
+  const removeMutation = useMutation({
+    mutationFn: (id: string) => todosApi.delete(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: todosKey })
+      const previous = queryClient.getQueryData<TodoItem[]>(todosKey)
+      queryClient.setQueryData<TodoItem[]>(todosKey, (old) => (old ?? []).filter((t) => t.id !== id))
+      return { previous }
+    },
+    onError: (_err, _id, ctx) => {
+      if (ctx?.previous !== undefined) queryClient.setQueryData(todosKey, ctx.previous)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: todosKey })
+    },
+  })
+
+  const addTodo = (text: string) => {
     const trimmed = text.trim()
     if (!trimmed) return
     if (isDemoMode) {
@@ -67,38 +120,23 @@ export function TodosProvider({ children }: { children: ReactNode }) {
       ])
       return
     }
-    try {
-      await todosApi.create(trimmed)
-      invalidate()
-    } catch {
-      // ignore
-    }
+    addMutation.mutate(trimmed)
   }
 
-  const toggleTodo = async (id: string, done: boolean) => {
+  const toggleTodo = (id: string, done: boolean) => {
     if (isDemoMode) {
       setDemoTodos((prev) => prev.map((t) => (t.id === id ? { ...t, done } : t)))
       return
     }
-    try {
-      await todosApi.toggle(id, done)
-      invalidate()
-    } catch {
-      // ignore
-    }
+    toggleMutation.mutate({ id, done })
   }
 
-  const removeTodo = async (id: string) => {
+  const removeTodo = (id: string) => {
     if (isDemoMode) {
       setDemoTodos((prev) => prev.filter((t) => t.id !== id))
       return
     }
-    try {
-      await todosApi.delete(id)
-      invalidate()
-    } catch {
-      // ignore
-    }
+    removeMutation.mutate(id)
   }
 
   return (

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { Card } from '../../components/Card'
 import { EmptyState } from '../../components/EmptyState'
@@ -9,11 +10,12 @@ import { MonthSelector } from '../../components/MonthSelector'
 import { useAuth } from '../../context/AuthContext'
 import { useDemoData, DEMO_EXPENSES, DEMO_INCOME, DEMO_SCHEDULED_EXPENSES } from '../../context/DemoDataContext'
 import { useFinanceCategories } from '../../context/FinanceCategoriesContext'
-import { mergeExpensesWithScheduled } from '../../lib/expensesUtils'
-import { useMonth, inMonth } from '../../context/MonthContext'
+import { mergeExpensesWithScheduled, type MergedExpense } from '../../lib/expensesUtils'
+import { useMonth, inMonth, parseDate } from '../../context/MonthContext'
 import { expensesApi, incomeApi, scheduledExpensesApi } from '../../lib/api'
 import { useFinanceListsQuery } from '../../hooks/useFinanceListsQuery'
 import { invalidateFinanceQueries } from '../../lib/invalidateFinanceQueries'
+import { TransactionsPageSkeleton } from '../../components/skeletons'
 
 const monthNames = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru']
 
@@ -30,7 +32,59 @@ interface Transaction {
   scheduledId?: string
 }
 
+function buildTransactionsForDateRange(
+  effectiveExpenses: Parameters<typeof mergeExpensesWithScheduled>[0],
+  effectiveScheduled: Parameters<typeof mergeExpensesWithScheduled>[1],
+  effectiveIncome: { id: string; source: string; amount: number; date: string; recurring: boolean }[],
+  from: string,
+  to: string
+): Transaction[] {
+  const fromD = new Date(from + 'T12:00:00')
+  const toD = new Date(to + 'T12:00:00')
+  const months: { m: number; y: number }[] = []
+  const cur = new Date(fromD.getFullYear(), fromD.getMonth(), 1)
+  const end = new Date(toD.getFullYear(), toD.getMonth(), 1)
+  while (cur <= end) {
+    months.push({ m: cur.getMonth(), y: cur.getFullYear() })
+    cur.setMonth(cur.getMonth() + 1)
+  }
+  const merged: MergedExpense[] = []
+  for (const { m, y } of months) {
+    const monthExp = effectiveExpenses.filter((e) => {
+      const { year: ey, month: em } = parseDate(e.date)
+      return em === m && ey === y
+    })
+    merged.push(...mergeExpensesWithScheduled(monthExp, effectiveScheduled, m, y))
+  }
+  const inRange = (d: string) => d >= from && d <= to
+  const mergedInRange = merged.filter((e) => inRange(e.date))
+  const monthInc = effectiveIncome.filter((i) => inRange(i.date))
+
+  const expenseTx: Transaction[] = mergedInRange.map((e) => ({
+    id: e.id,
+    date: e.date,
+    name: e.name,
+    category: e.category,
+    amount: -e.amount,
+    type: 'expense' as const,
+    isScheduled: e.isScheduled,
+    scheduledId: e.scheduledId,
+  }))
+
+  const incomeTx: Transaction[] = monthInc.map((i) => ({
+    id: i.id,
+    date: i.date,
+    name: i.source,
+    category: 'Dochód',
+    amount: i.amount,
+    type: 'income' as const,
+  }))
+
+  return [...expenseTx, ...incomeTx].sort((a, b) => b.date.localeCompare(a.date))
+}
+
 export function Transactions() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const { isDemoMode, user } = useAuth()
   const queryClient = useQueryClient()
   const userId = user?.id ?? ''
@@ -38,6 +92,8 @@ export function Transactions() {
   const financeCats = useFinanceCategories()
   const monthCtx = useMonth()
   const [filter, setFilter] = useState<FilterType>('all')
+  const [drillCategory, setDrillCategory] = useState<string | null>(null)
+  const [dateRange, setDateRange] = useState<{ from: string; to: string } | null>(null)
   const {
     expenses: qExpenses,
     income: qIncome,
@@ -56,7 +112,41 @@ export function Transactions() {
   const effectiveScheduled = isDemoMode ? (demoData?.scheduledExpenses ?? DEMO_SCHEDULED_EXPENSES) : qScheduled
   const effectiveIncome = isDemoMode ? (demoData?.income ?? DEMO_INCOME) : qIncome
 
+  useEffect(() => {
+    if (!monthCtx) return
+    const cat = searchParams.get('category')
+    const from = searchParams.get('from')
+    const to = searchParams.get('to')
+    const m = searchParams.get('month')
+    const y = searchParams.get('year')
+    if (from && to) {
+      setDateRange({ from, to })
+      setDrillCategory(cat ? decodeURIComponent(cat) : null)
+      if (cat) setFilter('expense')
+      return
+    }
+    if (m !== null && y !== null) {
+      monthCtx.setSelectedMonth(Number(m))
+      monthCtx.setSelectedYear(Number(y))
+      setDateRange(null)
+      setDrillCategory(cat ? decodeURIComponent(cat) : null)
+      if (cat) setFilter('expense')
+      return
+    }
+    setDrillCategory(null)
+    setDateRange(null)
+  }, [searchParams, monthCtx])
+
   const transactions = useMemo((): Transaction[] => {
+    if (dateRange) {
+      return buildTransactionsForDateRange(
+        effectiveExpenses,
+        effectiveScheduled,
+        effectiveIncome,
+        dateRange.from,
+        dateRange.to
+      )
+    }
     const monthExp = effectiveExpenses.filter((e) => inMonth(e.date, selectedMonth, selectedYear))
     const merged = mergeExpensesWithScheduled(monthExp, effectiveScheduled, selectedMonth, selectedYear)
     const monthInc = effectiveIncome.filter((i) => inMonth(i.date, selectedMonth, selectedYear))
@@ -82,24 +172,35 @@ export function Transactions() {
     }))
 
     return [...expenseTx, ...incomeTx].sort((a, b) => b.date.localeCompare(a.date))
-  }, [effectiveExpenses, effectiveScheduled, effectiveIncome, selectedMonth, selectedYear])
+  }, [effectiveExpenses, effectiveScheduled, effectiveIncome, selectedMonth, selectedYear, dateRange])
 
   const filteredTransactions = useMemo(() => {
-    if (filter === 'income') return transactions.filter((t) => t.type === 'income')
-    if (filter === 'expense') return transactions.filter((t) => t.type === 'expense')
-    return transactions
-  }, [transactions, filter])
+    let list = transactions
+    if (drillCategory) {
+      list = list.filter((t) => t.category === drillCategory)
+    }
+    if (filter === 'income') return list.filter((t) => t.type === 'income')
+    if (filter === 'expense') return list.filter((t) => t.type === 'expense')
+    return list
+  }, [transactions, filter, drillCategory])
 
   useEffect(() => {
-    setFilter('all')
-  }, [selectedMonth, selectedYear])
+    if (!searchParams.get('category')) setFilter('all')
+  }, [selectedMonth, selectedYear, searchParams])
 
   useEffect(() => {
-    if (wasLoadingRef.current && !loading) {
+    if (wasLoadingRef.current && !loading && !searchParams.get('category')) {
       setFilter('all')
     }
     wasLoadingRef.current = loading
-  }, [loading])
+  }, [loading, searchParams])
+
+  const clearDrilldown = () => {
+    setDrillCategory(null)
+    setDateRange(null)
+    setSearchParams({})
+    setFilter('all')
+  }
 
   const categoriesForModal = financeCats?.categories.map((c) => ({
     id: c.id,
@@ -173,17 +274,23 @@ export function Transactions() {
   }
 
   if (loading) {
-    return (
-      <div className="flex justify-center min-h-[200px] items-center text-base text-(--text-muted)">
-        Ładowanie...
-      </div>
-    )
+    return <TransactionsPageSkeleton />
   }
+
+  const periodLabel = dateRange
+    ? `${dateRange.from} — ${dateRange.to}`
+    : `${monthNames[selectedMonth]} ${selectedYear}`
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap justify-between items-center gap-4">
-        <MonthSelector />
+        {dateRange ? (
+          <div className="text-base text-(--text-muted) font-gaming">
+            Okres z dashboardu: <span className="text-(--text-primary)">{periodLabel}</span>
+          </div>
+        ) : (
+          <MonthSelector />
+        )}
         <div className="flex gap-2">
           <Tooltip content="Dodaj przychód">
             <button
@@ -213,7 +320,25 @@ export function Transactions() {
       </div>
 
       <Card>
-        <h3 className="text-base font-semibold text-(--text-primary) mb-4 font-gaming tracking-wider">Transakcje</h3>
+        <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+          <h3 className="text-base font-semibold text-(--text-primary) font-gaming tracking-wider">Transakcje</h3>
+          {(drillCategory || dateRange) && (
+            <div className="flex flex-wrap items-center gap-2">
+              {drillCategory && (
+                <span className="text-sm px-3 py-1 rounded-lg border border-(--accent-cyan)/40 bg-(--accent-cyan)/10 text-(--accent-cyan) font-gaming">
+                  Kategoria: {getLabel(drillCategory)}
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={clearDrilldown}
+                className="text-sm px-3 py-1 rounded-lg border border-(--border) text-(--text-muted) hover:text-(--text-primary) font-gaming transition-colors"
+              >
+                Wyczyść filtr z dashboardu
+              </button>
+            </div>
+          )}
+        </div>
 
         <div className="flex gap-2 mb-4">
           {(['all', 'income', 'expense'] as const).map((f) => (
@@ -288,7 +413,7 @@ export function Transactions() {
           <EmptyState
             icon={Receipt}
             title="Brak transakcji"
-            description={`W wybranym okresie (${monthNames[selectedMonth]} ${selectedYear}) nie ma ${filter === 'income' ? 'przychodów' : filter === 'expense' ? 'wydatków' : 'transakcji'}.`}
+            description={`W wybranym okresie (${periodLabel}) nie ma ${drillCategory ? `transakcji w kategorii „${getLabel(drillCategory)}”` : filter === 'income' ? 'przychodów' : filter === 'expense' ? 'wydatków' : 'transakcji'}.`}
             action={
               <button
                 onClick={() => setShowForm(true)}

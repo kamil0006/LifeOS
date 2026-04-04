@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Trash2 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useWishes } from '../../context/WishesContext'
+import { SimplePageSkeleton } from '../../components/skeletons'
 import type { Wish, WishStage } from '../../context/WishesContext'
 
 const STAGES: { id: WishStage; label: string }[] = [
@@ -125,11 +126,7 @@ export function FinancesWishes() {
   }
 
   if (loading) {
-    return (
-      <div className="flex justify-center min-h-[200px] items-center text-base text-(--text-muted)">
-        Ładowanie...
-      </div>
-    )
+    return <SimplePageSkeleton titleWidth="w-44" />
   }
 
   return (

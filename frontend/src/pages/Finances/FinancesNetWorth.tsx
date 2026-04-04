@@ -22,6 +22,7 @@ import type { NetWorthPositionKey } from '../../context/DemoDataContext'
 import { mergeExpensesWithScheduled } from '../../lib/expensesUtils'
 import { useMonth, parseDate, inMonth } from '../../context/MonthContext'
 import { useFinanceListsQuery } from '../../hooks/useFinanceListsQuery'
+import { NetWorthPageSkeleton } from '../../components/skeletons'
 
 const monthNames = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru']
 
@@ -198,11 +199,7 @@ export function FinancesNetWorth() {
   }, [undoInfo])
 
   if (loading) {
-    return (
-      <div className="flex justify-center min-h-[200px] items-center text-base text-(--text-muted)">
-        Ładowanie...
-      </div>
-    )
+    return <NetWorthPageSkeleton />
   }
 
   return (

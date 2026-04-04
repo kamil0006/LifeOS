@@ -17,7 +17,7 @@ export function Tooltip({ children, content, side = 'top' }: TooltipProps) {
         onFocus={() => setVisible(true)}
         onBlur={() => setVisible(false)}
         tabIndex={0}
-        className="inline-flex cursor-help"
+        className="inline-flex cursor-help items-center justify-center"
       >
         {children}
       </span>

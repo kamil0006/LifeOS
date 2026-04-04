@@ -14,7 +14,7 @@ import {
   Cell,
 } from 'recharts'
 import { motion } from 'framer-motion'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useFinanceCategories } from '../context/FinanceCategoriesContext'
 import { useDemoData, DEMO_EXPENSES, DEMO_INCOME, DEMO_SCHEDULED_EXPENSES } from '../context/DemoDataContext'
@@ -30,6 +30,8 @@ import { ChartPeriodSelector } from '../components/ChartPeriodSelector'
 import { useChartPeriod, getMonthsInQuarter } from '../context/ChartPeriodContext'
 import { StickyNote, Calendar, GraduationCap, Target } from 'lucide-react'
 import { useFinanceListsQuery } from '../hooks/useFinanceListsQuery'
+import { DashboardSkeleton } from '../components/skeletons'
+import { buildTransactionsDrilldownSearch } from '../lib/buildDrilldownSearch'
 
 const monthNames = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru']
 
@@ -69,6 +71,7 @@ const currentYear = now.getFullYear()
 const currentMonth = now.getMonth()
 
 export function Dashboard() {
+  const navigate = useNavigate()
   const { isDemoMode } = useAuth()
   const demoData = useDemoData()
   const financeCats = useFinanceCategories()
@@ -300,12 +303,21 @@ export function Dashboard() {
     return { done, total }
   }, [habits, todayStr])
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[300px] text-base text-(--text-muted)">
-        Ładowanie...
-      </div>
+  const handleCategoryPieClick = (data: unknown) => {
+    const d = data as { kategoria?: string; name?: string; payload?: { kategoria?: string } }
+    const kategoria = d.kategoria ?? d.payload?.kategoria ?? d.name
+    if (!kategoria) return
+    const qs = buildTransactionsDrilldownSearch(
+      kategoria,
+      chartPeriod,
+      selectedMonth,
+      selectedYear
     )
+    navigate(`/finances/transactions?${qs}`)
+  }
+
+  if (loading) {
+    return <DashboardSkeleton />
   }
 
   return (
@@ -415,6 +427,9 @@ export function Dashboard() {
           })`}
           action={chartPeriod ? <ChartPeriodSelector /> : undefined}
         >
+          <p className="text-sm text-(--text-muted) mb-3 font-gaming tracking-wide">
+            Kliknij segment kategorii, aby zobaczyć transakcje w tym okresie.
+          </p>
           <div className="h-60 w-full min-h-[200px] relative">
             {chartFilteredData.categoryData.length > 0 ? (
               <>
@@ -431,6 +446,8 @@ export function Dashboard() {
                     paddingAngle={2}
                     stroke="var(--bg-card)"
                     strokeWidth={2}
+                    cursor="pointer"
+                    onClick={handleCategoryPieClick}
                   >
                     {chartFilteredData.categoryData.map((entry) => (
                       <Cell key={entry.kategoria} fill={getCategoryColor(entry.kategoria)} />

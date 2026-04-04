@@ -11,22 +11,29 @@ export function useFinanceListsQuery() {
   const userId = user?.id ?? ''
   const enabled = useAuthenticatedQueryEnabled()
 
+  /** Soft polling: świeże dane gdy karta otwarta dłużej (inna karta / telefon nie wymaga SSE na start). */
+  const listOptions = {
+    enabled: enabled && !!userId,
+    refetchInterval: 45_000 as number | false,
+    refetchIntervalInBackground: false,
+  }
+
   const expensesQuery = useQuery({
     queryKey: queryKeys.expenses(userId),
     queryFn: fetchExpensesList,
-    enabled: enabled && !!userId,
+    ...listOptions,
   })
 
   const incomeQuery = useQuery({
     queryKey: queryKeys.income(userId),
     queryFn: fetchIncomeList,
-    enabled: enabled && !!userId,
+    ...listOptions,
   })
 
   const scheduledQuery = useQuery({
     queryKey: queryKeys.scheduledExpenses(userId),
     queryFn: fetchScheduledExpensesList,
-    enabled: enabled && !!userId,
+    ...listOptions,
   })
 
   const isLoading = expensesQuery.isPending || incomeQuery.isPending || scheduledQuery.isPending

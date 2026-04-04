@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
 import { Card } from '../components/Card'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Trash2, CalendarClock } from 'lucide-react'
@@ -7,18 +6,17 @@ import { useAuth } from '../context/AuthContext'
 import { useDemoData, DEMO_EXPENSES } from '../context/DemoDataContext'
 import { useMonth, inMonth } from '../context/MonthContext'
 import { MonthSelector } from '../components/MonthSelector'
-import { expensesApi, scheduledExpensesApi } from '../lib/api'
 import { useFinanceListsQuery } from '../hooks/useFinanceListsQuery'
-import { invalidateFinanceQueries } from '../lib/invalidateFinanceQueries'
+import { useOptimisticExpenseMutations } from '../hooks/useOptimisticExpenseMutations'
 import { mergeExpensesWithScheduled } from '../lib/expensesUtils'
+import { FinanceListPageSkeleton } from '../components/skeletons'
 
 const categories = ['Jedzenie', 'Mieszkanie', 'Transport', 'Rozrywka', 'Inne']
 
 export function Expenses() {
-  const { isDemoMode, user } = useAuth()
-  const queryClient = useQueryClient()
-  const userId = user?.id ?? ''
+  const { isDemoMode } = useAuth()
   const demoData = useDemoData()
+  const { addExpense, deleteExpense, addScheduled, deleteScheduled } = useOptimisticExpenseMutations()
   const monthCtx = useMonth()
   const {
     expenses: qExpenses,
@@ -44,12 +42,7 @@ export function Expenses() {
       demoData.addExpense({ name, amount, category, date: expenseDate })
       return
     }
-    try {
-      await expensesApi.create({ name, amount, category, date: expenseDate })
-      await invalidateFinanceQueries(queryClient, userId)
-    } catch {
-      // ignore
-    }
+    addExpense.mutate({ name, amount, category, date: expenseDate })
   }
 
   const handleDelete = async (id: string) => {
@@ -57,12 +50,7 @@ export function Expenses() {
       demoData.deleteExpense(id)
       return
     }
-    try {
-      await expensesApi.delete(id)
-      await invalidateFinanceQueries(queryClient, userId)
-    } catch {
-      // ignore
-    }
+    deleteExpense.mutate(id)
   }
 
   const handleAddScheduled = async (
@@ -75,12 +63,7 @@ export function Expenses() {
       demoData.addScheduledExpense({ name, amount, category, dayOfMonth, active: true })
       return
     }
-    try {
-      await scheduledExpensesApi.create({ name, amount, category, dayOfMonth })
-      await invalidateFinanceQueries(queryClient, userId)
-    } catch {
-      // ignore
-    }
+    addScheduled.mutate({ name, amount, category, dayOfMonth })
   }
 
   const handleDeleteScheduled = async (id: string) => {
@@ -88,20 +71,11 @@ export function Expenses() {
       demoData.deleteScheduledExpense(id)
       return
     }
-    try {
-      await scheduledExpensesApi.delete(id)
-      await invalidateFinanceQueries(queryClient, userId)
-    } catch {
-      // ignore
-    }
+    deleteScheduled.mutate(id)
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[200px] text-base text-(--text-muted)">
-        Ładowanie...
-      </div>
-    )
+    return <FinanceListPageSkeleton />
   }
 
   return (

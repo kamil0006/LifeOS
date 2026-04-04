@@ -9,8 +9,8 @@ export function MonthSelector() {
   const { selectedMonth, selectedYear, setSelectedMonth, setSelectedYear, monthOptions } = monthCtx
 
   return (
-    <div className="flex items-center gap-2">
-      <label className="text-base text-(--text-muted) font-gaming tracking-wide">Miesiąc:</label>
+    <div className="flex w-full max-w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+      <label className="shrink-0 text-base text-(--text-muted) font-gaming tracking-wide">Miesiąc:</label>
       <select
         value={`${selectedMonth}-${selectedYear}`}
         onChange={(e) => {
@@ -21,7 +21,7 @@ export function MonthSelector() {
             chartPeriodCtx.setMonth(m, y)
           }
         }}
-        className="px-3 py-2 rounded-lg bg-(--bg-card) border border-(--border) text-(--text-primary) font-gaming tracking-wide focus:border-(--accent-cyan) focus:outline-none cursor-pointer min-w-[140px]"
+        className="min-h-[44px] min-w-0 max-w-full flex-1 cursor-pointer rounded-lg border border-(--border) bg-(--bg-card) px-3 py-2 font-gaming tracking-wide text-(--text-primary) focus:border-(--accent-cyan) focus:outline-none sm:min-w-[140px] sm:flex-none"
       >
         {monthOptions.map((opt) => (
           <option key={`${opt.month}-${opt.year}`} value={`${opt.month}-${opt.year}`}>
