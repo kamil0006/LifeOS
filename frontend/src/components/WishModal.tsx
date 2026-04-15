@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
+import { useModalMotion } from '../lib/modalMotion'
 import type { WishStage } from '../context/WishesContext'
 
 const STAGES: { id: WishStage; label: string }[] = [
@@ -18,6 +19,7 @@ interface WishModalProps {
 }
 
 export function WishModal({ isOpen, onClose, onSubmit }: WishModalProps) {
+  const { backdrop, panel } = useModalMotion()
   const initialForm = () => ({ name: '', price: '', priority: 2 as 1 | 2 | 3, stage: 'pomysl' as WishStage })
   const [form, setForm] = useState(initialForm)
   const updateField = <K extends keyof ReturnType<typeof initialForm>>(key: K, value: ReturnType<typeof initialForm>[K]) =>
@@ -37,25 +39,22 @@ export function WishModal({ isOpen, onClose, onSubmit }: WishModalProps) {
     onClose()
   }
 
-  if (!isOpen) return null
-
   const modalContent = (
     <AnimatePresence>
-      <div className="fixed inset-0 z-9999 flex items-start justify-center overflow-y-auto p-4 pt-12">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm"
-          onClick={onClose}
-        />
-        <motion.div
-          initial={{ opacity: 0, y: -20, scale: 0.98 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -20, scale: 0.98 }}
-          transition={{ duration: 0.2 }}
-          className="relative z-10 w-full max-w-md rounded-lg border border-(--border) bg-(--bg-card) p-6 shadow-xl"
-        >
+      {isOpen && (
+        <>
+          <motion.div
+            key="wish-backdrop"
+            {...backdrop}
+            className="fixed inset-0 z-9998 bg-black/60 backdrop-blur-sm"
+            onClick={onClose}
+          />
+          <div className="fixed inset-0 z-9999 flex items-start justify-center overflow-y-auto p-4 pt-12 pointer-events-none">
+            <motion.div
+              key="wish-panel"
+              {...panel}
+              className="pointer-events-auto relative z-10 w-full max-w-md rounded-lg border border-(--border) bg-(--bg-card) p-6 shadow-xl"
+            >
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold text-(--text-primary) font-gaming">
               Nowa zachcianka
@@ -135,8 +134,10 @@ export function WishModal({ isOpen, onClose, onSubmit }: WishModalProps) {
               </button>
             </div>
           </form>
-        </motion.div>
-      </div>
+            </motion.div>
+          </div>
+        </>
+      )}
     </AnimatePresence>
   )
 

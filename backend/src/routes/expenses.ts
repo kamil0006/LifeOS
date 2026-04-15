@@ -2,7 +2,6 @@ import { Router } from 'express'
 import { z } from 'zod'
 import { getAuthUser } from '../middleware/auth.js'
 import { prisma } from '../lib/prisma.js'
-import { unlockAchievement, checkSavingsAchievement } from '../lib/achievements.js'
 
 const createSchema = z.object({
   name: z.string().min(1),
@@ -34,9 +33,6 @@ expensesRouter.post('/', async (req, res) => {
       date: new Date(data.date),
     },
   })
-  const count = await prisma.expense.count({ where: { userId } })
-  if (count === 1) await unlockAchievement(userId, 'first_expense')
-  await checkSavingsAchievement(userId)
   res.status(201).json(expense)
 })
 

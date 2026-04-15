@@ -2,7 +2,6 @@ import { Router } from 'express'
 import { z } from 'zod'
 import { getAuthUser } from '../middleware/auth.js'
 import { prisma } from '../lib/prisma.js'
-import { unlockAchievement } from '../lib/achievements.js'
 
 const STAGES = ['pomysl', 'chce_kupic', 'odkladam', 'kupione'] as const
 
@@ -49,9 +48,6 @@ wishesRouter.post('/', async (req, res) => {
       notes: data.notes,
     },
   })
-  const count = await prisma.wish.count({ where: { userId } })
-  if (count === 1) await unlockAchievement(userId, 'first_wish')
-  if (count === 5) await unlockAchievement(userId, 'wishes_5')
   res.status(201).json(wish)
 })
 

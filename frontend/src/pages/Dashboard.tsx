@@ -13,7 +13,8 @@ import {
   Pie,
   Cell,
 } from 'recharts'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
+import { dashboardContainerVariants, getDashboardTileVariants } from '../lib/dashboardMotion'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useFinanceCategories } from '../context/FinanceCategoriesContext'
@@ -35,6 +36,9 @@ import { DashboardQuickStats } from '../components/dashboard/DashboardQuickStats
 import { DashboardQuickLinks } from '../components/dashboard/DashboardQuickLinks'
 
 const monthNames = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru']
+
+/** Jedna wysokość obszaru wykresu obok siebie (area vs donut). */
+const DASHBOARD_CHART_PX = 280
 
 function DonutTooltip(props: { active?: boolean; payload?: readonly unknown[]; total: number }) {
   const { active, payload, total } = props
@@ -68,6 +72,7 @@ const currentMonth = now.getMonth()
 
 export function Dashboard() {
   const navigate = useNavigate()
+  const reduceMotion = useReducedMotion()
   const { isDemoMode } = useAuth()
   const demoData = useDemoData()
   const { getColor: getCategoryColor } = useFinanceCategories()
@@ -138,11 +143,14 @@ export function Dashboard() {
   }
 
   return (
-    <div className="space-y-10">
+    <motion.div
+      className="space-y-10"
+      variants={dashboardContainerVariants}
+      initial="hidden"
+      animate="show"
+    >
       <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
+        variants={getDashboardTileVariants(reduceMotion, 0)}
         className="flex flex-wrap items-end justify-between gap-4"
       >
         <div>
@@ -156,37 +164,70 @@ export function Dashboard() {
         <MonthSelector />
       </motion.div>
 
-      {/* KPI cards – HUD style */}
+      {/* KPI cards – każdy kafel z innej strony */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-(--accent-green)/20 hover:border-(--accent-green)/40 hover:shadow-[0_0_15px_rgba(0,255,157,0.08)]">
-          <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">Przychody ({kpiPeriodLabel})</p>
-          <p className="text-2xl font-bold text-(--accent-green) mt-1 font-gaming drop-shadow-[0_0_8px_rgba(0,255,157,0.3)]">
-            {chartFilteredData.incomeTotal.toLocaleString('pl-PL')} zł
-          </p>
-        </Card>
-        <Card className="border-(--accent-magenta)/20 hover:border-(--accent-magenta)/40 hover:shadow-[0_0_15px_rgba(255,0,212,0.08)]">
-          <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">Wydatki ({kpiPeriodLabel})</p>
-          <p className="text-2xl font-bold text-(--accent-magenta) mt-1 font-gaming drop-shadow-[0_0_8px_rgba(255,0,212,0.3)]">
-            {chartFilteredData.expensesTotal.toLocaleString('pl-PL')} zł
-          </p>
-        </Card>
-        <Card className={chartFilteredData.balance >= 0 ? 'border-(--accent-cyan)/20 hover:border-(--accent-cyan)/40' : 'border-[#e74c3c]/30 hover:border-[#e74c3c]/50'}>
-          <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">Bilans ({kpiPeriodLabel})</p>
-          <p className={`text-2xl font-bold mt-1 font-gaming ${chartFilteredData.balance >= 0 ? 'text-(--accent-cyan) drop-shadow-[0_0_8px_rgba(0,229,255,0.3)]' : 'text-[#e74c3c] drop-shadow-[0_0_8px_rgba(231,76,60,0.3)]'}`}>
-            {chartFilteredData.balance >= 0 ? '+' : ''}{chartFilteredData.balance.toLocaleString('pl-PL')} zł
-          </p>
-        </Card>
+        <motion.div variants={getDashboardTileVariants(reduceMotion, 1)} className="min-w-0">
+          <Card
+            animateEntrance={false}
+            className="border-(--accent-green)/20 hover:border-(--accent-green)/40 hover:shadow-[0_0_15px_rgba(0,255,157,0.08)]"
+          >
+            <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">Przychody ({kpiPeriodLabel})</p>
+            <p className="text-2xl font-bold text-(--accent-green) mt-1 font-gaming drop-shadow-[0_0_8px_rgba(0,255,157,0.3)]">
+              {chartFilteredData.incomeTotal.toLocaleString('pl-PL')} zł
+            </p>
+          </Card>
+        </motion.div>
+        <motion.div variants={getDashboardTileVariants(reduceMotion, 2)} className="min-w-0">
+          <Card
+            animateEntrance={false}
+            className="border-(--accent-magenta)/20 hover:border-(--accent-magenta)/40 hover:shadow-[0_0_15px_rgba(255,0,212,0.08)]"
+          >
+            <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">Wydatki ({kpiPeriodLabel})</p>
+            <p className="text-2xl font-bold text-(--accent-magenta) mt-1 font-gaming drop-shadow-[0_0_8px_rgba(255,0,212,0.3)]">
+              {chartFilteredData.expensesTotal.toLocaleString('pl-PL')} zł
+            </p>
+          </Card>
+        </motion.div>
+        <motion.div variants={getDashboardTileVariants(reduceMotion, 3)} className="min-w-0">
+          <Card
+            animateEntrance={false}
+            className={
+              chartFilteredData.balance >= 0
+                ? 'border-(--accent-cyan)/20 hover:border-(--accent-cyan)/40'
+                : 'border-[#e74c3c]/30 hover:border-[#e74c3c]/50'
+            }
+          >
+            <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">Bilans ({kpiPeriodLabel})</p>
+            <p
+              className={`text-2xl font-bold mt-1 font-gaming ${
+                chartFilteredData.balance >= 0
+                  ? 'text-(--accent-cyan) drop-shadow-[0_0_8px_rgba(0,229,255,0.3)]'
+                  : 'text-[#e74c3c] drop-shadow-[0_0_8px_rgba(231,76,60,0.3)]'
+              }`}
+            >
+              {chartFilteredData.balance >= 0 ? '+' : ''}
+              {chartFilteredData.balance.toLocaleString('pl-PL')} zł
+            </p>
+          </Card>
+        </motion.div>
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card
-          title="Wydatki vs Przychody"
-          action={chartPeriod ? <ChartPeriodSelector /> : undefined}
-        >
-          <div className="h-60 w-full min-h-[200px]">
-            <ResponsiveContainer width="100%" height={240}>
-              <AreaChart data={chartData}>
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-stretch">
+        <motion.div variants={getDashboardTileVariants(reduceMotion, 4)} className="min-w-0 flex">
+          <Card
+            animateEntrance={false}
+            className="flex h-full min-h-0 w-full flex-col"
+            title="Wydatki vs Przychody"
+            action={chartPeriod ? <ChartPeriodSelector /> : undefined}
+          >
+          <div className="flex min-h-0 w-full flex-1 flex-col justify-end">
+            <div className="w-full shrink-0" style={{ height: DASHBOARD_CHART_PX }}>
+            <ResponsiveContainer width="100%" height={DASHBOARD_CHART_PX}>
+              <AreaChart
+                data={chartData}
+                margin={{ top: 6, right: 8, bottom: 10, left: 4 }}
+              >
                 <defs>
                   <linearGradient id="colorWydatki" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#ff00d4" stopOpacity={0.4} />
@@ -209,7 +250,11 @@ export function Dashboard() {
                   }}
                   formatter={(value: number | undefined) => [value != null ? `${value} zł` : '', '']}
                 />
-                <Legend />
+                <Legend
+                  verticalAlign="bottom"
+                  align="center"
+                  wrapperStyle={{ paddingTop: 0 }}
+                />
                 <Area
                   type="monotone"
                   dataKey="wydatki"
@@ -230,10 +275,15 @@ export function Dashboard() {
                 />
               </AreaChart>
             </ResponsiveContainer>
+            </div>
           </div>
         </Card>
-        <Card
-          title={`Wydatki po kategoriach (${
+        </motion.div>
+        <motion.div variants={getDashboardTileVariants(reduceMotion, 5)} className="min-w-0 flex">
+          <Card
+            animateEntrance={false}
+            className="flex h-full min-h-0 w-full flex-col"
+            title={`Wydatki po kategoriach (${
             chartPeriod?.period.type === 'quarter'
               ? `Q${chartPeriod.period.quarter} ${chartPeriod.period.year}`
               : chartPeriod?.period.type === 'year'
@@ -244,13 +294,13 @@ export function Dashboard() {
           })`}
           action={chartPeriod ? <ChartPeriodSelector /> : undefined}
         >
-          <p className="text-sm text-(--text-muted) mb-3 font-gaming tracking-wide">
+          <p className="mb-3 shrink-0 text-sm text-(--text-muted) font-gaming tracking-wide">
             Kliknij segment kategorii, aby zobaczyć transakcje w tym okresie.
           </p>
-          <div className="h-60 w-full min-h-[200px] relative">
+          <div className="relative w-full shrink-0" style={{ height: DASHBOARD_CHART_PX }}>
             {chartFilteredData.categoryData.length > 0 ? (
               <>
-                <ResponsiveContainer width="100%" height={240}>
+                <ResponsiveContainer width="100%" height={DASHBOARD_CHART_PX}>
                   <PieChart>
                   <Pie
                     data={chartFilteredData.categoryData}
@@ -302,6 +352,7 @@ export function Dashboard() {
             )}
           </div>
         </Card>
+        </motion.div>
       </div>
 
       {/* Nadchodzące wydarzenia + Quick stats – rozszerzony grid */}
@@ -311,10 +362,11 @@ export function Dashboard() {
         wishesCount={wishesCount}
         goals={goals}
         habitsToday={habitsToday}
+        reduceMotion={reduceMotion}
       />
 
       {/* Szybkie linki */}
-      <DashboardQuickLinks notesCount={notesCount} habitsCount={habits.length} />
-    </div>
+      <DashboardQuickLinks notesCount={notesCount} habitsCount={habits.length} reduceMotion={reduceMotion} />
+    </motion.div>
   )
 }

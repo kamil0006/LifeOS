@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { LayoutDashboard, Receipt, Repeat, BarChart3, Sparkles, Wallet } from 'lucide-react'
+import { getSubpageOutletVariants } from '../../lib/layoutSectionMotion'
 
 const subNavItems = [
   { to: '/finances', end: true, icon: LayoutDashboard, label: 'Przegląd' },
@@ -11,22 +12,10 @@ const subNavItems = [
   { to: '/finances/analytics', end: false, icon: BarChart3, label: 'Analityka' },
 ]
 
-const contentVariants = {
-  hidden: { opacity: 0, clipPath: 'inset(100% 0 0 0)' },
-  visible: {
-    opacity: 1,
-    clipPath: 'inset(0 0 0 0)',
-    transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] as const },
-  },
-  exit: {
-    opacity: 0,
-    clipPath: 'inset(0 0 100% 0)',
-    transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] as const },
-  },
-}
-
 export function FinancesLayout() {
   const location = useLocation()
+  const reduceMotion = useReducedMotion()
+  const contentVariants = getSubpageOutletVariants(reduceMotion)
 
   return (
     <div className="space-y-6">

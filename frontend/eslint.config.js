@@ -20,7 +20,9 @@ export default defineConfig([
       globals: globals.browser,
     },
     rules: {
-      // Many legitimate patterns (modals, URL/month sync, layout reset) use setState after props change; case-by-case refactors are tracked separately.
+      // Deliberate: React 19's `set-state-in-effect` flags common modal/controlled-form resets
+      // (sync local state when `open` or `initialValues` change). Fixing every case with keys or
+      // derived state is tracked separately; re-enable as `warn` if you want new sites flagged.
       'react-hooks/set-state-in-effect': 'off',
       // Context modules export hooks + Provider; splitting every file is noisy for a small app.
       'react-refresh/only-export-components': 'off',

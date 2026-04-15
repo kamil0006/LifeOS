@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useOnboardingMotion } from '../lib/modalMotion'
 import {
   X,
   ChevronLeft,
@@ -45,7 +46,7 @@ const STEPS = [
   {
     icon: Target,
     title: 'Rozwój',
-    desc: 'Nawyki, cele, nauka (kursy, książki, projekty) oraz osiągnięcia – śledź swój postęp.',
+    desc: 'Nawyki, cele, nauka (kursy, książki, projekty) – śledź swój postęp.',
     path: '/habits',
   },
   {
@@ -58,6 +59,7 @@ const STEPS = [
 
 export function Onboarding() {
   const { isOpen, close } = useOnboarding()
+  const { overlay, stepCard } = useOnboardingMotion()
   const navigate = useNavigate()
   const [step, setStep] = useState(0)
 
@@ -95,8 +97,6 @@ export function Onboarding() {
     if (step > 0) setStep((s) => s - 1)
   }
 
-  if (!isOpen) return null
-
   const current = STEPS[step]
   const Icon = current.icon
   const isFirst = step === 0
@@ -104,22 +104,19 @@ export function Onboarding() {
 
   const modalContent = (
     <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-9998 flex items-start justify-center px-4 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6 lg:items-start lg:justify-start lg:pl-68 lg:pr-6 lg:pt-10"
-        onClick={handleDismiss}
-      >
+      {isOpen && (
         <motion.div
-          key={step}
-          initial={{ opacity: 0, x: -24 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -24 }}
-          transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] as const }}
-          onClick={(e) => e.stopPropagation()}
-          className="relative w-full max-w-lg rounded-xl border border-(--border) bg-(--bg-card) p-5 shadow-xl sm:p-6 lg:max-w-md"
+          key="onboarding-shell"
+          {...overlay}
+          className="fixed inset-0 z-9998 flex items-start justify-center px-4 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6 lg:items-start lg:justify-start lg:pl-68 lg:pr-6 lg:pt-10"
+          onClick={handleDismiss}
         >
+          <motion.div
+            key={step}
+            {...stepCard}
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-lg rounded-xl border border-(--border) bg-(--bg-card) p-5 shadow-xl sm:p-6 lg:max-w-md"
+          >
           <button
             onClick={handleDismiss}
             className="absolute top-4 right-4 p-1.5 rounded-lg text-(--text-muted) hover:text-(--text-primary) hover:bg-(--bg-dark) transition-colors"
@@ -180,8 +177,9 @@ export function Onboarding() {
               ))}
             </div>
           </div>
+          </motion.div>
         </motion.div>
-      </motion.div>
+      )}
     </AnimatePresence>
   )
 

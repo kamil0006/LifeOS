@@ -14,6 +14,7 @@ import { expensesApi, incomeApi, scheduledExpensesApi } from '../../lib/api'
 import { useFinanceListsQuery } from '../../hooks/useFinanceListsQuery'
 import { useTransactionsList, type Transaction } from '../../hooks/useTransactionsList'
 import { invalidateFinanceQueries } from '../../lib/invalidateFinanceQueries'
+import { useFinanceTransactionSubmit } from '../../hooks/useFinanceTransactionSubmit'
 import { TransactionsPageSkeleton } from '../../components/skeletons'
 
 export function Transactions() {
@@ -29,6 +30,7 @@ export function Transactions() {
     scheduledExpenses: qScheduled,
     isLoading: financeLoading,
   } = useFinanceListsQuery()
+  const { submit: submitTransaction } = useFinanceTransactionSubmit()
   const [showForm, setShowForm] = useState(false)
   const [formType, setFormType] = useState<'income' | 'expense'>('expense')
   const loading = isDemoMode ? false : financeLoading
@@ -95,31 +97,8 @@ export function Transactions() {
   }
 
   const handleAdd = async (data: { name: string; amount: number; category?: string; date: string }) => {
-    const date = data.date ?? new Date().toISOString().split('T')[0]
     try {
-      if (formType === 'income') {
-        if (isDemoMode) {
-          if (demoData) {
-            demoData.addIncome({ source: data.name, amount: data.amount, date, recurring: false })
-          } else {
-            console.warn('DemoDataProvider brak – przychód nie został zapisany')
-          }
-        } else {
-          await incomeApi.create({ source: data.name, amount: data.amount, date })
-          await invalidateFinanceQueries(queryClient, userId)
-        }
-      } else {
-        if (isDemoMode) {
-          if (demoData) {
-            demoData.addExpense({ name: data.name, amount: data.amount, category: data.category ?? 'Inne', date })
-          } else {
-            console.warn('DemoDataProvider brak – wydatek nie został zapisany')
-          }
-        } else {
-          await expensesApi.create({ name: data.name, amount: data.amount, category: data.category ?? 'Inne', date })
-          await invalidateFinanceQueries(queryClient, userId)
-        }
-      }
+      await submitTransaction(formType, data)
     } catch (err) {
       console.error(err)
       alert(err instanceof Error ? err.message : 'Nie udało się zapisać transakcji')

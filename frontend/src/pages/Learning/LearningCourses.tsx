@@ -5,6 +5,7 @@ import { Plus, Trash2, Pencil, ExternalLink } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
 import { useLearning } from '../../context/LearningContext'
+import { useModalMotion } from '../../lib/modalMotion'
 import type { Course } from '../../context/LearningContext'
 
 const STATUS_OPTIONS: { value: Course['status']; label: string }[] = [
@@ -15,6 +16,7 @@ const STATUS_OPTIONS: { value: Course['status']; label: string }[] = [
 
 export function LearningCourses() {
   const learning = useLearning()
+  const { backdrop, panel } = useModalMotion()
   const [name, setName] = useState('')
   const [platform, setPlatform] = useState('')
   const [platformUrl, setPlatformUrl] = useState('')
@@ -215,22 +217,22 @@ export function LearningCourses() {
         )}
       </Card>
 
-      {editingId && createPortal(
+      {createPortal(
         <AnimatePresence>
-          <div className="fixed inset-0 z-9999 flex items-start justify-center overflow-y-auto p-4 pt-12">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm"
-              onClick={() => setEditingId(null)}
-            />
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="relative z-10 w-full max-w-md rounded-lg border border-(--border) bg-(--bg-card) p-6 shadow-xl"
-            >
+          {editingId && (
+            <>
+              <motion.div
+                key="course-edit-backdrop"
+                {...backdrop}
+                className="fixed inset-0 z-9998 bg-black/60 backdrop-blur-sm"
+                onClick={() => setEditingId(null)}
+              />
+              <div className="fixed inset-0 z-9999 flex items-start justify-center overflow-y-auto p-4 pt-12 pointer-events-none">
+                <motion.div
+                  key="course-edit-panel"
+                  {...panel}
+                  className="pointer-events-auto relative z-10 w-full max-w-md rounded-lg border border-(--border) bg-(--bg-card) p-6 shadow-xl"
+                >
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold text-(--text-primary) font-gaming">Edytuj kurs</h3>
                 <button
@@ -317,8 +319,10 @@ export function LearningCourses() {
                   </button>
                 </div>
               </form>
-            </motion.div>
-          </div>
+                </motion.div>
+              </div>
+            </>
+          )}
         </AnimatePresence>,
         document.body
       )}

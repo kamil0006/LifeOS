@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
+import { useAuth } from './AuthContext'
 
 export interface CodingHour {
   id: string
@@ -45,7 +46,11 @@ export interface Certification {
   url?: string
 }
 
-const STORAGE_KEY = 'lifeos_nauka'
+/** Zalogowane konto — osobny prefiks niż demo i niż stary `lifeos_nauka_*`, żeby nie wczytywać zapisanych kiedyś przykładów. */
+const STORAGE_KEY_AUTH = 'lifeos_nauka_user'
+/** Stary wspólny prefiks (przed rozdzieleniem demo/user) — używany tylko do jednorazowej migracji. */
+const STORAGE_KEY_LEGACY = 'lifeos_nauka'
+const STORAGE_KEY_DEMO = 'lifeos_nauka_demo'
 
 const currentYear = new Date().getFullYear()
 const pad = (m: number, d: number) => `${currentYear}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
@@ -109,9 +114,9 @@ interface LearningContextType {
 
 const LearningContext = createContext<LearningContextType | null>(null)
 
-function loadFromStorage<T>(key: string, fallback: T): T {
+function loadFromStorage<T>(storagePrefix: string, key: string, fallback: T): T {
   try {
-    const s = localStorage.getItem(`${STORAGE_KEY}_${key}`)
+    const s = localStorage.getItem(`${storagePrefix}_${key}`)
     if (s) return JSON.parse(s) as T
   } catch {
     /* ignore */
@@ -119,40 +124,81 @@ function loadFromStorage<T>(key: string, fallback: T): T {
   return fallback
 }
 
-function saveToStorage<T>(key: string, data: T) {
+function saveToStorage<T>(storagePrefix: string, key: string, data: T) {
   try {
-    localStorage.setItem(`${STORAGE_KEY}_${key}`, JSON.stringify(data))
+    localStorage.setItem(`${storagePrefix}_${key}`, JSON.stringify(data))
   } catch {
     /* ignore */
   }
 }
 
+/** Dla konta: najpierw `lifeos_nauka_user_*`, potem ewentualnie migracja ze starego `lifeos_nauka_*` (pomijamy treść identyczną z demo). */
+function loadAuthSlice<T>(key: string, empty: T, demoSeed: T): T {
+  try {
+    const userRaw = localStorage.getItem(`${STORAGE_KEY_AUTH}_${key}`)
+    if (userRaw != null) return JSON.parse(userRaw) as T
+  } catch {
+    /* ignore */
+  }
+  try {
+    const legacyRaw = localStorage.getItem(`${STORAGE_KEY_LEGACY}_${key}`)
+    if (legacyRaw == null) return empty
+    const parsed = JSON.parse(legacyRaw) as T
+    if (JSON.stringify(parsed) === JSON.stringify(demoSeed)) return empty
+    saveToStorage(STORAGE_KEY_AUTH, key, parsed)
+    return parsed
+  } catch {
+    return empty
+  }
+}
+
 export function LearningProvider({ children }: { children: ReactNode }) {
-  const [codingHours, setCodingHours] = useState<CodingHour[]>(() => loadFromStorage('codingHours', DEMO_CODING_HOURS))
-  const [courses, setCourses] = useState<Course[]>(() => loadFromStorage('courses', DEMO_COURSES))
-  const [projects, setProjects] = useState<Project[]>(() => loadFromStorage('projects', DEMO_PROJECTS))
-  const [books, setBooks] = useState<Book[]>(() => loadFromStorage('books', DEMO_BOOKS))
-  const [bookCategories, setBookCategories] = useState<string[]>(() => loadFromStorage('bookCategories', []))
-  const [certifications, setCertifications] = useState<Certification[]>(() => loadFromStorage('certifications', DEMO_CERTIFICATES))
+  const { isDemoMode } = useAuth()
+  const storagePrefix = isDemoMode ? STORAGE_KEY_DEMO : STORAGE_KEY_AUTH
+
+  const [codingHours, setCodingHours] = useState<CodingHour[]>(() =>
+    isDemoMode
+      ? loadFromStorage(storagePrefix, 'codingHours', DEMO_CODING_HOURS)
+      : loadAuthSlice('codingHours', [], DEMO_CODING_HOURS),
+  )
+  const [courses, setCourses] = useState<Course[]>(() =>
+    isDemoMode ? loadFromStorage(storagePrefix, 'courses', DEMO_COURSES) : loadAuthSlice('courses', [], DEMO_COURSES),
+  )
+  const [projects, setProjects] = useState<Project[]>(() =>
+    isDemoMode
+      ? loadFromStorage(storagePrefix, 'projects', DEMO_PROJECTS)
+      : loadAuthSlice('projects', [], DEMO_PROJECTS),
+  )
+  const [books, setBooks] = useState<Book[]>(() =>
+    isDemoMode ? loadFromStorage(storagePrefix, 'books', DEMO_BOOKS) : loadAuthSlice('books', [], DEMO_BOOKS),
+  )
+  const [bookCategories, setBookCategories] = useState<string[]>(() =>
+    isDemoMode ? loadFromStorage(storagePrefix, 'bookCategories', []) : loadAuthSlice('bookCategories', [], []),
+  )
+  const [certifications, setCertifications] = useState<Certification[]>(() =>
+    isDemoMode
+      ? loadFromStorage(storagePrefix, 'certifications', DEMO_CERTIFICATES)
+      : loadAuthSlice('certifications', [], DEMO_CERTIFICATES),
+  )
 
   useEffect(() => {
-    saveToStorage('codingHours', codingHours)
-  }, [codingHours])
+    saveToStorage(storagePrefix, 'codingHours', codingHours)
+  }, [codingHours, storagePrefix])
   useEffect(() => {
-    saveToStorage('courses', courses)
-  }, [courses])
+    saveToStorage(storagePrefix, 'courses', courses)
+  }, [courses, storagePrefix])
   useEffect(() => {
-    saveToStorage('projects', projects)
-  }, [projects])
+    saveToStorage(storagePrefix, 'projects', projects)
+  }, [projects, storagePrefix])
   useEffect(() => {
-    saveToStorage('books', books)
-  }, [books])
+    saveToStorage(storagePrefix, 'books', books)
+  }, [books, storagePrefix])
   useEffect(() => {
-    saveToStorage('bookCategories', bookCategories)
-  }, [bookCategories])
+    saveToStorage(storagePrefix, 'bookCategories', bookCategories)
+  }, [bookCategories, storagePrefix])
   useEffect(() => {
-    saveToStorage('certifications', certifications)
-  }, [certifications])
+    saveToStorage(storagePrefix, 'certifications', certifications)
+  }, [certifications, storagePrefix])
 
   const addCodingHour = (h: Omit<CodingHour, 'id'>) => {
     setCodingHours((prev) => [...prev, { ...h, id: Date.now().toString() }])

@@ -6,6 +6,7 @@ import { ChartPeriodProvider } from './context/ChartPeriodContext'
 import { LearningProvider } from './context/LearningContext'
 import { NotesProvider } from './context/NotesContext'
 import { GlobalSearchProvider } from './context/GlobalSearchContext'
+import { QuickAddProvider } from './context/QuickAddContext'
 import { OnboardingProvider } from './context/OnboardingContext'
 import { Login } from './pages/Login'
 import { Dashboard } from './pages/Dashboard'
@@ -17,7 +18,6 @@ import { Analytics } from './pages/Finances/Analytics'
 import { Todo } from './pages/Todo'
 import { FinancesWishes } from './pages/Finances/Wishes'
 import { FinancesNetWorth } from './pages/Finances/FinancesNetWorth'
-import { Achievements } from './pages/Achievements'
 import { Calendar } from './pages/Calendar'
 import { Habits } from './pages/Habits'
 import { LearningLayout } from './pages/Learning/LearningLayout'
@@ -53,6 +53,7 @@ function App() {
         <LearningProvider>
         <NotesProvider>
         <GlobalSearchProvider>
+        <QuickAddProvider>
         <OnboardingProvider>
         <Layout>
         <Routes>
@@ -71,7 +72,6 @@ function App() {
         <Route path="/income" element={<Navigate to="/finances/transactions" replace />} />
         <Route path="/wishes" element={<Navigate to="/finances/wishes" replace />} />
         <Route path="/todo" element={<Todo />} />
-        <Route path="/achievements" element={<Achievements />} />
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/habits" element={<Habits />} />
         <Route path="/notes" element={<NotesLayout />}>
@@ -93,6 +93,7 @@ function App() {
       </Routes>
     </Layout>
         </OnboardingProvider>
+        </QuickAddProvider>
         </GlobalSearchProvider>
         </NotesProvider>
         </LearningProvider>

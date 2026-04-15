@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Plus, Trash2 } from 'lucide-react'
+import { useModalMotion } from '../lib/modalMotion'
 
 const PRESET_COLORS = [
   '#00ff9d', '#00e5ff', '#ffb800', '#ff00d4', '#e57373', '#64b5f6', '#9d4edd',
@@ -35,6 +36,7 @@ export function RecurringModal({
   onAddCategory,
   onDeleteCategory,
 }: RecurringModalProps) {
+  const { backdrop, panel } = useModalMotion()
   const buildInitialForm = useCallback(
     () => ({
       name: '',
@@ -65,25 +67,22 @@ export function RecurringModal({
     onClose()
   }
 
-  if (!isOpen) return null
-
   const modalContent = (
     <AnimatePresence>
-      <div className="fixed inset-0 -[9999 flex items-start justify-center overflow-y-auto p-4 pt-12">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm"
-          onClick={onClose}
-        />
-        <motion.div
-          initial={{ opacity: 0, y: -20, scale: 0.98 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -20, scale: 0.98 }}
-          transition={{ duration: 0.2 }}
-          className="relative z-10 w-full max-w-md rounded-lg border border-(--border) bg-(--bg-card) p-6 shadow-xl"
-        >
+      {isOpen && (
+        <>
+          <motion.div
+            key="recurring-backdrop"
+            {...backdrop}
+            className="fixed inset-0 z-9998 bg-black/60 backdrop-blur-sm"
+            onClick={onClose}
+          />
+          <div className="fixed inset-0 z-9999 flex items-start justify-center overflow-y-auto p-4 pt-12 pointer-events-none">
+            <motion.div
+              key="recurring-panel"
+              {...panel}
+              className="pointer-events-auto relative z-10 w-full max-w-md rounded-lg border border-(--border) bg-(--bg-card) p-6 shadow-xl"
+            >
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold text-(--text-primary) font-gaming">
               Nowy stały koszt
@@ -247,8 +246,10 @@ export function RecurringModal({
               </button>
             </div>
           </form>
-        </motion.div>
-      </div>
+            </motion.div>
+          </div>
+        </>
+      )}
     </AnimatePresence>
   )
 

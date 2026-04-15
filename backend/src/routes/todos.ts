@@ -2,7 +2,6 @@ import { Router } from 'express'
 import { z } from 'zod'
 import { getAuthUser } from '../middleware/auth.js'
 import { prisma } from '../lib/prisma.js'
-import { unlockAchievement } from '../lib/achievements.js'
 
 const createSchema = z.object({
   text: z.string().min(1),
@@ -29,8 +28,6 @@ todosRouter.post('/', async (req, res) => {
   const todo = await prisma.todo.create({
     data: { userId, text: data.text },
   })
-  const count = await prisma.todo.count({ where: { userId } })
-  if (count === 1) await unlockAchievement(userId, 'first_todo')
   res.status(201).json(todo)
 })
 

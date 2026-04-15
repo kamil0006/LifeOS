@@ -4,7 +4,7 @@
 
 ## What this project is
 
-**LifeOS** is a personal dashboard for everyday life: **money** (expenses, income, categories, charts, recurring costs, wishlist), **productivity** (to-do, calendar, habits, goals), **learning** (hours, courses, books, certificates, projects), **notes**, and light **gamification** (achievements). The UI has a gaming / cyberpunk vibe; under the hood it’s meant for real daily use. The app will gain full **English** support over time; repository docs are bilingual from the start.
+**LifeOS** is a personal dashboard for everyday life: **money** (expenses, income, categories, charts, recurring costs, wishlist), **productivity** (to-do, calendar, habits, goals), **learning** (hours, courses, books, certificates, projects), and **notes**. The UI has a gaming / cyberpunk vibe; under the hood it’s meant for real daily use. The app will gain full **English** support over time; repository docs are bilingual from the start.
 
 ---
 
@@ -117,7 +117,7 @@ Optional hosting: frontend on **Vercel**, backend on **Railway** / **Render** �
 | Money | Dashboard, expenses, income, categories, transactions, analytics, net worth, recurring, wishlist |
 | Productivity | To-do, calendar, habits, goals |
 | Learning | Overview, hours, courses, books, certificates, projects |
-| Other | Notes, achievements |
+| Other | Notes |
 
 ---
 

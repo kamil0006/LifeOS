@@ -3,7 +3,6 @@ import {
   LayoutDashboard,
   Wallet,
   CheckSquare,
-  Trophy,
   Calendar as CalendarIcon,
   Target,
   GraduationCap,
@@ -40,7 +39,6 @@ const navSections = [
     items: [
       { to: '/habits', icon: Target, label: 'Nawyki' },
       { to: '/learning', icon: GraduationCap, label: 'Nauka' },
-      { to: '/achievements', icon: Trophy, label: 'Osiągnięcia' },
     ],
   },
 ]

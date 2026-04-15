@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { motion, useReducedMotion } from 'framer-motion'
 import { Card } from '../../components/Card'
 import { MonthSelector } from '../../components/MonthSelector'
 import { useAuth } from '../../context/AuthContext'
@@ -7,11 +8,16 @@ import { mergeExpensesWithScheduled } from '../../lib/expensesUtils'
 import { useMonth, inMonth } from '../../context/MonthContext'
 import { useFinanceListsQuery } from '../../hooks/useFinanceListsQuery'
 import { OverviewSkeleton } from '../../components/skeletons'
+import {
+  getOverviewTileVariants,
+  overviewPageContainerVariants,
+} from '../../lib/layoutSectionMotion'
 
 const monthNames = ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień']
 
 export function Overview() {
   const { isDemoMode } = useAuth()
+  const reduceMotion = useReducedMotion()
   const demoData = useDemoData()
   const monthCtx = useMonth()
   const {
@@ -75,55 +81,64 @@ export function Overview() {
   const currMonthName = monthNames[selectedMonth]
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-end">
+    <motion.div
+      className="grid grid-cols-1 gap-6 md:grid-cols-3"
+      variants={overviewPageContainerVariants}
+      initial="hidden"
+      animate="show"
+    >
+      <motion.div variants={getOverviewTileVariants(reduceMotion, 0)} className="flex justify-end md:col-span-3">
         <MonthSelector />
-      </div>
+      </motion.div>
 
-      {/* Monthly trend */}
-      <Card className="border-(--accent-cyan)/20">
-        <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase mb-3">Trend miesięczny</p>
-        <div className="flex flex-wrap gap-6 items-baseline">
-          <div>
-            <p className="text-base text-(--text-muted)">{currMonthName}</p>
-            <p className="text-2xl font-bold text-(--accent-cyan) font-gaming drop-shadow-[0_0_8px_rgba(0,229,255,0.3)]">
-              {currentTotal.toLocaleString('pl-PL')} zł
-            </p>
+      <motion.div variants={getOverviewTileVariants(reduceMotion, 1)} className="min-w-0 md:col-span-3">
+        <Card className="border-(--accent-cyan)/20" animateEntrance={false}>
+          <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase mb-3">Trend miesięczny</p>
+          <div className="flex flex-wrap gap-6 items-baseline">
+            <div>
+              <p className="text-base text-(--text-muted)">{currMonthName}</p>
+              <p className="text-2xl font-bold text-(--accent-cyan) font-gaming drop-shadow-[0_0_8px_rgba(0,229,255,0.3)]">
+                {currentTotal.toLocaleString('pl-PL')} zł
+              </p>
+            </div>
+            <div>
+              <p className="text-base text-(--text-muted)">{prevMonthName}</p>
+              <p className="text-xl font-semibold text-(--text-primary)">
+                {previousTotal.toLocaleString('pl-PL')} zł
+              </p>
+            </div>
+            <div>
+              <p className="text-base text-(--text-muted)">Zmiana</p>
+              <p
+                className={`text-xl font-semibold font-gaming ${
+                  changePercent >= 0 ? 'text-(--accent-green)' : 'text-[#e74c3c]'
+                }`}
+              >
+                {changePercent >= 0 ? '+' : ''}{changePercent}%
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-base text-(--text-muted)">{prevMonthName}</p>
-            <p className="text-xl font-semibold text-(--text-primary)">
-              {previousTotal.toLocaleString('pl-PL')} zł
-            </p>
-          </div>
-          <div>
-            <p className="text-base text-(--text-muted)">Zmiana</p>
-            <p
-              className={`text-xl font-semibold font-gaming ${
-                changePercent >= 0 ? 'text-(--accent-green)' : 'text-[#e74c3c]'
-              }`}
-            >
-              {changePercent >= 0 ? '+' : ''}{changePercent}%
-            </p>
-          </div>
-        </div>
-      </Card>
+        </Card>
+      </motion.div>
 
-      {/* KPI cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-(--accent-green)/20">
+      <motion.div variants={getOverviewTileVariants(reduceMotion, 2)} className="min-w-0">
+        <Card className="border-(--accent-green)/20" animateEntrance={false}>
           <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">Przychody</p>
           <p className="text-2xl font-bold text-(--accent-green) mt-1 font-gaming">
             {incomeTotal.toLocaleString('pl-PL')} zł
           </p>
         </Card>
-        <Card className="border-(--accent-magenta)/20">
+      </motion.div>
+      <motion.div variants={getOverviewTileVariants(reduceMotion, 3)} className="min-w-0">
+        <Card className="border-(--accent-magenta)/20" animateEntrance={false}>
           <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">Wydatki</p>
           <p className="text-2xl font-bold text-(--accent-magenta) mt-1 font-gaming">
             {expensesTotal.toLocaleString('pl-PL')} zł
           </p>
         </Card>
-        <Card className={currentTotal >= 0 ? 'border-(--accent-cyan)/20' : 'border-[#e74c3c]/30'}>
+      </motion.div>
+      <motion.div variants={getOverviewTileVariants(reduceMotion, 4)} className="min-w-0">
+        <Card className={currentTotal >= 0 ? 'border-(--accent-cyan)/20' : 'border-[#e74c3c]/30'} animateEntrance={false}>
           <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">Bilans</p>
           <p
             className={`text-2xl font-bold mt-1 font-gaming ${
@@ -133,7 +148,7 @@ export function Overview() {
             {currentTotal >= 0 ? '+' : ''}{currentTotal.toLocaleString('pl-PL')} zł
           </p>
         </Card>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   )
 }

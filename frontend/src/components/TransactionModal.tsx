@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Plus, Trash2 } from 'lucide-react'
+import { useModalMotion } from '../lib/modalMotion'
 
 const PRESET_COLORS = [
   '#00ff9d', '#00e5ff', '#ffb800', '#ff00d4', '#e57373', '#64b5f6', '#9d4edd',
@@ -30,6 +31,7 @@ export function TransactionModal({
   onAddCategory,
   onDeleteCategory,
 }: TransactionModalProps) {
+  const { backdrop, panel } = useModalMotion()
   const buildInitialForm = useCallback(
     () => ({
       name: '',
@@ -46,9 +48,12 @@ export function TransactionModal({
   const updateField = <K extends keyof ReturnType<typeof buildInitialForm>>(key: K, value: ReturnType<typeof buildInitialForm>[K]) =>
     setForm((f) => ({ ...f, [key]: value }))
 
+  /** Tylko przy otwarciu / zmianie typu — nie przy zmianie `categories` (np. po dodaniu kategorii), żeby nie czyścić nazwy i kwoty. */
   useEffect(() => {
-    if (isOpen) setForm(buildInitialForm())
-  }, [isOpen, type, buildInitialForm])
+    if (!isOpen) return
+    setForm(buildInitialForm())
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reset wyłącznie przy isOpen/type; `buildInitialForm` zmienia się przy `categories`
+  }, [isOpen, type])
 
   const { name, amount, category, date, showAddCategory, newCategoryName, newCategoryColor } = form
 
@@ -66,25 +71,22 @@ export function TransactionModal({
     onClose()
   }
 
-  if (!isOpen) return null
-
   const modalContent = (
     <AnimatePresence>
-      <div className="fixed inset-0 z-9999 flex items-start justify-center overflow-y-auto p-4 pt-12">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm"
-          onClick={onClose}
-        />
-        <motion.div
-          initial={{ opacity: 0, y: -20, scale: 0.98 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -20, scale: 0.98 }}
-          transition={{ duration: 0.2 }}
-          className="relative z-10 w-full max-w-md rounded-lg border border-(--border) bg-(--bg-card) p-6 shadow-xl"
-        >
+      {isOpen && (
+        <>
+          <motion.div
+            key="transaction-backdrop"
+            {...backdrop}
+            className="fixed inset-0 z-9998 bg-black/60 backdrop-blur-sm"
+            onClick={onClose}
+          />
+          <div className="fixed inset-0 z-9999 flex items-start justify-center overflow-y-auto p-4 pt-12 pointer-events-none">
+            <motion.div
+              key="transaction-panel"
+              {...panel}
+              className="pointer-events-auto relative z-10 w-full max-w-md rounded-lg border border-(--border) bg-(--bg-card) p-6 shadow-xl"
+            >
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold text-(--text-primary) font-gaming">
               {type === 'income' ? 'Nowy przychód' : 'Nowy wydatek'}
@@ -246,8 +248,10 @@ export function TransactionModal({
               </button>
             </div>
           </form>
-        </motion.div>
-      </div>
+            </motion.div>
+          </div>
+        </>
+      )}
     </AnimatePresence>
   )
 

@@ -11,7 +11,6 @@ import {
   Calendar,
   CheckSquare,
   Target,
-  Trophy,
   ChevronDown,
   ChevronRight,
   Receipt,
@@ -27,6 +26,7 @@ import {
   Award,
 } from 'lucide-react'
 import { useGlobalSearch } from '../context/GlobalSearchContext'
+import { useModalMotion } from '../lib/modalMotion'
 
 interface NavItemChild {
   label: string
@@ -76,7 +76,6 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'calendar', label: 'Kalendarz', route: '/calendar', icon: Calendar, keywords: ['wydarzenia', 'terminy'] },
   { id: 'todo', label: 'To-do', route: '/todo', icon: CheckSquare, keywords: ['zadania', 'lista'] },
   { id: 'habits', label: 'Nawyki', route: '/habits', icon: Target, keywords: ['cele', 'nawyki'] },
-  { id: 'achievements', label: 'Osiągnięcia', route: '/achievements', icon: Trophy, keywords: ['odznaki', 'sukcesy'] },
   {
     id: 'learning',
     label: 'Nauka',
@@ -121,8 +120,37 @@ function getFilteredChildren(item: NavItem, query: string): NavItemChild[] {
   return item.children.filter((c) => normalizeForSearch(c.label).includes(nQuery))
 }
 
+/** Stopka palety: jawne Ctrl / Shift (bez symboli ⌃⌘). */
+function ShortcutLegend({
+  parts,
+  accentClass,
+}: {
+  parts: string[]
+  accentClass?: string
+}) {
+  return (
+    <span className="inline-flex items-center gap-0.5 font-mono">
+      {parts.map((part, i) => (
+        <span key={i} className="inline-flex items-center gap-0.5">
+          {i > 0 && (
+            <span className="text-(--text-muted) select-none" aria-hidden="true">
+              +
+            </span>
+          )}
+          <kbd
+            className={`px-1.5 py-0.5 rounded bg-(--bg-dark) border border-(--border) ${accentClass ?? ''}`}
+          >
+            {part}
+          </kbd>
+        </span>
+      ))}
+    </span>
+  )
+}
+
 export function GlobalSearch() {
   const { isOpen, close } = useGlobalSearch()
+  const { backdrop, panel } = useModalMotion()
   const navigate = useNavigate()
   const inputRef = useRef<HTMLInputElement>(null)
   const [query, setQuery] = useState('')
@@ -172,29 +200,24 @@ export function GlobalSearch() {
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div
-          key="global-search"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-9997 flex items-start justify-center pt-[15vh] px-4"
-        >
+        <>
           <motion.div
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            key="global-search-backdrop"
+            {...backdrop}
+            className="fixed inset-0 z-9996 bg-black/70 backdrop-blur-sm"
             onClick={close}
             aria-hidden="true"
           />
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: -20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: -20 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="relative w-full max-w-md rounded-xl border border-(--border) bg-(--bg-card) shadow-[0_0_30px_rgba(0,229,255,0.08),0_0_60px_rgba(0,229,255,0.04)] overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Globalne wyszukiwanie"
-          >
+          <div className="fixed inset-0 z-9997 flex items-start justify-center px-4 pt-[15vh] pointer-events-none">
+            <motion.div
+              key="global-search-panel"
+              {...panel}
+              className="pointer-events-auto relative w-full max-w-md overflow-hidden rounded-xl border border-(--border) bg-(--bg-card) shadow-[0_0_30px_rgba(0,229,255,0.08),0_0_60px_rgba(0,229,255,0.04)]"
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Globalne wyszukiwanie"
+            >
             <div className="p-4">
               <div className="global-search-field relative">
                 <Search className="w-5 h-5 shrink-0 text-(--text-muted)" />
@@ -313,12 +336,30 @@ export function GlobalSearch() {
                 </div>
               )}
             </div>
-            <div className="px-4 py-2 border-t border-(--border) flex items-center justify-center gap-4 text-xs text-(--text-muted)">
-              <span><kbd className="px-1.5 py-0.5 rounded bg-(--bg-dark) border border-(--border) font-mono">Esc</kbd> zamknij</span>
-              <span><kbd className="px-1.5 py-0.5 rounded bg-(--bg-dark) border border-(--border) font-mono text-(--accent-cyan)">Ctrl+K</kbd> otwórz</span>
+            <div className="px-4 py-2 border-t border-(--border) flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-sm text-(--text-muted)">
+              <span>
+                <kbd className="px-1.5 py-0.5 rounded bg-(--bg-dark) border border-(--border) font-mono">Esc</kbd>{' '}
+                zamknij
+              </span>
+              <span>
+                <ShortcutLegend parts={['Ctrl', 'K']} accentClass="text-(--accent-cyan)" /> paleta
+              </span>
+              <span>
+                <ShortcutLegend parts={['Ctrl', 'E']} accentClass="text-(--accent-magenta)" /> wydatek
+              </span>
+              <span>
+                <ShortcutLegend parts={['Ctrl', 'I']} accentClass="text-(--accent-green)" /> przychód
+              </span>
+              <span>
+                <ShortcutLegend parts={['Ctrl', 'Shift', 'Y']} accentClass="text-(--accent-amber)" /> notatka
+              </span>
+              <span>
+                <ShortcutLegend parts={['Ctrl', 'Shift', 'L']} accentClass="text-(--accent-cyan)/90" /> to-do
+              </span>
             </div>
-          </motion.div>
-        </motion.div>
+            </motion.div>
+          </div>
+        </>
       )}
     </AnimatePresence>
   )

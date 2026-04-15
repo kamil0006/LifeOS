@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Trash2 } from 'lucide-react'
+import { useModalMotion } from '../lib/modalMotion'
 import type { Book } from '../context/LearningContext'
 
 interface BookModalProps {
@@ -23,6 +24,7 @@ export function BookModal({
   onDelete,
   addBookCategory,
 }: BookModalProps) {
+  const { backdrop, panel } = useModalMotion()
   const getInitialForm = useCallback(() => {
     if (!book) return { title: '', author: '', category: 'Programowanie', customCategory: '', finishedAt: '', rating: '' }
     const cat = book.category || 'Programowanie'
@@ -69,24 +71,22 @@ export function BookModal({
     }
   }
 
-  if (!isOpen || !book) return null
-
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-9999 flex items-center justify-center p-4">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-          onClick={onClose}
-        />
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          className="relative w-full max-w-md rounded-lg border border-(--border) bg-(--bg-card) p-6 shadow-xl"
-        >
+      {isOpen && book && (
+        <>
+          <motion.div
+            key="book-backdrop"
+            {...backdrop}
+            className="fixed inset-0 z-9998 bg-black/60 backdrop-blur-sm"
+            onClick={onClose}
+          />
+          <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 pointer-events-none">
+            <motion.div
+              key="book-panel"
+              {...panel}
+              className="pointer-events-auto relative w-full max-w-md rounded-lg border border-(--border) bg-(--bg-card) p-6 shadow-xl"
+            >
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold text-(--text-primary) font-gaming">
               Edytuj książkę
@@ -191,8 +191,10 @@ export function BookModal({
               </button>
             </div>
           </form>
-        </motion.div>
-      </div>
+            </motion.div>
+          </div>
+        </>
+      )}
     </AnimatePresence>
   )
 

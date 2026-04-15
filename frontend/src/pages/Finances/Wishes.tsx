@@ -46,11 +46,11 @@ function WishCard({
 
   return (
     <motion.div
-      layout
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      className="group relative p-4 rounded-lg border border-(--border) bg-(--bg-dark) hover:border-(--accent-magenta)/30 transition-all"
+      initial={false}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.18 }}
+      className="group relative rounded-lg border border-(--border) bg-(--bg-dark) p-4 transition-all hover:border-(--accent-magenta)/30"
     >
       <div className="flex justify-between items-start gap-2">
         <div className="flex-1 min-w-0">
@@ -95,11 +95,9 @@ function WishCard({
       </div>
       <div className="mt-3">
         <div className="h-1.5 rounded-full bg-(--bg-card) overflow-hidden">
-          <motion.div
-            className="h-full rounded-full bg-linear-to-r from-(--accent-cyan) to-(--accent-green)"
-            initial={{ width: 0 }}
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.4 }}
+          <div
+            className="h-full rounded-full bg-linear-to-r from-(--accent-cyan) to-(--accent-green) transition-[width] duration-500 ease-out"
+            style={{ width: `${progress}%` }}
           />
         </div>
       </div>
@@ -147,7 +145,7 @@ export function FinancesWishes() {
         </button>
       </div>
 
-      <Card className="border-(--accent-magenta)/20">
+      <Card className="border-(--accent-magenta)/20" animateEntrance={false}>
         <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">Łączna wartość listy</p>
         <p className="text-2xl font-bold text-(--accent-magenta) font-gaming mt-1">
           {wishes.reduce((s, w) => s + w.estimatedPrice, 0).toLocaleString('pl-PL')} zł
@@ -163,7 +161,7 @@ export function FinancesWishes() {
                 {stage.label}
               </h4>
               <div className="space-y-2">
-                <AnimatePresence mode="popLayout">
+                <AnimatePresence>
                   {items.length === 0 ? (
                     <p className="text-sm text-(--text-muted) py-4 text-center border border-dashed border-(--border) rounded-lg">
                       Brak pozycji

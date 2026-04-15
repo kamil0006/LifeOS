@@ -5,7 +5,8 @@ import tailwindcss from '@tailwindcss/vite'
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const apiPort = env.VITE_API_PORT || '3001'
+  /** Zgodnie z `backend/.env.example` (PORT); nadpisz `VITE_API_PORT` jeśli backend na innym porcie. */
+  const apiPort = env.VITE_API_PORT || '3002'
 
   return {
     plugins: [react(), tailwindcss()],

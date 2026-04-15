@@ -3,7 +3,6 @@ import {
   SkeletonCardShell,
   SkeletonRow,
   SkeletonChart,
-  SkeletonText,
 } from './SkeletonPrimitives'
 
 /** Dashboard: KPI row + two charts + side content hint */
@@ -180,7 +179,7 @@ export function NetWorthPageSkeleton() {
   )
 }
 
-/** Todo, Habits, Calendar, Wishes, Achievements: title + card list */
+/** Todo, Habits, Calendar, Wishes: title + card list */
 export function SimplePageSkeleton({ titleWidth = 'w-40' }: { titleWidth?: string }) {
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
@@ -195,26 +194,6 @@ export function SimplePageSkeleton({ titleWidth = 'w-40' }: { titleWidth?: strin
           ))}
         </div>
       </SkeletonCardShell>
-    </div>
-  )
-}
-
-/** Achievements: grid of badges */
-export function AchievementsPageSkeleton() {
-  return (
-    <div className="space-y-6 animate-in fade-in duration-200">
-      <div className="space-y-2">
-        <SkeletonPulse className="h-8 w-48" />
-        <SkeletonPulse className="h-4 w-72 max-w-full" />
-      </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <SkeletonCardShell key={i} className="p-4 flex flex-col items-center">
-            <SkeletonPulse className="h-14 w-14 rounded-full mb-3" />
-            <SkeletonText className="w-24 mx-auto" />
-          </SkeletonCardShell>
-        ))}
-      </div>
     </div>
   )
 }

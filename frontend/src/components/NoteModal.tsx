@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, HelpCircle } from 'lucide-react'
+import { useModalMotion } from '../lib/modalMotion'
 import type { Note, NoteType } from '../context/NotesContext'
 
 interface NoteModalProps {
@@ -30,6 +31,7 @@ const MARKDOWN_HINT = (
 )
 
 export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProps) {
+  const { backdrop, panel } = useModalMotion()
   const getInitialForm = useCallback(
     () => ({
       content: note?.content ?? '',
@@ -66,24 +68,22 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
     onClose()
   }
 
-  if (!isOpen) return null
-
   const modalContent = (
     <AnimatePresence>
-      <div className="fixed inset-0 z-9999 flex items-center justify-center p-4">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-          onClick={onClose}
-        />
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          className="relative w-full max-w-lg rounded-lg border border-(--border) bg-(--bg-card) p-6 shadow-xl"
-        >
+      {isOpen && (
+        <>
+          <motion.div
+            key="note-backdrop"
+            {...backdrop}
+            className="fixed inset-0 z-9998 bg-black/60 backdrop-blur-sm"
+            onClick={onClose}
+          />
+          <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 pointer-events-none">
+            <motion.div
+              key="note-panel"
+              {...panel}
+              className="pointer-events-auto relative w-full max-w-lg rounded-lg border border-(--border) bg-(--bg-card) p-6 shadow-xl"
+            >
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold text-(--text-primary) font-gaming">
               {isEdit ? 'Edytuj notatkę' : `Dodaj ${TYPE_LABELS[type].toLowerCase()}`}
@@ -158,8 +158,10 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
               </button>
             </div>
           </form>
-        </motion.div>
-      </div>
+            </motion.div>
+          </div>
+        </>
+      )}
     </AnimatePresence>
   )
 

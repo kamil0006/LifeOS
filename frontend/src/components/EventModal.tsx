@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Trash2 } from 'lucide-react'
+import { useModalMotion } from '../lib/modalMotion'
 import type { DemoEvent } from '../context/EventsContext'
 import { EVENT_CATEGORIES } from '../lib/eventCategories'
 
@@ -26,6 +27,7 @@ export function EventModal({
   event,
   holidayName,
 }: EventModalProps) {
+  const { backdrop, panel } = useModalMotion()
   const getInitialForm = useCallback(
     () =>
       event
@@ -72,24 +74,22 @@ export function EventModal({
     }
   }
 
-  if (!isOpen) return null
-
   const modalContent = (
     <AnimatePresence>
-      <div className="fixed inset-0 z-9999 flex items-center justify-center p-4">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-          onClick={onClose}
-        />
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          className="relative w-full max-w-md rounded-lg border border-(--border) bg-(--bg-card) p-6 shadow-xl"
-        >
+      {isOpen && (
+        <>
+          <motion.div
+            key="event-backdrop"
+            {...backdrop}
+            className="fixed inset-0 z-9998 bg-black/60 backdrop-blur-sm"
+            onClick={onClose}
+          />
+          <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 pointer-events-none">
+            <motion.div
+              key="event-panel"
+              {...panel}
+              className="pointer-events-auto relative w-full max-w-md rounded-lg border border-(--border) bg-(--bg-card) p-6 shadow-xl"
+            >
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-lg font-bold text-(--text-primary) font-gaming">
@@ -201,8 +201,10 @@ export function EventModal({
               </button>
             </div>
           </form>
-        </motion.div>
-      </div>
+            </motion.div>
+          </div>
+        </>
+      )}
     </AnimatePresence>
   )
 

@@ -10,5 +10,4 @@ export const queryKeys = {
   wishes: (userId: string) => [...queryKeys.root, 'wishes', userId] as const,
   habits: (userId: string) => [...queryKeys.root, 'habits', userId] as const,
   goals: (userId: string) => [...queryKeys.root, 'goals', userId] as const,
-  achievements: (userId: string) => [...queryKeys.root, 'achievements', userId] as const,
 }

@@ -9,13 +9,14 @@
     "kill:ports": "npx kill-port 3001 5173 5174 5175"
   },
   "dependencies": {
+    "@prisma/client": "^6.0.0",
+    "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.0",
+    "express-async-errors": "^3.1.1",
     "jsonwebtoken": "^9.0.2",
     "prisma": "^6.0.0",
-    "@prisma/client": "^6.0.0",
-    "bcryptjs": "^2.4.3",
     "zod": "^3.23.8"
   },
   "devDependencies": {

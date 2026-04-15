@@ -4,7 +4,7 @@
 
 ## Czym jest ten projekt
 
-**LifeOS** to osobisty panel do ogarnięcia życia w jednym miejscu: **finanse** (wydatki, przychody, kategorie, wykresy, zaplanowane koszty, zachcianki), **produktywność** (to-do, kalendarz, nawyki, cele), **naukę** (śledzenie godzin, kursów, książek, certyfikatów, projektów), **notatki** oraz lekka **gamifikacja** (osiągnięcia). Interfejs ma charakter gamingowy / cyberpunkowy — funkcjonalnie to jednak narzędzie do codziennego użytku u siebie. Aplikacja w przyszłości będzie też po angielsku; dokumentacja w repozytorium jest już dwujęzyczna.
+**LifeOS** to osobisty panel do ogarnięcia życia w jednym miejscu: **finanse** (wydatki, przychody, kategorie, wykresy, zaplanowane koszty, zachcianki), **produktywność** (to-do, kalendarz, nawyki, cele), **naukę** (śledzenie godzin, kursów, książek, certyfikatów, projektów) oraz **notatki**. Interfejs ma charakter gamingowy / cyberpunkowy — funkcjonalnie to jednak narzędzie do codziennego użytku u siebie. Aplikacja w przyszłości będzie też po angielsku; dokumentacja w repozytorium jest już dwujęzyczna.
 
 ---
 
@@ -117,7 +117,7 @@ Wdrożenie docelowe (opcjonalnie): frontend np. **Vercel**, backend **Railway** 
 | Finanse | Dashboard, wydatki, przychody, kategorie, transakcje, analityka, wartość netto, wydatki cykliczne, zachcianki |
 | Produktywność | To-do, kalendarz, nawyki, cele |
 | Rozwój | Nauka: przegląd, godziny, kursy, książki, certyfikaty, projekty |
-| Inne | Notatki, osiągnięcia |
+| Inne | Notatki |
 
 ---
 

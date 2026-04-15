@@ -20,7 +20,6 @@ model User {
   income      Income[]
   todos       Todo[]
   wishes      Wish[]
-  achievements Achievement[]
   events      Event[]
   habits      Habit[]
   habitCheckIns HabitCheckIn[]
@@ -104,17 +103,6 @@ model Wish {
   notes          String?
   createdAt      DateTime @default(now())
 
-  @@index([userId])
-}
-
-model Achievement {
-  id          String    @id @default(cuid())
-  userId      String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  achievementId String  // np. "first_expense", "savings_1000"
-  unlockedAt  DateTime @default(now())
-
-  @@unique([userId, achievementId])
   @@index([userId])
 }
 

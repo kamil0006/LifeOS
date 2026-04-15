@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
+import { useModalMotion } from '../lib/modalMotion'
 import type { NetWorthPositionKey } from '../context/DemoDataContext'
 
 const POSITION_LABELS: Record<NetWorthPositionKey, string> = {
@@ -20,6 +21,7 @@ interface NetWorthAdjustModalProps {
 }
 
 export function NetWorthAdjustModal({ isOpen, onClose, onSubmit, initialPosition, currentValue = 0 }: NetWorthAdjustModalProps) {
+  const { backdrop, panel } = useModalMotion()
   const [position, setPosition] = useState<NetWorthPositionKey>(initialPosition ?? 'cash')
   const [amount, setAmount] = useState('')
   const [isAdd, setIsAdd] = useState(true)
@@ -40,25 +42,22 @@ export function NetWorthAdjustModal({ isOpen, onClose, onSubmit, initialPosition
     onClose()
   }
 
-  if (!isOpen) return null
-
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-9999 flex items-start justify-center overflow-y-auto p-4 pt-12">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm"
-          onClick={onClose}
-        />
-        <motion.div
-          initial={{ opacity: 0, y: -20, scale: 0.98 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -20, scale: 0.98 }}
-          transition={{ duration: 0.2 }}
-          className="relative z-10 w-full max-w-md rounded-lg border border-(--border) bg-(--bg-card) p-6 shadow-xl"
-        >
+      {isOpen && (
+        <>
+          <motion.div
+            key="networth-backdrop"
+            {...backdrop}
+            className="fixed inset-0 z-9998 bg-black/60 backdrop-blur-sm"
+            onClick={onClose}
+          />
+          <div className="fixed inset-0 z-9999 flex items-start justify-center overflow-y-auto p-4 pt-12 pointer-events-none">
+            <motion.div
+              key="networth-panel"
+              {...panel}
+              className="pointer-events-auto relative z-10 w-full max-w-md rounded-lg border border-(--border) bg-(--bg-card) p-6 shadow-xl"
+            >
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold text-(--text-primary) font-gaming">
               Korekta: {POSITION_LABELS[position]}
@@ -166,10 +165,10 @@ export function NetWorthAdjustModal({ isOpen, onClose, onSubmit, initialPosition
               </button>
             </div>
           </form>
-        </motion.div>
-      </div>
+            </motion.div>
+          </div>
+        </>
+      )}
     </AnimatePresence>
   )
-
- 
 }

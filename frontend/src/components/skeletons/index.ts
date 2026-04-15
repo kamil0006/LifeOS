@@ -7,5 +7,4 @@ export {
   AnalyticsPageSkeleton,
   NetWorthPageSkeleton,
   SimplePageSkeleton,
-  AchievementsPageSkeleton,
 } from './PageSkeletons'

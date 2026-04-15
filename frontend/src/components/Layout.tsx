@@ -6,6 +6,10 @@ import { Sidebar } from './Sidebar'
 import { MobileHeader } from './MobileHeader'
 import { MobileDrawer } from './MobileDrawer'
 import { GlobalSearch } from './GlobalSearch'
+import { GlobalKeyboardShortcuts } from './GlobalKeyboardShortcuts'
+import { GlobalQuickTransaction } from './GlobalQuickTransaction'
+import { GlobalQuickNote } from './GlobalQuickNote'
+import { GlobalQuickTodo } from './GlobalQuickTodo'
 import { Onboarding } from './Onboarding'
 
 interface LayoutProps {
@@ -30,6 +34,10 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     <div className="flex min-h-screen bg-(--bg-dark) bg-grid">
+      <GlobalKeyboardShortcuts />
+      <GlobalQuickTransaction />
+      <GlobalQuickNote />
+      <GlobalQuickTodo />
       <GlobalSearch />
       <Onboarding />
       <Sidebar />

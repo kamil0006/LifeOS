@@ -10,5 +10,4 @@ export {
   eventsApi,
   habitsApi,
   goalsApi,
-  achievementsApi,
 } from './api/index'
