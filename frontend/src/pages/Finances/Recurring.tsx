@@ -17,12 +17,7 @@ export function Recurring() {
   const queryClient = useQueryClient()
   const userId = user?.id ?? ''
   const demoData = useDemoData()
-  const financeCats = useFinanceCategories()
-  const categories = financeCats?.categories?.length
-    ? financeCats.categories
-    : [{ id: 'Inne', name: 'Inne', label: 'Inne', color: '#9d4edd' }]
-  const customCategories = financeCats?.customCategories ?? []
-  const getColor = financeCats?.getColor ?? (() => '#9d4edd')
+  const { categories, customCategories, getColor, addCategory, deleteCategory } = useFinanceCategories()
   const [showForm, setShowForm] = useState(false)
   const { scheduledExpenses: qScheduled, isLoading: financeLoading } = useFinanceListsQuery()
   const loading = isDemoMode ? false : financeLoading
@@ -123,8 +118,8 @@ export function Recurring() {
           onSubmit={handleAdd}
           categories={categories}
           customCategories={customCategories}
-          onAddCategory={financeCats?.addCategory}
-          onDeleteCategory={financeCats?.deleteCategory}
+          onAddCategory={addCategory}
+          onDeleteCategory={deleteCategory}
         />
       </Card>
     </div>

@@ -1,13 +1,16 @@
 import { useMemo } from 'react'
 import { Card } from '../../components/Card'
 import { Clock, GraduationCap, FolderKanban, BookOpen, Award } from 'lucide-react'
-import { useNauka } from '../../context/NaukaContext'
+import { useLearning } from '../../context/LearningContext'
 
-export function NaukaOverview() {
-  const nauka = useNauka()
-  if (!nauka) return null
+export function LearningOverview() {
+  const learning = useLearning()
 
-  const { codingHours, courses, projects, books, certifications } = nauka
+  const codingHours = learning?.codingHours ?? []
+  const courses = learning?.courses ?? []
+  const projects = learning?.projects ?? []
+  const books = learning?.books ?? []
+  const certifications = learning?.certifications ?? []
 
   const totalHours = useMemo(
     () => codingHours.reduce((s, h) => s + h.hours, 0),
@@ -24,6 +27,8 @@ export function NaukaOverview() {
       })
       .reduce((s, h) => s + h.hours, 0)
   }, [codingHours])
+
+  if (!learning) return null
 
   const coursesInProgress = courses.filter((c) => c.status === 'w_trakcie').length
   const coursesCompleted = courses.filter((c) => c.status === 'ukonczony').length

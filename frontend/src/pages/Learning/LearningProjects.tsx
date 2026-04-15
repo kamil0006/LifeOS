@@ -1,21 +1,21 @@
 import { useState } from 'react'
 import { Card } from '../../components/Card'
 import { Plus, Trash2, ExternalLink, Github } from 'lucide-react'
-import { useNauka } from '../../context/NaukaContext'
+import { useLearning } from '../../context/LearningContext'
 
 const STATUS_LABELS = { w_trakcie: 'W trakcie', ukonczony: 'Ukończony', zaplanowany: 'Zaplanowany' }
 
-export function NaukaProjekty() {
-  const nauka = useNauka()
+export function LearningProjects() {
+  const learning = useLearning()
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [tech, setTech] = useState('')
   const [url, setUrl] = useState('')
   const [githubUrl, setGithubUrl] = useState('')
 
-  if (!nauka) return null
+  if (!learning) return null
 
-  const { projects, addProject, deleteProject } = nauka
+  const { projects, addProject, deleteProject } = learning
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()

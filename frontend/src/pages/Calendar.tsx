@@ -14,7 +14,7 @@ const dayNames = ['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb', 'Nd']
 type ViewMode = 'month' | 'week'
 
 export function Calendar() {
-  const { events, addEvent, updateEvent, deleteEvent, loading } = useEvents() ?? {}
+  const { events, addEvent, updateEvent, deleteEvent, loading } = useEvents()
   const [viewDate, setViewDate] = useState(() => new Date())
   const [modalOpen, setModalOpen] = useState(false)
   const [editingEvent, setEditingEvent] = useState<DemoEvent | null>(null)
@@ -51,7 +51,7 @@ export function Calendar() {
 
   const eventsByDate = useMemo(() => {
     const map: Record<string, typeof events> = {}
-    ;(events ?? []).forEach((ev) => {
+    events.forEach((ev) => {
       const key = ev.date
       if (!map[key]) map[key] = []
       map[key].push(ev)
@@ -101,15 +101,15 @@ export function Calendar() {
   }
 
   const handleAdd = (data: Omit<DemoEvent, 'id'>) => {
-    addEvent?.(data)
+    addEvent(data)
   }
 
   const handleUpdate = (id: string, data: Partial<Omit<DemoEvent, 'id'>>) => {
-    updateEvent?.(id, data)
+    updateEvent(id, data)
   }
 
   const handleDelete = (id: string) => {
-    deleteEvent?.(id)
+    deleteEvent(id)
   }
 
   if (loading) {

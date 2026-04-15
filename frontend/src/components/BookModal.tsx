@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Trash2 } from 'lucide-react'
-import type { Book } from '../context/NaukaContext'
+import type { Book } from '../context/LearningContext'
 
 interface BookModalProps {
   isOpen: boolean
@@ -23,25 +23,28 @@ export function BookModal({
   onDelete,
   addBookCategory,
 }: BookModalProps) {
-  const [title, setTitle] = useState('')
-  const [author, setAuthor] = useState('')
-  const [category, setCategory] = useState('Programowanie')
-  const [customCategory, setCustomCategory] = useState('')
-  const [finishedAt, setFinishedAt] = useState('')
-  const [rating, setRating] = useState('')
+  const getInitialForm = () => {
+    if (!book) return { title: '', author: '', category: 'Programowanie', customCategory: '', finishedAt: '', rating: '' }
+    const cat = book.category || 'Programowanie'
+    const isInList = allCategories.includes(cat)
+    return {
+      title: book.title,
+      author: book.author,
+      category: isInList ? cat : 'Inne',
+      customCategory: isInList ? '' : cat,
+      finishedAt: book.finishedAt,
+      rating: book.rating != null ? String(book.rating) : '',
+    }
+  }
+  const [form, setForm] = useState(getInitialForm)
+  const updateField = <K extends keyof ReturnType<typeof getInitialForm>>(key: K, value: string) =>
+    setForm((f) => ({ ...f, [key]: value }))
 
   useEffect(() => {
-    if (isOpen && book) {
-      setTitle(book.title)
-      setAuthor(book.author)
-      const cat = book.category || 'Programowanie'
-      const isInList = allCategories.includes(cat)
-      setCategory(isInList ? cat : 'Inne')
-      setCustomCategory(isInList ? '' : cat)
-      setFinishedAt(book.finishedAt)
-      setRating(book.rating != null ? String(book.rating) : '')
-    }
+    if (isOpen && book) setForm(getInitialForm())
   }, [isOpen, book, allCategories])
+
+  const { title, author, category, customCategory, finishedAt, rating } = form
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -103,7 +106,7 @@ export function BookModal({
               <input
                 type="text"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => updateField('title', e.target.value)}
                 className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
                 required
                 autoFocus
@@ -114,7 +117,7 @@ export function BookModal({
               <input
                 type="text"
                 value={author}
-                onChange={(e) => setAuthor(e.target.value)}
+                onChange={(e) => updateField('author', e.target.value)}
                 className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
                 required
               />
@@ -124,7 +127,7 @@ export function BookModal({
               <div className="flex flex-wrap gap-2">
                 <select
                   value={category}
-                  onChange={(e) => setCategory(e.target.value)}
+                  onChange={(e) => updateField('category', e.target.value)}
                   className="px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none min-w-[160px]"
                 >
                   {allCategories.map((cat) => (
@@ -135,7 +138,7 @@ export function BookModal({
                   <input
                     type="text"
                     value={customCategory}
-                    onChange={(e) => setCustomCategory(e.target.value)}
+                    onChange={(e) => updateField('customCategory', e.target.value)}
                     placeholder="Wpisz kategorię"
                     className="px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none min-w-[140px]"
                   />
@@ -148,7 +151,7 @@ export function BookModal({
                 <input
                   type="date"
                   value={finishedAt}
-                  onChange={(e) => setFinishedAt(e.target.value)}
+                  onChange={(e) => updateField('finishedAt', e.target.value)}
                   className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
                 />
               </div>
@@ -158,7 +161,7 @@ export function BookModal({
                   type="text"
                   inputMode="numeric"
                   value={rating}
-                  onChange={(e) => setRating(e.target.value.replace(/\D/g, ''))}
+                  onChange={(e) => updateField('rating', e.target.value.replace(/\D/g, ''))}
                   className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-mono focus:border-(--accent-cyan) focus:outline-none"
                 />
               </div>

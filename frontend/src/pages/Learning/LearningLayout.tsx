@@ -3,12 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { LayoutDashboard, Clock, GraduationCap, FolderKanban, BookOpen, Award } from 'lucide-react'
 
 const subNavItems = [
-  { to: '/nauka', end: true, icon: LayoutDashboard, label: 'Przegląd' },
-  { to: '/nauka/godziny', end: false, icon: Clock, label: 'Godziny kodowania' },
-  { to: '/nauka/kursy', end: false, icon: GraduationCap, label: 'Kursy' },
-  { to: '/nauka/projekty', end: false, icon: FolderKanban, label: 'Projekty' },
-  { to: '/nauka/ksiazki', end: false, icon: BookOpen, label: 'Książki' },
-  { to: '/nauka/certyfikaty', end: false, icon: Award, label: 'Certyfikaty' },
+  { to: '/learning', end: true, icon: LayoutDashboard, label: 'Przegląd' },
+  { to: '/learning/hours', end: false, icon: Clock, label: 'Godziny kodowania' },
+  { to: '/learning/courses', end: false, icon: GraduationCap, label: 'Kursy' },
+  { to: '/learning/projects', end: false, icon: FolderKanban, label: 'Projekty' },
+  { to: '/learning/books', end: false, icon: BookOpen, label: 'Książki' },
+  { to: '/learning/certificates', end: false, icon: Award, label: 'Certyfikaty' },
 ]
 
 const contentVariants = {
@@ -25,7 +25,7 @@ const contentVariants = {
   },
 }
 
-export function NaukaLayout() {
+export function LearningLayout() {
   const location = useLocation()
 
   return (

@@ -19,7 +19,7 @@ const updateSchema = z.object({
 export const goalsRouter = Router()
 
 goalsRouter.get('/', async (req, res) => {
-  const userId = (req as any).user.userId
+  const userId = req.user!.userId
   const goals = await prisma.goal.findMany({
     where: { userId },
     orderBy: { createdAt: 'asc' },
@@ -28,7 +28,7 @@ goalsRouter.get('/', async (req, res) => {
 })
 
 goalsRouter.post('/', async (req, res) => {
-  const userId = (req as any).user.userId
+  const userId = req.user!.userId
   const data = createSchema.parse(req.body)
   const goal = await prisma.goal.create({
     data: {
@@ -43,7 +43,7 @@ goalsRouter.post('/', async (req, res) => {
 })
 
 goalsRouter.patch('/:id', async (req, res) => {
-  const userId = (req as any).user.userId
+  const userId = req.user!.userId
   const { id } = req.params
   const data = updateSchema.parse(req.body)
   const existing = await prisma.goal.findFirst({ where: { id, userId } })
@@ -61,7 +61,7 @@ goalsRouter.patch('/:id', async (req, res) => {
 })
 
 goalsRouter.delete('/:id', async (req, res) => {
-  const userId = (req as any).user.userId
+  const userId = req.user!.userId
   const { id } = req.params
   await prisma.goal.deleteMany({ where: { id, userId } })
   res.status(204).send()

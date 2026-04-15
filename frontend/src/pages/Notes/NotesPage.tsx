@@ -25,12 +25,10 @@ export function NotesPage({ type }: NotesPageProps) {
   const [editingNote, setEditingNote] = useState<Note | null>(null)
   const [isAddOpen, setIsAddOpen] = useState(false)
 
-  if (!notesCtx) return null
-
-  const { notes, addNote, updateNote, deleteNote } = notesCtx
+  const ctxNotes = notesCtx?.notes ?? []
 
   const filtered = useMemo(() => {
-    let list = notes.filter((n) => n.type === type)
+    let list = ctxNotes.filter((n) => n.type === type)
     if (search.trim()) {
       const q = search.trim().toLowerCase()
       list = list.filter(
@@ -45,15 +43,19 @@ export function NotesPage({ type }: NotesPageProps) {
       )
     }
     return [...list].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
-  }, [notes, type, search, selectedTags])
+  }, [ctxNotes, type, search, selectedTags])
 
   const allTags = useMemo(() => {
     const set = new Set<string>()
-    notes
+    ctxNotes
       .filter((n) => n.type === type)
       .forEach((n) => n.tags.forEach((t) => set.add(t)))
     return [...set].sort()
-  }, [notes, type])
+  }, [ctxNotes, type])
+
+  if (!notesCtx) return null
+
+  const { addNote, updateNote, deleteNote } = notesCtx
 
   const toggleTag = (tag: string) => {
     setSelectedTags((prev) => {

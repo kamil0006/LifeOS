@@ -1,13 +1,13 @@
 import { useState, useMemo } from 'react'
 import { Card } from '../../components/Card'
 import { Plus, Trash2, Pencil } from 'lucide-react'
-import { useNauka } from '../../context/NaukaContext'
+import { useLearning } from '../../context/LearningContext'
 import { BookModal } from '../../components/BookModal'
 
 const DEFAULT_CATEGORIES = ['Programowanie', 'Biznes', 'Psychologia', 'Rozwój osobisty', 'Inne']
 
-export function NaukaKsiazki() {
-  const nauka = useNauka()
+export function LearningBooks() {
+  const learning = useLearning()
   const [title, setTitle] = useState('')
   const [author, setAuthor] = useState('')
   const [category, setCategory] = useState('Programowanie')
@@ -15,16 +15,19 @@ export function NaukaKsiazki() {
   const [newCategoryName, setNewCategoryName] = useState('')
   const [finishedAt, setFinishedAt] = useState(() => new Date().toISOString().split('T')[0])
   const [rating, setRating] = useState('')
+  const [editingBook, setEditingBook] = useState<NonNullable<ReturnType<typeof useLearning>>['books'][0] | null>(null)
 
-  if (!nauka) return null
-
-  const { books, bookCategories, addBook, updateBook, deleteBook, addBookCategory } = nauka
-  const [editingBook, setEditingBook] = useState<typeof books[0] | null>(null)
+  const books = learning?.books ?? []
+  const bookCategories = learning?.bookCategories ?? []
 
   const allCategories = useMemo(() => {
     const combined = [...DEFAULT_CATEGORIES, ...bookCategories]
     return [...new Set(combined)]
   }, [bookCategories])
+
+  if (!learning) return null
+
+  const { addBook, updateBook, deleteBook, addBookCategory } = learning
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()

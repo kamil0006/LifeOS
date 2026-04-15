@@ -1,4 +1,3 @@
-import { createContext, useContext, useState, type ReactNode } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from './AuthContext'
 import { eventsApi } from '../lib/api'
@@ -14,16 +13,6 @@ export interface DemoEvent {
   color?: string
   notes?: string
 }
-
-interface EventsContextType {
-  events: DemoEvent[]
-  addEvent: (e: Omit<DemoEvent, 'id'>) => void
-  updateEvent: (id: string, e: Partial<Omit<DemoEvent, 'id'>>) => void
-  deleteEvent: (id: string) => void
-  loading: boolean
-}
-
-const EventsContext = createContext<EventsContextType | null>(null)
 
 function getDemoEvents(year: number): DemoEvent[] {
   const y = year.toString()
@@ -46,40 +35,41 @@ function getDemoEvents(year: number): DemoEvent[] {
 }
 
 const currentYear = new Date().getFullYear()
-const DEMO_EVENTS = getDemoEvents(currentYear)
+const INITIAL_DEMO_EVENTS = getDemoEvents(currentYear)
 
-export function EventsProvider({ children }: { children: ReactNode }) {
+export function useEvents() {
   const { isDemoMode, user } = useAuth()
   const queryClient = useQueryClient()
   const userId = user?.id ?? ''
   const queryEnabled = useAuthenticatedQueryEnabled() && !!userId
+  const key = queryKeys.events(userId)
 
-  const [demoEvents, setDemoEvents] = useState<DemoEvent[]>(DEMO_EVENTS)
-
-  const { data: apiEvents = [], isPending } = useQuery({
-    queryKey: queryKeys.events(userId),
-    queryFn: () =>
-      eventsApi.getAll().then((data) =>
-        data.map((e) => ({ ...e, date: e.date.split('T')[0], category: e.category ?? undefined }))
-      ),
-    enabled: queryEnabled,
+  const { data: events = [], isPending } = useQuery({
+    queryKey: key,
+    queryFn: isDemoMode
+      ? () => INITIAL_DEMO_EVENTS
+      : () =>
+          eventsApi.getAll().then((data) =>
+            data.map((e) => ({ ...e, date: e.date.split('T')[0], category: e.category ?? undefined }))
+          ),
+    enabled: isDemoMode || queryEnabled,
+    staleTime: isDemoMode ? Infinity : undefined,
+    gcTime: isDemoMode ? Infinity : undefined,
   })
 
-  const events = isDemoMode ? demoEvents : apiEvents
   const loading = !isDemoMode && isPending
-
-  const invalidate = () => {
-    if (userId) queryClient.invalidateQueries({ queryKey: queryKeys.events(userId) })
-  }
 
   const addEvent = async (e: Omit<DemoEvent, 'id'>) => {
     if (isDemoMode) {
-      setDemoEvents((prev) => [...prev, { ...e, id: Date.now().toString() }])
+      queryClient.setQueryData<DemoEvent[]>(key, (old) => [
+        ...(old ?? []),
+        { ...e, id: Date.now().toString() },
+      ])
       return
     }
     try {
       await eventsApi.create(e)
-      invalidate()
+      queryClient.invalidateQueries({ queryKey: key })
     } catch {
       // ignore
     }
@@ -87,12 +77,14 @@ export function EventsProvider({ children }: { children: ReactNode }) {
 
   const updateEvent = async (id: string, updates: Partial<Omit<DemoEvent, 'id'>>) => {
     if (isDemoMode) {
-      setDemoEvents((prev) => prev.map((ev) => (ev.id === id ? { ...ev, ...updates } : ev)))
+      queryClient.setQueryData<DemoEvent[]>(key, (old) =>
+        (old ?? []).map((ev) => (ev.id === id ? { ...ev, ...updates } : ev))
+      )
       return
     }
     try {
       await eventsApi.update(id, updates)
-      invalidate()
+      queryClient.invalidateQueries({ queryKey: key })
     } catch {
       // ignore
     }
@@ -100,25 +92,18 @@ export function EventsProvider({ children }: { children: ReactNode }) {
 
   const deleteEvent = async (id: string) => {
     if (isDemoMode) {
-      setDemoEvents((prev) => prev.filter((ev) => ev.id !== id))
+      queryClient.setQueryData<DemoEvent[]>(key, (old) =>
+        (old ?? []).filter((ev) => ev.id !== id)
+      )
       return
     }
     try {
       await eventsApi.delete(id)
-      invalidate()
+      queryClient.invalidateQueries({ queryKey: key })
     } catch {
       // ignore
     }
   }
 
-  return (
-    <EventsContext.Provider value={{ events, addEvent, updateEvent, deleteEvent, loading }}>
-      {children}
-    </EventsContext.Provider>
-  )
-}
-
-export function useEvents() {
-  const ctx = useContext(EventsContext)
-  return ctx
+  return { events, addEvent, updateEvent, deleteEvent, loading }
 }

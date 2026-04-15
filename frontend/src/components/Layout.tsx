@@ -20,7 +20,7 @@ export function Layout({ children }: LayoutProps) {
     pathname === '/' ||
     pathname === '/calendar' ||
     pathname.startsWith('/finances') ||
-    pathname.startsWith('/nauka') ||
+    pathname.startsWith('/learning') ||
     pathname.startsWith('/notes')
   const sectionKey = pathname.split('/').filter(Boolean)[0] || 'dashboard'
 

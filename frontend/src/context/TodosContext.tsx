@@ -1,4 +1,3 @@
-import { createContext, useContext, useState, type ReactNode } from 'react'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { useAuth } from './AuthContext'
 import { todosApi } from '../lib/api'
@@ -18,35 +17,26 @@ const DEMO_TODOS: TodoItem[] = [
   { id: '3', text: 'Zrobić zakupy', done: true, createdAt: '2025-03-03' },
 ]
 
-interface TodosContextType {
-  todos: TodoItem[]
-  addTodo: (text: string) => void
-  toggleTodo: (id: string, done: boolean) => void
-  removeTodo: (id: string) => void
-  loading: boolean
-}
-
-const TodosContext = createContext<TodosContextType | null>(null)
-
-export function TodosProvider({ children }: { children: ReactNode }) {
+export function useTodos() {
   const { isDemoMode, user } = useAuth()
   const queryClient = useQueryClient()
   const userId = user?.id ?? ''
   const queryEnabled = useAuthenticatedQueryEnabled() && !!userId
   const todosKey = queryKeys.todos(userId)
 
-  const [demoTodos, setDemoTodos] = useState<TodoItem[]>(DEMO_TODOS)
-
-  const { data: apiTodos = [], isPending } = useQuery({
+  const { data: todos = [], isPending } = useQuery({
     queryKey: todosKey,
-    queryFn: () =>
-      todosApi.getAll().then((data) =>
-        data.map((t) => ({ ...t, createdAt: t.createdAt?.split('T')[0] ?? '' }))
-      ),
-    enabled: queryEnabled,
+    queryFn: isDemoMode
+      ? () => DEMO_TODOS
+      : () =>
+          todosApi.getAll().then((data) =>
+            data.map((t) => ({ ...t, createdAt: t.createdAt?.split('T')[0] ?? '' }))
+          ),
+    enabled: isDemoMode || queryEnabled,
+    staleTime: isDemoMode ? Infinity : undefined,
+    gcTime: isDemoMode ? Infinity : undefined,
   })
 
-  const todos = isDemoMode ? demoTodos : apiTodos
   const loading = !isDemoMode && isPending
 
   const addMutation = useMutation({
@@ -109,8 +99,8 @@ export function TodosProvider({ children }: { children: ReactNode }) {
     const trimmed = text.trim()
     if (!trimmed) return
     if (isDemoMode) {
-      setDemoTodos((prev) => [
-        ...prev,
+      queryClient.setQueryData<TodoItem[]>(todosKey, (old) => [
+        ...(old ?? []),
         {
           id: Date.now().toString(),
           text: trimmed,
@@ -125,7 +115,9 @@ export function TodosProvider({ children }: { children: ReactNode }) {
 
   const toggleTodo = (id: string, done: boolean) => {
     if (isDemoMode) {
-      setDemoTodos((prev) => prev.map((t) => (t.id === id ? { ...t, done } : t)))
+      queryClient.setQueryData<TodoItem[]>(todosKey, (old) =>
+        (old ?? []).map((t) => (t.id === id ? { ...t, done } : t))
+      )
       return
     }
     toggleMutation.mutate({ id, done })
@@ -133,20 +125,13 @@ export function TodosProvider({ children }: { children: ReactNode }) {
 
   const removeTodo = (id: string) => {
     if (isDemoMode) {
-      setDemoTodos((prev) => prev.filter((t) => t.id !== id))
+      queryClient.setQueryData<TodoItem[]>(todosKey, (old) =>
+        (old ?? []).filter((t) => t.id !== id)
+      )
       return
     }
     removeMutation.mutate(id)
   }
 
-  return (
-    <TodosContext.Provider value={{ todos, addTodo, toggleTodo, removeTodo, loading }}>
-      {children}
-    </TodosContext.Provider>
-  )
-}
-
-export function useTodos() {
-  const ctx = useContext(TodosContext)
-  return ctx
+  return { todos, addTodo, toggleTodo, removeTodo, loading }
 }

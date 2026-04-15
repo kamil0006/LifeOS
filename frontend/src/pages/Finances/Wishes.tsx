@@ -109,10 +109,10 @@ function WishCard({
 
 export function FinancesWishes() {
   const { isDemoMode } = useAuth()
-  const { wishes, addWish, updateWish, removeWish, loading } = useWishes() ?? {}
+  const { wishes, addWish, updateWish, removeWish, loading } = useWishes()
   const [showForm, setShowForm] = useState(false)
 
-  const wishesByStage = (wishes ?? []).reduce(
+  const wishesByStage = wishes.reduce(
     (acc, w) => {
       acc[w.stage] = acc[w.stage] || []
       acc[w.stage].push(w)
@@ -122,7 +122,7 @@ export function FinancesWishes() {
   )
 
   const handleAdd = (name: string, estimatedPrice: number, priority: 1 | 2 | 3, stage: WishStage = 'pomysl') => {
-    addWish?.({ name, estimatedPrice, priority, stage, savedAmount: 0 })
+    addWish({ name, estimatedPrice, priority, stage, savedAmount: 0 })
   }
 
   if (loading) {
@@ -150,7 +150,7 @@ export function FinancesWishes() {
       <Card className="border-(--accent-magenta)/20">
         <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">Łączna wartość listy</p>
         <p className="text-2xl font-bold text-(--accent-magenta) font-gaming mt-1">
-          {(wishes ?? []).reduce((s, w) => s + w.estimatedPrice, 0).toLocaleString('pl-PL')} zł
+          {wishes.reduce((s, w) => s + w.estimatedPrice, 0).toLocaleString('pl-PL')} zł
         </p>
       </Card>
 
@@ -173,8 +173,8 @@ export function FinancesWishes() {
                       <WishCard
                         key={wish.id}
                         wish={wish}
-                        onUpdate={(id, updates) => updateWish?.(id, updates)}
-                        onDelete={() => removeWish?.(wish.id)}
+                        onUpdate={(id, updates) => updateWish(id, updates)}
+                        onDelete={() => removeWish(wish.id)}
                       />
                     ))
                   )}

@@ -30,32 +30,29 @@ const MARKDOWN_HINT = (
 )
 
 export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProps) {
-  const [content, setContent] = useState('')
-  const [tagsInput, setTagsInput] = useState('')
-  const [showMarkdownHelp, setShowMarkdownHelp] = useState(false)
-  const [error, setError] = useState('')
-
-  const isEdit = !!note
+  const getInitialForm = () => ({
+    content: note?.content ?? '',
+    tagsInput: note?.tags.join(', ') ?? '',
+    showMarkdownHelp: false,
+    error: '',
+  })
+  const [form, setForm] = useState(getInitialForm)
+  const updateField = <K extends keyof ReturnType<typeof getInitialForm>>(key: K, value: ReturnType<typeof getInitialForm>[K]) =>
+    setForm((f) => ({ ...f, [key]: value }))
 
   useEffect(() => {
-    if (isOpen) {
-      setError('')
-      if (note) {
-        setContent(note.content)
-        setTagsInput(note.tags.join(', '))
-      } else {
-        setContent('')
-        setTagsInput('')
-      }
-    }
+    if (isOpen) setForm(getInitialForm())
   }, [isOpen, note])
+
+  const { content, tagsInput, showMarkdownHelp, error } = form
+  const isEdit = !!note
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
+    updateField('error', '')
     const trimmed = content.trim()
     if (!trimmed) {
-      setError('Treść nie może być pusta.')
+      updateField('error', 'Treść nie może być pusta.')
       return
     }
     const tags = tagsInput
@@ -110,7 +107,7 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
                 </label>
                 <button
                   type="button"
-                  onClick={() => setShowMarkdownHelp((v) => !v)}
+                  onClick={() => setForm((f) => ({ ...f, showMarkdownHelp: !f.showMarkdownHelp }))}
                   className="p-1 rounded text-(--text-muted) hover:text-(--accent-cyan) hover:bg-(--accent-cyan)/10 transition-colors"
                   title="Składnia Markdown"
                   aria-label="Pokaż składnię Markdown"
@@ -125,7 +122,7 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
               )}
               <textarea
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
+                onChange={(e) => updateField('content', e.target.value)}
                 rows={8}
                 className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-mono text-sm focus:border-(--accent-cyan) focus:outline-none resize-y"
                 autoFocus
@@ -138,7 +135,7 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
               <input
                 type="text"
                 value={tagsInput}
-                onChange={(e) => setTagsInput(e.target.value)}
+                onChange={(e) => updateField('tagsInput', e.target.value)}
                 className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
               />
             </div>

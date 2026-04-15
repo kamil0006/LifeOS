@@ -1,4 +1,3 @@
-import { createContext, useContext, useState, type ReactNode } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from './AuthContext'
 import { habitsApi, goalsApi } from '../lib/api'
@@ -52,75 +51,59 @@ function getDemoHabits(): HabitItem[] {
   ]
 }
 
+const INITIAL_DEMO_HABITS = getDemoHabits()
+
 const DEMO_GOALS: GoalItem[] = [
   { id: '1', name: 'Przeczytać książki', target: 12, current: 4, unit: 'książek' },
   { id: '2', name: 'Zaoszczędzić', target: 5000, current: 2100, unit: 'zł' },
   { id: '3', name: 'Bieg 5 km', target: 10, current: 3, unit: 'treningów' },
 ]
 
-interface HabitsContextType {
-  habits: HabitItem[]
-  goals: GoalItem[]
-  addHabit: (name: string) => void
-  updateHabit: (id: string, name: string) => void
-  removeHabit: (id: string) => void
-  toggleCheckIn: (habitId: string, date: string) => void
-  addGoal: (goal: Omit<GoalItem, 'id'>) => void
-  updateGoal: (id: string, updates: Partial<Pick<GoalItem, 'current' | 'target' | 'name' | 'unit'>>) => void
-  removeGoal: (id: string) => void
-  loading: boolean
-}
-
-const HabitsContext = createContext<HabitsContextType | null>(null)
-
-export function HabitsProvider({ children }: { children: ReactNode }) {
+export function useHabits() {
   const { isDemoMode, user } = useAuth()
   const queryClient = useQueryClient()
   const userId = user?.id ?? ''
   const queryEnabled = useAuthenticatedQueryEnabled() && !!userId
+  const habitsKey = queryKeys.habits(userId)
+  const goalsKey = queryKeys.goals(userId)
 
-  const [demoHabits, setDemoHabits] = useState<HabitItem[]>(getDemoHabits)
-  const [demoGoals, setDemoGoals] = useState<GoalItem[]>(DEMO_GOALS)
-
-  const { data: apiHabits = [], isPending: habitsPending } = useQuery({
-    queryKey: queryKeys.habits(userId),
-    queryFn: () =>
-      habitsApi.getAll().then((h) =>
-        h.map((habit) => ({
-          ...habit,
-          checkIns: habit.checkIns.map((c) => ({
-            id: c.id,
-            date: typeof c.date === 'string' ? c.date.split('T')[0] : c.date,
-          })),
-        }))
-      ),
-    enabled: queryEnabled,
+  const { data: habits = [], isPending: habitsPending } = useQuery({
+    queryKey: habitsKey,
+    queryFn: isDemoMode
+      ? () => INITIAL_DEMO_HABITS
+      : () =>
+          habitsApi.getAll().then((h) =>
+            h.map((habit) => ({
+              ...habit,
+              checkIns: habit.checkIns.map((c) => ({
+                id: c.id,
+                date: typeof c.date === 'string' ? c.date.split('T')[0] : c.date,
+              })),
+            }))
+          ),
+    enabled: isDemoMode || queryEnabled,
+    staleTime: isDemoMode ? Infinity : undefined,
+    gcTime: isDemoMode ? Infinity : undefined,
   })
 
-  const { data: apiGoals = [], isPending: goalsPending } = useQuery({
-    queryKey: queryKeys.goals(userId),
-    queryFn: () => goalsApi.getAll(),
-    enabled: queryEnabled,
+  const { data: goals = [], isPending: goalsPending } = useQuery({
+    queryKey: goalsKey,
+    queryFn: isDemoMode ? () => DEMO_GOALS : () => goalsApi.getAll(),
+    enabled: isDemoMode || queryEnabled,
+    staleTime: isDemoMode ? Infinity : undefined,
+    gcTime: isDemoMode ? Infinity : undefined,
   })
 
-  const habits = isDemoMode ? demoHabits : apiHabits
-  const goals = isDemoMode ? demoGoals : apiGoals
   const loading = !isDemoMode && (habitsPending || goalsPending)
-
-  const invalidateHabits = () => {
-    if (userId) queryClient.invalidateQueries({ queryKey: queryKeys.habits(userId) })
-  }
-  const invalidateGoals = () => {
-    if (userId) queryClient.invalidateQueries({ queryKey: queryKeys.goals(userId) })
-  }
 
   const toggleCheckIn = async (habitId: string, date: string) => {
     const habit = habits.find((h) => h.id === habitId)
     if (!habit) return
     const hasCheckIn = habit.checkIns.some((c) => c.date === date)
+
     if (isDemoMode) {
-      setDemoHabits((prev) =>
-        prev.map((h) => {
+      queryClient.setQueryData<HabitItem[]>(habitsKey, (old) =>
+        (old ?? []).map((h) => {
           if (h.id !== habitId) return h
           if (hasCheckIn) {
             return { ...h, checkIns: h.checkIns.filter((c) => c.date !== date) }
@@ -136,7 +119,7 @@ export function HabitsProvider({ children }: { children: ReactNode }) {
       } else {
         await habitsApi.checkIn(habitId, date)
       }
-      invalidateHabits()
+      queryClient.invalidateQueries({ queryKey: habitsKey })
     } catch {
       // ignore
     }
@@ -144,12 +127,15 @@ export function HabitsProvider({ children }: { children: ReactNode }) {
 
   const addHabit = async (name: string) => {
     if (isDemoMode) {
-      setDemoHabits((prev) => [...prev, { id: Date.now().toString(), name, checkIns: [] }])
+      queryClient.setQueryData<HabitItem[]>(habitsKey, (old) => [
+        ...(old ?? []),
+        { id: Date.now().toString(), name, checkIns: [] },
+      ])
       return
     }
     try {
       await habitsApi.create(name)
-      invalidateHabits()
+      queryClient.invalidateQueries({ queryKey: habitsKey })
     } catch {
       // ignore
     }
@@ -157,12 +143,14 @@ export function HabitsProvider({ children }: { children: ReactNode }) {
 
   const updateHabit = async (id: string, name: string) => {
     if (isDemoMode) {
-      setDemoHabits((prev) => prev.map((h) => (h.id === id ? { ...h, name } : h)))
+      queryClient.setQueryData<HabitItem[]>(habitsKey, (old) =>
+        (old ?? []).map((h) => (h.id === id ? { ...h, name } : h))
+      )
       return
     }
     try {
       await habitsApi.update(id, name)
-      invalidateHabits()
+      queryClient.invalidateQueries({ queryKey: habitsKey })
     } catch {
       // ignore
     }
@@ -170,12 +158,14 @@ export function HabitsProvider({ children }: { children: ReactNode }) {
 
   const removeHabit = async (id: string) => {
     if (isDemoMode) {
-      setDemoHabits((prev) => prev.filter((h) => h.id !== id))
+      queryClient.setQueryData<HabitItem[]>(habitsKey, (old) =>
+        (old ?? []).filter((h) => h.id !== id)
+      )
       return
     }
     try {
       await habitsApi.delete(id)
-      invalidateHabits()
+      queryClient.invalidateQueries({ queryKey: habitsKey })
     } catch {
       // ignore
     }
@@ -183,12 +173,15 @@ export function HabitsProvider({ children }: { children: ReactNode }) {
 
   const addGoal = async (goal: Omit<GoalItem, 'id'>) => {
     if (isDemoMode) {
-      setDemoGoals((prev) => [...prev, { ...goal, id: Date.now().toString() }])
+      queryClient.setQueryData<GoalItem[]>(goalsKey, (old) => [
+        ...(old ?? []),
+        { ...goal, id: Date.now().toString() },
+      ])
       return
     }
     try {
       await goalsApi.create(goal)
-      invalidateGoals()
+      queryClient.invalidateQueries({ queryKey: goalsKey })
     } catch {
       // ignore
     }
@@ -199,12 +192,14 @@ export function HabitsProvider({ children }: { children: ReactNode }) {
     updates: Partial<Pick<GoalItem, 'current' | 'target' | 'name' | 'unit'>>
   ) => {
     if (isDemoMode) {
-      setDemoGoals((prev) => prev.map((g) => (g.id === id ? { ...g, ...updates } : g)))
+      queryClient.setQueryData<GoalItem[]>(goalsKey, (old) =>
+        (old ?? []).map((g) => (g.id === id ? { ...g, ...updates } : g))
+      )
       return
     }
     try {
       await goalsApi.update(id, updates)
-      invalidateGoals()
+      queryClient.invalidateQueries({ queryKey: goalsKey })
     } catch {
       // ignore
     }
@@ -212,37 +207,29 @@ export function HabitsProvider({ children }: { children: ReactNode }) {
 
   const removeGoal = async (id: string) => {
     if (isDemoMode) {
-      setDemoGoals((prev) => prev.filter((g) => g.id !== id))
+      queryClient.setQueryData<GoalItem[]>(goalsKey, (old) =>
+        (old ?? []).filter((g) => g.id !== id)
+      )
       return
     }
     try {
       await goalsApi.delete(id)
-      invalidateGoals()
+      queryClient.invalidateQueries({ queryKey: goalsKey })
     } catch {
       // ignore
     }
   }
 
-  return (
-    <HabitsContext.Provider
-      value={{
-        habits,
-        goals,
-        addHabit,
-        updateHabit,
-        removeHabit,
-        toggleCheckIn,
-        addGoal,
-        updateGoal,
-        removeGoal,
-        loading,
-      }}
-    >
-      {children}
-    </HabitsContext.Provider>
-  )
-}
-
-export function useHabits() {
-  return useContext(HabitsContext)
+  return {
+    habits,
+    goals,
+    addHabit,
+    updateHabit,
+    removeHabit,
+    toggleCheckIn,
+    addGoal,
+    updateGoal,
+    removeGoal,
+    loading,
+  }
 }

@@ -7,9 +7,23 @@ import { useNotes } from '../../context/NotesContext'
 
 export function NotesOverview() {
   const notes = useNotes()
-  if (!notes) return null
 
-  const { notes: allNotes } = notes
+  const allNotes = notes?.notes ?? []
+
+  const byType = useMemo(() => {
+    const quick = allNotes.filter((n) => n.type === 'quick')
+    const ideas = allNotes.filter((n) => n.type === 'idea')
+    const refs = allNotes.filter((n) => n.type === 'reference')
+    return { quick, ideas, refs }
+  }, [allNotes])
+
+  const allTags = useMemo(() => {
+    const set = new Set<string>()
+    allNotes.forEach((n) => n.tags.forEach((t) => set.add(t)))
+    return [...set].sort()
+  }, [allNotes])
+
+  if (!notes) return null
 
   if (allNotes.length === 0) {
     return (
@@ -29,19 +43,6 @@ export function NotesOverview() {
       />
     )
   }
-
-  const byType = useMemo(() => {
-    const quick = allNotes.filter((n) => n.type === 'quick')
-    const ideas = allNotes.filter((n) => n.type === 'idea')
-    const refs = allNotes.filter((n) => n.type === 'reference')
-    return { quick, ideas, refs }
-  }, [allNotes])
-
-  const allTags = useMemo(() => {
-    const set = new Set<string>()
-    allNotes.forEach((n) => n.tags.forEach((t) => set.add(t)))
-    return [...set].sort()
-  }, [allNotes])
 
   const stats = [
     { icon: Zap, label: 'Szybkie notatki', value: byType.quick.length, color: 'text-(--accent-cyan)' },

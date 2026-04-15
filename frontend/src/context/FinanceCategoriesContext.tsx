@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
+import { useCallback } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from './AuthContext'
 import { expenseCategoriesApi } from '../lib/api'
@@ -45,18 +45,6 @@ function saveDemoCategories(cats: FinanceCategory[]) {
   )
 }
 
-interface FinanceCategoriesContextType {
-  categories: FinanceCategory[]
-  customCategories: FinanceCategory[]
-  getColor: (categoryName: string) => string
-  getLabel: (categoryNameOrId: string) => string
-  addCategory: (name: string, color: string) => Promise<void>
-  deleteCategory: (id: string) => Promise<void>
-  isLoading: boolean
-}
-
-const FinanceCategoriesContext = createContext<FinanceCategoriesContextType | null>(null)
-
 function mapApiCategories(
   data: { id: string; name: string; color: string }[]
 ): FinanceCategory[] {
@@ -68,29 +56,30 @@ function mapApiCategories(
   }))
 }
 
-export function FinanceCategoriesProvider({ children }: { children: ReactNode }) {
+export function useFinanceCategories() {
   const { isDemoMode, user } = useAuth()
   const queryClient = useQueryClient()
   const userId = user?.id ?? ''
   const queryEnabled = useAuthenticatedQueryEnabled() && !!userId
+  const key = queryKeys.expenseCategories(userId)
 
-  const [demoCustom, setDemoCustom] = useState<FinanceCategory[]>(() => loadDemoCategories())
-
-  const { data: apiCustom = [], isPending } = useQuery({
-    queryKey: queryKeys.expenseCategories(userId),
-    queryFn: () => expenseCategoriesApi.getAll().then(mapApiCategories),
-    enabled: queryEnabled,
+  const { data: customCategories = [], isPending } = useQuery({
+    queryKey: key,
+    queryFn: isDemoMode
+      ? () => loadDemoCategories()
+      : () => expenseCategoriesApi.getAll().then(mapApiCategories),
+    enabled: isDemoMode || queryEnabled,
+    staleTime: isDemoMode ? Infinity : undefined,
+    gcTime: isDemoMode ? Infinity : undefined,
   })
 
-  const customCategories = isDemoMode ? demoCustom : apiCustom
-  const loading = !isDemoMode && isPending
-
-  const allCategories = [...DEFAULT_CATEGORIES, ...customCategories]
+  const isLoading = !isDemoMode && isPending
+  const categories = [...DEFAULT_CATEGORIES, ...customCategories]
 
   const getColor = useCallback(
     (categoryName: string): string => {
       const lower = categoryName?.toLowerCase() ?? ''
-      const cat = allCategories.find(
+      const cat = categories.find(
         (c) =>
           c.name.toLowerCase() === lower ||
           c.id.toLowerCase() === lower ||
@@ -98,12 +87,12 @@ export function FinanceCategoriesProvider({ children }: { children: ReactNode })
       )
       return cat?.color ?? '#9d4edd'
     },
-    [allCategories]
+    [categories]
   )
 
   const getLabel = useCallback(
     (categoryNameOrId: string): string => {
-      const cat = allCategories.find((c) => c.name === categoryNameOrId || c.id === categoryNameOrId)
+      const cat = categories.find((c) => c.name === categoryNameOrId || c.id === categoryNameOrId)
       if (cat) return cat.label
       if (categoryNameOrId.startsWith('demo-') && categoryNameOrId.includes('-')) {
         const parts = categoryNameOrId.split('-')
@@ -111,71 +100,40 @@ export function FinanceCategoriesProvider({ children }: { children: ReactNode })
       }
       return categoryNameOrId
     },
-    [allCategories]
+    [categories]
   )
 
-  const invalidate = () => {
-    if (userId) queryClient.invalidateQueries({ queryKey: queryKeys.expenseCategories(userId) })
+  const addCategory = async (name: string, color: string) => {
+    const trimmed = name.trim()
+    if (!trimmed) return
+    if (categories.some((c) => c.name.toLowerCase() === trimmed.toLowerCase())) return
+
+    if (isDemoMode) {
+      const newCat: FinanceCategory = {
+        id: `demo-${Date.now()}-${trimmed}`,
+        label: trimmed,
+        name: trimmed,
+        color,
+      }
+      const updated = [...customCategories, newCat]
+      saveDemoCategories(updated)
+      queryClient.setQueryData<FinanceCategory[]>(key, updated)
+    } else {
+      await expenseCategoriesApi.create({ name: trimmed, color })
+      queryClient.invalidateQueries({ queryKey: key })
+    }
   }
 
-  const addCategory = useCallback(
-    async (name: string, color: string) => {
-      const trimmed = name.trim()
-      if (!trimmed) return
-      if (allCategories.some((c) => c.name.toLowerCase() === trimmed.toLowerCase())) return
-
-      if (isDemoMode) {
-        const existing = loadDemoCategories()
-        const newCat: FinanceCategory = {
-          id: `demo-${Date.now()}-${trimmed}`,
-          label: trimmed,
-          name: trimmed,
-          color,
-        }
-        const updated = [...existing, newCat]
-        saveDemoCategories(updated)
-        setDemoCustom(updated)
-      } else {
-        await expenseCategoriesApi.create({ name: trimmed, color })
-        invalidate()
-      }
-    },
-    [isDemoMode, allCategories, userId]
-  )
-
-  const deleteCategory = useCallback(
-    async (id: string) => {
-      if (isDemoMode) {
-        const existing = loadDemoCategories()
-        const updated = existing.filter((c) => c.id !== id)
-        saveDemoCategories(updated)
-        setDemoCustom(updated)
-      } else {
-        await expenseCategoriesApi.delete(id)
-        invalidate()
-      }
-    },
-    [isDemoMode, userId]
-  )
-
-  const value: FinanceCategoriesContextType = {
-    categories: allCategories,
-    customCategories,
-    getColor,
-    getLabel,
-    addCategory,
-    deleteCategory,
-    isLoading: loading,
+  const deleteCategory = async (id: string) => {
+    if (isDemoMode) {
+      const updated = customCategories.filter((c) => c.id !== id)
+      saveDemoCategories(updated)
+      queryClient.setQueryData<FinanceCategory[]>(key, updated)
+    } else {
+      await expenseCategoriesApi.delete(id)
+      queryClient.invalidateQueries({ queryKey: key })
+    }
   }
 
-  return (
-    <FinanceCategoriesContext.Provider value={value}>
-      {children}
-    </FinanceCategoriesContext.Provider>
-  )
-}
-
-export function useFinanceCategories() {
-  const ctx = useContext(FinanceCategoriesContext)
-  return ctx
+  return { categories, customCategories, getColor, getLabel, addCategory, deleteCategory, isLoading }
 }

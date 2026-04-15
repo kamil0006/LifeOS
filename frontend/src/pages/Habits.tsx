@@ -41,7 +41,7 @@ export function Habits() {
     updateGoal,
     removeGoal,
     loading,
-  } = useHabits() ?? {}
+  } = useHabits()
 
   const [showHabitForm, setShowHabitForm] = useState(false)
   const [showGoalForm, setShowGoalForm] = useState(false)
@@ -88,7 +88,7 @@ export function Habits() {
 
   const handleAddHabit = () => {
     if (!newHabitName.trim()) return
-    addHabit?.(newHabitName.trim())
+    addHabit(newHabitName.trim())
     setNewHabitName('')
     setShowHabitForm(false)
   }
@@ -98,7 +98,7 @@ export function Habits() {
     const target = parseGoalNumber(newGoal.target)
     const current = parseGoalNumber(newGoal.current)
     if (!name || isNaN(target) || target <= 0) return
-    addGoal?.({ name, target, current, unit: newGoal.unit.trim() || undefined })
+    addGoal({ name, target, current, unit: newGoal.unit.trim() || undefined })
     setNewGoal({ name: '', target: '', current: '0', unit: '' })
     setShowGoalForm(false)
   }
@@ -121,7 +121,7 @@ export function Habits() {
       {/* Nawyki */}
       <Card title="Nawyki" className="border-(--accent-green)/20">
         <div className="space-y-4">
-          {(habits ?? []).map((habit) => {
+          {habits.map((habit) => {
             const streak = getStreak(habit.checkIns)
             const isEditing = editingHabitId === habit.id
 
@@ -143,7 +143,7 @@ export function Habits() {
                           onChange={(e) => setEditingHabitName(e.target.value)}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
-                              updateHabit?.(habit.id, editingHabitName.trim())
+                              updateHabit(habit.id, editingHabitName.trim())
                               setEditingHabitId(null)
                             }
                             if (e.key === 'Escape') setEditingHabitId(null)
@@ -153,7 +153,7 @@ export function Habits() {
                         />
                         <button
                           onClick={() => {
-                            updateHabit?.(habit.id, editingHabitName.trim())
+                            updateHabit(habit.id, editingHabitName.trim())
                             setEditingHabitId(null)
                           }}
                           className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-(--accent-green)/15 text-(--accent-green) border border-(--accent-green)/40 text-sm hover:bg-(--accent-green)/25"
@@ -192,7 +192,7 @@ export function Habits() {
                         <Pencil className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => removeHabit?.(habit.id)}
+                        onClick={() => removeHabit(habit.id)}
                         className="p-2 text-(--text-muted) hover:text-red-400 transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -214,7 +214,7 @@ export function Habits() {
                       return (
                         <button
                           key={date}
-                          onClick={() => toggleCheckIn?.(habit.id, date)}
+                          onClick={() => toggleCheckIn(habit.id, date)}
                           className={`w-4 h-4 rounded-sm transition-colors ${
                             checked
                               ? 'bg-(--accent-green) hover:bg-(--accent-green)/80'
@@ -277,7 +277,7 @@ export function Habits() {
       {/* Cele */}
       <Card title="Aktywne cele" className="border-(--accent-cyan)/20">
         <div className="space-y-4">
-          {(goals ?? []).map((goal) => {
+          {goals.map((goal) => {
             const pct = Math.min(100, (goal.current / goal.target) * 100)
             const isEditing = editingGoalId === goal.id
 
@@ -336,7 +336,7 @@ export function Habits() {
                             onClick={() => {
                               const target = parseGoalNumber(editingGoal.target)
                               if (editingGoal.name.trim() && !isNaN(target) && target > 0) {
-                                updateGoal?.(goal.id, {
+                                updateGoal(goal.id, {
                                   name: editingGoal.name.trim(),
                                   target,
                                   unit: editingGoal.unit.trim() || undefined,
@@ -379,7 +379,7 @@ export function Habits() {
                           setCurrentInputRaw({ goalId: goal.id, value: sanitized })
                           const num = parseGoalNumber(sanitized)
                           if (!Number.isNaN(num) && num <= goal.target) {
-                            updateGoal?.(goal.id, { current: num })
+                            updateGoal(goal.id, { current: num })
                           }
                         }}
                         onBlur={() => setCurrentInputRaw(null)}
@@ -400,7 +400,7 @@ export function Habits() {
                         <Pencil className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => removeGoal?.(goal.id)}
+                        onClick={() => removeGoal(goal.id)}
                         className="p-2 text-(--text-muted) hover:text-red-400 transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />

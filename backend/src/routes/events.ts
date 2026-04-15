@@ -16,7 +16,7 @@ const updateSchema = createSchema.partial()
 export const eventsRouter = Router()
 
 eventsRouter.get('/', async (req, res) => {
-  const userId = (req as any).user.userId
+  const userId = req.user!.userId
   const events = await prisma.event.findMany({
     where: { userId },
     orderBy: { date: 'asc' },
@@ -25,7 +25,7 @@ eventsRouter.get('/', async (req, res) => {
 })
 
 eventsRouter.post('/', async (req, res) => {
-  const userId = (req as any).user.userId
+  const userId = req.user!.userId
   const data = createSchema.parse(req.body)
   const event = await prisma.event.create({
     data: {
@@ -42,7 +42,7 @@ eventsRouter.post('/', async (req, res) => {
 })
 
 eventsRouter.patch('/:id', async (req, res) => {
-  const userId = (req as any).user.userId
+  const userId = req.user!.userId
   const { id } = req.params
   const data = updateSchema.parse(req.body)
   const existing = await prisma.event.findFirst({ where: { id, userId } })
@@ -62,7 +62,7 @@ eventsRouter.patch('/:id', async (req, res) => {
 })
 
 eventsRouter.delete('/:id', async (req, res) => {
-  const userId = (req as any).user.userId
+  const userId = req.user!.userId
   const { id } = req.params
   await prisma.event.deleteMany({ where: { id, userId } })
   res.status(204).send()

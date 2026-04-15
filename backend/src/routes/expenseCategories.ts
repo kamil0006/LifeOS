@@ -12,7 +12,7 @@ const updateSchema = createSchema.partial()
 export const expenseCategoriesRouter = Router()
 
 expenseCategoriesRouter.get('/', async (req, res) => {
-  const userId = (req as any).user.userId
+  const userId = req.user!.userId
   const categories = await prisma.expenseCategory.findMany({
     where: { userId },
     orderBy: { name: 'asc' },
@@ -21,7 +21,7 @@ expenseCategoriesRouter.get('/', async (req, res) => {
 })
 
 expenseCategoriesRouter.post('/', async (req, res) => {
-  const userId = (req as any).user.userId
+  const userId = req.user!.userId
   const data = createSchema.parse(req.body)
   const category = await prisma.expenseCategory.create({
     data: { userId, name: data.name.trim(), color: data.color },
@@ -30,7 +30,7 @@ expenseCategoriesRouter.post('/', async (req, res) => {
 })
 
 expenseCategoriesRouter.patch('/:id', async (req, res) => {
-  const userId = (req as any).user.userId
+  const userId = req.user!.userId
   const { id } = req.params
   const data = updateSchema.parse(req.body)
   const category = await prisma.expenseCategory.updateMany({
@@ -43,7 +43,7 @@ expenseCategoriesRouter.patch('/:id', async (req, res) => {
 })
 
 expenseCategoriesRouter.delete('/:id', async (req, res) => {
-  const userId = (req as any).user.userId
+  const userId = req.user!.userId
   const { id } = req.params
   await prisma.expenseCategory.deleteMany({ where: { id, userId } })
   res.status(204).send()

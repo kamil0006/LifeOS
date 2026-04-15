@@ -1,4 +1,3 @@
-import { createContext, useContext, useState, type ReactNode } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from './AuthContext'
 import { wishesApi } from '../lib/api'
@@ -24,16 +23,6 @@ const DEMO_WISHES: Wish[] = [
   { id: '4', name: 'Weekend w górach', estimatedPrice: 800, priority: 3, stage: 'odkladam', savedAmount: 200 },
 ]
 
-interface WishesContextType {
-  wishes: Wish[]
-  addWish: (wish: Omit<Wish, 'id'>) => void
-  updateWish: (id: string, updates: Partial<Wish>) => void
-  removeWish: (id: string) => void
-  loading: boolean
-}
-
-const WishesContext = createContext<WishesContextType | null>(null)
-
 function mapWish(w: {
   id: string
   name: string
@@ -51,38 +40,36 @@ function mapWish(w: {
   }
 }
 
-export function WishesProvider({ children }: { children: ReactNode }) {
+export function useWishes() {
   const { isDemoMode, user } = useAuth()
   const queryClient = useQueryClient()
   const userId = user?.id ?? ''
   const queryEnabled = useAuthenticatedQueryEnabled() && !!userId
+  const key = queryKeys.wishes(userId)
 
-  const [demoWishes, setDemoWishes] = useState<Wish[]>(DEMO_WISHES)
-
-  const { data: apiWishes = [], isPending } = useQuery({
-    queryKey: queryKeys.wishes(userId),
-    queryFn: () => wishesApi.getAll().then((data) => data.map(mapWish)),
-    enabled: queryEnabled,
+  const { data: wishes = [], isPending } = useQuery({
+    queryKey: key,
+    queryFn: isDemoMode
+      ? () => DEMO_WISHES
+      : () => wishesApi.getAll().then((data) => data.map(mapWish)),
+    enabled: isDemoMode || queryEnabled,
+    staleTime: isDemoMode ? Infinity : undefined,
+    gcTime: isDemoMode ? Infinity : undefined,
   })
 
-  const wishes = isDemoMode ? demoWishes : apiWishes
   const loading = !isDemoMode && isPending
-
-  const invalidate = () => {
-    if (userId) queryClient.invalidateQueries({ queryKey: queryKeys.wishes(userId) })
-  }
 
   const addWish = async (wish: Omit<Wish, 'id'>) => {
     if (isDemoMode) {
-      setDemoWishes((prev) => [
-        ...prev,
+      queryClient.setQueryData<Wish[]>(key, (old) => [
+        ...(old ?? []),
         { ...wish, id: Date.now().toString(), stage: wish.stage ?? 'pomysl', savedAmount: wish.savedAmount ?? 0 },
       ])
       return
     }
     try {
       await wishesApi.create(wish)
-      invalidate()
+      queryClient.invalidateQueries({ queryKey: key })
     } catch {
       // ignore
     }
@@ -90,12 +77,14 @@ export function WishesProvider({ children }: { children: ReactNode }) {
 
   const updateWish = async (id: string, updates: Partial<Wish>) => {
     if (isDemoMode) {
-      setDemoWishes((prev) => prev.map((w) => (w.id === id ? { ...w, ...updates } : w)))
+      queryClient.setQueryData<Wish[]>(key, (old) =>
+        (old ?? []).map((w) => (w.id === id ? { ...w, ...updates } : w))
+      )
       return
     }
     try {
       await wishesApi.update(id, updates)
-      invalidate()
+      queryClient.invalidateQueries({ queryKey: key })
     } catch {
       // ignore
     }
@@ -103,25 +92,18 @@ export function WishesProvider({ children }: { children: ReactNode }) {
 
   const removeWish = async (id: string) => {
     if (isDemoMode) {
-      setDemoWishes((prev) => prev.filter((w) => w.id !== id))
+      queryClient.setQueryData<Wish[]>(key, (old) =>
+        (old ?? []).filter((w) => w.id !== id)
+      )
       return
     }
     try {
       await wishesApi.delete(id)
-      invalidate()
+      queryClient.invalidateQueries({ queryKey: key })
     } catch {
       // ignore
     }
   }
 
-  return (
-    <WishesContext.Provider value={{ wishes, addWish, updateWish, removeWish, loading }}>
-      {children}
-    </WishesContext.Provider>
-  )
-}
-
-export function useWishes() {
-  const ctx = useContext(WishesContext)
-  return ctx
+  return { wishes, addWish, updateWish, removeWish, loading }
 }

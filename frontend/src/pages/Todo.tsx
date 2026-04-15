@@ -63,28 +63,28 @@ function TodoCard({
 
 export function Todo() {
   const { isDemoMode } = useAuth()
-  const { todos, addTodo, toggleTodo, removeTodo, loading } = useTodos() ?? {}
+  const { todos, addTodo, toggleTodo, removeTodo, loading } = useTodos()
   const [newText, setNewText] = useState('')
 
-  const activeCount = (todos ?? []).filter((t) => !t.done).length
+  const activeCount = todos.filter((t) => !t.done).length
 
   const add = () => {
     if (!newText.trim()) return
-    addTodo?.(newText.trim())
+    addTodo(newText.trim())
     setNewText('')
   }
 
   const toggle = (id: string) => {
-    const todo = (todos ?? []).find((t) => t.id === id)
+    const todo = todos.find((t) => t.id === id)
     if (!todo) return
-    toggleTodo?.(id, !todo.done)
+    toggleTodo(id, !todo.done)
   }
 
   const remove = (id: string) => {
-    removeTodo?.(id)
+    removeTodo(id)
   }
 
-  const todosByColumn = (todos ?? []).reduce(
+  const todosByColumn = todos.reduce(
     (acc, t) => {
       const key = t.done ? 'done' : 'todo'
       acc[key].push(t)

@@ -20,7 +20,7 @@ const updateSchema = z.object({
 export const scheduledExpensesRouter = Router()
 
 scheduledExpensesRouter.get('/', async (req, res) => {
-  const userId = (req as any).user.userId
+  const userId = req.user!.userId
   const items = await prisma.scheduledExpense.findMany({
     where: { userId },
     orderBy: { dayOfMonth: 'asc' },
@@ -29,7 +29,7 @@ scheduledExpensesRouter.get('/', async (req, res) => {
 })
 
 scheduledExpensesRouter.post('/', async (req, res) => {
-  const userId = (req as any).user.userId
+  const userId = req.user!.userId
   const data = createSchema.parse(req.body)
   const item = await prisma.scheduledExpense.create({
     data: {
@@ -44,7 +44,7 @@ scheduledExpensesRouter.post('/', async (req, res) => {
 })
 
 scheduledExpensesRouter.patch('/:id', async (req, res) => {
-  const userId = (req as any).user.userId
+  const userId = req.user!.userId
   const { id } = req.params
   const data = updateSchema.parse(req.body)
   const existing = await prisma.scheduledExpense.findFirst({ where: { id, userId } })
@@ -57,7 +57,7 @@ scheduledExpensesRouter.patch('/:id', async (req, res) => {
 })
 
 scheduledExpensesRouter.delete('/:id', async (req, res) => {
-  const userId = (req as any).user.userId
+  const userId = req.user!.userId
   const { id } = req.params
   await prisma.scheduledExpense.deleteMany({ where: { id, userId } })
   res.status(204).send()

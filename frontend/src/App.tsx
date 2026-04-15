@@ -1,14 +1,9 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Layout } from './components/Layout'
 import { DemoDataProvider } from './context/DemoDataContext'
-import { FinanceCategoriesProvider } from './context/FinanceCategoriesContext'
 import { MonthProvider } from './context/MonthContext'
 import { ChartPeriodProvider } from './context/ChartPeriodContext'
-import { EventsProvider } from './context/EventsContext'
-import { TodosProvider } from './context/TodosContext'
-import { WishesProvider } from './context/WishesContext'
-import { HabitsProvider } from './context/HabitsContext'
-import { NaukaProvider } from './context/NaukaContext'
+import { LearningProvider } from './context/LearningContext'
 import { NotesProvider } from './context/NotesContext'
 import { GlobalSearchProvider } from './context/GlobalSearchContext'
 import { OnboardingProvider } from './context/OnboardingContext'
@@ -25,13 +20,13 @@ import { FinancesNetWorth } from './pages/Finances/FinancesNetWorth'
 import { Achievements } from './pages/Achievements'
 import { Calendar } from './pages/Calendar'
 import { Habits } from './pages/Habits'
-import { NaukaLayout } from './pages/Nauka/NaukaLayout'
-import { NaukaOverview } from './pages/Nauka/NaukaOverview'
-import { NaukaGodziny } from './pages/Nauka/NaukaGodziny'
-import { NaukaKursy } from './pages/Nauka/NaukaKursy'
-import { NaukaProjekty } from './pages/Nauka/NaukaProjekty'
-import { NaukaKsiazki } from './pages/Nauka/NaukaKsiazki'
-import { NaukaCertyfikaty } from './pages/Nauka/NaukaCertyfikaty'
+import { LearningLayout } from './pages/Learning/LearningLayout'
+import { LearningOverview } from './pages/Learning/LearningOverview'
+import { LearningHours } from './pages/Learning/LearningHours'
+import { LearningCourses } from './pages/Learning/LearningCourses'
+import { LearningProjects } from './pages/Learning/LearningProjects'
+import { LearningBooks } from './pages/Learning/LearningBooks'
+import { LearningCertificates } from './pages/Learning/LearningCertificates'
 import { NotesLayout } from './pages/Notes/NotesLayout'
 import { NotesOverview } from './pages/Notes/NotesOverview'
 import { NotesPage } from './pages/Notes/NotesPage'
@@ -40,8 +35,6 @@ import { useAuth } from './context/AuthContext'
 function App() {
   const { token, isDemoMode } = useAuth()
 
-  // Demo: zawsze pokazuj app z mock danymi
-  // Własne dane: wymagaj logowania
   const isAuthenticated = isDemoMode || !!token
 
   if (!isAuthenticated) {
@@ -55,14 +48,9 @@ function App() {
 
   return (
     <DemoDataProvider>
-      <FinanceCategoriesProvider>
       <MonthProvider>
         <ChartPeriodProvider>
-        <EventsProvider>
-        <TodosProvider>
-        <WishesProvider>
-        <HabitsProvider>
-        <NaukaProvider>
+        <LearningProvider>
         <NotesProvider>
         <GlobalSearchProvider>
         <OnboardingProvider>
@@ -92,28 +80,24 @@ function App() {
           <Route path="ideas" element={<NotesPage type="idea" />} />
           <Route path="references" element={<NotesPage type="reference" />} />
         </Route>
-        <Route path="/nauka" element={<NaukaLayout />}>
-          <Route index element={<NaukaOverview />} />
-          <Route path="godziny" element={<NaukaGodziny />} />
-          <Route path="kursy" element={<NaukaKursy />} />
-          <Route path="projekty" element={<NaukaProjekty />} />
-          <Route path="ksiazki" element={<NaukaKsiazki />} />
-          <Route path="certyfikaty" element={<NaukaCertyfikaty />} />
+        <Route path="/learning" element={<LearningLayout />}>
+          <Route index element={<LearningOverview />} />
+          <Route path="hours" element={<LearningHours />} />
+          <Route path="courses" element={<LearningCourses />} />
+          <Route path="projects" element={<LearningProjects />} />
+          <Route path="books" element={<LearningBooks />} />
+          <Route path="certificates" element={<LearningCertificates />} />
         </Route>
+        <Route path="/nauka" element={<Navigate to="/learning" replace />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </Layout>
         </OnboardingProvider>
         </GlobalSearchProvider>
         </NotesProvider>
-        </NaukaProvider>
-        </HabitsProvider>
-        </WishesProvider>
-        </TodosProvider>
-        </EventsProvider>
+        </LearningProvider>
         </ChartPeriodProvider>
       </MonthProvider>
-      </FinanceCategoriesProvider>
     </DemoDataProvider>
   )
 }

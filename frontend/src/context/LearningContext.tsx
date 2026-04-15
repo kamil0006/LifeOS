@@ -83,7 +83,7 @@ const DEMO_CERTIFICATES: Certification[] = [
   { id: '1', name: 'AWS Cloud Practitioner', issuer: 'Amazon', date: '2024-12-01' },
 ]
 
-interface NaukaContextType {
+interface LearningContextType {
   codingHours: CodingHour[]
   courses: Course[]
   projects: Project[]
@@ -107,7 +107,7 @@ interface NaukaContextType {
   deleteCertification: (id: string) => void
 }
 
-const NaukaContext = createContext<NaukaContextType | null>(null)
+const LearningContext = createContext<LearningContextType | null>(null)
 
 function loadFromStorage<T>(key: string, fallback: T): T {
   try {
@@ -127,7 +127,7 @@ function saveToStorage<T>(key: string, data: T) {
   }
 }
 
-export function NaukaProvider({ children }: { children: ReactNode }) {
+export function LearningProvider({ children }: { children: ReactNode }) {
   const [codingHours, setCodingHours] = useState<CodingHour[]>(() => loadFromStorage('codingHours', DEMO_CODING_HOURS))
   const [courses, setCourses] = useState<Course[]>(() => loadFromStorage('courses', DEMO_COURSES))
   const [projects, setProjects] = useState<Project[]>(() => loadFromStorage('projects', DEMO_PROJECTS))
@@ -211,7 +211,7 @@ export function NaukaProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <NaukaContext.Provider
+    <LearningContext.Provider
       value={{
         codingHours,
         courses,
@@ -237,10 +237,10 @@ export function NaukaProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
-    </NaukaContext.Provider>
+    </LearningContext.Provider>
   )
 }
 
-export function useNauka() {
-  return useContext(NaukaContext)
+export function useLearning() {
+  return useContext(LearningContext)
 }

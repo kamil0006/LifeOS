@@ -1,18 +1,18 @@
 import { useState } from 'react'
 import { Card } from '../../components/Card'
 import { Plus, Trash2, ExternalLink } from 'lucide-react'
-import { useNauka } from '../../context/NaukaContext'
+import { useLearning } from '../../context/LearningContext'
 
-export function NaukaCertyfikaty() {
-  const nauka = useNauka()
+export function LearningCertificates() {
+  const learning = useLearning()
   const [name, setName] = useState('')
   const [issuer, setIssuer] = useState('')
   const [date, setDate] = useState(() => new Date().toISOString().split('T')[0])
   const [url, setUrl] = useState('')
 
-  if (!nauka) return null
+  if (!learning) return null
 
-  const { certifications, addCertification, deleteCertification } = nauka
+  const { certifications, addCertification, deleteCertification } = learning
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()

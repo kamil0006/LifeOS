@@ -4,8 +4,8 @@ import { Card } from '../../components/Card'
 import { Plus, Trash2, Pencil, ExternalLink } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
-import { useNauka } from '../../context/NaukaContext'
-import type { Course } from '../../context/NaukaContext'
+import { useLearning } from '../../context/LearningContext'
+import type { Course } from '../../context/LearningContext'
 
 const STATUS_OPTIONS: { value: Course['status']; label: string }[] = [
   { value: 'zaplanowany', label: 'Zaplanowany' },
@@ -13,8 +13,8 @@ const STATUS_OPTIONS: { value: Course['status']; label: string }[] = [
   { value: 'ukonczony', label: 'Ukończony' },
 ]
 
-export function NaukaKursy() {
-  const nauka = useNauka()
+export function LearningCourses() {
+  const learning = useLearning()
   const [name, setName] = useState('')
   const [platform, setPlatform] = useState('')
   const [platformUrl, setPlatformUrl] = useState('')
@@ -27,9 +27,9 @@ export function NaukaKursy() {
   const [editStatus, setEditStatus] = useState<Course['status']>('zaplanowany')
   const [editProgress, setEditProgress] = useState('')
 
-  if (!nauka) return null
+  if (!learning) return null
 
-  const { courses, addCourse, updateCourse, deleteCourse } = nauka
+  const { courses, addCourse, updateCourse, deleteCourse } = learning
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()

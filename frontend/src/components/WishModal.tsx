@@ -18,19 +18,16 @@ interface WishModalProps {
 }
 
 export function WishModal({ isOpen, onClose, onSubmit }: WishModalProps) {
-  const [name, setName] = useState('')
-  const [price, setPrice] = useState('')
-  const [priority, setPriority] = useState<1 | 2 | 3>(2)
-  const [stage, setStage] = useState<WishStage>('pomysl')
+  const initialForm = () => ({ name: '', price: '', priority: 2 as 1 | 2 | 3, stage: 'pomysl' as WishStage })
+  const [form, setForm] = useState(initialForm)
+  const updateField = <K extends keyof ReturnType<typeof initialForm>>(key: K, value: ReturnType<typeof initialForm>[K]) =>
+    setForm((f) => ({ ...f, [key]: value }))
 
   useEffect(() => {
-    if (isOpen) {
-      setName('')
-      setPrice('')
-      setPriority(2)
-      setStage('pomysl')
-    }
+    if (isOpen) setForm(initialForm())
   }, [isOpen])
+
+  const { name, price, priority, stage } = form
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -78,7 +75,7 @@ export function WishModal({ isOpen, onClose, onSubmit }: WishModalProps) {
               <input
                 type="text"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => updateField('name', e.target.value)}
                 required
                 autoFocus
                 className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
@@ -91,7 +88,7 @@ export function WishModal({ isOpen, onClose, onSubmit }: WishModalProps) {
                 step="0.01"
                 min="0.01"
                 value={price}
-                onChange={(e) => setPrice(e.target.value)}
+                onChange={(e) => updateField('price', e.target.value)}
                 required
                 className="no-spinners w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
               />
@@ -101,7 +98,7 @@ export function WishModal({ isOpen, onClose, onSubmit }: WishModalProps) {
                 <label className="block text-base text-(--text-muted) font-gaming mb-1">Priorytet</label>
                 <select
                   value={priority}
-                  onChange={(e) => setPriority(parseInt(e.target.value) as 1 | 2 | 3)}
+                  onChange={(e) => updateField('priority', parseInt(e.target.value) as 1 | 2 | 3)}
                   className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
                 >
                   <option value="1">Wysoki</option>
@@ -113,7 +110,7 @@ export function WishModal({ isOpen, onClose, onSubmit }: WishModalProps) {
                 <label className="block text-base text-(--text-muted) font-gaming mb-1">Etap</label>
                 <select
                   value={stage}
-                  onChange={(e) => setStage(e.target.value as WishStage)}
+                  onChange={(e) => updateField('stage', e.target.value as WishStage)}
                   className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
                 >
                   {STAGES.map((s) => (

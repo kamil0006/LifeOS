@@ -26,31 +26,21 @@ export function EventModal({
   event,
   holidayName,
 }: EventModalProps) {
-  const [title, setTitle] = useState('')
-  const [date, setDate] = useState('')
-  const [time, setTime] = useState('')
-  const [category, setCategory] = useState('praca')
-  const [notes, setNotes] = useState('')
+  const getInitialForm = () =>
+    event
+      ? { title: event.title, date: event.date, time: event.time ?? '', category: event.category ?? 'praca', notes: event.notes ?? '' }
+      : { title: '', date: initialDate ?? new Date().toISOString().split('T')[0], time: '', category: 'praca', notes: '' }
 
-  const isEdit = !!event
+  const [form, setForm] = useState(getInitialForm)
+  const updateField = <K extends keyof ReturnType<typeof getInitialForm>>(key: K, value: string) =>
+    setForm((f) => ({ ...f, [key]: value }))
 
   useEffect(() => {
-    if (isOpen) {
-      if (event) {
-        setTitle(event.title)
-        setDate(event.date)
-        setTime(event.time ?? '')
-        setCategory(event.category ?? 'praca')
-        setNotes(event.notes ?? '')
-      } else {
-        setTitle('')
-        setDate(initialDate ?? new Date().toISOString().split('T')[0])
-        setTime('')
-        setCategory('praca')
-        setNotes('')
-      }
-    }
+    if (isOpen) setForm(getInitialForm())
   }, [isOpen, event, initialDate])
+
+  const { title, date, time, category, notes } = form
+  const isEdit = !!event
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -123,7 +113,7 @@ export function EventModal({
               <input
                 type="text"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => updateField('title', e.target.value)}
                 className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
                 required
                 autoFocus
@@ -136,7 +126,7 @@ export function EventModal({
                 <input
                   type="date"
                   value={date}
-                  onChange={(e) => setDate(e.target.value)}
+                  onChange={(e) => updateField('date', e.target.value)}
                   className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
                 />
               </div>
@@ -145,7 +135,7 @@ export function EventModal({
                 <input
                   type="time"
                   value={time}
-                  onChange={(e) => setTime(e.target.value)}
+                  onChange={(e) => updateField('time', e.target.value)}
                   className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
                 />
               </div>
@@ -158,7 +148,7 @@ export function EventModal({
                   <button
                     key={id}
                     type="button"
-                    onClick={() => setCategory(id)}
+                    onClick={() => updateField('category', id)}
                     className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 transition-all text-sm font-gaming ${
                       category === id ? 'border-(--accent-cyan)' : 'border-transparent hover:opacity-90'
                     }`}
@@ -175,7 +165,7 @@ export function EventModal({
               <label className="block text-base text-(--text-muted) font-gaming mb-1">Notatki</label>
               <textarea
                 value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                onChange={(e) => updateField('notes', e.target.value)}
                 rows={2}
                 className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none resize-none"
               />

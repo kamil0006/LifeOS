@@ -35,25 +35,24 @@ export function RecurringModal({
   onAddCategory,
   onDeleteCategory,
 }: RecurringModalProps) {
-  const [name, setName] = useState('')
-  const [amount, setAmount] = useState('')
-  const [category, setCategory] = useState('')
-  const [dayOfMonth, setDayOfMonth] = useState(1)
-  const [showAddCategory, setShowAddCategory] = useState(false)
-  const [newCategoryName, setNewCategoryName] = useState('')
-  const [newCategoryColor, setNewCategoryColor] = useState(PRESET_COLORS[0])
+  const initialForm = () => ({
+    name: '',
+    amount: '',
+    category: categories[0]?.name ?? 'Inne',
+    dayOfMonth: 1,
+    showAddCategory: false,
+    newCategoryName: '',
+    newCategoryColor: PRESET_COLORS[0],
+  })
+  const [form, setForm] = useState(initialForm)
+  const updateField = <K extends keyof ReturnType<typeof initialForm>>(key: K, value: ReturnType<typeof initialForm>[K]) =>
+    setForm((f) => ({ ...f, [key]: value }))
 
   useEffect(() => {
-    if (isOpen) {
-      setName('')
-      setAmount('')
-      setCategory(categories[0]?.name ?? 'Inne')
-      setDayOfMonth(1)
-      setShowAddCategory(false)
-      setNewCategoryName('')
-      setNewCategoryColor(PRESET_COLORS[0])
-    }
+    if (isOpen) setForm(initialForm())
   }, [isOpen, categories])
+
+  const { name, amount, category, dayOfMonth, showAddCategory, newCategoryName, newCategoryColor } = form
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -101,7 +100,7 @@ export function RecurringModal({
               <input
                 type="text"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => updateField('name', e.target.value)}
                 required
                 autoFocus
                 className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
@@ -115,7 +114,7 @@ export function RecurringModal({
                   step="0.01"
                   min="0.01"
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  onChange={(e) => updateField('amount', e.target.value)}
                   required
                   className="no-spinners w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
                 />
@@ -127,7 +126,7 @@ export function RecurringModal({
                   min={1}
                   max={31}
                   value={dayOfMonth}
-                  onChange={(e) => setDayOfMonth(Math.min(31, Math.max(1, parseInt(e.target.value, 10) || 1)))}
+                  onChange={(e) => updateField('dayOfMonth', Math.min(31, Math.max(1, parseInt(e.target.value, 10) || 1)))}
                   required
                   className="no-spinners w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
                 />
@@ -137,7 +136,7 @@ export function RecurringModal({
               <label className="block text-base text-(--text-muted) font-gaming mb-1">Kategoria</label>
               <select
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                onChange={(e) => updateField('category', e.target.value)}
                 className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
               >
                 {categories.map((c) => (
@@ -158,7 +157,7 @@ export function RecurringModal({
                         type="button"
                         onClick={() => {
                           onDeleteCategory(c.id)
-                          if (category === c.name) setCategory(categories[0]?.name ?? 'Inne')
+                          if (category === c.name) updateField('category', categories[0]?.name ?? 'Inne')
                         }}
                         className="p-0.5 rounded hover:bg-black/20 text-(--text-muted) hover:text-red-400"
                         title="Usuń kategorię"
@@ -174,7 +173,7 @@ export function RecurringModal({
                   {!showAddCategory ? (
                     <button
                       type="button"
-                      onClick={() => setShowAddCategory(true)}
+                      onClick={() => updateField('showAddCategory', true)}
                       className="flex items-center gap-2 text-sm text-(--accent-cyan) hover:underline mt-1"
                     >
                       <Plus className="w-3.5 h-3.5" />
@@ -185,7 +184,7 @@ export function RecurringModal({
                       <input
                         type="text"
                         value={newCategoryName}
-                        onChange={(e) => setNewCategoryName(e.target.value)}
+                        onChange={(e) => updateField('newCategoryName', e.target.value)}
                         className="w-full px-3 py-2 rounded-lg bg-(--bg-card) border border-(--border) text-(--text-primary) text-sm focus:border-(--accent-cyan) focus:outline-none"
                       />
                       <div className="flex gap-2 flex-wrap items-center">
@@ -194,7 +193,7 @@ export function RecurringModal({
                           <button
                             key={col}
                             type="button"
-                            onClick={() => setNewCategoryColor(col)}
+                            onClick={() => updateField('newCategoryColor', col)}
                             className={`w-6 h-6 rounded-full border-2 transition-all ${
                               newCategoryColor === col ? 'border-(--accent-cyan) scale-110' : 'border-transparent hover:scale-105'
                             }`}
@@ -209,9 +208,7 @@ export function RecurringModal({
                           onClick={async () => {
                             if (newCategoryName.trim()) {
                               await onAddCategory(newCategoryName.trim(), newCategoryColor)
-                              setCategory(newCategoryName.trim())
-                              setShowAddCategory(false)
-                              setNewCategoryName('')
+                              setForm((f) => ({ ...f, category: f.newCategoryName.trim(), showAddCategory: false, newCategoryName: '' }))
                             }
                           }}
                           className="px-3 py-1.5 rounded-lg bg-(--accent-cyan)/20 text-(--accent-cyan) text-sm font-gaming"
@@ -220,10 +217,7 @@ export function RecurringModal({
                         </button>
                         <button
                           type="button"
-                          onClick={() => {
-                            setShowAddCategory(false)
-                            setNewCategoryName('')
-                          }}
+                          onClick={() => setForm((f) => ({ ...f, showAddCategory: false, newCategoryName: '' }))}
                           className="px-3 py-1.5 rounded-lg border border-(--border) text-(--text-muted) text-sm"
                         >
                           Anuluj

@@ -55,8 +55,7 @@ function DonutTooltip(props: { active?: boolean; payload?: readonly unknown[]; t
 
 export function Analytics() {
   const { isDemoMode } = useAuth()
-  const financeCats = useFinanceCategories()
-  const getColor = financeCats?.getColor ?? (() => '#9d4edd')
+  const { getColor } = useFinanceCategories()
   const demoData = useDemoData()
   const monthCtx = useMonth()
   const {

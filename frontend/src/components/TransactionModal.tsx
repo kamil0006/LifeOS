@@ -30,25 +30,24 @@ export function TransactionModal({
   onAddCategory,
   onDeleteCategory,
 }: TransactionModalProps) {
-  const [name, setName] = useState('')
-  const [amount, setAmount] = useState('')
-  const [category, setCategory] = useState('')
-  const [date, setDate] = useState(() => new Date().toISOString().split('T')[0])
-  const [showAddCategory, setShowAddCategory] = useState(false)
-  const [newCategoryName, setNewCategoryName] = useState('')
-  const [newCategoryColor, setNewCategoryColor] = useState(PRESET_COLORS[0])
+  const initialForm = () => ({
+    name: '',
+    amount: '',
+    category: categories[0]?.name ?? 'Inne',
+    date: new Date().toISOString().split('T')[0],
+    showAddCategory: false,
+    newCategoryName: '',
+    newCategoryColor: PRESET_COLORS[0],
+  })
+  const [form, setForm] = useState(initialForm)
+  const updateField = <K extends keyof ReturnType<typeof initialForm>>(key: K, value: ReturnType<typeof initialForm>[K]) =>
+    setForm((f) => ({ ...f, [key]: value }))
 
   useEffect(() => {
-    if (isOpen) {
-      setName('')
-      setAmount('')
-      setDate(new Date().toISOString().split('T')[0])
-      setCategory(categories[0]?.name ?? 'Inne')
-      setShowAddCategory(false)
-      setNewCategoryName('')
-      setNewCategoryColor(PRESET_COLORS[0])
-    }
+    if (isOpen) setForm(initialForm())
   }, [isOpen, type, categories])
+
+  const { name, amount, category, date, showAddCategory, newCategoryName, newCategoryColor } = form
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -104,7 +103,7 @@ export function TransactionModal({
               <input
                 type="text"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => updateField('name', e.target.value)}
                 required
                 autoFocus
                 className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
@@ -115,7 +114,7 @@ export function TransactionModal({
               <input
                 type="date"
                 value={date}
-                onChange={(e) => setDate(e.target.value)}
+                onChange={(e) => updateField('date', e.target.value)}
                 className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
               />
             </div>
@@ -125,7 +124,7 @@ export function TransactionModal({
                 type="number"
                 step="0.01"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={(e) => updateField('amount', e.target.value)}
                 required
                 className="no-spinners w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
               />
@@ -135,7 +134,7 @@ export function TransactionModal({
                 <label className="block text-base text-(--text-muted) font-gaming mb-1">Kategoria</label>
                 <select
                   value={category}
-                  onChange={(e) => setCategory(e.target.value)}
+                  onChange={(e) => updateField('category', e.target.value)}
                   className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
                 >
                   {categories.map((c) => (
@@ -156,7 +155,7 @@ export function TransactionModal({
                           type="button"
                           onClick={() => {
                             onDeleteCategory(c.id)
-                            if (category === c.name) setCategory(categories[0]?.name ?? 'Inne')
+                            if (category === c.name) updateField('category', categories[0]?.name ?? 'Inne')
                           }}
                           className="p-0.5 rounded hover:bg-black/20 text-(--text-muted) hover:text-red-400"
                           title="Usuń kategorię"
@@ -172,7 +171,7 @@ export function TransactionModal({
                     {!showAddCategory ? (
                       <button
                         type="button"
-                        onClick={() => setShowAddCategory(true)}
+                        onClick={() => updateField('showAddCategory', true)}
                         className="flex items-center gap-2 text-sm text-(--accent-cyan) hover:underline"
                       >
                         <Plus className="w-3.5 h-3.5" />
@@ -183,7 +182,7 @@ export function TransactionModal({
                         <input
                           type="text"
                           value={newCategoryName}
-                          onChange={(e) => setNewCategoryName(e.target.value)}
+                          onChange={(e) => updateField('newCategoryName', e.target.value)}
                           className="w-full px-3 py-2 rounded-lg bg-(--bg-card) border border-(--border) text-(--text-primary) text-sm focus:border-(--accent-cyan) focus:outline-none"
                         />
                         <div className="flex gap-2 flex-wrap items-center">
@@ -192,7 +191,7 @@ export function TransactionModal({
                             <button
                               key={col}
                               type="button"
-                              onClick={() => setNewCategoryColor(col)}
+                              onClick={() => updateField('newCategoryColor', col)}
                               className={`w-6 h-6 rounded-full border-2 transition-all ${
                                 newCategoryColor === col ? 'border-(--accent-cyan) scale-110' : 'border-transparent hover:scale-105'
                               }`}
@@ -207,9 +206,7 @@ export function TransactionModal({
                             onClick={async () => {
                               if (newCategoryName.trim() && onAddCategory) {
                                 await onAddCategory(newCategoryName.trim(), newCategoryColor)
-                                setCategory(newCategoryName.trim())
-                                setShowAddCategory(false)
-                                setNewCategoryName('')
+                                setForm((f) => ({ ...f, category: f.newCategoryName.trim(), showAddCategory: false, newCategoryName: '' }))
                               }
                             }}
                             className="px-3 py-1.5 rounded-lg bg-(--accent-cyan)/20 text-(--accent-cyan) text-sm font-gaming"
@@ -218,10 +215,7 @@ export function TransactionModal({
                           </button>
                           <button
                             type="button"
-                            onClick={() => {
-                              setShowAddCategory(false)
-                              setNewCategoryName('')
-                            }}
+                            onClick={() => setForm((f) => ({ ...f, showAddCategory: false, newCategoryName: '' }))}
                             className="px-3 py-1.5 rounded-lg border border-(--border) text-(--text-muted) text-sm"
                           >
                             Anuluj

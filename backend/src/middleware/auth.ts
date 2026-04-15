@@ -22,7 +22,7 @@ export function authMiddleware(
 
   try {
     const payload = jwt.verify(token, JWT_SECRET) as AuthPayload
-    ;(req as Request & { user: AuthPayload }).user = payload
+    req.user = payload
     next()
   } catch {
     return res.status(401).json({ error: 'Nieprawidłowy token' })

@@ -13,7 +13,7 @@ const createSchema = z.object({
 export const incomeRouter = Router()
 
 incomeRouter.get('/', async (req, res) => {
-  const userId = (req as any).user.userId
+  const userId = req.user!.userId
   const income = await prisma.income.findMany({
     where: { userId },
     orderBy: { date: 'desc' },
@@ -22,7 +22,7 @@ incomeRouter.get('/', async (req, res) => {
 })
 
 incomeRouter.post('/', async (req, res) => {
-  const userId = (req as any).user.userId
+  const userId = req.user!.userId
   const data = createSchema.parse(req.body)
   const income = await prisma.income.create({
     data: {
@@ -40,7 +40,7 @@ incomeRouter.post('/', async (req, res) => {
 })
 
 incomeRouter.delete('/:id', async (req, res) => {
-  const userId = (req as any).user.userId
+  const userId = req.user!.userId
   const { id } = req.params
   await prisma.income.deleteMany({ where: { id, userId } })
   res.status(204).send()

@@ -39,7 +39,7 @@ const navSections = [
     label: 'Rozwój',
     items: [
       { to: '/habits', icon: Target, label: 'Nawyki' },
-      { to: '/nauka', icon: GraduationCap, label: 'Nauka' },
+      { to: '/learning', icon: GraduationCap, label: 'Nauka' },
       { to: '/achievements', icon: Trophy, label: 'Osiągnięcia' },
     ],
   },

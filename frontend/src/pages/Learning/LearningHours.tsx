@@ -10,33 +10,20 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import { Plus, Trash2 } from 'lucide-react'
-import { useNauka } from '../../context/NaukaContext'
+import { useLearning } from '../../context/LearningContext'
 import { ChartPeriodSelector } from '../../components/ChartPeriodSelector'
 import { useChartPeriod, getMonthsInQuarter } from '../../context/ChartPeriodContext'
 
 const monthNames = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru']
 
-export function NaukaGodziny() {
-  const nauka = useNauka()
+export function LearningHours() {
+  const learning = useLearning()
   const chartPeriod = useChartPeriod()
   const [date, setDate] = useState(() => new Date().toISOString().split('T')[0])
   const [hours, setHours] = useState('')
   const [note, setNote] = useState('')
 
-  if (!nauka) return null
-
-  const { codingHours, addCodingHour, deleteCodingHour } = nauka
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const h = parseFloat(hours.replace(',', '.'))
-    if (isNaN(h) || h <= 0) return
-    addCodingHour({ date, hours: h, note: note.trim() || undefined })
-    setHours('')
-    setNote('')
-  }
-
-  const sorted = [...codingHours].sort((a, b) => b.date.localeCompare(a.date))
+  const codingHours = learning?.codingHours ?? []
 
   const trendData = useMemo(() => {
     if (chartPeriod?.period.type === 'year') {
@@ -94,6 +81,21 @@ export function NaukaGodziny() {
     }
     return result
   }, [codingHours, chartPeriod])
+
+  if (!learning) return null
+
+  const { addCodingHour, deleteCodingHour } = learning
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const h = parseFloat(hours.replace(',', '.'))
+    if (isNaN(h) || h <= 0) return
+    addCodingHour({ date, hours: h, note: note.trim() || undefined })
+    setHours('')
+    setNote('')
+  }
+
+  const sorted = [...codingHours].sort((a, b) => b.date.localeCompare(a.date))
 
   return (
     <div className="space-y-6">
