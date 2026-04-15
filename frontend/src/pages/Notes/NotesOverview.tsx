@@ -8,7 +8,7 @@ import { useNotes } from '../../context/NotesContext'
 export function NotesOverview() {
   const notes = useNotes()
 
-  const allNotes = notes?.notes ?? []
+  const allNotes = useMemo(() => notes?.notes ?? [], [notes])
 
   const byType = useMemo(() => {
     const quick = allNotes.filter((n) => n.type === 'quick')

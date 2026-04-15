@@ -17,13 +17,26 @@ export function LearningBooks() {
   const [rating, setRating] = useState('')
   const [editingBook, setEditingBook] = useState<NonNullable<ReturnType<typeof useLearning>>['books'][0] | null>(null)
 
-  const books = learning?.books ?? []
-  const bookCategories = learning?.bookCategories ?? []
+  const books = useMemo(() => learning?.books ?? [], [learning])
+  const bookCategories = useMemo(() => learning?.bookCategories ?? [], [learning])
 
   const allCategories = useMemo(() => {
     const combined = [...DEFAULT_CATEGORIES, ...bookCategories]
     return [...new Set(combined)]
   }, [bookCategories])
+
+  const booksByCategory = useMemo(() => {
+    const byCat: Record<string, typeof books> = {}
+    books.forEach((b) => {
+      const cat = b.category || 'Bez kategorii'
+      if (!byCat[cat]) byCat[cat] = []
+      byCat[cat].push(b)
+    })
+    Object.keys(byCat).forEach((cat) => {
+      byCat[cat].sort((a, b) => b.finishedAt.localeCompare(a.finishedAt))
+    })
+    return byCat
+  }, [books])
 
   if (!learning) return null
 
@@ -49,19 +62,6 @@ export function LearningBooks() {
     setFinishedAt(new Date().toISOString().split('T')[0])
     setRating('')
   }
-
-  const booksByCategory = useMemo(() => {
-    const byCat: Record<string, typeof books> = {}
-    books.forEach((b) => {
-      const cat = b.category || 'Bez kategorii'
-      if (!byCat[cat]) byCat[cat] = []
-      byCat[cat].push(b)
-    })
-    Object.keys(byCat).forEach((cat) => {
-      byCat[cat].sort((a, b) => b.finishedAt.localeCompare(a.finishedAt))
-    })
-    return byCat
-  }, [books])
 
   return (
     <div className="space-y-6">

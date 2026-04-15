@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { z } from 'zod'
+import { getAuthUser } from '../middleware/auth.js'
 import { prisma } from '../lib/prisma.js'
 import { unlockAchievement, checkSavingsAchievement } from '../lib/achievements.js'
 
@@ -13,7 +14,7 @@ const createSchema = z.object({
 export const expensesRouter = Router()
 
 expensesRouter.get('/', async (req, res) => {
-  const userId = req.user!.userId
+  const userId = getAuthUser(req).userId
   const expenses = await prisma.expense.findMany({
     where: { userId },
     orderBy: { date: 'desc' },
@@ -22,7 +23,7 @@ expensesRouter.get('/', async (req, res) => {
 })
 
 expensesRouter.post('/', async (req, res) => {
-  const userId = req.user!.userId
+  const userId = getAuthUser(req).userId
   const data = createSchema.parse(req.body)
   const expense = await prisma.expense.create({
     data: {
@@ -40,7 +41,7 @@ expensesRouter.post('/', async (req, res) => {
 })
 
 expensesRouter.delete('/:id', async (req, res) => {
-  const userId = req.user!.userId
+  const userId = getAuthUser(req).userId
   const { id } = req.params
   await prisma.expense.deleteMany({ where: { id, userId } })
   res.status(204).send()

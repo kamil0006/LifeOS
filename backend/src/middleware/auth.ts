@@ -28,3 +28,11 @@ export function authMiddleware(
     return res.status(401).json({ error: 'Nieprawidłowy token' })
   }
 }
+
+/** Use in handlers after `authMiddleware` — central invariant instead of `req.user!`. */
+export function getAuthUser(req: Request): AuthPayload {
+  if (req.user === undefined) {
+    throw new Error('getAuthUser: missing req.user (auth middleware not applied?)')
+  }
+  return req.user
+}

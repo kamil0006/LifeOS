@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { z } from 'zod'
+import { getAuthUser } from '../middleware/auth.js'
 import { prisma } from '../lib/prisma.js'
 
 const createSchema = z.object({
@@ -12,7 +13,7 @@ const updateSchema = createSchema.partial()
 export const expenseCategoriesRouter = Router()
 
 expenseCategoriesRouter.get('/', async (req, res) => {
-  const userId = req.user!.userId
+  const userId = getAuthUser(req).userId
   const categories = await prisma.expenseCategory.findMany({
     where: { userId },
     orderBy: { name: 'asc' },
@@ -21,7 +22,7 @@ expenseCategoriesRouter.get('/', async (req, res) => {
 })
 
 expenseCategoriesRouter.post('/', async (req, res) => {
-  const userId = req.user!.userId
+  const userId = getAuthUser(req).userId
   const data = createSchema.parse(req.body)
   const category = await prisma.expenseCategory.create({
     data: { userId, name: data.name.trim(), color: data.color },
@@ -30,7 +31,7 @@ expenseCategoriesRouter.post('/', async (req, res) => {
 })
 
 expenseCategoriesRouter.patch('/:id', async (req, res) => {
-  const userId = req.user!.userId
+  const userId = getAuthUser(req).userId
   const { id } = req.params
   const data = updateSchema.parse(req.body)
   const category = await prisma.expenseCategory.updateMany({
@@ -43,7 +44,7 @@ expenseCategoriesRouter.patch('/:id', async (req, res) => {
 })
 
 expenseCategoriesRouter.delete('/:id', async (req, res) => {
-  const userId = req.user!.userId
+  const userId = getAuthUser(req).userId
   const { id } = req.params
   await prisma.expenseCategory.deleteMany({ where: { id, userId } })
   res.status(204).send()

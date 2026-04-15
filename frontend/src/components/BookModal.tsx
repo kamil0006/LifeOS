@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Trash2 } from 'lucide-react'
@@ -23,7 +23,7 @@ export function BookModal({
   onDelete,
   addBookCategory,
 }: BookModalProps) {
-  const getInitialForm = () => {
+  const getInitialForm = useCallback(() => {
     if (!book) return { title: '', author: '', category: 'Programowanie', customCategory: '', finishedAt: '', rating: '' }
     const cat = book.category || 'Programowanie'
     const isInList = allCategories.includes(cat)
@@ -35,14 +35,14 @@ export function BookModal({
       finishedAt: book.finishedAt,
       rating: book.rating != null ? String(book.rating) : '',
     }
-  }
+  }, [book, allCategories])
   const [form, setForm] = useState(getInitialForm)
   const updateField = <K extends keyof ReturnType<typeof getInitialForm>>(key: K, value: string) =>
     setForm((f) => ({ ...f, [key]: value }))
 
   useEffect(() => {
     if (isOpen && book) setForm(getInitialForm())
-  }, [isOpen, book, allCategories])
+  }, [isOpen, book, getInitialForm])
 
   const { title, author, category, customCategory, finishedAt, rating } = form
 

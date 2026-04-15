@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Trash2 } from 'lucide-react'
@@ -26,10 +26,13 @@ export function EventModal({
   event,
   holidayName,
 }: EventModalProps) {
-  const getInitialForm = () =>
-    event
-      ? { title: event.title, date: event.date, time: event.time ?? '', category: event.category ?? 'praca', notes: event.notes ?? '' }
-      : { title: '', date: initialDate ?? new Date().toISOString().split('T')[0], time: '', category: 'praca', notes: '' }
+  const getInitialForm = useCallback(
+    () =>
+      event
+        ? { title: event.title, date: event.date, time: event.time ?? '', category: event.category ?? 'praca', notes: event.notes ?? '' }
+        : { title: '', date: initialDate ?? new Date().toISOString().split('T')[0], time: '', category: 'praca', notes: '' },
+    [event, initialDate]
+  )
 
   const [form, setForm] = useState(getInitialForm)
   const updateField = <K extends keyof ReturnType<typeof getInitialForm>>(key: K, value: string) =>
@@ -37,7 +40,7 @@ export function EventModal({
 
   useEffect(() => {
     if (isOpen) setForm(getInitialForm())
-  }, [isOpen, event, initialDate])
+  }, [isOpen, getInitialForm])
 
   const { title, date, time, category, notes } = form
   const isEdit = !!event

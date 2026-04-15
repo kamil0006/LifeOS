@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { z } from 'zod'
+import { getAuthUser } from '../middleware/auth.js'
 import { prisma } from '../lib/prisma.js'
 
 const createSchema = z.object({
@@ -16,7 +17,7 @@ const updateSchema = createSchema.partial()
 export const eventsRouter = Router()
 
 eventsRouter.get('/', async (req, res) => {
-  const userId = req.user!.userId
+  const userId = getAuthUser(req).userId
   const events = await prisma.event.findMany({
     where: { userId },
     orderBy: { date: 'asc' },
@@ -25,7 +26,7 @@ eventsRouter.get('/', async (req, res) => {
 })
 
 eventsRouter.post('/', async (req, res) => {
-  const userId = req.user!.userId
+  const userId = getAuthUser(req).userId
   const data = createSchema.parse(req.body)
   const event = await prisma.event.create({
     data: {
@@ -42,7 +43,7 @@ eventsRouter.post('/', async (req, res) => {
 })
 
 eventsRouter.patch('/:id', async (req, res) => {
-  const userId = req.user!.userId
+  const userId = getAuthUser(req).userId
   const { id } = req.params
   const data = updateSchema.parse(req.body)
   const existing = await prisma.event.findFirst({ where: { id, userId } })
@@ -62,7 +63,7 @@ eventsRouter.patch('/:id', async (req, res) => {
 })
 
 eventsRouter.delete('/:id', async (req, res) => {
-  const userId = req.user!.userId
+  const userId = getAuthUser(req).userId
   const { id } = req.params
   await prisma.event.deleteMany({ where: { id, userId } })
   res.status(204).send()

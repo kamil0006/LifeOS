@@ -19,5 +19,11 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      // Many legitimate patterns (modals, URL/month sync, layout reset) use setState after props change; case-by-case refactors are tracked separately.
+      'react-hooks/set-state-in-effect': 'off',
+      // Context modules export hooks + Provider; splitting every file is noisy for a small app.
+      'react-refresh/only-export-components': 'off',
+    },
   },
 ])

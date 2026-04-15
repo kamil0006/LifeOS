@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { z } from 'zod'
+import { getAuthUser } from '../middleware/auth.js'
 import { prisma } from '../lib/prisma.js'
 
 const createSchema = z.object({
@@ -19,7 +20,7 @@ const updateSchema = z.object({
 export const goalsRouter = Router()
 
 goalsRouter.get('/', async (req, res) => {
-  const userId = req.user!.userId
+  const userId = getAuthUser(req).userId
   const goals = await prisma.goal.findMany({
     where: { userId },
     orderBy: { createdAt: 'asc' },
@@ -28,7 +29,7 @@ goalsRouter.get('/', async (req, res) => {
 })
 
 goalsRouter.post('/', async (req, res) => {
-  const userId = req.user!.userId
+  const userId = getAuthUser(req).userId
   const data = createSchema.parse(req.body)
   const goal = await prisma.goal.create({
     data: {
@@ -43,7 +44,7 @@ goalsRouter.post('/', async (req, res) => {
 })
 
 goalsRouter.patch('/:id', async (req, res) => {
-  const userId = req.user!.userId
+  const userId = getAuthUser(req).userId
   const { id } = req.params
   const data = updateSchema.parse(req.body)
   const existing = await prisma.goal.findFirst({ where: { id, userId } })
@@ -61,7 +62,7 @@ goalsRouter.patch('/:id', async (req, res) => {
 })
 
 goalsRouter.delete('/:id', async (req, res) => {
-  const userId = req.user!.userId
+  const userId = getAuthUser(req).userId
   const { id } = req.params
   await prisma.goal.deleteMany({ where: { id, userId } })
   res.status(204).send()

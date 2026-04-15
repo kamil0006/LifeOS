@@ -16,8 +16,6 @@ import { useTransactionsList, type Transaction } from '../../hooks/useTransactio
 import { invalidateFinanceQueries } from '../../lib/invalidateFinanceQueries'
 import { TransactionsPageSkeleton } from '../../components/skeletons'
 
-const monthNames = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru']
-
 export function Transactions() {
   const { isDemoMode, user } = useAuth()
   const queryClient = useQueryClient()
@@ -44,8 +42,9 @@ export function Transactions() {
 
   const {
     filteredTransactions,
-    filter,
     setFilter,
+    tabFilter,
+    typeFilter,
     drillCategory,
     dateRange,
     clearDrilldown,
@@ -198,7 +197,7 @@ export function Transactions() {
               key={f}
               onClick={() => setFilter(f)}
               className={`px-4 py-2 rounded-lg font-gaming text-sm transition-all ${
-                filter === f
+                tabFilter === f
                   ? 'bg-(--accent-cyan)/20 text-(--accent-cyan) border border-(--accent-cyan)/40'
                   : 'bg-(--bg-dark) text-(--text-muted) border border-(--border) hover:text-(--text-primary)'
               }`}
@@ -265,7 +264,7 @@ export function Transactions() {
           <EmptyState
             icon={Receipt}
             title="Brak transakcji"
-            description={`W wybranym okresie (${periodLabel}) nie ma ${drillCategory ? `transakcji w kategorii „${getLabel(drillCategory)}”` : filter === 'income' ? 'przychodów' : filter === 'expense' ? 'wydatków' : 'transakcji'}.`}
+            description={`W wybranym okresie (${periodLabel}) nie ma ${drillCategory ? `transakcji w kategorii „${getLabel(drillCategory)}”` : typeFilter === 'income' ? 'przychodów' : typeFilter === 'expense' ? 'wydatków' : 'transakcji'}.`}
             action={
               <button
                 onClick={() => setShowForm(true)}

@@ -73,7 +73,7 @@ export function Habits() {
     const set = new Set(checkIns.map((c) => c.date))
     let streak = 0
     const today = new Date().toISOString().split('T')[0]
-    let d = new Date(today)
+    const d = new Date(today)
     while (true) {
       const key = d.toISOString().split('T')[0]
       if (set.has(key)) {

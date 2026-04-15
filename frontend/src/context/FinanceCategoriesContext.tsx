@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from './AuthContext'
 import { expenseCategoriesApi } from '../lib/api'
@@ -74,7 +74,10 @@ export function useFinanceCategories() {
   })
 
   const isLoading = !isDemoMode && isPending
-  const categories = [...DEFAULT_CATEGORIES, ...customCategories]
+  const categories = useMemo(
+    () => [...DEFAULT_CATEGORIES, ...customCategories],
+    [customCategories]
+  )
 
   const getColor = useCallback(
     (categoryName: string): string => {

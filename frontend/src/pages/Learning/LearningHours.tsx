@@ -23,7 +23,7 @@ export function LearningHours() {
   const [hours, setHours] = useState('')
   const [note, setNote] = useState('')
 
-  const codingHours = learning?.codingHours ?? []
+  const codingHours = useMemo(() => learning?.codingHours ?? [], [learning])
 
   const trendData = useMemo(() => {
     if (chartPeriod?.period.type === 'year') {

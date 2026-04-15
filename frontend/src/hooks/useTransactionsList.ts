@@ -86,6 +86,36 @@ function buildTransactionsForDateRange(
   return [...expenseTx, ...incomeTx].sort((a, b) => b.date.localeCompare(a.date))
 }
 
+/** Parsed query: date range and/or drill category come from URL, not duplicated in React state. */
+function parseTransactionSearchParams(searchParams: URLSearchParams) {
+  const from = searchParams.get('from')
+  const to = searchParams.get('to')
+  const catRaw = searchParams.get('category')
+  const m = searchParams.get('month')
+  const y = searchParams.get('year')
+  const category = catRaw ? decodeURIComponent(catRaw) : null
+
+  if (from && to) {
+    return {
+      dateRange: { from, to } as { from: string; to: string },
+      drillCategory: category,
+      monthFromUrl: null as { month: number; year: number } | null,
+    }
+  }
+  if (m !== null && y !== null) {
+    return {
+      dateRange: null,
+      drillCategory: category,
+      monthFromUrl: { month: Number(m), year: Number(y) },
+    }
+  }
+  return {
+    dateRange: null,
+    drillCategory: null,
+    monthFromUrl: null,
+  }
+}
+
 export function useTransactionsList(params: UseTransactionsListParams) {
   const {
     effectiveExpenses,
@@ -99,34 +129,21 @@ export function useTransactionsList(params: UseTransactionsListParams) {
 
   const [searchParams, setSearchParams] = useSearchParams()
   const [filter, setFilter] = useState<FilterType>('all')
-  const [drillCategory, setDrillCategory] = useState<string | null>(null)
-  const [dateRange, setDateRange] = useState<{ from: string; to: string } | null>(null)
   const wasLoadingRef = useRef(loading)
 
+  const { dateRange, drillCategory, monthFromUrl } = useMemo(
+    () => parseTransactionSearchParams(searchParams),
+    [searchParams]
+  )
+
+  const monthFromUrlKey = monthFromUrl ? `${monthFromUrl.month}-${monthFromUrl.year}` : ''
+
   useEffect(() => {
-    if (!monthCtx) return
-    const cat = searchParams.get('category')
-    const from = searchParams.get('from')
-    const to = searchParams.get('to')
-    const m = searchParams.get('month')
-    const y = searchParams.get('year')
-    if (from && to) {
-      setDateRange({ from, to })
-      setDrillCategory(cat ? decodeURIComponent(cat) : null)
-      if (cat) setFilter('expense')
-      return
-    }
-    if (m !== null && y !== null) {
-      monthCtx.setSelectedMonth(Number(m))
-      monthCtx.setSelectedYear(Number(y))
-      setDateRange(null)
-      setDrillCategory(cat ? decodeURIComponent(cat) : null)
-      if (cat) setFilter('expense')
-      return
-    }
-    setDrillCategory(null)
-    setDateRange(null)
-  }, [searchParams, monthCtx])
+    if (!monthCtx || !monthFromUrlKey) return
+    const [mStr, yStr] = monthFromUrlKey.split('-')
+    monthCtx.setSelectedMonth(Number(mStr))
+    monthCtx.setSelectedYear(Number(yStr))
+  }, [monthCtx, monthFromUrlKey])
 
   const transactions = useMemo((): Transaction[] => {
     if (dateRange) {
@@ -165,15 +182,17 @@ export function useTransactionsList(params: UseTransactionsListParams) {
     return [...expenseTx, ...incomeTx].sort((a, b) => b.date.localeCompare(a.date))
   }, [effectiveExpenses, effectiveScheduled, effectiveIncome, selectedMonth, selectedYear, dateRange])
 
+  const typeFilter: FilterType = drillCategory ? 'expense' : filter
+
   const filteredTransactions = useMemo(() => {
     let list = transactions
     if (drillCategory) {
       list = list.filter((t) => t.category === drillCategory)
     }
-    if (filter === 'income') return list.filter((t) => t.type === 'income')
-    if (filter === 'expense') return list.filter((t) => t.type === 'expense')
+    if (typeFilter === 'income') return list.filter((t) => t.type === 'income')
+    if (typeFilter === 'expense') return list.filter((t) => t.type === 'expense')
     return list
-  }, [transactions, filter, drillCategory])
+  }, [transactions, typeFilter, drillCategory])
 
   useEffect(() => {
     if (!searchParams.get('category')) setFilter('all')
@@ -187,8 +206,6 @@ export function useTransactionsList(params: UseTransactionsListParams) {
   }, [loading, searchParams])
 
   const clearDrilldown = () => {
-    setDrillCategory(null)
-    setDateRange(null)
     setSearchParams({})
     setFilter('all')
   }
@@ -197,11 +214,16 @@ export function useTransactionsList(params: UseTransactionsListParams) {
     ? `${dateRange.from} — ${dateRange.to}`
     : `${(monthCtx?.monthNames ?? FALLBACK_MONTH_NAMES)[selectedMonth]} ${selectedYear}`
 
+  /** Which tab should look selected (drill z URL wymusza „Wydatki”). */
+  const tabFilter: FilterType = drillCategory ? 'expense' : filter
+
   return {
     transactions,
     filteredTransactions,
     filter,
     setFilter,
+    tabFilter,
+    typeFilter,
     drillCategory,
     dateRange,
     clearDrilldown,

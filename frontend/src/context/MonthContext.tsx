@@ -9,7 +9,8 @@ import {
 
 const monthNames = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru']
 
-function buildRollingMonthOptions(count = 24) {
+function buildRollingMonthOptions(count = 24, recalcToken = 0) {
+  void recalcToken
   const options: { month: number; year: number; label: string }[] = []
   const now = new Date()
   for (let i = 0; i < count; i++) {
@@ -50,7 +51,7 @@ export function MonthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const monthOptions = useMemo(() => buildRollingMonthOptions(24), [calendarTick])
+  const monthOptions = useMemo(() => buildRollingMonthOptions(24, calendarTick), [calendarTick])
 
   useEffect(() => {
     const key = `${selectedMonth}-${selectedYear}`

@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { z } from 'zod'
+import { getAuthUser } from '../middleware/auth.js'
 import { prisma } from '../lib/prisma.js'
 import { unlockAchievement } from '../lib/achievements.js'
 
@@ -14,7 +15,7 @@ const updateSchema = z.object({
 export const todosRouter = Router()
 
 todosRouter.get('/', async (req, res) => {
-  const userId = req.user!.userId
+  const userId = getAuthUser(req).userId
   const todos = await prisma.todo.findMany({
     where: { userId },
     orderBy: { createdAt: 'desc' },
@@ -23,7 +24,7 @@ todosRouter.get('/', async (req, res) => {
 })
 
 todosRouter.post('/', async (req, res) => {
-  const userId = req.user!.userId
+  const userId = getAuthUser(req).userId
   const data = createSchema.parse(req.body)
   const todo = await prisma.todo.create({
     data: { userId, text: data.text },
@@ -34,7 +35,7 @@ todosRouter.post('/', async (req, res) => {
 })
 
 todosRouter.patch('/:id', async (req, res) => {
-  const userId = req.user!.userId
+  const userId = getAuthUser(req).userId
   const { id } = req.params
   const data = updateSchema.parse(req.body)
   const existing = await prisma.todo.findFirst({ where: { id, userId } })
@@ -47,7 +48,7 @@ todosRouter.patch('/:id', async (req, res) => {
 })
 
 todosRouter.delete('/:id', async (req, res) => {
-  const userId = req.user!.userId
+  const userId = getAuthUser(req).userId
   const { id } = req.params
   await prisma.todo.deleteMany({ where: { id, userId } })
   res.status(204).send()

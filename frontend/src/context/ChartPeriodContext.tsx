@@ -45,7 +45,9 @@ interface ChartPeriodContextType {
 
 const ChartPeriodContext = createContext<ChartPeriodContextType | null>(null)
 
-function getMonthOptions() {
+/** `recalcToken` bumps when wall-clock advances so labels stay in sync (see `calendarTick`). */
+function getMonthOptions(recalcToken: number) {
+  void recalcToken
   const options: { month: number; year: number; label: string }[] = []
   const now = new Date()
   for (let i = 0; i < 24; i++) {
@@ -57,7 +59,8 @@ function getMonthOptions() {
   return options
 }
 
-function getQuarterOptions() {
+function getQuarterOptions(recalcToken: number) {
+  void recalcToken
   const options: { quarter: 1 | 2 | 3 | 4; year: number; label: string }[] = []
   const quarters = [1, 2, 3, 4] as const
   const y0 = new Date().getFullYear()
@@ -70,7 +73,8 @@ function getQuarterOptions() {
   return options
 }
 
-function getYearOptions() {
+function getYearOptions(recalcToken: number) {
+  void recalcToken
   const options: { year: number; label: string }[] = []
   const y0 = new Date().getFullYear()
   for (let yOffset = 0; yOffset <= 5; yOffset++) {
@@ -105,9 +109,9 @@ export function ChartPeriodProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const monthOptions = useMemo(() => getMonthOptions(), [calendarTick])
-  const quarterOptions = useMemo(() => getQuarterOptions(), [calendarTick])
-  const yearOptions = useMemo(() => getYearOptions(), [calendarTick])
+  const monthOptions = useMemo(() => getMonthOptions(calendarTick), [calendarTick])
+  const quarterOptions = useMemo(() => getQuarterOptions(calendarTick), [calendarTick])
+  const yearOptions = useMemo(() => getYearOptions(calendarTick), [calendarTick])
 
   const period: ChartPeriod = useMemo(() => {
     if (periodType === 'month') {

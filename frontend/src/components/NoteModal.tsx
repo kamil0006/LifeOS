@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, HelpCircle } from 'lucide-react'
@@ -30,19 +30,22 @@ const MARKDOWN_HINT = (
 )
 
 export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProps) {
-  const getInitialForm = () => ({
-    content: note?.content ?? '',
-    tagsInput: note?.tags.join(', ') ?? '',
-    showMarkdownHelp: false,
-    error: '',
-  })
+  const getInitialForm = useCallback(
+    () => ({
+      content: note?.content ?? '',
+      tagsInput: note?.tags.join(', ') ?? '',
+      showMarkdownHelp: false,
+      error: '',
+    }),
+    [note]
+  )
   const [form, setForm] = useState(getInitialForm)
   const updateField = <K extends keyof ReturnType<typeof getInitialForm>>(key: K, value: ReturnType<typeof getInitialForm>[K]) =>
     setForm((f) => ({ ...f, [key]: value }))
 
   useEffect(() => {
     if (isOpen) setForm(getInitialForm())
-  }, [isOpen, note])
+  }, [isOpen, getInitialForm])
 
   const { content, tagsInput, showMarkdownHelp, error } = form
   const isEdit = !!note

@@ -25,7 +25,7 @@ export function NotesPage({ type }: NotesPageProps) {
   const [editingNote, setEditingNote] = useState<Note | null>(null)
   const [isAddOpen, setIsAddOpen] = useState(false)
 
-  const ctxNotes = notesCtx?.notes ?? []
+  const ctxNotes = useMemo(() => notesCtx?.notes ?? [], [notesCtx])
 
   const filtered = useMemo(() => {
     let list = ctxNotes.filter((n) => n.type === type)

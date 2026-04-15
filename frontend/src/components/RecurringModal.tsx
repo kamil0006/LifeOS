@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Plus, Trash2 } from 'lucide-react'
@@ -35,22 +35,25 @@ export function RecurringModal({
   onAddCategory,
   onDeleteCategory,
 }: RecurringModalProps) {
-  const initialForm = () => ({
-    name: '',
-    amount: '',
-    category: categories[0]?.name ?? 'Inne',
-    dayOfMonth: 1,
-    showAddCategory: false,
-    newCategoryName: '',
-    newCategoryColor: PRESET_COLORS[0],
-  })
-  const [form, setForm] = useState(initialForm)
-  const updateField = <K extends keyof ReturnType<typeof initialForm>>(key: K, value: ReturnType<typeof initialForm>[K]) =>
+  const buildInitialForm = useCallback(
+    () => ({
+      name: '',
+      amount: '',
+      category: categories[0]?.name ?? 'Inne',
+      dayOfMonth: 1,
+      showAddCategory: false,
+      newCategoryName: '',
+      newCategoryColor: PRESET_COLORS[0],
+    }),
+    [categories]
+  )
+  const [form, setForm] = useState(buildInitialForm)
+  const updateField = <K extends keyof ReturnType<typeof buildInitialForm>>(key: K, value: ReturnType<typeof buildInitialForm>[K]) =>
     setForm((f) => ({ ...f, [key]: value }))
 
   useEffect(() => {
-    if (isOpen) setForm(initialForm())
-  }, [isOpen, categories])
+    if (isOpen) setForm(buildInitialForm())
+  }, [isOpen, buildInitialForm])
 
   const { name, amount, category, dayOfMonth, showAddCategory, newCategoryName, newCategoryColor } = form
 

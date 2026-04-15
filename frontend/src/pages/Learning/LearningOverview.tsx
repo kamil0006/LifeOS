@@ -6,11 +6,11 @@ import { useLearning } from '../../context/LearningContext'
 export function LearningOverview() {
   const learning = useLearning()
 
-  const codingHours = learning?.codingHours ?? []
-  const courses = learning?.courses ?? []
-  const projects = learning?.projects ?? []
-  const books = learning?.books ?? []
-  const certifications = learning?.certifications ?? []
+  const codingHours = useMemo(() => learning?.codingHours ?? [], [learning])
+  const courses = useMemo(() => learning?.courses ?? [], [learning])
+  const projects = useMemo(() => learning?.projects ?? [], [learning])
+  const books = useMemo(() => learning?.books ?? [], [learning])
+  const certifications = useMemo(() => learning?.certifications ?? [], [learning])
 
   const totalHours = useMemo(
     () => codingHours.reduce((s, h) => s + h.hours, 0),

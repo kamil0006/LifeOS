@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { z } from 'zod'
+import { getAuthUser } from '../middleware/auth.js'
 import { prisma } from '../lib/prisma.js'
 import { unlockAchievement } from '../lib/achievements.js'
 
@@ -26,7 +27,7 @@ const updateSchema = z.object({
 export const wishesRouter = Router()
 
 wishesRouter.get('/', async (req, res) => {
-  const userId = req.user!.userId
+  const userId = getAuthUser(req).userId
   const wishes = await prisma.wish.findMany({
     where: { userId },
     orderBy: [{ stage: 'asc' }, { priority: 'asc' }],
@@ -35,7 +36,7 @@ wishesRouter.get('/', async (req, res) => {
 })
 
 wishesRouter.post('/', async (req, res) => {
-  const userId = req.user!.userId
+  const userId = getAuthUser(req).userId
   const data = createSchema.parse(req.body)
   const wish = await prisma.wish.create({
     data: {
@@ -55,7 +56,7 @@ wishesRouter.post('/', async (req, res) => {
 })
 
 wishesRouter.patch('/:id', async (req, res) => {
-  const userId = req.user!.userId
+  const userId = getAuthUser(req).userId
   const { id } = req.params
   const data = updateSchema.parse(req.body)
   const wish = await prisma.wish.updateMany({
@@ -68,7 +69,7 @@ wishesRouter.patch('/:id', async (req, res) => {
 })
 
 wishesRouter.delete('/:id', async (req, res) => {
-  const userId = req.user!.userId
+  const userId = getAuthUser(req).userId
   const { id } = req.params
   await prisma.wish.deleteMany({ where: { id, userId } })
   res.status(204).send()

@@ -21,7 +21,7 @@ export async function api<T>(
   let res: Response
   try {
     res = await fetch(`${API_BASE}${path}`, { ...options, headers })
-  } catch (e) {
+  } catch {
     throw new Error(
       'Nie można połączyć z serwerem. Upewnij się, że backend działa (port 3002).'
     )
