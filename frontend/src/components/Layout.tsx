@@ -25,7 +25,8 @@ export function Layout({ children }: LayoutProps) {
     pathname === '/calendar' ||
     pathname.startsWith('/finances') ||
     pathname.startsWith('/learning') ||
-    pathname.startsWith('/notes')
+    pathname.startsWith('/notes') ||
+    pathname.startsWith('/habits')
   const sectionKey = pathname.split('/').filter(Boolean)[0] || 'dashboard'
 
   useEffect(() => {

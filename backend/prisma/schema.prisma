@@ -123,12 +123,16 @@ model Event {
 }
 
 model Habit {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name      String
-  createdAt DateTime @default(now())
-  checkIns  HabitCheckIn[]
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  /// Etykieta jednostki (np. km, min) — tylko UI; null = nawyk binarny (tak/nie).
+  unit         String?
+  /// Opcjonalny dzienny cel liczbowy (np. 10 km). Przy braku — wpis liczy się sumarycznie bez procentu „celu dnia”.
+  targetPerDay Float?
+  createdAt    DateTime @default(now())
+  checkIns     HabitCheckIn[]
 
   @@index([userId])
 }
@@ -140,6 +144,8 @@ model HabitCheckIn {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   date      DateTime
+  /// Wykonana ilość; null = zaznaczenie bez liczby (kompatybilność / nawyk binarny).
+  value     Float?
   createdAt DateTime @default(now())
 
   @@unique([habitId, date])
