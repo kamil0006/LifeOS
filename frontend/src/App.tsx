@@ -22,7 +22,7 @@ import { Calendar } from './pages/Calendar'
 import { Habits } from './pages/Habits'
 import { LearningLayout } from './pages/Learning/LearningLayout'
 import { LearningOverview } from './pages/Learning/LearningOverview'
-import { LearningHours } from './pages/Learning/LearningHours'
+import { LearningTime } from './pages/Learning/LearningTime'
 import { LearningCourses } from './pages/Learning/LearningCourses'
 import { LearningProjects } from './pages/Learning/LearningProjects'
 import { LearningBooks } from './pages/Learning/LearningBooks'
@@ -30,6 +30,7 @@ import { LearningCertificates } from './pages/Learning/LearningCertificates'
 import { NotesLayout } from './pages/Notes/NotesLayout'
 import { NotesOverview } from './pages/Notes/NotesOverview'
 import { NotesPage } from './pages/Notes/NotesPage'
+import { NotesArchive } from './pages/Notes/NotesArchive'
 import { useAuth } from './context/AuthContext'
 
 function App() {
@@ -76,13 +77,15 @@ function App() {
         <Route path="/habits" element={<Habits />} />
         <Route path="/notes" element={<NotesLayout />}>
           <Route index element={<NotesOverview />} />
-          <Route path="quick" element={<NotesPage type="quick" />} />
+          <Route path="inbox" element={<NotesPage type="inbox" />} />
+          <Route path="quick" element={<Navigate to="/notes/inbox" replace />} />
           <Route path="ideas" element={<NotesPage type="idea" />} />
           <Route path="references" element={<NotesPage type="reference" />} />
+          <Route path="archive" element={<NotesArchive />} />
         </Route>
         <Route path="/learning" element={<LearningLayout />}>
           <Route index element={<LearningOverview />} />
-          <Route path="hours" element={<LearningHours />} />
+          <Route path="hours" element={<LearningTime />} />
           <Route path="courses" element={<LearningCourses />} />
           <Route path="projects" element={<LearningProjects />} />
           <Route path="books" element={<LearningBooks />} />

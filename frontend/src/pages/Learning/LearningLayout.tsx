@@ -5,7 +5,7 @@ import { getSubpageOutletVariants } from '../../lib/layoutSectionMotion'
 
 const subNavItems = [
   { to: '/learning', end: true, icon: LayoutDashboard, label: 'Przegląd' },
-  { to: '/learning/hours', end: false, icon: Clock, label: 'Godziny kodowania' },
+  { to: '/learning/hours', end: false, icon: Clock, label: 'Czas nauki' },
   { to: '/learning/courses', end: false, icon: GraduationCap, label: 'Kursy' },
   { to: '/learning/projects', end: false, icon: FolderKanban, label: 'Projekty' },
   { to: '/learning/books', end: false, icon: BookOpen, label: 'Książki' },
@@ -22,7 +22,7 @@ export function LearningLayout() {
       <div>
         <h1 className="text-2xl font-bold text-(--text-primary) font-gaming tracking-wider">NAUKA</h1>
         <p className="text-base text-(--text-muted) mt-1 font-gaming tracking-wide">
-          Godziny kodowania, kursy, projekty i książki
+          Sesje nauki, kursy, projekty i książki
         </p>
       </div>
 

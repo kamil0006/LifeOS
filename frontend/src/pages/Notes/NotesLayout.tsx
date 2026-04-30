@@ -1,13 +1,14 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
-import { LayoutDashboard, Zap, Lightbulb, BookMarked } from 'lucide-react'
+import { LayoutDashboard, Inbox, Lightbulb, BookMarked, Archive } from 'lucide-react'
 import { getSubpageOutletVariants } from '../../lib/layoutSectionMotion'
 
 const subNavItems = [
   { to: '/notes', end: true, icon: LayoutDashboard, label: 'Przegląd' },
-  { to: '/notes/quick', end: false, icon: Zap, label: 'Szybkie notatki' },
+  { to: '/notes/inbox', end: false, icon: Inbox, label: 'Inbox' },
   { to: '/notes/ideas', end: false, icon: Lightbulb, label: 'Pomysły' },
   { to: '/notes/references', end: false, icon: BookMarked, label: 'Referencje' },
+  { to: '/notes/archive', end: false, icon: Archive, label: 'Archiwum' },
 ]
 
 export function NotesLayout() {
@@ -20,7 +21,7 @@ export function NotesLayout() {
       <div>
         <h1 className="text-2xl font-bold text-(--text-primary) font-gaming tracking-wider">NOTATKI</h1>
         <p className="text-base text-(--text-muted) mt-1 font-gaming tracking-wide">
-          Szybkie notatki, pomysły i referencje – Markdown, tagi, wyszukiwarka
+          Inbox na szybkie wrzutki, pomysły, referencje – Markdown, tagi, archiwum
         </p>
       </div>
 

@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
+  engineType = "binary"
 }
 
 datasource db {
@@ -81,14 +82,25 @@ model Income {
 }
 
 model Todo {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   text      String
-  done      Boolean  @default(false)
-  createdAt DateTime @default(now())
+  done      Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  /// Data terminu (bez strefy — dzień kalendarzowy)
+  dueDate   DateTime? @db.Date
+  /// Opcjonalna godzina „HH:mm”
+  dueTime   String?
+  /// low | medium | high
+  priority  String    @default("medium")
+  /// dom | praca | finanse | nauka | zdrowie | inne
+  category  String    @default("inne")
+  archivedAt DateTime?
+  noteId    String?
 
   @@index([userId])
+  @@index([userId, done])
 }
 
 model Wish {
@@ -127,14 +139,24 @@ model Habit {
   userId       String
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name         String
+  category     String?
+  color        String?
+  /// daily | weekdays | weekly | monthly
+  scheduleType String   @default("daily")
+  /// Dni tygodnia dla scheduleType=weekdays (0 = niedziela ... 6 = sobota).
+  scheduleDays Int[]    @default([])
+  weeklyTarget Int?
+  monthlyTarget Int?
   /// Etykieta jednostki (np. km, min) — tylko UI; null = nawyk binarny (tak/nie).
   unit         String?
   /// Opcjonalny dzienny cel liczbowy (np. 10 km). Przy braku — wpis liczy się sumarycznie bez procentu „celu dnia”.
   targetPerDay Float?
   createdAt    DateTime @default(now())
+  archivedAt   DateTime?
   checkIns     HabitCheckIn[]
 
   @@index([userId])
+  @@index([userId, archivedAt])
 }
 
 model HabitCheckIn {
@@ -144,8 +166,11 @@ model HabitCheckIn {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   date      DateTime
+  /// done | missed | skipped
+  status    String   @default("done")
   /// Wykonana ilość; null = zaznaczenie bez liczby (kompatybilność / nawyk binarny).
   value     Float?
+  note      String?
   createdAt DateTime @default(now())
 
   @@unique([habitId, date])

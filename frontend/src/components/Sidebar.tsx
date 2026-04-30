@@ -194,7 +194,7 @@ export function AppNavPanel({ onNavigate, mobileClose }: AppNavPanelProps) {
 
 export function Sidebar() {
   return (
-    <aside className="relative hidden w-64 shrink-0 border-r border-(--border) bg-(--bg-card)/95 lg:flex lg:flex-col">
+    <aside className="relative hidden h-full min-h-0 w-64 shrink-0 overflow-y-auto border-r border-(--border) bg-(--bg-card)/95 scrollbar-theme lg:flex lg:flex-col">
       <div className="absolute top-0 left-0 h-px w-full bg-linear-to-r from-transparent via-(--accent-cyan)/50 to-transparent" />
       <AppNavPanel />
     </aside>

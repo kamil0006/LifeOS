@@ -5,6 +5,7 @@ import { X, Plus } from 'lucide-react'
 import { useModalMotion } from '../lib/modalMotion'
 import { useQuickAdd } from '../context/QuickAddContext'
 import { useTodos } from '../context/TodosContext'
+import { parseQuickTodoInput } from '../lib/todoQuickParse'
 
 /** Jednolinijkowe dodanie zadania To-do (Ctrl+Shift+L). */
 export function GlobalQuickTodo() {
@@ -19,9 +20,17 @@ export function GlobalQuickTodo() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    const t = text.trim()
-    if (!t) return
-    addTodo(t)
+    const raw = text.trim()
+    if (!raw) return
+    const parsed = parseQuickTodoInput(raw)
+    if (!parsed.text) return
+    addTodo({
+      text: parsed.text,
+      dueDate: parsed.dueDate,
+      dueTime: parsed.dueTime,
+      priority: parsed.priority,
+      category: parsed.category,
+    })
     closeQuickTodo()
   }
 
@@ -60,7 +69,7 @@ export function GlobalQuickTodo() {
                     value={text}
                     onChange={(e) => setText(e.target.value)}
                     autoFocus
-                    placeholder="Co masz do zrobienia?"
+                    placeholder="Np. Spotkanie jutro 10:00 #praca !"
                     className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
                   />
                 </div>

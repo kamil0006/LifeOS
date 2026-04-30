@@ -14,6 +14,31 @@ export interface DemoEvent {
   notes?: string
 }
 
+/** Jedna postać daty w UI i porównaniach (YYYY-MM-DD). */
+export function normalizeEventDate(raw: string): string {
+  return raw.split('T')[0]
+}
+
+function normalizeEvent(e: {
+  id: string
+  title: string
+  date: string
+  time?: string | null
+  category?: string | null
+  color?: string | null
+  notes?: string | null
+}): DemoEvent {
+  return {
+    id: e.id,
+    title: e.title,
+    date: normalizeEventDate(e.date),
+    time: e.time ?? undefined,
+    category: e.category ?? undefined,
+    color: e.color ?? undefined,
+    notes: e.notes ?? undefined,
+  }
+}
+
 function getDemoEvents(year: number): DemoEvent[] {
   const y = year.toString()
   const pad = (m: number, d: number) => `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
@@ -48,10 +73,7 @@ export function useEvents() {
     queryKey: key,
     queryFn: isDemoMode
       ? () => INITIAL_DEMO_EVENTS
-      : () =>
-          eventsApi.getAll().then((data) =>
-            data.map((e) => ({ ...e, date: e.date.split('T')[0], category: e.category ?? undefined }))
-          ),
+      : () => eventsApi.getAll().then((data) => data.map((e) => normalizeEvent(e))),
     enabled: isDemoMode || queryEnabled,
     staleTime: isDemoMode ? Infinity : undefined,
     gcTime: isDemoMode ? Infinity : undefined,
@@ -59,49 +81,60 @@ export function useEvents() {
 
   const loading = !isDemoMode && isPending
 
-  const addEvent = async (e: Omit<DemoEvent, 'id'>) => {
-    if (isDemoMode) {
-      queryClient.setQueryData<DemoEvent[]>(key, (old) => [
-        ...(old ?? []),
-        { ...e, id: Date.now().toString() },
-      ])
-      return
-    }
-    try {
-      await eventsApi.create(e)
-      queryClient.invalidateQueries({ queryKey: key })
-    } catch {
-      // ignore
-    }
-  }
+  const mergeSorted = (list: DemoEvent[]) =>
+    [...list].sort((a, b) => a.date.localeCompare(b.date) || a.title.localeCompare(b.title))
 
-  const updateEvent = async (id: string, updates: Partial<Omit<DemoEvent, 'id'>>) => {
+  const addEvent = async (e: Omit<DemoEvent, 'id'>) => {
+    const payload = { ...e, date: normalizeEventDate(e.date) }
     if (isDemoMode) {
       queryClient.setQueryData<DemoEvent[]>(key, (old) =>
-        (old ?? []).map((ev) => (ev.id === id ? { ...ev, ...updates } : ev))
+        mergeSorted([...(old ?? []), { ...payload, id: Date.now().toString() }])
       )
       return
     }
     try {
-      await eventsApi.update(id, updates)
-      queryClient.invalidateQueries({ queryKey: key })
+      const created = await eventsApi.create(payload)
+      const row = normalizeEvent(created)
+      queryClient.setQueryData<DemoEvent[]>(key, (old) =>
+        mergeSorted([...(old ?? []).filter((ev) => ev.id !== row.id), row])
+      )
     } catch {
-      // ignore
+      await queryClient.invalidateQueries({ queryKey: key })
+    }
+  }
+
+  const updateEvent = async (id: string, updates: Partial<Omit<DemoEvent, 'id'>>) => {
+    const patch = {
+      ...updates,
+      ...(updates.date != null ? { date: normalizeEventDate(updates.date) } : {}),
+    }
+    if (isDemoMode) {
+      queryClient.setQueryData<DemoEvent[]>(key, (old) =>
+        mergeSorted((old ?? []).map((ev) => (ev.id === id ? { ...ev, ...patch } : ev)))
+      )
+      return
+    }
+    try {
+      const updated = await eventsApi.update(id, patch)
+      const row = normalizeEvent(updated)
+      queryClient.setQueryData<DemoEvent[]>(key, (old) =>
+        mergeSorted((old ?? []).map((ev) => (ev.id === id ? row : ev)))
+      )
+    } catch {
+      await queryClient.invalidateQueries({ queryKey: key })
     }
   }
 
   const deleteEvent = async (id: string) => {
     if (isDemoMode) {
-      queryClient.setQueryData<DemoEvent[]>(key, (old) =>
-        (old ?? []).filter((ev) => ev.id !== id)
-      )
+      queryClient.setQueryData<DemoEvent[]>(key, (old) => (old ?? []).filter((ev) => ev.id !== id))
       return
     }
     try {
       await eventsApi.delete(id)
-      queryClient.invalidateQueries({ queryKey: key })
+      queryClient.setQueryData<DemoEvent[]>(key, (old) => (old ?? []).filter((ev) => ev.id !== id))
     } catch {
-      // ignore
+      await queryClient.invalidateQueries({ queryKey: key })
     }
   }
 

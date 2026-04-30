@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Plus, CalendarDays, CalendarRange } from 'lucide-react'
 import { Card } from '../components/Card'
 import { EventModal } from '../components/EventModal'
-import { useEvents, type DemoEvent } from '../context/EventsContext'
+import { useEvents, normalizeEventDate, type DemoEvent } from '../context/EventsContext'
 import { getPolishHolidays } from '../lib/polishHolidays'
 import { EVENT_CATEGORIES, getCategoryColor } from '../lib/eventCategories'
 import { SimplePageSkeleton } from '../components/skeletons'
@@ -52,7 +52,7 @@ export function Calendar() {
   const eventsByDate = useMemo(() => {
     const map: Record<string, typeof events> = {}
     events.forEach((ev) => {
-      const key = ev.date
+      const key = normalizeEventDate(ev.date)
       if (!map[key]) map[key] = []
       map[key].push(ev)
     })
@@ -101,15 +101,15 @@ export function Calendar() {
   }
 
   const handleAdd = (data: Omit<DemoEvent, 'id'>) => {
-    addEvent(data)
+    void addEvent(data)
   }
 
   const handleUpdate = (id: string, data: Partial<Omit<DemoEvent, 'id'>>) => {
-    updateEvent(id, data)
+    void updateEvent(id, data)
   }
 
   const handleDelete = (id: string) => {
-    deleteEvent(id)
+    void deleteEvent(id)
   }
 
   if (loading) {
@@ -129,7 +129,7 @@ export function Calendar() {
             KALENDARZ
           </h1>
           <p className="text-base text-(--text-muted) mt-1 font-gaming tracking-wide">
-            Twoje wydarzenia i terminy
+            Twoje wydarzenia — lista aktualizuje się od razu po zapisie.
           </p>
         </div>
         <button

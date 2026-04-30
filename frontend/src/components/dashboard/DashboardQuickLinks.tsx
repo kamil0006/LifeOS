@@ -41,7 +41,7 @@ export function DashboardQuickLinks({ notesCount, habitsCount, reduceMotion }: D
           <div className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-(--accent-cyan)/40 to-transparent" />
           <GraduationCap className="w-8 h-8 text-(--accent-cyan) mb-2 group-hover:drop-shadow-[0_0_8px_rgba(0,229,255,0.5)]" />
           <p className="text-base font-semibold text-(--text-primary) font-gaming">Nauka</p>
-          <p className="text-sm text-(--text-muted) mt-0.5">Kursy, projekty</p>
+          <p className="text-sm text-(--text-muted) mt-0.5">Sesje, kursy, projekty</p>
         </Link>
       </motion.div>
       <motion.div variants={getDashboardTileVariants(reduceMotion, LINK_BASE + 3)} className="min-w-0">

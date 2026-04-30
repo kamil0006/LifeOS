@@ -1,6 +1,11 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from './AuthContext'
-import { habitsApi } from '../lib/api/habitsApi'
+import {
+  habitsApi,
+  type HabitCheckInStatus,
+  type HabitScheduleType,
+  type HabitUpsertPayload,
+} from '../lib/api/habitsApi'
 import { goalsApi } from '../lib/api/goalsApi'
 import { queryKeys } from '../lib/queryKeys'
 import { useAuthenticatedQueryEnabled } from '../hooks/useAuthenticatedQueryEnabled'
@@ -9,15 +14,24 @@ export interface HabitCheckInItem {
   id: string
   date: string
   value: number | null
+  status: HabitCheckInStatus
+  note: string | null
 }
 
 export interface HabitItem {
   id: string
   name: string
+  category: string | null
+  color: string | null
+  scheduleType: HabitScheduleType
+  scheduleDays: number[]
+  weeklyTarget: number | null
+  monthlyTarget: number | null
   unit: string | null
   targetPerDay: number | null
   /** Data utworzenia nawyku (YYYY-MM-DD). */
   createdAt: string
+  archivedAt: string | null
   checkIns: HabitCheckInItem[]
 }
 
@@ -39,18 +53,40 @@ function normalizeHabitFromApi(habit: {
   name: string
   unit?: string | null
   targetPerDay?: number | null
+  category?: string | null
+  color?: string | null
+  scheduleType?: HabitScheduleType
+  scheduleDays?: number[]
+  weeklyTarget?: number | null
+  monthlyTarget?: number | null
   createdAt?: string | Date
-  checkIns: { id: string; date: string | Date; value?: number | null }[]
+  archivedAt?: string | Date | null
+  checkIns: {
+    id: string
+    date: string | Date
+    value?: number | null
+    status?: HabitCheckInStatus
+    note?: string | null
+  }[]
 }): HabitItem {
   return {
     ...habit,
+    category: habit.category ?? null,
+    color: habit.color ?? null,
+    scheduleType: habit.scheduleType ?? 'daily',
+    scheduleDays: habit.scheduleDays ?? [],
+    weeklyTarget: habit.weeklyTarget ?? null,
+    monthlyTarget: habit.monthlyTarget ?? null,
     unit: habit.unit ?? null,
     targetPerDay: habit.targetPerDay ?? null,
     createdAt: habit.createdAt != null ? toYmd(habit.createdAt) : toYmd(new Date()),
+    archivedAt: habit.archivedAt != null ? toYmd(habit.archivedAt) : null,
     checkIns: habit.checkIns.map((c) => ({
       id: c.id,
       date: typeof c.date === 'string' ? c.date.split('T')[0] : String(c.date).split('T')[0],
       value: c.value ?? null,
+      status: c.status ?? 'done',
+      note: c.note ?? null,
     })),
   }
 }
@@ -69,44 +105,80 @@ function getDemoHabits(): HabitItem[] {
     {
       id: '1',
       name: 'Bieg',
+      category: 'Zdrowie',
+      color: '#00ff9d',
+      scheduleType: 'weekly',
+      scheduleDays: [],
+      weeklyTarget: 4,
+      monthlyTarget: null,
       unit: 'km',
       targetPerDay: 10,
       createdAt: created,
+      archivedAt: null,
       checkIns: dates.flatMap((date, i) => {
         if (i % 2 !== 0) return []
         const value = i === 6 ? 7 : 10
-        return [{ id: `c1-${date}`, date, value }]
+        return [{ id: `c1-${date}`, date, value, status: 'done', note: null }]
       }),
     },
     {
       id: '2',
       name: 'Czytanie 20 min',
+      category: 'Rozwój',
+      color: '#00e5ff',
+      scheduleType: 'daily',
+      scheduleDays: [],
+      weeklyTarget: null,
+      monthlyTarget: null,
       unit: null,
       targetPerDay: null,
       createdAt: created,
+      archivedAt: null,
       checkIns: dates.filter((_, i) => i < 10).map((date) => ({
         id: `c2-${date}`,
         date,
         value: null,
+        status: 'done',
+        note: null,
       })),
     },
     {
       id: '3',
       name: 'Pić 2L wody',
+      category: 'Zdrowie',
+      color: '#38bdf8',
+      scheduleType: 'daily',
+      scheduleDays: [],
+      weeklyTarget: null,
+      monthlyTarget: null,
       unit: null,
       targetPerDay: null,
       createdAt: created,
-      checkIns: dates.slice(0, 7).map((date) => ({ id: `c3-${date}`, date, value: null })),
+      archivedAt: null,
+      checkIns: dates.slice(0, 7).map((date) => ({
+        id: `c3-${date}`,
+        date,
+        value: null,
+        status: 'done',
+        note: null,
+      })),
     },
     {
       id: '4',
       name: 'Medytacja 10 min',
+      category: 'Mindset',
+      color: '#a78bfa',
+      scheduleType: 'weekdays',
+      scheduleDays: [1, 2, 3, 4, 5],
+      weeklyTarget: null,
+      monthlyTarget: null,
       unit: null,
       targetPerDay: null,
       createdAt: created,
+      archivedAt: null,
       checkIns: dates
         .filter((_, i) => i % 3 === 0)
-        .map((date) => ({ id: `c4-${date}`, date, value: null })),
+        .map((date) => ({ id: `c4-${date}`, date, value: null, status: 'done', note: null })),
     },
   ]
 }
@@ -131,7 +203,7 @@ export function useHabits() {
     queryKey: habitsKey,
     queryFn: isDemoMode
       ? () => INITIAL_DEMO_HABITS
-      : () => habitsApi.getAll().then((h) => h.map(normalizeHabitFromApi)),
+      : () => habitsApi.getAll({ includeArchived: true }).then((h) => h.map(normalizeHabitFromApi)),
     enabled: isDemoMode || queryEnabled,
     staleTime: isDemoMode ? Infinity : undefined,
     gcTime: isDemoMode ? Infinity : undefined,
@@ -161,7 +233,10 @@ export function useHabits() {
           }
           return {
             ...h,
-            checkIns: [...h.checkIns, { id: `c-${date}`, date, value: null }],
+            checkIns: [
+              ...h.checkIns,
+              { id: `c-${habitId}-${date}`, date, value: null, status: 'done', note: null },
+            ],
           }
         })
       )
@@ -182,31 +257,38 @@ export function useHabits() {
   const upsertHabitDayValue = async (
     habitId: string,
     date: string,
-    value: number
+    value: number | null,
+    extras?: { status?: HabitCheckInStatus; note?: string | null }
   ): Promise<boolean> => {
     if (isDemoMode) {
       queryClient.setQueryData<HabitItem[]>(habitsKey, (old) =>
         (old ?? []).map((h) => {
           if (h.id !== habitId) return h
           const existing = h.checkIns.find((c) => c.date === date)
+          const status = extras?.status ?? 'done'
+          const note = extras?.note ?? null
+          const resolvedValue = status === 'done' ? value : null
           if (existing) {
             return {
               ...h,
               checkIns: h.checkIns.map((c) =>
-                c.date === date ? { ...c, value } : c
+                c.date === date ? { ...c, value: resolvedValue, status, note } : c
               ),
             }
           }
           return {
             ...h,
-            checkIns: [...h.checkIns, { id: `c-${date}`, date, value }],
+            checkIns: [
+              ...h.checkIns,
+              { id: `c-${habitId}-${date}`, date, value: resolvedValue, status, note },
+            ],
           }
         })
       )
       return true
     }
     try {
-      await habitsApi.checkIn(habitId, date, { value })
+      await habitsApi.checkIn(habitId, date, { value, ...extras })
       queryClient.invalidateQueries({ queryKey: habitsKey })
       return true
     } catch {
@@ -228,7 +310,13 @@ export function useHabits() {
             ...h,
             checkIns: [
               ...h.checkIns,
-              { id: `c-${date}`, date, value: resolved },
+              {
+                id: `c-${habitId}-${date}`,
+                date,
+                value: resolved,
+                status: 'done',
+                note: null,
+              },
             ],
           }
         })
@@ -264,7 +352,7 @@ export function useHabits() {
 
   const addHabit = async (
     name: string,
-    extras?: { unit?: string | null; targetPerDay?: number | null }
+    extras?: HabitUpsertPayload
   ) => {
     if (isDemoMode) {
       queryClient.setQueryData<HabitItem[]>(habitsKey, (old) => [
@@ -272,9 +360,16 @@ export function useHabits() {
         {
           id: Date.now().toString(),
           name,
+          category: extras?.category ?? null,
+          color: extras?.color ?? null,
+          scheduleType: extras?.scheduleType ?? 'daily',
+          scheduleDays: extras?.scheduleDays ?? [],
+          weeklyTarget: extras?.weeklyTarget ?? null,
+          monthlyTarget: extras?.monthlyTarget ?? null,
           unit: extras?.unit ?? null,
           targetPerDay: extras?.targetPerDay ?? null,
           createdAt: toYmd(new Date()),
+          archivedAt: null,
           checkIns: [],
         },
       ])
@@ -290,7 +385,7 @@ export function useHabits() {
 
   const updateHabit = async (
     id: string,
-    updates: { name?: string; unit?: string | null; targetPerDay?: number | null }
+    updates: { name?: string } & HabitUpsertPayload
   ) => {
     if (isDemoMode) {
       queryClient.setQueryData<HabitItem[]>(habitsKey, (old) =>
@@ -309,12 +404,44 @@ export function useHabits() {
   const removeHabit = async (id: string) => {
     if (isDemoMode) {
       queryClient.setQueryData<HabitItem[]>(habitsKey, (old) =>
-        (old ?? []).filter((h) => h.id !== id)
+        (old ?? []).map((h) =>
+          h.id === id ? { ...h, archivedAt: toYmd(new Date()) } : h
+        )
       )
       return
     }
     try {
       await habitsApi.delete(id)
+      queryClient.invalidateQueries({ queryKey: habitsKey })
+    } catch {
+      // ignore
+    }
+  }
+
+  const restoreHabit = async (id: string) => {
+    if (isDemoMode) {
+      queryClient.setQueryData<HabitItem[]>(habitsKey, (old) =>
+        (old ?? []).map((h) => (h.id === id ? { ...h, archivedAt: null } : h))
+      )
+      return
+    }
+    try {
+      await habitsApi.update(id, { archivedAt: null })
+      queryClient.invalidateQueries({ queryKey: habitsKey })
+    } catch {
+      // ignore
+    }
+  }
+
+  const deleteHabitPermanently = async (id: string) => {
+    if (isDemoMode) {
+      queryClient.setQueryData<HabitItem[]>(habitsKey, (old) =>
+        (old ?? []).filter((h) => h.id !== id)
+      )
+      return
+    }
+    try {
+      await habitsApi.deletePermanently(id)
       queryClient.invalidateQueries({ queryKey: habitsKey })
     } catch {
       // ignore
@@ -376,6 +503,8 @@ export function useHabits() {
     addHabit,
     updateHabit,
     removeHabit,
+    restoreHabit,
+    deleteHabitPermanently,
     toggleCheckIn,
     upsertHabitDayValue,
     addHabitDayDefault,

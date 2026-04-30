@@ -88,7 +88,7 @@ export function Dashboard() {
   const { habits, goals } = useHabits()
   const notesCtx = useNotes()
 
-  const notesCount = notesCtx?.notes?.length ?? 0
+  const notesCount = notesCtx?.notes.filter((n) => !n.archivedAt).length ?? 0
   const todoCount = todosLoading ? 0 : todos.filter((t) => !t.done).length
   const wishesCount = wishesLoading ? 0 : wishes.length
   const selectedMonth = monthCtx?.selectedMonth ?? currentMonth

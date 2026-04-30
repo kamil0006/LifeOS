@@ -34,7 +34,7 @@ export function Layout({ children }: LayoutProps) {
   }, [pathname])
 
   return (
-    <div className="flex min-h-screen bg-(--bg-dark) bg-grid">
+    <div className="flex h-dvh max-h-dvh min-h-0 overflow-hidden bg-(--bg-dark) bg-grid">
       <GlobalKeyboardShortcuts />
       <GlobalQuickTransaction />
       <GlobalQuickNote />

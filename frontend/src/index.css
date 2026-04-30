@@ -150,3 +150,21 @@ input.no-spinners {
   -moz-appearance: textfield;
   appearance: textfield;
 }
+
+/* Date input – dark color-scheme so the browser renders dark native calendar popup */
+input[type='date'] {
+  color-scheme: dark;
+}
+
+/* Tint the calendar icon to match accent-cyan */
+input[type='date']::-webkit-calendar-picker-indicator {
+  filter: invert(0.6) sepia(1) saturate(3) hue-rotate(160deg);
+  opacity: 0.8;
+  cursor: pointer;
+  border-radius: 3px;
+  padding: 2px;
+  transition: opacity 0.15s;
+}
+input[type='date']::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}

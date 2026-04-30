@@ -2,15 +2,15 @@ import { NoteModal } from './NoteModal'
 import { useQuickAdd } from '../context/QuickAddContext'
 import { useNotes } from '../context/NotesContext'
 
-/** Szybka notatka (Ctrl+Shift+Y) — typ „quick”, jak w zakładce Szybkie notatki. */
+/** Szybka notatka (Ctrl+Shift+Y) — trafia do Inbox. */
 export function GlobalQuickNote() {
   const { quickNoteOpen, closeQuickNote } = useQuickAdd()
   const notesCtx = useNotes()
 
   if (!notesCtx) return null
 
-  const handleSave = (data: { content: string; tags: string[] }) => {
-    notesCtx.addNote({ type: 'quick', content: data.content, tags: data.tags })
+  const handleSave = (data: { content: string; tags: string[]; title: string | null }) => {
+    notesCtx.addNote({ type: 'inbox', content: data.content, tags: data.tags, title: data.title })
   }
 
   return (
@@ -18,7 +18,7 @@ export function GlobalQuickNote() {
       isOpen={quickNoteOpen}
       onClose={closeQuickNote}
       note={null}
-      type="quick"
+      type="inbox"
       onSave={handleSave}
     />
   )
