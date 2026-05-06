@@ -23,6 +23,8 @@ export interface DemoScheduledExpense {
   category: string
   dayOfMonth: number
   active: boolean
+  pausedUntil?: string | null
+  reminderDaysBefore?: number | null
 }
 
 export interface DemoNetWorth {
@@ -39,8 +41,12 @@ interface DemoDataContextType {
   scheduledExpenses: DemoScheduledExpense[]
   netWorth: DemoNetWorth
   addExpense: (e: Omit<DemoExpense, 'id'>) => void
+  updateExpense: (id: string, updates: Partial<Omit<DemoExpense, 'id'>>) => void
+  restoreExpense: (e: DemoExpense) => void
   deleteExpense: (id: string) => void
   addIncome: (i: Omit<DemoIncome, 'id'>) => void
+  updateIncome: (id: string, updates: Partial<Omit<DemoIncome, 'id'>>) => void
+  restoreIncome: (i: DemoIncome) => void
   deleteIncome: (id: string) => void
   addScheduledExpense: (e: Omit<DemoScheduledExpense, 'id'>) => void
   updateScheduledExpense: (id: string, e: Partial<DemoScheduledExpense>) => void
@@ -121,10 +127,10 @@ function getDemoData(year: number) {
 }
 
 const DEMO_SCHEDULED_EXPENSES: DemoScheduledExpense[] = [
-  { id: 's1', name: 'Czynsz', amount: 1200, category: 'Mieszkanie', dayOfMonth: 1, active: true },
-  { id: 's2', name: 'Netflix', amount: 55, category: 'Rozrywka', dayOfMonth: 2, active: true },
-  { id: 's3', name: 'Spotify', amount: 23, category: 'Rozrywka', dayOfMonth: 5, active: true },
-  { id: 's4', name: 'Prąd', amount: 185, category: 'Mieszkanie', dayOfMonth: 20, active: true },
+  { id: 's1', name: 'Czynsz', amount: 1200, category: 'Mieszkanie', dayOfMonth: 1, active: true, pausedUntil: null, reminderDaysBefore: 3 },
+  { id: 's2', name: 'Netflix', amount: 55, category: 'Rozrywka', dayOfMonth: 2, active: true, pausedUntil: null, reminderDaysBefore: 1 },
+  { id: 's3', name: 'Spotify', amount: 23, category: 'Rozrywka', dayOfMonth: 5, active: true, pausedUntil: null, reminderDaysBefore: 1 },
+  { id: 's4', name: 'Prąd', amount: 185, category: 'Mieszkanie', dayOfMonth: 20, active: true, pausedUntil: null, reminderDaysBefore: 5 },
 ]
 
 const currentYear = new Date().getFullYear()
@@ -135,6 +141,92 @@ export const DEMO_NET_WORTH: DemoNetWorth = { cash: 800, bankAccount: 4200, asse
 export { DEMO_EXPENSES, DEMO_INCOME, DEMO_SCHEDULED_EXPENSES }
 
 const NET_WORTH_STORAGE_KEY = 'lifeos_net_worth'
+const DEMO_EXPENSES_STORAGE_KEY = 'lifeos_demo_expenses_v1'
+const DEMO_INCOME_STORAGE_KEY = 'lifeos_demo_income_v1'
+const DEMO_SCHEDULED_STORAGE_KEY = 'lifeos_demo_scheduled_expenses_v1'
+
+function isDemoExpenseRow(x: unknown): x is DemoExpense {
+  if (!x || typeof x !== 'object') return false
+  const o = x as Record<string, unknown>
+  return (
+    typeof o.id === 'string' &&
+    typeof o.name === 'string' &&
+    typeof o.amount === 'number' &&
+    typeof o.category === 'string' &&
+    typeof o.date === 'string'
+  )
+}
+
+function isDemoIncomeRow(x: unknown): x is DemoIncome {
+  if (!x || typeof x !== 'object') return false
+  const o = x as Record<string, unknown>
+  return (
+    typeof o.id === 'string' &&
+    typeof o.source === 'string' &&
+    typeof o.amount === 'number' &&
+    typeof o.date === 'string' &&
+    typeof o.recurring === 'boolean'
+  )
+}
+
+function isDemoScheduledRow(x: unknown): x is DemoScheduledExpense {
+  if (!x || typeof x !== 'object') return false
+  const o = x as Record<string, unknown>
+  return (
+    typeof o.id === 'string' &&
+    typeof o.name === 'string' &&
+    typeof o.amount === 'number' &&
+    typeof o.category === 'string' &&
+    typeof o.dayOfMonth === 'number' &&
+    typeof o.active === 'boolean'
+  )
+}
+
+function loadDemoExpenses(): DemoExpense[] {
+  try {
+    const raw = localStorage.getItem(DEMO_EXPENSES_STORAGE_KEY)
+    if (!raw) return DEMO_EXPENSES
+    const parsed = JSON.parse(raw) as unknown
+    if (!Array.isArray(parsed)) return DEMO_EXPENSES
+    const rows = parsed.filter(isDemoExpenseRow)
+    if (parsed.length > 0 && rows.length === 0) return DEMO_EXPENSES
+    return rows
+  } catch {
+    return DEMO_EXPENSES
+  }
+}
+
+function loadDemoIncome(): DemoIncome[] {
+  try {
+    const raw = localStorage.getItem(DEMO_INCOME_STORAGE_KEY)
+    if (!raw) return DEMO_INCOME
+    const parsed = JSON.parse(raw) as unknown
+    if (!Array.isArray(parsed)) return DEMO_INCOME
+    const rows = parsed.filter(isDemoIncomeRow)
+    if (parsed.length > 0 && rows.length === 0) return DEMO_INCOME
+    return rows
+  } catch {
+    return DEMO_INCOME
+  }
+}
+
+function loadDemoScheduled(): DemoScheduledExpense[] {
+  try {
+    const raw = localStorage.getItem(DEMO_SCHEDULED_STORAGE_KEY)
+    if (!raw) return DEMO_SCHEDULED_EXPENSES
+    const parsed = JSON.parse(raw) as unknown
+    if (!Array.isArray(parsed)) return DEMO_SCHEDULED_EXPENSES
+    const rows = parsed.filter(isDemoScheduledRow).map((x) => ({
+      ...x,
+      pausedUntil: x.pausedUntil ?? null,
+      reminderDaysBefore: x.reminderDaysBefore ?? null,
+    }))
+    if (parsed.length > 0 && rows.length === 0) return DEMO_SCHEDULED_EXPENSES
+    return rows
+  } catch {
+    return DEMO_SCHEDULED_EXPENSES
+  }
+}
 
 function loadNetWorth(): DemoNetWorth {
   try {
@@ -154,39 +246,149 @@ function loadNetWorth(): DemoNetWorth {
 }
 
 export function DemoDataProvider({ children }: { children: ReactNode }) {
-  const [expenses, setExpenses] = useState<DemoExpense[]>(DEMO_EXPENSES)
-  const [income, setIncome] = useState<DemoIncome[]>(DEMO_INCOME)
-  const [scheduledExpenses, setScheduledExpenses] = useState<DemoScheduledExpense[]>(DEMO_SCHEDULED_EXPENSES)
+  const [expenses, setExpenses] = useState<DemoExpense[]>(() => loadDemoExpenses())
+  const [income, setIncome] = useState<DemoIncome[]>(() => loadDemoIncome())
+  const [scheduledExpenses, setScheduledExpenses] = useState<DemoScheduledExpense[]>(() => loadDemoScheduled())
   const [netWorth, setNetWorth] = useState<DemoNetWorth>(loadNetWorth)
 
   const addExpense = (e: Omit<DemoExpense, 'id'>) => {
-    setExpenses((prev) => [...prev, { ...e, id: Date.now().toString() }])
+    setExpenses((prev) => {
+      const next = [...prev, { ...e, id: Date.now().toString() }]
+      try {
+        localStorage.setItem(DEMO_EXPENSES_STORAGE_KEY, JSON.stringify(next))
+      } catch {
+        /* ignore */
+      }
+      return next
+    })
+  }
+
+  const updateExpense = (id: string, updates: Partial<Omit<DemoExpense, 'id'>>) => {
+    setExpenses((prev) => {
+      const next = prev.map((x) => (x.id === id ? { ...x, ...updates } : x))
+      try {
+        localStorage.setItem(DEMO_EXPENSES_STORAGE_KEY, JSON.stringify(next))
+      } catch {
+        /* ignore */
+      }
+      return next
+    })
+  }
+
+  const restoreExpense = (expense: DemoExpense) => {
+    setExpenses((prev) => {
+      const next = [expense, ...prev.filter((x) => x.id !== expense.id)]
+      try {
+        localStorage.setItem(DEMO_EXPENSES_STORAGE_KEY, JSON.stringify(next))
+      } catch {
+        /* ignore */
+      }
+      return next
+    })
   }
 
   const deleteExpense = (id: string) => {
-    setExpenses((prev) => prev.filter((x) => x.id !== id))
+    setExpenses((prev) => {
+      const next = prev.filter((x) => x.id !== id)
+      try {
+        localStorage.setItem(DEMO_EXPENSES_STORAGE_KEY, JSON.stringify(next))
+      } catch {
+        /* ignore */
+      }
+      return next
+    })
   }
 
   const addIncome = (i: Omit<DemoIncome, 'id'>) => {
-    setIncome((prev) => [...prev, { ...i, id: Date.now().toString() }])
+    setIncome((prev) => {
+      const next = [...prev, { ...i, id: Date.now().toString() }]
+      try {
+        localStorage.setItem(DEMO_INCOME_STORAGE_KEY, JSON.stringify(next))
+      } catch {
+        /* ignore */
+      }
+      return next
+    })
+  }
+
+  const updateIncome = (id: string, updates: Partial<Omit<DemoIncome, 'id'>>) => {
+    setIncome((prev) => {
+      const next = prev.map((x) => (x.id === id ? { ...x, ...updates } : x))
+      try {
+        localStorage.setItem(DEMO_INCOME_STORAGE_KEY, JSON.stringify(next))
+      } catch {
+        /* ignore */
+      }
+      return next
+    })
+  }
+
+  const restoreIncome = (incomeItem: DemoIncome) => {
+    setIncome((prev) => {
+      const next = [incomeItem, ...prev.filter((x) => x.id !== incomeItem.id)]
+      try {
+        localStorage.setItem(DEMO_INCOME_STORAGE_KEY, JSON.stringify(next))
+      } catch {
+        /* ignore */
+      }
+      return next
+    })
   }
 
   const deleteIncome = (id: string) => {
-    setIncome((prev) => prev.filter((x) => x.id !== id))
+    setIncome((prev) => {
+      const next = prev.filter((x) => x.id !== id)
+      try {
+        localStorage.setItem(DEMO_INCOME_STORAGE_KEY, JSON.stringify(next))
+      } catch {
+        /* ignore */
+      }
+      return next
+    })
   }
 
   const addScheduledExpense = (e: Omit<DemoScheduledExpense, 'id'>) => {
-    setScheduledExpenses((prev) => [...prev, { ...e, id: `s${Date.now()}` }])
+    setScheduledExpenses((prev) => {
+      const next = [
+        ...prev,
+        {
+          ...e,
+          pausedUntil: e.pausedUntil ?? null,
+          reminderDaysBefore: e.reminderDaysBefore ?? null,
+          id: `s${Date.now()}`,
+        },
+      ]
+      try {
+        localStorage.setItem(DEMO_SCHEDULED_STORAGE_KEY, JSON.stringify(next))
+      } catch {
+        /* ignore */
+      }
+      return next
+    })
   }
 
   const updateScheduledExpense = (id: string, updates: Partial<DemoScheduledExpense>) => {
-    setScheduledExpenses((prev) =>
-      prev.map((x) => (x.id === id ? { ...x, ...updates } : x))
-    )
+    setScheduledExpenses((prev) => {
+      const next = prev.map((x) => (x.id === id ? { ...x, ...updates } : x))
+      try {
+        localStorage.setItem(DEMO_SCHEDULED_STORAGE_KEY, JSON.stringify(next))
+      } catch {
+        /* ignore */
+      }
+      return next
+    })
   }
 
   const deleteScheduledExpense = (id: string) => {
-    setScheduledExpenses((prev) => prev.filter((x) => x.id !== id))
+    setScheduledExpenses((prev) => {
+      const next = prev.filter((x) => x.id !== id)
+      try {
+        localStorage.setItem(DEMO_SCHEDULED_STORAGE_KEY, JSON.stringify(next))
+      } catch {
+        /* ignore */
+      }
+      return next
+    })
   }
 
   const updateNetWorthPosition = (key: NetWorthPositionKey, delta: number) => {
@@ -209,8 +411,12 @@ export function DemoDataProvider({ children }: { children: ReactNode }) {
         scheduledExpenses,
         netWorth,
         addExpense,
+        updateExpense,
+        restoreExpense,
         deleteExpense,
         addIncome,
+        updateIncome,
+        restoreIncome,
         deleteIncome,
         addScheduledExpense,
         updateScheduledExpense,

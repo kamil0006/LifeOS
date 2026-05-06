@@ -13,6 +13,7 @@ export interface ScheduledExpenseLike {
   category: string
   dayOfMonth: number
   active: boolean
+  pausedUntil?: string | null
 }
 
 export interface MergedExpense extends ExpenseLike {
@@ -47,10 +48,11 @@ export function mergeExpensesWithScheduled<E extends ExpenseLike, S extends Sche
 
   const virtual: MergedExpense[] = scheduled
     .filter((s) => s.active)
-    .map((s) => {
+    .reduce<MergedExpense[]>((acc, s) => {
       const day = Math.min(s.dayOfMonth, lastDay)
       const date = `${year}-${pad(month + 1)}-${pad(day)}`
-      return {
+      if (s.pausedUntil && s.pausedUntil >= date) return acc
+      acc.push({
         id: `scheduled-${s.id}-${date}`,
         name: s.name,
         amount: s.amount,
@@ -58,8 +60,9 @@ export function mergeExpensesWithScheduled<E extends ExpenseLike, S extends Sche
         date,
         isScheduled: true,
         scheduledId: s.id,
-      }
-    })
+      })
+      return acc
+    }, [])
 
   return [...real, ...virtual].sort((a, b) => a.date.localeCompare(b.date))
 }

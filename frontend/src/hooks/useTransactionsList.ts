@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { mergeExpensesWithScheduled, type MergedExpense } from '../lib/expensesUtils'
 import { useMonth, inMonth, parseDate } from '../context/MonthContext'
+import { EXPENSE_CATEGORY_NONE } from '../lib/expenseCategoryConstants'
 
 export type FilterType = 'all' | 'income' | 'expense'
 
@@ -27,6 +28,8 @@ export interface UseTransactionsListParams {
     category: string
     dayOfMonth: number
     active: boolean
+    pausedUntil?: string | null
+    reminderDaysBefore?: number | null
   }[]
   effectiveIncome: { id: string; source: string; amount: number; date: string; recurring: boolean }[]
   selectedMonth: number
@@ -78,7 +81,7 @@ function buildTransactionsForDateRange(
     id: i.id,
     date: i.date,
     name: i.source,
-    category: 'Dochód',
+    category: EXPENSE_CATEGORY_NONE,
     amount: i.amount,
     type: 'income' as const,
   }))
@@ -174,7 +177,7 @@ export function useTransactionsList(params: UseTransactionsListParams) {
       id: i.id,
       date: i.date,
       name: i.source,
-      category: 'Dochód',
+      category: EXPENSE_CATEGORY_NONE,
       amount: i.amount,
       type: 'income',
     }))

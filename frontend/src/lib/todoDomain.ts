@@ -30,6 +30,7 @@ export interface TodoItem {
   category: TodoCategory
   archivedAt: string | null
   noteId: string | null
+  linkedEventId?: string | null
 }
 
 export function localISODate(d = new Date()): string {

@@ -34,7 +34,8 @@ import { NotesArchive } from './pages/Notes/NotesArchive'
 import { useAuth } from './context/AuthContext'
 
 function App() {
-  const { token, isDemoMode } = useAuth()
+  const { token, isDemoMode, user } = useAuth()
+  const dataScopeKey = isDemoMode ? 'demo' : `u-${user?.id ?? 'x'}`
 
   const isAuthenticated = isDemoMode || !!token
 
@@ -51,8 +52,8 @@ function App() {
     <DemoDataProvider>
       <MonthProvider>
         <ChartPeriodProvider>
-        <LearningProvider>
-        <NotesProvider>
+        <LearningProvider key={dataScopeKey}>
+        <NotesProvider key={dataScopeKey}>
         <GlobalSearchProvider>
         <QuickAddProvider>
         <OnboardingProvider>

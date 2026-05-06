@@ -7,4 +7,6 @@ export type ScheduledExpenseRow = {
   category: string
   dayOfMonth: number
   active: boolean
+  pausedUntil?: string | null
+  reminderDaysBefore?: number | null
 }

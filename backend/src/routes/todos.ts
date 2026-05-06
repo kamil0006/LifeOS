@@ -21,6 +21,7 @@ const createSchema = z.object({
   priority: priorityEnum.optional(),
   category: categoryEnum.optional(),
   noteId: z.string().optional().nullable(),
+  linkedEventId: z.string().optional().nullable(),
 })
 
 const updateSchema = z
@@ -33,6 +34,7 @@ const updateSchema = z
     category: categoryEnum.optional(),
     archivedAt: z.string().datetime().nullable().optional(),
     noteId: z.string().nullable().optional(),
+    linkedEventId: z.string().nullable().optional(),
   })
   .refine((o) => Object.keys(o).length > 0, { message: 'Brak pól do aktualizacji' })
 
@@ -60,6 +62,7 @@ todosRouter.post('/', async (req, res) => {
       priority: data.priority ?? 'medium',
       category: data.category ?? 'inne',
       noteId: data.noteId?.trim() || null,
+      linkedEventId: data.linkedEventId?.trim() || null,
     },
   })
   res.status(201).json(todo)
@@ -85,6 +88,7 @@ todosRouter.patch('/:id', async (req, res) => {
   if (data.archivedAt !== undefined)
     patch.archivedAt = data.archivedAt === null ? null : new Date(data.archivedAt)
   if (data.noteId !== undefined) patch.noteId = data.noteId?.trim() || null
+  if (data.linkedEventId !== undefined) patch.linkedEventId = data.linkedEventId?.trim() || null
 
   const updated = await prisma.todo.update({
     where: { id },

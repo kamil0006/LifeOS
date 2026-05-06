@@ -7,6 +7,11 @@ export const expensesApi = {
       '/expenses',
       { method: 'POST', body: JSON.stringify(data) }
     ),
+  update: (id: string, data: { name?: string; amount?: number; category?: string; date?: string }) =>
+    api<{ id: string; name: string; amount: number; category: string; date: string }>(
+      `/expenses/${id}`,
+      { method: 'PATCH', body: JSON.stringify(data) }
+    ),
   delete: (id: string) => api(`/expenses/${id}`, { method: 'DELETE' }),
 }
 
@@ -28,19 +33,27 @@ export const expenseCategoriesApi = {
 
 export const scheduledExpensesApi = {
   getAll: () =>
-    api<{ id: string; name: string; amount: number; category: string; dayOfMonth: number; active: boolean }[]>(
+    api<{ id: string; name: string; amount: number; category: string; dayOfMonth: number; active: boolean; pausedUntil?: string | null; reminderDaysBefore?: number | null }[]>(
       '/scheduled-expenses'
     ),
   create: (data: { name: string; amount: number; category: string; dayOfMonth: number }) =>
-    api<{ id: string; name: string; amount: number; category: string; dayOfMonth: number; active: boolean }>(
+    api<{ id: string; name: string; amount: number; category: string; dayOfMonth: number; active: boolean; pausedUntil?: string | null; reminderDaysBefore?: number | null }>(
       '/scheduled-expenses',
       { method: 'POST', body: JSON.stringify(data) }
     ),
   update: (
     id: string,
-    data: { name?: string; amount?: number; category?: string; dayOfMonth?: number; active?: boolean }
+    data: {
+      name?: string
+      amount?: number
+      category?: string
+      dayOfMonth?: number
+      active?: boolean
+      pausedUntil?: string | null
+      reminderDaysBefore?: number | null
+    }
   ) =>
-    api<{ id: string; name: string; amount: number; category: string; dayOfMonth: number; active: boolean }>(
+    api<{ id: string; name: string; amount: number; category: string; dayOfMonth: number; active: boolean; pausedUntil?: string | null; reminderDaysBefore?: number | null }>(
       `/scheduled-expenses/${id}`,
       { method: 'PATCH', body: JSON.stringify(data) }
     ),
@@ -55,5 +68,42 @@ export const incomeApi = {
       '/income',
       { method: 'POST', body: JSON.stringify(data) }
     ),
+  update: (id: string, data: { source?: string; amount?: number; date?: string; recurring?: boolean }) =>
+    api<{ id: string; source: string; amount: number; date: string; recurring: boolean }>(
+      `/income/${id}`,
+      { method: 'PATCH', body: JSON.stringify(data) }
+    ),
   delete: (id: string) => api(`/income/${id}`, { method: 'DELETE' }),
+}
+
+export type NetWorthAccountDto = {
+  id: string
+  name: string
+  kind: 'asset' | 'liability'
+  balance: number
+  createdAt: string
+  updatedAt: string
+}
+
+export type NetWorthAdjustmentDto = {
+  id: string
+  accountId: string
+  amount: number
+  description: string | null
+  createdAt: string
+  account: { id: string; name: string; kind: 'asset' | 'liability' }
+}
+
+export const netWorthApi = {
+  getAccounts: () => api<NetWorthAccountDto[]>('/net-worth/accounts'),
+  createAccount: (data: { name: string; kind: 'asset' | 'liability'; balance: number }) =>
+    api<NetWorthAccountDto>('/net-worth/accounts', { method: 'POST', body: JSON.stringify(data) }),
+  updateAccount: (id: string, data: Partial<{ name: string; kind: 'asset' | 'liability'; balance: number }>) =>
+    api<NetWorthAccountDto>(`/net-worth/accounts/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  getAdjustments: () => api<NetWorthAdjustmentDto[]>('/net-worth/adjustments'),
+  createAdjustment: (data: { accountId: string; amount: number; description?: string }) =>
+    api<{ adjustment: NetWorthAdjustmentDto; account: NetWorthAccountDto }>('/net-worth/adjustments', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
 }

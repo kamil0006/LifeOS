@@ -75,9 +75,9 @@ export interface Certification {
   renewalReminderDays?: number
 }
 
-const STORAGE_KEY_AUTH = 'lifeos_nauka_user'
-const STORAGE_KEY_LEGACY = 'lifeos_nauka'
 const STORAGE_KEY_DEMO = 'lifeos_nauka_demo'
+/** Izolacja danych Nauki per konto (bez współdzielonego „lifeos_nauka_user”). */
+const STORAGE_KEY_USER_PREFIX = 'lifeos_nauka_u'
 
 const currentYear = new Date().getFullYear()
 const pad = (m: number, d: number) =>
@@ -271,48 +271,6 @@ function saveToStorage<T>(storagePrefix: string, key: string, data: T) {
   }
 }
 
-function loadAuthSlice<T>(key: string, empty: T, demoSeed: T): T {
-  try {
-    const userRaw = localStorage.getItem(`${STORAGE_KEY_AUTH}_${key}`)
-    if (userRaw != null) return JSON.parse(userRaw) as T
-  } catch {
-    /* ignore */
-  }
-  try {
-    const legacyRaw = localStorage.getItem(`${STORAGE_KEY_LEGACY}_${key}`)
-    if (legacyRaw == null) return empty
-    const parsed = JSON.parse(legacyRaw) as T
-    if (JSON.stringify(parsed) === JSON.stringify(demoSeed)) return empty
-    saveToStorage(STORAGE_KEY_AUTH, key, parsed)
-    return parsed
-  } catch {
-    return empty
-  }
-}
-
-function loadAuthSessions(): LearningSession[] {
-  try {
-    const raw = localStorage.getItem(`${STORAGE_KEY_AUTH}_sessions`)
-    if (raw != null) return JSON.parse(raw) as LearningSession[]
-  } catch {
-    /* ignore */
-  }
-  try {
-    const legacyRaw =
-      localStorage.getItem(`${STORAGE_KEY_AUTH}_codingHours`) ||
-      localStorage.getItem(`${STORAGE_KEY_LEGACY}_codingHours`)
-    if (legacyRaw != null) {
-      const legacy = JSON.parse(legacyRaw) as LegacyCodingHour[]
-      const migrated = migrateLegacyCodingHours(legacy)
-      saveToStorage(STORAGE_KEY_AUTH, 'sessions', migrated)
-      return migrated
-    }
-  } catch {
-    /* ignore */
-  }
-  return []
-}
-
 function loadDemoSessions(): LearningSession[] {
   try {
     const raw = localStorage.getItem(`${STORAGE_KEY_DEMO}_sessions`)
@@ -332,43 +290,43 @@ function loadDemoSessions(): LearningSession[] {
 }
 
 export function LearningProvider({ children }: { children: ReactNode }) {
-  const { isDemoMode } = useAuth()
-  const storagePrefix = isDemoMode ? STORAGE_KEY_DEMO : STORAGE_KEY_AUTH
+  const { isDemoMode, user } = useAuth()
+  const storagePrefix = isDemoMode
+    ? STORAGE_KEY_DEMO
+    : `${STORAGE_KEY_USER_PREFIX}_${user?.id ?? '_'}`
 
   const [sessions, setSessions] = useState<LearningSession[]>(() =>
-    isDemoMode ? loadDemoSessions() : loadAuthSessions(),
+    isDemoMode ? loadDemoSessions() : loadFromStorage(storagePrefix, 'sessions', []),
   )
   const [courses, setCourses] = useState<Course[]>(() =>
     isDemoMode
       ? loadFromStorage(storagePrefix, 'courses', DEMO_COURSES)
-      : loadAuthSlice('courses', [], DEMO_COURSES),
+      : loadFromStorage(storagePrefix, 'courses', []),
   )
   const [projects, setProjects] = useState<Project[]>(() => {
     const raw = isDemoMode
       ? loadFromStorage<unknown[]>(storagePrefix, 'projects', DEMO_PROJECTS as unknown[])
-      : loadAuthSlice<unknown[]>('projects', [], DEMO_PROJECTS as unknown[])
+      : loadFromStorage<unknown[]>(storagePrefix, 'projects', [])
     return normalizeProjectsFromStorage(raw)
   })
   const [books, setBooks] = useState<Book[]>(() => {
     const raw = isDemoMode
       ? loadFromStorage<unknown[]>(storagePrefix, 'books', DEMO_BOOKS as unknown[])
-      : loadAuthSlice<unknown[]>('books', [], DEMO_BOOKS as unknown[])
+      : loadFromStorage<unknown[]>(storagePrefix, 'books', [])
     return normalizeBooksFromStorage(raw)
   })
   const [bookCategories, setBookCategories] = useState<string[]>(() =>
-    isDemoMode
-      ? loadFromStorage(storagePrefix, 'bookCategories', [])
-      : loadAuthSlice('bookCategories', [], []),
+    loadFromStorage(storagePrefix, 'bookCategories', []),
   )
   const [sessionCategories, setSessionCategories] = useState<string[]>(() =>
     isDemoMode
       ? loadFromStorage(storagePrefix, 'sessionCategories', DEMO_SESSION_CATEGORIES)
-      : loadAuthSlice('sessionCategories', [], DEMO_SESSION_CATEGORIES),
+      : loadFromStorage(storagePrefix, 'sessionCategories', []),
   )
   const [certifications, setCertifications] = useState<Certification[]>(() =>
     isDemoMode
       ? loadFromStorage(storagePrefix, 'certifications', DEMO_CERTIFICATES)
-      : loadAuthSlice('certifications', [], DEMO_CERTIFICATES),
+      : loadFromStorage(storagePrefix, 'certifications', []),
   )
   const [weeklyGoalMinutes, setWeeklyGoalMinutesState] = useState<number>(() => {
     try {

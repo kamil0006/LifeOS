@@ -7,7 +7,10 @@ export const queryKeys = {
   expenseCategories: (userId: string) => [...queryKeys.root, 'expenseCategories', userId] as const,
   todos: (userId: string) => [...queryKeys.root, 'todos', userId] as const,
   events: (userId: string) => [...queryKeys.root, 'events', userId] as const,
+  eventCategories: (userId: string) => [...queryKeys.root, 'eventCategories', userId] as const,
   wishes: (userId: string) => [...queryKeys.root, 'wishes', userId] as const,
   habits: (userId: string) => [...queryKeys.root, 'habits', userId] as const,
   goals: (userId: string) => [...queryKeys.root, 'goals', userId] as const,
+  netWorthAccounts: (userId: string) => [...queryKeys.root, 'netWorthAccounts', userId] as const,
+  netWorthAdjustments: (userId: string) => [...queryKeys.root, 'netWorthAdjustments', userId] as const,
 }

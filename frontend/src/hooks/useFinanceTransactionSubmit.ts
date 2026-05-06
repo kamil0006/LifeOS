@@ -4,23 +4,26 @@ import { useAuth } from '../context/AuthContext'
 import { useDemoData } from '../context/DemoDataContext'
 import { expensesApi, incomeApi } from '../lib/api'
 import { invalidateFinanceQueries } from '../lib/invalidateFinanceQueries'
+import { EXPENSE_CATEGORY_NONE } from '../lib/expenseCategoryConstants'
 
 export type TransactionFormData = { name: string; amount: number; category?: string; date: string }
+export type TransactionUpdateData = TransactionFormData & { recurring?: boolean }
 
 /**
  * Wspólna logika zapisu przychodu/wydatku (Transakcje + skróty globalne).
  */
 export function useFinanceTransactionSubmit() {
-  const { isDemoMode, user } = useAuth()
+  const { user, token } = useAuth()
   const queryClient = useQueryClient()
   const demoData = useDemoData()
   const userId = user?.id ?? ''
+  const useApi = Boolean(token)
 
   const submit = useCallback(
     async (formType: 'income' | 'expense', data: TransactionFormData) => {
       const date = data.date ?? new Date().toISOString().split('T')[0]
       if (formType === 'income') {
-        if (isDemoMode) {
+        if (!useApi) {
           if (demoData) {
             demoData.addIncome({ source: data.name, amount: data.amount, date, recurring: false })
           } else {
@@ -31,12 +34,12 @@ export function useFinanceTransactionSubmit() {
           await invalidateFinanceQueries(queryClient, userId)
         }
       } else {
-        if (isDemoMode) {
+        if (!useApi) {
           if (demoData) {
             demoData.addExpense({
               name: data.name,
               amount: data.amount,
-              category: data.category ?? 'Inne',
+              category: data.category ?? EXPENSE_CATEGORY_NONE,
               date,
             })
           } else {
@@ -46,15 +49,50 @@ export function useFinanceTransactionSubmit() {
           await expensesApi.create({
             name: data.name,
             amount: data.amount,
-            category: data.category ?? 'Inne',
+            category: data.category ?? EXPENSE_CATEGORY_NONE,
             date,
           })
           await invalidateFinanceQueries(queryClient, userId)
         }
       }
     },
-    [isDemoMode, demoData, queryClient, userId],
+    [useApi, demoData, queryClient, userId],
   )
 
-  return { submit }
+  const submitUpdate = useCallback(
+    async (formType: 'income' | 'expense', id: string, data: TransactionUpdateData) => {
+      const date = data.date ?? new Date().toISOString().split('T')[0]
+      if (formType === 'income') {
+        if (!useApi) {
+          demoData?.updateIncome(id, {
+            source: data.name,
+            amount: data.amount,
+            date,
+            recurring: data.recurring ?? false,
+          })
+        } else {
+          await incomeApi.update(id, { source: data.name, amount: data.amount, date, recurring: data.recurring })
+          await invalidateFinanceQueries(queryClient, userId)
+        }
+      } else if (!useApi) {
+        demoData?.updateExpense(id, {
+          name: data.name,
+          amount: data.amount,
+          category: data.category ?? EXPENSE_CATEGORY_NONE,
+          date,
+        })
+      } else {
+        await expensesApi.update(id, {
+          name: data.name,
+          amount: data.amount,
+          category: data.category ?? EXPENSE_CATEGORY_NONE,
+          date,
+        })
+        await invalidateFinanceQueries(queryClient, userId)
+      }
+    },
+    [useApi, demoData, queryClient, userId]
+  )
+
+  return { submit, submitUpdate }
 }

@@ -1,24 +1,22 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Plus, Trash2 } from 'lucide-react'
+import { X } from 'lucide-react'
 import { useModalMotion } from '../lib/modalMotion'
-
-const PRESET_COLORS = [
-  '#00ff9d', '#00e5ff', '#ffb800', '#ff00d4', '#e57373', '#64b5f6', '#9d4edd',
-  '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dfe6e9', '#fd79a8',
-  '#a29bfe', '#6c5ce7', '#00b894', '#e17055',
-]
+import { ExpenseCategoryPicker, DEFAULT_NEW_EXPENSE_CATEGORY_COLOR } from './finance/ExpenseCategoryPicker'
+import { EXPENSE_CATEGORY_NONE } from '../lib/expenseCategoryConstants'
 
 interface TransactionModalProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (data: { name: string; amount: number; category?: string; date: string }) => void
+  onSubmit: (data: { name: string; amount: number; category?: string; date: string }) => void | Promise<void>
   type: 'income' | 'expense'
   categories: { id: string; name: string; label: string; color: string }[]
-  customCategories?: { id: string; name: string; label: string; color: string }[]
   onAddCategory?: (name: string, color: string) => Promise<void>
   onDeleteCategory?: (id: string) => Promise<void>
+  initialData?: { name: string; amount: number; category?: string; date: string } | null
+  submitLabel?: string
+  title?: string
 }
 
 export function TransactionModal({
@@ -27,48 +25,105 @@ export function TransactionModal({
   onSubmit,
   type,
   categories,
-  customCategories = [],
   onAddCategory,
   onDeleteCategory,
+  initialData,
+  submitLabel,
+  title,
 }: TransactionModalProps) {
   const { backdrop, panel } = useModalMotion()
-  const buildInitialForm = useCallback(
-    () => ({
-      name: '',
-      amount: '',
-      category: categories[0]?.name ?? 'Inne',
-      date: new Date().toISOString().split('T')[0],
+
+  const initialDataKey =
+    initialData == null
+      ? 'new'
+      : `${initialData.name}\t${initialData.amount}\t${initialData.date}\t${initialData.category ?? ''}`
+
+  const formDefaults = (
+    cats: typeof categories,
+    init: typeof initialData
+  ): {
+    name: string
+    amount: string
+    category: string
+    date: string
+    showAddCategory: boolean
+    newCategoryName: string
+    newCategoryColor: string
+  } => {
+    const raw = init?.category ?? EXPENSE_CATEGORY_NONE
+    const category =
+      raw === EXPENSE_CATEGORY_NONE || cats.some((c) => c.name === raw) ? raw : EXPENSE_CATEGORY_NONE
+    return {
+      name: init?.name ?? '',
+      amount: init?.amount != null ? String(init.amount) : '',
+      category,
+      date: init?.date ?? new Date().toISOString().split('T')[0],
       showAddCategory: false,
       newCategoryName: '',
-      newCategoryColor: PRESET_COLORS[0],
-    }),
-    [categories]
-  )
-  const [form, setForm] = useState(buildInitialForm)
-  const updateField = <K extends keyof ReturnType<typeof buildInitialForm>>(key: K, value: ReturnType<typeof buildInitialForm>[K]) =>
+      newCategoryColor: DEFAULT_NEW_EXPENSE_CATEGORY_COLOR,
+    }
+  }
+
+  const [form, setForm] = useState(() => formDefaults(categories, initialData))
+  type FormState = typeof form
+  const formRef = useRef(form)
+  formRef.current = form
+
+  const updateField = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((f) => ({ ...f, [key]: value }))
 
-  /** Tylko przy otwarciu / zmianie typu — nie przy zmianie `categories` (np. po dodaniu kategorii), żeby nie czyścić nazwy i kwoty. */
+  const wasOpenRef = useRef(false)
+  const prevTypeRef = useRef(type)
+  const prevInitialKeyRef = useRef(initialDataKey)
+
+  /**
+   * Reset tylko przy otwarciu modala lub zmianie typu / edytowanego wpisu — nie przy każdej zmianie referencji `categories`
+   * (rodzic często robi .map() bez useMemo, co wcześniej kasowało wybraną kategorię przed zapisem).
+   */
   useEffect(() => {
-    if (!isOpen) return
-    setForm(buildInitialForm())
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- reset wyłącznie przy isOpen/type; `buildInitialForm` zmienia się przy `categories`
-  }, [isOpen, type])
+    if (!isOpen) {
+      wasOpenRef.current = false
+      return
+    }
+
+    const justOpened = !wasOpenRef.current
+    wasOpenRef.current = true
+
+    const typeChanged = prevTypeRef.current !== type
+    prevTypeRef.current = type
+
+    const initialChanged = prevInitialKeyRef.current !== initialDataKey
+    prevInitialKeyRef.current = initialDataKey
+
+    if (justOpened || typeChanged || initialChanged) {
+      setForm(formDefaults(categories, initialData))
+    }
+    // Nie dodawaj `categories` do zależności — nowa tablica z rodzica (np. .map()) resetowałaby formularz i kasowała wybór kategorii.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, type, initialDataKey])
 
   const { name, amount, category, date, showAddCategory, newCategoryName, newCategoryColor } = form
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const normalized = String(amount).replace(/\s/g, '').replace(',', '.')
+    const f = formRef.current
+    const normalized = String(f.amount).replace(/\s/g, '').replace(',', '.')
     const amt = parseFloat(normalized)
-    if (!name.trim() || isNaN(amt)) return
-    onSubmit({
-      name: name.trim(),
-      amount: amt,
-      category: type === 'expense' ? (category || 'Inne') : undefined,
-      date,
-    })
-    onClose()
+    if (!f.name.trim() || isNaN(amt)) return
+    try {
+      await Promise.resolve(
+        onSubmit({
+          name: f.name.trim(),
+          amount: amt,
+          category: type === 'expense' ? (f.category || EXPENSE_CATEGORY_NONE) : undefined,
+          date: f.date,
+        })
+      )
+      onClose()
+    } catch (err) {
+      console.error(err)
+      alert(err instanceof Error ? err.message : 'Nie udało się zapisać')
+    }
   }
 
   const modalContent = (
@@ -89,7 +144,7 @@ export function TransactionModal({
             >
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold text-(--text-primary) font-gaming">
-              {type === 'income' ? 'Nowy przychód' : 'Nowy wydatek'}
+              {title ?? (type === 'income' ? 'Nowy przychód' : 'Nowy wydatek')}
             </h3>
             <button
               onClick={onClose}
@@ -135,102 +190,20 @@ export function TransactionModal({
               />
             </div>
             {type === 'expense' && (
-              <div className="space-y-2">
-                <label className="block text-base text-(--text-muted) font-gaming mb-1">Kategoria</label>
-                <select
-                  value={category}
-                  onChange={(e) => updateField('category', e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
-                >
-                  {categories.map((c) => (
-                    <option key={c.id} value={c.name}>{c.label}</option>
-                  ))}
-                </select>
-                {customCategories.length > 0 && onDeleteCategory && (
-                  <div className="flex flex-wrap gap-2">
-                    <span className="text-sm text-(--text-muted) self-center">Usuń:</span>
-                    {customCategories.map((c) => (
-                      <span
-                        key={c.id}
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded text-sm"
-                        style={{ backgroundColor: `${c.color}25`, color: c.color }}
-                      >
-                        {c.label}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            onDeleteCategory(c.id)
-                            if (category === c.name) updateField('category', categories[0]?.name ?? 'Inne')
-                          }}
-                          className="p-0.5 rounded hover:bg-black/20 text-(--text-muted) hover:text-red-400"
-                          title="Usuń kategorię"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-                {onAddCategory && (
-                  <>
-                    {!showAddCategory ? (
-                      <button
-                        type="button"
-                        onClick={() => updateField('showAddCategory', true)}
-                        className="flex items-center gap-2 text-sm text-(--accent-cyan) hover:underline"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        Dodaj własną kategorię
-                      </button>
-                    ) : (
-                      <div className="p-3 rounded-lg bg-(--bg-dark) border border-(--border) space-y-2">
-                        <input
-                          type="text"
-                          value={newCategoryName}
-                          onChange={(e) => updateField('newCategoryName', e.target.value)}
-                          className="w-full px-3 py-2 rounded-lg bg-(--bg-card) border border-(--border) text-(--text-primary) text-sm focus:border-(--accent-cyan) focus:outline-none"
-                        />
-                        <div className="flex gap-2 flex-wrap items-center">
-                          <span className="text-sm text-(--text-muted)">Kolor:</span>
-                          {PRESET_COLORS.map((col) => (
-                            <button
-                              key={col}
-                              type="button"
-                              onClick={() => updateField('newCategoryColor', col)}
-                              className={`w-6 h-6 rounded-full border-2 transition-all ${
-                                newCategoryColor === col ? 'border-(--accent-cyan) scale-110' : 'border-transparent hover:scale-105'
-                              }`}
-                              style={{ backgroundColor: col }}
-                              title={col}
-                            />
-                          ))}
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              if (newCategoryName.trim() && onAddCategory) {
-                                await onAddCategory(newCategoryName.trim(), newCategoryColor)
-                                setForm((f) => ({ ...f, category: f.newCategoryName.trim(), showAddCategory: false, newCategoryName: '' }))
-                              }
-                            }}
-                            className="px-3 py-1.5 rounded-lg bg-(--accent-cyan)/20 text-(--accent-cyan) text-sm font-gaming"
-                          >
-                            Zapisz
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setForm((f) => ({ ...f, showAddCategory: false, newCategoryName: '' }))}
-                            className="px-3 py-1.5 rounded-lg border border-(--border) text-(--text-muted) text-sm"
-                          >
-                            Anuluj
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
+              <ExpenseCategoryPicker
+                categories={categories}
+                category={category}
+                onCategoryChange={(v) => updateField('category', v)}
+                onDeleteCategory={onDeleteCategory}
+                onAddCategory={onAddCategory}
+                showAddCategory={showAddCategory}
+                setShowAddCategory={(v) => updateField('showAddCategory', v)}
+                newCategoryName={newCategoryName}
+                setNewCategoryName={(v) => updateField('newCategoryName', v)}
+                newCategoryColor={newCategoryColor}
+                setNewCategoryColor={(v) => updateField('newCategoryColor', v)}
+                onAddedCategory={(normalized) => updateField('category', normalized)}
+              />
             )}
             <div className="flex gap-2 pt-2">
               <button
@@ -244,7 +217,7 @@ export function TransactionModal({
                 type="submit"
                 className="px-4 py-2 rounded-lg bg-(--accent-cyan) text-(--bg-dark) font-gaming hover:opacity-90"
               >
-                Zapisz
+                {submitLabel ?? 'Zapisz'}
               </button>
             </div>
           </form>

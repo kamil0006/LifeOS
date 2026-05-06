@@ -6,21 +6,9 @@ import {
   useEffect,
   type ReactNode,
 } from 'react'
+import { ROLLING_MONTH_NAMES, buildCurrentYearMonthOptions } from '../lib/monthSelectLabels'
 
-const monthNames = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru']
-
-function buildRollingMonthOptions(count = 24, recalcToken = 0) {
-  void recalcToken
-  const options: { month: number; year: number; label: string }[] = []
-  const now = new Date()
-  for (let i = 0; i < count; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-    const m = d.getMonth()
-    const y = d.getFullYear()
-    options.push({ month: m, year: y, label: `${monthNames[m]} ${y}` })
-  }
-  return options
-}
+const monthNames = [...ROLLING_MONTH_NAMES]
 
 interface MonthContextType {
   selectedMonth: number
@@ -51,7 +39,7 @@ export function MonthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const monthOptions = useMemo(() => buildRollingMonthOptions(24, calendarTick), [calendarTick])
+  const monthOptions = useMemo(() => buildCurrentYearMonthOptions(calendarTick), [calendarTick])
 
   useEffect(() => {
     const key = `${selectedMonth}-${selectedYear}`

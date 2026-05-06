@@ -13,7 +13,43 @@ import {
 export type { Note, NoteType, IdeaStatus, ReferenceKind, NoteCreateInput }
 
 const STORAGE_KEY_DEMO = 'lifeos_notes_demo'
-const STORAGE_KEY_USER = 'lifeos_notes_user'
+/** Notatki zalogowanego użytkownika — osobny klucz per konto (bez wspólnego lifeos_notes_user). */
+function notesStorageKey(isDemoMode: boolean, userId: string | undefined): string {
+  if (isDemoMode) return `${STORAGE_KEY_DEMO}_notes`
+  return `lifeos_notes_u_${userId ?? '_'}_notes`
+}
+
+export type NoteUpdate = Partial<
+  Pick<
+    Note,
+    | 'content'
+    | 'tags'
+    | 'type'
+    | 'title'
+    | 'pinned'
+    | 'archivedAt'
+    | 'ideaStatus'
+    | 'referenceKind'
+    | 'referenceUrl'
+    | 'referenceSource'
+  >
+>
+
+interface NotesContextType {
+  notes: Note[]
+  addNote: (n: NoteCreateInput) => void
+  updateNote: (id: string, u: NoteUpdate) => void
+  archiveNote: (id: string) => void
+  restoreNote: (id: string) => void
+  deleteNotePermanently: (id: string) => void
+  togglePin: (id: string) => void
+}
+
+const NotesContext = createContext<NotesContextType | null>(null)
+
+function getStorageKey(isDemoMode: boolean, userId: string | undefined) {
+  return notesStorageKey(isDemoMode, userId)
+}
 
 const DEMO_NOTES: Note[] = normalizeNotesArray([
   {
@@ -45,38 +81,6 @@ const DEMO_NOTES: Note[] = normalizeNotesArray([
   },
 ])
 
-export type NoteUpdate = Partial<
-  Pick<
-    Note,
-    | 'content'
-    | 'tags'
-    | 'type'
-    | 'title'
-    | 'pinned'
-    | 'archivedAt'
-    | 'ideaStatus'
-    | 'referenceKind'
-    | 'referenceUrl'
-    | 'referenceSource'
-  >
->
-
-interface NotesContextType {
-  notes: Note[]
-  addNote: (n: NoteCreateInput) => void
-  updateNote: (id: string, u: NoteUpdate) => void
-  archiveNote: (id: string) => void
-  restoreNote: (id: string) => void
-  deleteNotePermanently: (id: string) => void
-  togglePin: (id: string) => void
-}
-
-const NotesContext = createContext<NotesContextType | null>(null)
-
-function getStorageKey(isDemoMode: boolean) {
-  return isDemoMode ? `${STORAGE_KEY_DEMO}_notes` : `${STORAGE_KEY_USER}_notes`
-}
-
 function parseStoredNotes(raw: string | null): Note[] {
   if (!raw) return []
   try {
@@ -88,8 +92,8 @@ function parseStoredNotes(raw: string | null): Note[] {
 }
 
 export function NotesProvider({ children }: { children: ReactNode }) {
-  const { isDemoMode } = useAuth()
-  const storageKey = getStorageKey(isDemoMode)
+  const { isDemoMode, user } = useAuth()
+  const storageKey = getStorageKey(isDemoMode, user?.id)
   const [notes, setNotes] = useState<Note[]>(() => {
     try {
       const s = localStorage.getItem(storageKey)

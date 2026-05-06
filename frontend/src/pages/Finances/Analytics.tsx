@@ -16,15 +16,16 @@ import {
   Cell,
   ReferenceLine,
 } from 'recharts'
+import { Info } from 'lucide-react'
 import { MonthSelector } from '../../components/MonthSelector'
 import { ChartPeriodSelector } from '../../components/ChartPeriodSelector'
 import { useChartPeriod, getMonthsInQuarter } from '../../context/ChartPeriodContext'
-import { useAuth } from '../../context/AuthContext'
 import { useDemoData, DEMO_EXPENSES, DEMO_INCOME, DEMO_SCHEDULED_EXPENSES } from '../../context/DemoDataContext'
 import { mergeExpensesWithScheduled, type MergedExpense } from '../../lib/expensesUtils'
 import { useMonth, parseDate } from '../../context/MonthContext'
 import { useFinanceCategories } from '../../context/FinanceCategoriesContext'
 import { useFinanceListsQuery } from '../../hooks/useFinanceListsQuery'
+import { useFinanceUsesApi } from '../../hooks/useFinanceUsesApi'
 import { AnalyticsPageSkeleton } from '../../components/skeletons'
 
 const monthNames = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru']
@@ -54,7 +55,7 @@ function DonutTooltip(props: { active?: boolean; payload?: readonly unknown[]; t
 }
 
 export function Analytics() {
-  const { isDemoMode } = useAuth()
+  const useApiFinance = useFinanceUsesApi()
   const { getColor } = useFinanceCategories()
   const demoData = useDemoData()
   const monthCtx = useMonth()
@@ -69,10 +70,10 @@ export function Analytics() {
   const selectedYear = monthCtx?.selectedYear ?? new Date().getFullYear()
   const chartPeriod = useChartPeriod()
 
-  const effectiveExpenses = isDemoMode ? (demoData?.expenses ?? DEMO_EXPENSES) : qExpenses
-  const effectiveScheduled = isDemoMode ? (demoData?.scheduledExpenses ?? DEMO_SCHEDULED_EXPENSES) : qScheduled
-  const effectiveIncome = isDemoMode ? (demoData?.income ?? DEMO_INCOME) : qIncome
-  const loading = isDemoMode ? false : financeLoading
+  const effectiveExpenses = useApiFinance ? qExpenses : (demoData?.expenses ?? DEMO_EXPENSES)
+  const effectiveScheduled = useApiFinance ? qScheduled : (demoData?.scheduledExpenses ?? DEMO_SCHEDULED_EXPENSES)
+  const effectiveIncome = useApiFinance ? qIncome : (demoData?.income ?? DEMO_INCOME)
+  const loading = useApiFinance ? financeLoading : false
 
   type ChartRow = {
     label: string
@@ -298,6 +299,44 @@ export function Analytics() {
     return { categoryData, expensesTotal }
   }, [effectiveExpenses, effectiveScheduled, chartMonth, chartYear, chartPeriod])
 
+  const insights = useMemo(() => {
+    const monthExp = effectiveExpenses.filter((e) => {
+      const { year, month } = parseDate(e.date)
+      return month === chartMonth && year === chartYear
+    })
+    const prevMonth = chartMonth === 0 ? 11 : chartMonth - 1
+    const prevYear = chartMonth === 0 ? chartYear - 1 : chartYear
+    const prevExp = effectiveExpenses.filter((e) => {
+      const { year, month } = parseDate(e.date)
+      return month === prevMonth && year === prevYear
+    })
+    const merged = mergeExpensesWithScheduled(monthExp, effectiveScheduled, chartMonth, chartYear)
+    const mergedPrev = mergeExpensesWithScheduled(prevExp, effectiveScheduled, prevMonth, prevYear)
+    const getCategorySum = (rows: typeof merged, category: string) =>
+      rows.filter((r) => r.category.toLowerCase() === category.toLowerCase()).reduce((s, r) => s + r.amount, 0)
+
+    const foodNow = getCategorySum(merged, 'Jedzenie')
+    const foodPrev = getCategorySum(mergedPrev, 'Jedzenie')
+    const foodChangePct = foodPrev > 0 ? ((foodNow - foodPrev) / foodPrev) * 100 : 0
+    const biggestExpense = [...merged].sort((a, b) => b.amount - a.amount)[0]
+    const topWeekday = [...weekdayData].sort((a, b) => b.kwota - a.kwota)[0]
+    const totalIncome = effectiveIncome
+      .filter((i) => {
+        const { year, month } = parseDate(i.date)
+        return month === chartMonth && year === chartYear
+      })
+      .reduce((s, i) => s + i.amount, 0)
+    const fixedCosts = effectiveScheduled.filter((s) => s.active).reduce((s, item) => s + item.amount, 0)
+    const fixedShare = totalIncome > 0 ? (fixedCosts / totalIncome) * 100 : 0
+
+    return {
+      foodChangePct,
+      biggestExpense,
+      topWeekday,
+      fixedShare,
+    }
+  }, [effectiveExpenses, effectiveScheduled, effectiveIncome, chartMonth, chartYear, weekdayData])
+
   if (loading) {
     return <AnalyticsPageSkeleton />
   }
@@ -310,6 +349,21 @@ export function Analytics() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card title="Szybkie insighty">
+          <div className="space-y-2 text-sm">
+            <p className="text-(--text-primary)">Jedzenie {insights.foodChangePct >= 0 ? '+' : ''}{insights.foodChangePct.toFixed(0)}% vs poprzedni miesiąc</p>
+            <p className="text-(--text-primary)">
+              Największy wydatek: {insights.biggestExpense ? `${insights.biggestExpense.name} (${insights.biggestExpense.amount.toLocaleString('pl-PL')} zł)` : 'brak danych'}
+            </p>
+            <p className="text-(--text-primary)">
+              Najwięcej wydajesz: {insights.topWeekday ? insights.topWeekday.dzień : '-'}
+            </p>
+            <p className="text-(--text-primary)">
+              Stałe koszty to {insights.fixedShare.toFixed(0)}% przychodów
+            </p>
+          </div>
+        </Card>
+
         <Card title="Trend wydatków i przychodów">
           <div className="h-60 w-full min-h-[200px]">
             <ResponsiveContainer width="100%" height={240}>
@@ -405,9 +459,10 @@ export function Analytics() {
         </Card>
 
         <Card title="Trend oszczędności">
-          <p className="text-base text-(--text-muted) mb-1">
-            Narastająca suma nadwyżek i deficytów z kolejnych punktów wykresu obok (dzień / miesiąc). W dymku: bilans w danym punkcie.
-          </p>
+          <div className="mb-1 inline-flex items-center gap-1 text-sm text-(--text-muted)">
+            <Info className="w-3.5 h-3.5" />
+            <span title="Narastająca suma nadwyżek i deficytów z kolejnych punktów wykresu.">Opis podpowiedzi</span>
+          </div>
           <div className="h-60 w-full min-h-[200px]">
             <ResponsiveContainer width="100%" height={240}>
               <AreaChart data={chartData}>

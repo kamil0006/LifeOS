@@ -14,6 +14,8 @@ model User {
   password  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  /// Pierwsze pobranie kategorii wydatków – jednorazowy zestaw domyślnych; brak ponownego seedu po usunięciu wszystkich.
+  financesCategoriesSeededAt DateTime?
 
   expenseCategories  ExpenseCategory[]
   expenses    Expense[]
@@ -25,6 +27,8 @@ model User {
   habits      Habit[]
   habitCheckIns HabitCheckIn[]
   goals       Goal[]
+  netWorthAccounts NetWorthAccount[]
+  netWorthAdjustments NetWorthAdjustment[]
 }
 
 model ExpenseCategory {
@@ -62,9 +66,41 @@ model ScheduledExpense {
   category   String
   dayOfMonth Int      // 1-31, dzień miesiąca
   active     Boolean  @default(true)
+  pausedUntil DateTime? @db.Date
+  reminderDaysBefore Int?
   createdAt  DateTime @default(now())
 
   @@index([userId])
+}
+
+model NetWorthAccount {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  /// asset | liability
+  kind      String
+  balance   Float    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  adjustments NetWorthAdjustment[]
+
+  @@index([userId])
+  @@index([userId, kind])
+}
+
+model NetWorthAdjustment {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId String
+  account   NetWorthAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  amount    Float
+  description String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([accountId, createdAt])
 }
 
 model Income {
@@ -98,6 +134,7 @@ model Todo {
   category  String    @default("inne")
   archivedAt DateTime?
   noteId    String?
+  linkedEventId String?
 
   @@index([userId])
   @@index([userId, done])
@@ -128,6 +165,7 @@ model Event {
   category  String?  // Praca, Prywatne, Zdrowie, Rozrywka, Inne
   color     String?  // hex, np. "#00e5ff"
   notes     String?
+  linkedTodoId String?
   createdAt DateTime @default(now())
 
   @@index([userId])

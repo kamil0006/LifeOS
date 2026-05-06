@@ -6,16 +6,18 @@ import { prisma } from '../lib/prisma.js'
 const createSchema = z.object({
   name: z.string().min(1),
   amount: z.number().positive(),
-  category: z.string().min(1),
+  category: z.string().max(100),
   dayOfMonth: z.number().min(1).max(31),
 })
 
 const updateSchema = z.object({
   name: z.string().min(1).optional(),
   amount: z.number().positive().optional(),
-  category: z.string().min(1).optional(),
+  category: z.string().max(100).optional(),
   dayOfMonth: z.number().min(1).max(31).optional(),
   active: z.boolean().optional(),
+  pausedUntil: z.union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.null()]).optional(),
+  reminderDaysBefore: z.number().int().min(0).max(31).nullable().optional(),
 })
 
 export const scheduledExpensesRouter = Router()
@@ -52,7 +54,17 @@ scheduledExpensesRouter.patch('/:id', async (req, res) => {
   if (!existing) return res.status(404).json({ error: 'Nie znaleziono' })
   const updated = await prisma.scheduledExpense.update({
     where: { id },
-    data,
+    data: {
+      ...(data.name !== undefined ? { name: data.name } : {}),
+      ...(data.amount !== undefined ? { amount: data.amount } : {}),
+      ...(data.category !== undefined ? { category: data.category } : {}),
+      ...(data.dayOfMonth !== undefined ? { dayOfMonth: data.dayOfMonth } : {}),
+      ...(data.active !== undefined ? { active: data.active } : {}),
+      ...(data.pausedUntil !== undefined
+        ? { pausedUntil: data.pausedUntil ? new Date(data.pausedUntil) : null }
+        : {}),
+      ...(data.reminderDaysBefore !== undefined ? { reminderDaysBefore: data.reminderDaysBefore } : {}),
+    },
   })
   res.json(updated)
 })

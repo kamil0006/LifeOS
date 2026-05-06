@@ -1,12 +1,21 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { Card } from '../../components/Card'
 import { MonthSelector } from '../../components/MonthSelector'
+import { Plus } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
+import { TransactionModal } from '../../components/TransactionModal'
+import { RecurringModal } from '../../components/RecurringModal'
 import { useAuth } from '../../context/AuthContext'
 import { useDemoData, DEMO_EXPENSES, DEMO_INCOME, DEMO_SCHEDULED_EXPENSES } from '../../context/DemoDataContext'
 import { mergeExpensesWithScheduled } from '../../lib/expensesUtils'
 import { useMonth, inMonth } from '../../context/MonthContext'
 import { useFinanceListsQuery } from '../../hooks/useFinanceListsQuery'
+import { useFinanceUsesApi } from '../../hooks/useFinanceUsesApi'
+import { useFinanceCategories } from '../../context/FinanceCategoriesContext'
+import { useFinanceTransactionSubmit } from '../../hooks/useFinanceTransactionSubmit'
+import { invalidateFinanceQueries } from '../../lib/invalidateFinanceQueries'
+import { scheduledExpensesApi } from '../../lib/api'
 import { OverviewSkeleton } from '../../components/skeletons'
 import {
   getOverviewTileVariants,
@@ -16,10 +25,18 @@ import {
 const monthNames = ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień']
 
 export function Overview() {
-  const { isDemoMode } = useAuth()
+  const { user } = useAuth()
+  const useApiFinance = useFinanceUsesApi()
+  const queryClient = useQueryClient()
   const reduceMotion = useReducedMotion()
   const demoData = useDemoData()
+  const userId = user?.id ?? ''
+  const { categories: finCats, addCategory, deleteCategory, getLabel } = useFinanceCategories()
+  const { submit: submitTransaction } = useFinanceTransactionSubmit()
   const monthCtx = useMonth()
+  const [txType, setTxType] = useState<'income' | 'expense'>('expense')
+  const [showTxModal, setShowTxModal] = useState(false)
+  const [showRecurringModal, setShowRecurringModal] = useState(false)
   const {
     expenses: qExpenses,
     income: qIncome,
@@ -30,12 +47,20 @@ export function Overview() {
   const selectedMonth = monthCtx?.selectedMonth ?? new Date().getMonth()
   const selectedYear = monthCtx?.selectedYear ?? new Date().getFullYear()
 
-  const effectiveExpenses = isDemoMode ? (demoData?.expenses ?? DEMO_EXPENSES) : qExpenses
-  const effectiveScheduled = isDemoMode ? (demoData?.scheduledExpenses ?? DEMO_SCHEDULED_EXPENSES) : qScheduled
-  const effectiveIncome = isDemoMode ? (demoData?.income ?? DEMO_INCOME) : qIncome
-  const loading = isDemoMode ? false : financeLoading
+  const effectiveExpenses = useApiFinance ? qExpenses : (demoData?.expenses ?? DEMO_EXPENSES)
+  const effectiveScheduled = useApiFinance ? qScheduled : (demoData?.scheduledExpenses ?? DEMO_SCHEDULED_EXPENSES)
+  const effectiveIncome = useApiFinance ? qIncome : (demoData?.income ?? DEMO_INCOME)
+  const loading = useApiFinance ? financeLoading : false
 
-  const { currentTotal, previousTotal, changePercent } = useMemo(() => {
+  const {
+    currentTotal,
+    previousTotal,
+    changePercent,
+    currentIncomeForTrend,
+    currentExpensesForTrend,
+    previousIncomeForTrend,
+    previousExpensesForTrend,
+  } = useMemo(() => {
     const monthExp = effectiveExpenses.filter((e) => inMonth(e.date, selectedMonth, selectedYear))
     const merged = mergeExpensesWithScheduled(monthExp, effectiveScheduled, selectedMonth, selectedYear)
     const monthInc = effectiveIncome.filter((i) => inMonth(i.date, selectedMonth, selectedYear))
@@ -60,6 +85,10 @@ export function Overview() {
       currentTotal,
       previousTotal,
       changePercent: Number(changePercent),
+      currentIncomeForTrend: currentIncome,
+      currentExpensesForTrend: currentExpenses,
+      previousIncomeForTrend: prevIncome,
+      previousExpensesForTrend: prevExpenses,
     }
   }, [effectiveExpenses, effectiveScheduled, effectiveIncome, selectedMonth, selectedYear])
 
@@ -73,71 +102,197 @@ export function Overview() {
     }
   }, [effectiveExpenses, effectiveScheduled, effectiveIncome, selectedMonth, selectedYear])
 
+  const monthDays = useMemo(() => new Date(selectedYear, selectedMonth + 1, 0).getDate(), [selectedMonth, selectedYear])
+  const todayDay = new Date().getDate()
+  const daysLeft = Math.max(1, monthDays - (selectedMonth === new Date().getMonth() && selectedYear === new Date().getFullYear() ? todayDay : 0))
+  const availableUntilMonthEnd = incomeTotal - expensesTotal
+  const dailyBudget = availableUntilMonthEnd / daysLeft
+
+  const topExpenseCategory = useMemo(() => {
+    const monthExp = effectiveExpenses.filter((e) => inMonth(e.date, selectedMonth, selectedYear))
+    const merged = mergeExpensesWithScheduled(monthExp, effectiveScheduled, selectedMonth, selectedYear)
+    const byCategory = new Map<string, number>()
+    merged.forEach((row) => byCategory.set(row.category, (byCategory.get(row.category) ?? 0) + row.amount))
+    const top = [...byCategory.entries()].sort((a, b) => b[1] - a[1])[0]
+    if (!top) return { category: 'Brak danych', amount: 0 }
+    return { category: getLabel(top[0]), amount: top[1] }
+  }, [effectiveExpenses, effectiveScheduled, selectedMonth, selectedYear, getLabel])
+
+  const upcomingRecurring = useMemo(() => {
+    const now = new Date()
+    const currentDay = now.getDate()
+    return effectiveScheduled
+      .filter((s) => s.active)
+      .map((s) => ({
+        ...s,
+        nextDay: s.dayOfMonth >= currentDay ? s.dayOfMonth : s.dayOfMonth,
+        isNextMonth: s.dayOfMonth < currentDay,
+      }))
+      .sort((a, b) => a.nextDay - b.nextDay)
+      .slice(0, 4)
+  }, [effectiveScheduled])
+
+  const categoriesForModal = finCats.map((c) => ({ id: c.id, name: c.name, label: c.label, color: c.color }))
+
+  const handleTxSubmit = async (data: { name: string; amount: number; category?: string; date: string }) => {
+    await submitTransaction(txType, data)
+    setShowTxModal(false)
+  }
+
+  const handleRecurringSubmit = async (data: { name: string; amount: number; category: string; dayOfMonth: number }) => {
+    if (!useApiFinance && demoData) demoData.addScheduledExpense({ ...data, active: true, pausedUntil: null, reminderDaysBefore: null })
+    else {
+      await scheduledExpensesApi.create(data)
+      await invalidateFinanceQueries(queryClient, userId)
+    }
+    setShowRecurringModal(false)
+  }
+
   if (loading) {
     return <OverviewSkeleton />
   }
 
   const prevMonthName = monthNames[selectedMonth === 0 ? 11 : selectedMonth - 1]
   const currMonthName = monthNames[selectedMonth]
+  const balanceDeltaZloty = currentTotal - previousTotal
 
   return (
     <motion.div
-      className="grid grid-cols-1 gap-6 md:grid-cols-3"
+      className="space-y-6"
       variants={overviewPageContainerVariants}
       initial="hidden"
       animate="show"
     >
-      <motion.div variants={getOverviewTileVariants(reduceMotion, 0)} className="flex justify-end md:col-span-3">
+      <motion.div variants={getOverviewTileVariants(reduceMotion, 0)} className="flex justify-end">
         <MonthSelector />
       </motion.div>
 
-      <motion.div variants={getOverviewTileVariants(reduceMotion, 1)} className="min-w-0 md:col-span-3">
-        <Card className="border-(--accent-cyan)/20" animateEntrance={false}>
-          <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase mb-3">Trend miesięczny</p>
-          <div className="flex flex-wrap gap-6 items-baseline">
-            <div>
-              <p className="text-base text-(--text-muted)">{currMonthName}</p>
-              <p className="text-2xl font-bold text-(--accent-cyan) font-gaming drop-shadow-[0_0_8px_rgba(0,229,255,0.3)]">
-                {currentTotal.toLocaleString('pl-PL')} zł
-              </p>
+      <motion.div variants={getOverviewTileVariants(reduceMotion, 1)} className="min-w-0">
+        <Card className="border-(--accent-cyan)/20 p-6! md:p-7!" animateEntrance={false}>
+          <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase mb-6">Trend miesięczny</p>
+          <div className="grid grid-cols-1 gap-8 sm:gap-10 md:grid-cols-3">
+            <div className="min-w-0 space-y-4 md:border-r md:border-(--border) md:pr-8">
+              <p className="text-sm font-semibold text-(--text-primary) font-gaming tracking-wide">{currMonthName}</p>
+              <div>
+                <p className="text-base text-(--text-muted)">Bilans</p>
+                <p
+                  className={`mt-1 text-2xl font-bold font-gaming sm:text-3xl ${
+                    currentTotal >= 0 ? 'text-(--accent-cyan) drop-shadow-[0_0_8px_rgba(0,229,255,0.25)]' : 'text-[#e74c3c]'
+                  }`}
+                >
+                  {currentTotal >= 0 ? '+' : ''}
+                  {currentTotal.toLocaleString('pl-PL')} zł
+                </p>
+              </div>
+              <dl className="space-y-3 border-t border-(--border) pt-4">
+                <div className="flex items-baseline justify-between gap-4">
+                  <dt className="text-base text-(--text-muted)">Przychody</dt>
+                  <dd className="text-right text-lg font-semibold tabular-nums text-(--accent-green)">
+                    {currentIncomeForTrend.toLocaleString('pl-PL')} zł
+                  </dd>
+                </div>
+                <div className="flex items-baseline justify-between gap-4">
+                  <dt className="text-base text-(--text-muted)">Wydatki</dt>
+                  <dd className="text-right text-lg font-semibold tabular-nums text-(--accent-magenta)">
+                    {currentExpensesForTrend.toLocaleString('pl-PL')} zł
+                  </dd>
+                </div>
+              </dl>
             </div>
-            <div>
-              <p className="text-base text-(--text-muted)">{prevMonthName}</p>
-              <p className="text-xl font-semibold text-(--text-primary)">
-                {previousTotal.toLocaleString('pl-PL')} zł
-              </p>
+            <div className="min-w-0 space-y-4 md:border-r md:border-(--border) md:pr-8">
+              <p className="text-sm font-semibold text-(--text-primary) font-gaming tracking-wide">{prevMonthName}</p>
+              <div>
+                <p className="text-base text-(--text-muted)">Bilans</p>
+                <p
+                  className={`mt-1 text-2xl font-bold font-gaming sm:text-3xl ${
+                    previousTotal >= 0 ? 'text-(--text-primary)' : 'text-[#e74c3c]'
+                  }`}
+                >
+                  {previousTotal >= 0 ? '+' : ''}
+                  {previousTotal.toLocaleString('pl-PL')} zł
+                </p>
+              </div>
+              <dl className="space-y-3 border-t border-(--border) pt-4">
+                <div className="flex items-baseline justify-between gap-4">
+                  <dt className="text-base text-(--text-muted)">Przychody</dt>
+                  <dd className="text-right text-lg font-semibold tabular-nums text-(--accent-green)">
+                    {previousIncomeForTrend.toLocaleString('pl-PL')} zł
+                  </dd>
+                </div>
+                <div className="flex items-baseline justify-between gap-4">
+                  <dt className="text-base text-(--text-muted)">Wydatki</dt>
+                  <dd className="text-right text-lg font-semibold tabular-nums text-(--accent-magenta)">
+                    {previousExpensesForTrend.toLocaleString('pl-PL')} zł
+                  </dd>
+                </div>
+              </dl>
             </div>
-            <div>
-              <p className="text-base text-(--text-muted)">Zmiana</p>
-              <p
-                className={`text-xl font-semibold font-gaming ${
-                  changePercent >= 0 ? 'text-(--accent-green)' : 'text-[#e74c3c]'
-                }`}
-              >
-                {changePercent >= 0 ? '+' : ''}{changePercent}%
-              </p>
+            <div className="min-w-0 space-y-4">
+              <p className="text-sm font-semibold text-(--text-primary) font-gaming tracking-wide">Porównanie</p>
+              <div>
+                <p className="text-base text-(--text-muted)">Zmiana bilansu</p>
+                <p
+                  className={`mt-1 text-2xl font-bold font-gaming sm:text-3xl ${
+                    changePercent >= 0 ? 'text-(--accent-green)' : 'text-[#e74c3c]'
+                  }`}
+                >
+                  {changePercent >= 0 ? '+' : ''}
+                  {changePercent}%
+                </p>
+              </div>
+              <dl className="space-y-3 border-t border-(--border) pt-4">
+                <div className="flex items-baseline justify-between gap-4">
+                  <dt className="text-base text-(--text-muted)">Różnica w zł</dt>
+                  <dd
+                    className={`text-right text-lg font-semibold tabular-nums font-gaming ${
+                      balanceDeltaZloty >= 0 ? 'text-(--accent-green)' : 'text-[#e74c3c]'
+                    }`}
+                  >
+                    {balanceDeltaZloty >= 0 ? '+' : ''}
+                    {balanceDeltaZloty.toLocaleString('pl-PL')} zł
+                  </dd>
+                </div>
+                <div className="flex items-baseline justify-between gap-4">
+                  <dt className="text-base text-(--text-muted)">Zmiana przychodów</dt>
+                  <dd
+                    className={`text-right text-base font-medium tabular-nums ${
+                      currentIncomeForTrend - previousIncomeForTrend >= 0 ? 'text-(--accent-green)' : 'text-[#e74c3c]'
+                    }`}
+                  >
+                    {currentIncomeForTrend - previousIncomeForTrend >= 0 ? '+' : ''}
+                    {(currentIncomeForTrend - previousIncomeForTrend).toLocaleString('pl-PL')} zł
+                  </dd>
+                </div>
+                <div className="flex items-baseline justify-between gap-4">
+                  <dt className="text-base text-(--text-muted)">Zmiana wydatków</dt>
+                  <dd
+                    className={`text-right text-base font-medium tabular-nums ${
+                      currentExpensesForTrend - previousExpensesForTrend <= 0 ? 'text-(--accent-green)' : 'text-[#e74c3c]'
+                    }`}
+                  >
+                    {currentExpensesForTrend - previousExpensesForTrend >= 0 ? '+' : ''}
+                    {(currentExpensesForTrend - previousExpensesForTrend).toLocaleString('pl-PL')} zł
+                  </dd>
+                </div>
+              </dl>
             </div>
           </div>
         </Card>
       </motion.div>
 
-      <motion.div variants={getOverviewTileVariants(reduceMotion, 2)} className="min-w-0">
+      <motion.div variants={getOverviewTileVariants(reduceMotion, 2)} className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card className="border-(--accent-green)/20" animateEntrance={false}>
           <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">Przychody</p>
           <p className="text-2xl font-bold text-(--accent-green) mt-1 font-gaming">
             {incomeTotal.toLocaleString('pl-PL')} zł
           </p>
         </Card>
-      </motion.div>
-      <motion.div variants={getOverviewTileVariants(reduceMotion, 3)} className="min-w-0">
         <Card className="border-(--accent-magenta)/20" animateEntrance={false}>
           <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">Wydatki</p>
           <p className="text-2xl font-bold text-(--accent-magenta) mt-1 font-gaming">
             {expensesTotal.toLocaleString('pl-PL')} zł
           </p>
         </Card>
-      </motion.div>
-      <motion.div variants={getOverviewTileVariants(reduceMotion, 4)} className="min-w-0">
         <Card className={currentTotal >= 0 ? 'border-(--accent-cyan)/20' : 'border-[#e74c3c]/30'} animateEntrance={false}>
           <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">Bilans</p>
           <p
@@ -149,6 +304,95 @@ export function Overview() {
           </p>
         </Card>
       </motion.div>
+
+      <motion.div variants={getOverviewTileVariants(reduceMotion, 3)} className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <Card className="border-(--accent-cyan)/20" animateEntrance={false}>
+          <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">Dostępne do końca miesiąca</p>
+          <p className={`text-2xl font-bold mt-1 font-gaming ${availableUntilMonthEnd >= 0 ? 'text-(--accent-cyan)' : 'text-[#e74c3c]'}`}>
+            {availableUntilMonthEnd.toLocaleString('pl-PL')} zł
+          </p>
+        </Card>
+        <Card className="border-(--accent-amber)/20" animateEntrance={false}>
+          <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">Średnio dziennie możesz wydać</p>
+          <p className={`text-2xl font-bold mt-1 font-gaming ${dailyBudget >= 0 ? 'text-(--accent-amber)' : 'text-[#e74c3c]'}`}>
+            {dailyBudget.toLocaleString('pl-PL', { maximumFractionDigits: 0 })} zł
+          </p>
+        </Card>
+        <Card className="border-(--accent-magenta)/20" animateEntrance={false}>
+          <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">Największa kategoria wydatków</p>
+          <p className="text-lg font-bold text-(--accent-magenta) mt-1 font-gaming">{topExpenseCategory.category}</p>
+          <p className="text-sm text-(--text-muted) mt-1">{topExpenseCategory.amount.toLocaleString('pl-PL')} zł</p>
+        </Card>
+      </motion.div>
+
+      <motion.div variants={getOverviewTileVariants(reduceMotion, 4)} className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Card className="border-(--accent-amber)/20" animateEntrance={false}>
+          <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase mb-2">Nadchodzące stałe koszty</p>
+          <div className="space-y-1.5">
+            {upcomingRecurring.length === 0 && <p className="text-base text-(--text-muted)">Brak aktywnych stałych kosztów.</p>}
+            {upcomingRecurring.map((item) => (
+              <div key={item.id} className="flex items-center justify-between text-sm">
+                <span className="text-(--text-primary)">{item.name} · dzień {item.dayOfMonth}{item.isNextMonth ? ' (nast. miesiąc)' : ''}</span>
+                <span className="font-mono text-(--accent-amber)">{item.amount.toLocaleString('pl-PL')} zł</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+        <Card className="border-(--border) p-6! md:p-7!" animateEntrance={false}>
+          <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase mb-5">Szybkie akcje</p>
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setTxType('expense')
+                setShowTxModal(true)
+              }}
+              className="inline-flex min-h-10 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-(--accent-magenta)/40 bg-(--accent-magenta)/15 px-2 py-2 text-(--accent-magenta) text-xs font-medium sm:gap-2 sm:px-3 sm:text-sm"
+            >
+              <Plus className="h-4 w-4 shrink-0 sm:h-[18px] sm:w-[18px]" strokeWidth={2.25} />
+              <span className="truncate">Wydatek</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setTxType('income')
+                setShowTxModal(true)
+              }}
+              className="inline-flex min-h-10 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-(--accent-green)/40 bg-(--accent-green)/15 px-2 py-2 text-(--accent-green) text-xs font-medium sm:gap-2 sm:px-3 sm:text-sm"
+            >
+              <Plus className="h-4 w-4 shrink-0 sm:h-[18px] sm:w-[18px]" strokeWidth={2.25} />
+              <span className="truncate">Przychód</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowRecurringModal(true)}
+              className="inline-flex min-h-10 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-(--accent-amber)/40 bg-(--accent-amber)/15 px-2 py-2 text-(--accent-amber) text-xs font-medium sm:gap-2 sm:px-3 sm:text-sm"
+            >
+              <Plus className="h-4 w-4 shrink-0 sm:h-[18px] sm:w-[18px]" strokeWidth={2.25} />
+              <span className="truncate">Stały koszt</span>
+            </button>
+          </div>
+        </Card>
+      </motion.div>
+
+      <TransactionModal
+        isOpen={showTxModal}
+        onClose={() => setShowTxModal(false)}
+        onSubmit={handleTxSubmit}
+        type={txType}
+        categories={categoriesForModal}
+        onAddCategory={addCategory}
+        onDeleteCategory={deleteCategory}
+      />
+
+      <RecurringModal
+        isOpen={showRecurringModal}
+        onClose={() => setShowRecurringModal(false)}
+        onSubmit={handleRecurringSubmit}
+        categories={categoriesForModal}
+        onAddCategory={addCategory}
+        onDeleteCategory={deleteCategory}
+      />
     </motion.div>
   )
 }

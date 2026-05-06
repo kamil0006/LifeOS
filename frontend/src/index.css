@@ -11,6 +11,9 @@
   --accent-magenta: #ff00d4;
   --accent-green: #00ff9d;
   --accent-amber: #ffb800;
+  /* Transakcje — ta sama linia kolorystyczna co accent, lekko stonowane (czytelne na ciemnym tle) */
+  --tx-income: #28f0b0;
+  --tx-expense: #ff4ede;
   --text-primary: #e8e8f5;
   --text-muted: #6b6b8a;
   --glow-cyan: rgba(0, 229, 255, 0.25);
@@ -110,6 +113,16 @@ html,
   scrollbar-color: rgba(0, 229, 255, 0.6) var(--bg-dark);
 }
 
+.scrollbar-hidden {
+  -ms-overflow-style: none; /* IE and old Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
 /* Global Search – pole wyszukiwania w stylu apki */
 .global-search-field {
   display: flex;
@@ -166,5 +179,21 @@ input[type='date']::-webkit-calendar-picker-indicator {
   transition: opacity 0.15s;
 }
 input[type='date']::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+/* Time input – keep clock icon visible on dark theme */
+input[type='time'] {
+  color-scheme: dark;
+}
+input[type='time']::-webkit-calendar-picker-indicator {
+  filter: invert(0.75) sepia(1) saturate(3.5) hue-rotate(165deg);
+  opacity: 0.95;
+  cursor: pointer;
+  border-radius: 3px;
+  padding: 2px;
+  transition: opacity 0.15s;
+}
+input[type='time']::-webkit-calendar-picker-indicator:hover {
   opacity: 1;
 }

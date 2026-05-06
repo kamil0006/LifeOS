@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Card } from '../../components/Card'
 import {
   AreaChart,
@@ -22,6 +23,9 @@ import type { NetWorthPositionKey } from '../../context/DemoDataContext'
 import { mergeExpensesWithScheduled } from '../../lib/expensesUtils'
 import { useMonth, parseDate, inMonth } from '../../context/MonthContext'
 import { useFinanceListsQuery } from '../../hooks/useFinanceListsQuery'
+import { useFinanceUsesApi } from '../../hooks/useFinanceUsesApi'
+import { netWorthApi, type NetWorthAccountDto, type NetWorthAdjustmentDto } from '../../lib/api/financeApi'
+import { queryKeys } from '../../lib/queryKeys'
 import { NetWorthPageSkeleton } from '../../components/skeletons'
 
 const monthNames = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru']
@@ -33,7 +37,10 @@ const POSITION_CONFIG: { key: NetWorthPositionKey; label: string; icon: typeof B
 ]
 
 export function FinancesNetWorth() {
-  const { isDemoMode } = useAuth()
+  const { user } = useAuth()
+  const useApiFinance = useFinanceUsesApi()
+  const queryClient = useQueryClient()
+  const userId = user?.id ?? ''
   const demoData = useDemoData()
   const monthCtx = useMonth()
   const {
@@ -46,15 +53,56 @@ export function FinancesNetWorth() {
   const [adjustTarget, setAdjustTarget] = useState<NetWorthPositionKey | null>(null)
   const [undoInfo, setUndoInfo] = useState<{ position: NetWorthPositionKey; delta: number } | null>(null)
 
+  const netWorthAccountsQuery = useQuery<NetWorthAccountDto[]>({
+    queryKey: queryKeys.netWorthAccounts(userId),
+    queryFn: netWorthApi.getAccounts,
+    enabled: useApiFinance && !!userId,
+  })
+  const netWorthAdjustmentsQuery = useQuery<NetWorthAdjustmentDto[]>({
+    queryKey: queryKeys.netWorthAdjustments(userId),
+    queryFn: netWorthApi.getAdjustments,
+    enabled: useApiFinance && !!userId,
+  })
+  const addAccountMutation = useMutation<
+    NetWorthAccountDto,
+    Error,
+    { name: string; kind: 'asset' | 'liability'; balance: number }
+  >({
+    mutationFn: netWorthApi.createAccount,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.netWorthAccounts(userId) })
+    },
+  })
+  const addAdjustmentMutation = useMutation<
+    { adjustment: NetWorthAdjustmentDto; account: NetWorthAccountDto },
+    Error,
+    { accountId: string; amount: number; description?: string }
+  >({
+    mutationFn: netWorthApi.createAdjustment,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.netWorthAccounts(userId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.netWorthAdjustments(userId) }),
+      ])
+    },
+  })
+
   const selectedMonth = monthCtx?.selectedMonth ?? new Date().getMonth()
   const selectedYear = monthCtx?.selectedYear ?? new Date().getFullYear()
   const chartPeriod = useChartPeriod()
 
-  const effectiveExpenses = isDemoMode ? (demoData?.expenses ?? DEMO_EXPENSES) : qExpenses
-  const effectiveScheduled = isDemoMode ? (demoData?.scheduledExpenses ?? DEMO_SCHEDULED_EXPENSES) : qScheduled
-  const effectiveIncome = isDemoMode ? (demoData?.income ?? DEMO_INCOME) : qIncome
-  const loading = isDemoMode ? false : financeLoading
+  const effectiveExpenses = useApiFinance ? qExpenses : (demoData?.expenses ?? DEMO_EXPENSES)
+  const effectiveScheduled = useApiFinance ? qScheduled : (demoData?.scheduledExpenses ?? DEMO_SCHEDULED_EXPENSES)
+  const effectiveIncome = useApiFinance ? qIncome : (demoData?.income ?? DEMO_INCOME)
+  const loading = useApiFinance ? (financeLoading || netWorthAccountsQuery.isPending || netWorthAdjustmentsQuery.isPending) : false
   const netWorthPositions = demoData?.netWorth ?? DEMO_NET_WORTH
+  const accounts: Array<{ id: string; name: string; kind: 'asset' | 'liability'; balance: number }> = !useApiFinance
+    ? [
+        { id: 'demo-cash', name: 'Gotówka', kind: 'asset' as const, balance: netWorthPositions.cash },
+        { id: 'demo-bank', name: 'Konto bankowe', kind: 'asset' as const, balance: netWorthPositions.bankAccount },
+        { id: 'demo-assets', name: 'Aktywa', kind: 'asset' as const, balance: netWorthPositions.assets },
+      ]
+    : (netWorthAccountsQuery.data ?? [])
 
   const { cumulativeSavings, trendData, currentIncome, currentExpenses, savingsRate } = useMemo(() => {
     let cumulative = 0
@@ -160,11 +208,11 @@ export function FinancesNetWorth() {
     }
   }, [effectiveExpenses, effectiveScheduled, effectiveIncome, selectedMonth, selectedYear, chartPeriod])
 
-  const totalNetWorth =
-    cumulativeSavings +
-    (netWorthPositions.cash ?? 0) +
-    (netWorthPositions.bankAccount ?? 0) +
-    (netWorthPositions.assets ?? 0)
+  const accountsNetWorth = accounts.reduce((sum, acc) => {
+    if (acc.kind === 'liability') return sum - acc.balance
+    return sum + acc.balance
+  }, 0)
+  const totalNetWorth = cumulativeSavings + accountsNetWorth
 
   const cumulativePeriodLabel = useMemo(() => {
     if (!chartPeriod) return `${monthNames[selectedMonth]} ${selectedYear}`
@@ -174,6 +222,7 @@ export function FinancesNetWorth() {
   }, [chartPeriod, selectedMonth, selectedYear])
 
   const handleAdjust = (position: NetWorthPositionKey) => {
+    if (useApiFinance) return
     setAdjustTarget(position)
     setAdjustModalOpen(true)
   }
@@ -190,6 +239,24 @@ export function FinancesNetWorth() {
     if (!undoInfo) return
     demoData?.updateNetWorthPosition(undoInfo.position, -undoInfo.delta)
     setUndoInfo(null)
+  }
+
+  const handleAdjustAccount = async (accountId: string) => {
+    const amountRaw = window.prompt('Kwota korekty (np. -200 lub 350):')
+    if (!amountRaw) return
+    const amount = Number(amountRaw.replace(',', '.'))
+    if (Number.isNaN(amount) || amount === 0) return
+    const description = window.prompt('Opis korekty (opcjonalnie):') ?? undefined
+    await addAdjustmentMutation.mutateAsync({ accountId, amount, description })
+  }
+
+  const handleCreateAccount = async (kind: 'asset' | 'liability') => {
+    const name = window.prompt(kind === 'asset' ? 'Nazwa aktywa:' : 'Nazwa zobowiązania (np. kredyt):')
+    if (!name?.trim()) return
+    const balanceRaw = window.prompt('Kwota początkowa:', '0') ?? '0'
+    const balance = Number(balanceRaw.replace(',', '.'))
+    if (Number.isNaN(balance) || balance < 0) return
+    await addAccountMutation.mutateAsync({ name: name.trim(), kind, balance })
   }
 
   useEffect(() => {
@@ -227,28 +294,68 @@ export function FinancesNetWorth() {
           <p className="text-sm text-(--text-muted) mt-0.5">Bilans skumulowany ({cumulativePeriodLabel})</p>
         </Card>
 
-        {POSITION_CONFIG.map(({ key, label, icon: Icon, desc, borderClass, iconClass }) => (
-          <Card key={key} className={`${borderClass} group relative`}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Icon className={`w-5 h-5 ${iconClass}`} />
-                <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">{label}</p>
-              </div>
+        {!useApiFinance
+          ? POSITION_CONFIG.map(({ key, label, icon: Icon, desc, borderClass, iconClass }) => (
+              <Card key={key} className={`${borderClass} group relative`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Icon className={`w-5 h-5 ${iconClass}`} />
+                    <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">{label}</p>
+                  </div>
+                  <button
+                    onClick={() => handleAdjust(key)}
+                    className="p-1.5 rounded-lg text-(--text-muted) hover:text-(--accent-cyan) hover:bg-(--bg-card-hover) transition-colors"
+                    title="Korekta – dodaj lub odejmij"
+                    aria-label="Korekta"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                </div>
+                <p className={`text-2xl font-bold mt-1 font-gaming ${iconClass}`}>
+                  {(netWorthPositions[key] ?? 0).toLocaleString('pl-PL')} zł
+                </p>
+                <p className="text-sm text-(--text-muted) mt-0.5">{desc}</p>
+              </Card>
+            ))
+          : accounts.map((account) => (
+              <Card key={account.id} className={account.kind === 'liability' ? 'border-[#e74c3c]/30' : 'border-(--accent-cyan)/20'}>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">
+                    {account.kind === 'liability' ? 'Zobowiązanie' : 'Aktywo'}
+                  </p>
+                  <button
+                    onClick={() => void handleAdjustAccount(account.id)}
+                    className="p-1.5 rounded-lg text-(--text-muted) hover:text-(--accent-cyan) hover:bg-(--bg-card-hover) transition-colors"
+                    title="Korekta"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                </div>
+                <p className="text-base text-(--text-primary) mt-1">{account.name}</p>
+                <p className={`text-2xl font-bold mt-1 font-gaming ${account.kind === 'liability' ? 'text-[#e74c3c]' : 'text-(--accent-cyan)'}`}>
+                  {account.balance.toLocaleString('pl-PL')} zł
+                </p>
+              </Card>
+            ))}
+
+        {useApiFinance && (
+          <Card className="border-(--border)">
+            <div className="flex items-center gap-2">
               <button
-                onClick={() => handleAdjust(key)}
-                className="p-1.5 rounded-lg text-(--text-muted) hover:text-(--accent-cyan) hover:bg-(--bg-card-hover) transition-colors"
-                title="Korekta – dodaj lub odejmij"
-                aria-label="Korekta"
+                onClick={() => void handleCreateAccount('asset')}
+                className="px-3 py-2 rounded-lg border border-(--accent-cyan)/40 bg-(--accent-cyan)/15 text-(--accent-cyan) text-sm"
               >
-                <Pencil className="w-4 h-4" />
+                Dodaj aktywo
+              </button>
+              <button
+                onClick={() => void handleCreateAccount('liability')}
+                className="px-3 py-2 rounded-lg border border-[#e74c3c]/40 bg-[#e74c3c]/15 text-[#e74c3c] text-sm"
+              >
+                Dodaj dług/kredyt
               </button>
             </div>
-            <p className={`text-2xl font-bold mt-1 font-gaming ${iconClass}`}>
-              {(netWorthPositions[key] ?? 0).toLocaleString('pl-PL')} zł
-            </p>
-            <p className="text-sm text-(--text-muted) mt-0.5">{desc}</p>
           </Card>
-        ))}
+        )}
 
         <Card className="border-(--accent-amber)/20">
           <div className="flex items-center gap-2">
@@ -336,16 +443,50 @@ export function FinancesNetWorth() {
         </div>
       </Card>
 
-      <NetWorthAdjustModal
-        isOpen={adjustModalOpen}
-        onClose={() => {
-          setAdjustModalOpen(false)
-          setAdjustTarget(null)
-        }}
-        onSubmit={handleAdjustSubmit}
-        initialPosition={adjustTarget ?? undefined}
-        currentValue={adjustTarget ? (netWorthPositions[adjustTarget] ?? 0) : 0}
-      />
+      <Card title="Historia korekt">
+        {useApiFinance ? (
+          <div className="space-y-1.5">
+            {(netWorthAdjustmentsQuery.data ?? []).length === 0 && (
+              <p className="text-base text-(--text-muted)">Brak korekt.</p>
+            )}
+            {(netWorthAdjustmentsQuery.data ?? []).map((row) => (
+              <div key={row.id} className="flex items-center justify-between gap-2 rounded-lg border border-(--border) px-3 py-2">
+                <div>
+                  <p className="text-sm text-(--text-primary)">
+                    {row.account.name} ({row.account.kind === 'liability' ? 'zobowiązanie' : 'aktywo'})
+                  </p>
+                  <p className="text-sm text-(--text-muted)">
+                    {row.description?.trim() || 'Brak opisu'}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className={`font-mono text-sm ${row.amount >= 0 ? 'text-(--accent-green)' : 'text-[#e74c3c]'}`}>
+                    {row.amount >= 0 ? '+' : ''}{row.amount.toLocaleString('pl-PL')} zł
+                  </p>
+                  <p className="text-xs text-(--text-muted)">
+                    {new Date(row.createdAt).toLocaleString('pl-PL')}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-base text-(--text-muted)">Historia korekt jest dostępna w trybie konta (API).</p>
+        )}
+      </Card>
+
+      {!useApiFinance && (
+        <NetWorthAdjustModal
+          isOpen={adjustModalOpen}
+          onClose={() => {
+            setAdjustModalOpen(false)
+            setAdjustTarget(null)
+          }}
+          onSubmit={handleAdjustSubmit}
+          initialPosition={adjustTarget ?? undefined}
+          currentValue={adjustTarget ? (netWorthPositions[adjustTarget] ?? 0) : 0}
+        />
+      )}
 
       <AnimatePresence>
         {undoInfo && (

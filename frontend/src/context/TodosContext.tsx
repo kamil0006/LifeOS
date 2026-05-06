@@ -22,6 +22,7 @@ export interface TodoCreatePayload {
   priority?: TodoPriority
   category?: TodoCategory
   noteId?: string | null
+  linkedEventId?: string | null
 }
 
 export type TodoUpdatePayload = Partial<{
@@ -33,6 +34,7 @@ export type TodoUpdatePayload = Partial<{
   category: TodoCategory
   archivedAt: string | null
   noteId: string | null
+  linkedEventId: string | null
 }>
 
 function normalizeTodoFromApi(raw: TodoApiRecord): TodoItem {
@@ -51,6 +53,7 @@ function normalizeTodoFromApi(raw: TodoApiRecord): TodoItem {
     category: normalizeCategory(raw.category),
     archivedAt: raw.archivedAt ?? null,
     noteId: raw.noteId ?? null,
+    linkedEventId: raw.linkedEventId ?? null,
   }
 }
 
@@ -64,6 +67,7 @@ function applyTodoPatch(t: TodoItem, p: TodoUpdatePayload): TodoItem {
   if (p.category !== undefined) next.category = p.category
   if (p.archivedAt !== undefined) next.archivedAt = p.archivedAt
   if (p.noteId !== undefined) next.noteId = p.noteId
+  if (p.linkedEventId !== undefined) next.linkedEventId = p.linkedEventId
   return next
 }
 
@@ -169,6 +173,7 @@ export function useTodos() {
         priority: payload.priority ?? 'medium',
         category: payload.category ?? 'inne',
         noteId: payload.noteId,
+        linkedEventId: payload.linkedEventId,
       }),
     onMutate: async (payload) => {
       await queryClient.cancelQueries({ queryKey: todosKey })
@@ -184,6 +189,7 @@ export function useTodos() {
         category: payload.category ?? 'inne',
         archivedAt: null,
         noteId: payload.noteId ?? null,
+        linkedEventId: payload.linkedEventId ?? null,
       }
       queryClient.setQueryData<TodoItem[]>(todosKey, (old) =>
         [...(old ?? []), optimistic].sort(compareTodosForDisplay)
@@ -287,6 +293,7 @@ export function useTodos() {
         category: payload.category ?? 'inne',
         archivedAt: null,
         noteId: payload.noteId ?? null,
+        linkedEventId: payload.linkedEventId ?? null,
       }
       queryClient.setQueryData<TodoItem[]>(todosKey, (old) =>
         [...(old ?? []), item].sort(compareTodosForDisplay)

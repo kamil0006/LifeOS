@@ -12,6 +12,7 @@ export interface TodoApiRecord {
   category?: string | null
   archivedAt?: string | null
   noteId?: string | null
+  linkedEventId?: string | null
 }
 
 export interface TodoCreateBody {
@@ -21,6 +22,7 @@ export interface TodoCreateBody {
   priority?: TodoPriority
   category?: TodoCategory
   noteId?: string | null
+  linkedEventId?: string | null
 }
 
 export interface TodoUpdateBody {
@@ -32,6 +34,7 @@ export interface TodoUpdateBody {
   category?: TodoCategory
   archivedAt?: string | null
   noteId?: string | null
+  linkedEventId?: string | null
 }
 
 export const todosApi = {

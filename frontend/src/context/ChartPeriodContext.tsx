@@ -6,8 +6,12 @@ import {
   useEffect,
   type ReactNode,
 } from 'react'
+import {
+  ROLLING_MONTH_NAMES,
+  buildCurrentYearMonthOptions,
+} from '../lib/monthSelectLabels'
 
-const monthNames = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru']
+const monthNames = [...ROLLING_MONTH_NAMES]
 
 export type ChartPeriodType = 'month' | 'quarter' | 'year'
 
@@ -47,16 +51,7 @@ const ChartPeriodContext = createContext<ChartPeriodContextType | null>(null)
 
 /** `recalcToken` bumps when wall-clock advances so labels stay in sync (see `calendarTick`). */
 function getMonthOptions(recalcToken: number) {
-  void recalcToken
-  const options: { month: number; year: number; label: string }[] = []
-  const now = new Date()
-  for (let i = 0; i < 24; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-    const m = d.getMonth()
-    const y = d.getFullYear()
-    options.push({ month: m, year: y, label: `${monthNames[m]} ${y}` })
-  }
-  return options
+  return buildCurrentYearMonthOptions(recalcToken)
 }
 
 function getQuarterOptions(recalcToken: number) {

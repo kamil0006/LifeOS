@@ -31,20 +31,35 @@ const ENV_DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(() => {
+    const tokenLocal = localStorage.getItem(TOKEN_KEY)
+    const tokenSession = sessionStorage.getItem(TOKEN_KEY)
+    if (tokenLocal || tokenSession) {
+      const fromLocal = localStorage.getItem(USER_KEY)
+      if (fromLocal) return JSON.parse(fromLocal) as User
+      const fromSession = sessionStorage.getItem(USER_KEY)
+      return fromSession ? (JSON.parse(fromSession) as User) : null
+    }
     if (localStorage.getItem(DEMO_SESSION_KEY) === 'true') {
       return { id: 'demo', email: 'demo@lifeos.app' }
     }
     const fromLocal = localStorage.getItem(USER_KEY)
-    if (fromLocal) return JSON.parse(fromLocal)
+    if (fromLocal) return JSON.parse(fromLocal) as User
     const fromSession = sessionStorage.getItem(USER_KEY)
-    return fromSession ? JSON.parse(fromSession) : null
+    return fromSession ? (JSON.parse(fromSession) as User) : null
   })
   const [token, setToken] = useState<string | null>(() => {
     return localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY)
   })
-  const [demoSession, setDemoSession] = useState(() => localStorage.getItem(DEMO_SESSION_KEY) === 'true')
+  const [demoSession, setDemoSession] = useState(() => {
+    const hasToken = Boolean(
+      localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY)
+    )
+    if (hasToken) return false
+    return localStorage.getItem(DEMO_SESSION_KEY) === 'true'
+  })
 
-  const isDemoMode = ENV_DEMO_MODE || demoSession
+  /** Dane demonstracyjne tylko bez JWT. Zalogowany użytkownik zawsze widzi „prawdziwą” aplikację (API + pusty lokalny seed). */
+  const isDemoMode = Boolean((ENV_DEMO_MODE || demoSession) && !token)
 
   const [storageMode, setStorageMode] = useState<'local' | 'session'>(
     () => (localStorage.getItem(TOKEN_KEY) ? 'local' : sessionStorage.getItem(TOKEN_KEY) ? 'session' : 'local')
@@ -90,6 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const store = getStorage(rememberMe)
     store.setItem(TOKEN_KEY, t)
     store.setItem(USER_KEY, JSON.stringify(u))
+    setDemoSession(false)
     setToken(t)
     setUser(u)
   }
@@ -106,6 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const store = getStorage(rememberMe)
     store.setItem(TOKEN_KEY, t)
     store.setItem(USER_KEY, JSON.stringify(u))
+    setDemoSession(false)
     setToken(t)
     setUser(u)
   }

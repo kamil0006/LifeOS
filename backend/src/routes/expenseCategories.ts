@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { z } from 'zod'
 import { getAuthUser } from '../middleware/auth.js'
 import { prisma } from '../lib/prisma.js'
+import { DEFAULT_EXPENSE_CATEGORIES_FOR_SEED } from '../lib/defaultExpenseCategories.js'
 
 const createSchema = z.object({
   name: z.string().min(1).max(50),
@@ -14,10 +15,53 @@ export const expenseCategoriesRouter = Router()
 
 expenseCategoriesRouter.get('/', async (req, res) => {
   const userId = getAuthUser(req).userId
-  const categories = await prisma.expenseCategory.findMany({
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { financesCategoriesSeededAt: true },
+  })
+  if (!user) return res.status(401).json({ error: 'Brak użytkownika' })
+
+  let categories = await prisma.expenseCategory.findMany({
     where: { userId },
     orderBy: { name: 'asc' },
   })
+
+  if (!user.financesCategoriesSeededAt) {
+    if (categories.length === 0) {
+      await prisma.expenseCategory.createMany({
+        data: DEFAULT_EXPENSE_CATEGORIES_FOR_SEED.map((d) => ({
+          userId,
+          name: d.name,
+          color: d.color.toLowerCase(),
+        })),
+        skipDuplicates: true,
+      })
+      categories = await prisma.expenseCategory.findMany({
+        where: { userId },
+        orderBy: { name: 'asc' },
+      })
+    }
+    await prisma.user.update({
+      where: { id: userId },
+      data: { financesCategoriesSeededAt: new Date() },
+    })
+  }
+
+  if (categories.length === 0) {
+    await prisma.expenseCategory.createMany({
+      data: DEFAULT_EXPENSE_CATEGORIES_FOR_SEED.map((d) => ({
+        userId,
+        name: d.name,
+        color: d.color.toLowerCase(),
+      })),
+      skipDuplicates: true,
+    })
+    categories = await prisma.expenseCategory.findMany({
+      where: { userId },
+      orderBy: { name: 'asc' },
+    })
+  }
+
   res.json(categories)
 })
 

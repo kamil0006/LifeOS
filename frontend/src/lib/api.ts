@@ -5,6 +5,7 @@ export {
   expenseCategoriesApi,
   scheduledExpensesApi,
   incomeApi,
+  netWorthApi,
   todosApi,
   wishesApi,
   eventsApi,

@@ -14,6 +14,7 @@ import { habitsRouter } from './routes/habits.js'
 import { goalsRouter } from './routes/goals.js'
 import { scheduledExpensesRouter } from './routes/scheduledExpenses.js'
 import { expenseCategoriesRouter } from './routes/expenseCategories.js'
+import { netWorthRouter } from './routes/netWorth.js'
 import { authMiddleware } from './middleware/auth.js'
 
 const app = express()
@@ -44,6 +45,7 @@ app.use('/api/habits', authMiddleware, habitsRouter)
 app.use('/api/goals', authMiddleware, goalsRouter)
 app.use('/api/scheduled-expenses', authMiddleware, scheduledExpensesRouter)
 app.use('/api/expense-categories', authMiddleware, expenseCategoriesRouter)
+app.use('/api/net-worth', authMiddleware, netWorthRouter)
 
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('[API]', err)

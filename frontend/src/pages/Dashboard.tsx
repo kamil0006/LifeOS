@@ -16,7 +16,6 @@ import {
 import { motion, useReducedMotion } from 'framer-motion'
 import { dashboardContainerVariants, getDashboardTileVariants } from '../lib/dashboardMotion'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
 import { useFinanceCategories } from '../context/FinanceCategoriesContext'
 import { useDemoData, DEMO_EXPENSES, DEMO_INCOME, DEMO_SCHEDULED_EXPENSES } from '../context/DemoDataContext'
 import { useMonth } from '../context/MonthContext'
@@ -29,6 +28,7 @@ import { MonthSelector } from '../components/MonthSelector'
 import { ChartPeriodSelector } from '../components/ChartPeriodSelector'
 import { useChartPeriod } from '../context/ChartPeriodContext'
 import { useFinanceListsQuery } from '../hooks/useFinanceListsQuery'
+import { useFinanceUsesApi } from '../hooks/useFinanceUsesApi'
 import { useDashboardFinance } from '../hooks/useDashboardFinance'
 import { DashboardSkeleton } from '../components/skeletons'
 import { buildTransactionsDrilldownSearch } from '../lib/buildDrilldownSearch'
@@ -73,7 +73,7 @@ const currentMonth = now.getMonth()
 export function Dashboard() {
   const navigate = useNavigate()
   const reduceMotion = useReducedMotion()
-  const { isDemoMode } = useAuth()
+  const useApiFinance = useFinanceUsesApi()
   const demoData = useDemoData()
   const { getColor: getCategoryColor } = useFinanceCategories()
   const {
@@ -96,10 +96,10 @@ export function Dashboard() {
   const chartPeriod = useChartPeriod()
   const { events } = useEvents()
 
-  const effectiveExpenses = isDemoMode ? (demoData?.expenses ?? DEMO_EXPENSES) : qExpenses
-  const effectiveScheduled = isDemoMode ? (demoData?.scheduledExpenses ?? DEMO_SCHEDULED_EXPENSES) : qScheduled
-  const effectiveIncome = isDemoMode ? (demoData?.income ?? DEMO_INCOME) : qIncome
-  const loading = isDemoMode ? false : financeLoading
+  const effectiveExpenses = useApiFinance ? qExpenses : (demoData?.expenses ?? DEMO_EXPENSES)
+  const effectiveScheduled = useApiFinance ? qScheduled : (demoData?.scheduledExpenses ?? DEMO_SCHEDULED_EXPENSES)
+  const effectiveIncome = useApiFinance ? qIncome : (demoData?.income ?? DEMO_INCOME)
+  const loading = useApiFinance ? financeLoading : false
 
   const { chartFilteredData, kpiPeriodLabel, emptyCategoryMessage, chartData } = useDashboardFinance(
     effectiveExpenses,
@@ -158,7 +158,7 @@ export function Dashboard() {
             DASHBOARD
           </h1>
           <p className="text-base text-(--text-muted) mt-1 font-gaming tracking-wide">
-            {isDemoMode ? 'Dane przykładowe' : 'Przegląd Twoich finansów i aktywności'}
+            {!useApiFinance ? 'Dane przykładowe' : 'Przegląd Twoich finansów i aktywności'}
           </p>
         </div>
         <MonthSelector />

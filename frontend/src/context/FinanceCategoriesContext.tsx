@@ -1,10 +1,14 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from './AuthContext'
 import { expenseCategoriesApi } from '../lib/api'
+import { capitalizeFirstPl } from '../lib/capitalizeFirst'
+import {
+  BUILTIN_EXPENSE_CATEGORY_ID_PREFIX,
+  EXPENSE_CATEGORY_DISPLAY_NONE,
+} from '../lib/expenseCategoryConstants'
 import { FINANCE_CATEGORIES } from '../lib/financeCategories'
 import { queryKeys } from '../lib/queryKeys'
-import { useAuthenticatedQueryEnabled } from '../hooks/useAuthenticatedQueryEnabled'
 
 export interface FinanceCategory {
   id: string
@@ -13,20 +17,59 @@ export interface FinanceCategory {
   color: string
 }
 
-const DEFAULT_CATEGORIES: FinanceCategory[] = FINANCE_CATEGORIES.filter((c) => c.id !== 'Dochód').map((c) => ({
-  id: c.id,
-  label: c.label,
-  name: c.id,
-  color: c.color,
-}))
-
 const DEMO_STORAGE_KEY = 'lifeos_demo_categories'
+const HIDDEN_BUILTIN_STORAGE_PREFIX = 'lifeos_fin_hidden_builtin:'
+
+/** Nazwy domyślnych kategorii wydatków (jak seed) — do odfiltrowania z `loaded` przy merge. */
+const DEFAULT_EXPENSE_NAMES_LOWER = new Set(
+  FINANCE_CATEGORIES.filter((c) => c.id !== 'Dochód').map((c) => c.id.toLowerCase())
+)
+
+function hiddenBuiltinStorageKey(userId: string) {
+  return `${HIDDEN_BUILTIN_STORAGE_PREFIX}${userId || 'anon'}`
+}
+
+function readHiddenBuiltinSet(userId: string): Set<string> {
+  try {
+    const raw = localStorage.getItem(hiddenBuiltinStorageKey(userId))
+    if (!raw) return new Set()
+    const arr = JSON.parse(raw) as unknown
+    if (!Array.isArray(arr)) return new Set()
+    return new Set(arr.map((x) => String(x).toLowerCase()))
+  } catch {
+    return new Set()
+  }
+}
+
+function writeHiddenBuiltinSet(userId: string, set: Set<string>) {
+  localStorage.setItem(hiddenBuiltinStorageKey(userId), JSON.stringify([...set]))
+}
+
+/** Zapisuje domyślny zestaw (jak pierwszy start) i zwraca obiekty do React Query. */
+function resetDemoCategoriesStorageToDefaults(): FinanceCategory[] {
+  const rows = FINANCE_CATEGORIES.filter((c) => c.id !== 'Dochód').map((c) => ({
+    name: c.id,
+    color: c.color,
+  }))
+  localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify(rows))
+  return rows.map((c, i) => ({
+    id: `demo-${i}-${c.name}`,
+    label: c.name,
+    name: c.name,
+    color: c.color,
+  }))
+}
 
 function loadDemoCategories(): FinanceCategory[] {
   try {
     const raw = localStorage.getItem(DEMO_STORAGE_KEY)
-    if (!raw) return []
+    if (!raw) {
+      return resetDemoCategoriesStorageToDefaults()
+    }
     const parsed = JSON.parse(raw) as { name: string; color: string }[]
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      return resetDemoCategoriesStorageToDefaults()
+    }
     return parsed.map((c, i) => ({
       id: `demo-${i}-${c.name}`,
       label: c.name,
@@ -34,7 +77,7 @@ function loadDemoCategories(): FinanceCategory[] {
       color: c.color,
     }))
   } catch {
-    return []
+    return resetDemoCategoriesStorageToDefaults()
   }
 }
 
@@ -56,52 +99,114 @@ function mapApiCategories(
   }))
 }
 
+function builtInExpenseCategories(): FinanceCategory[] {
+  return FINANCE_CATEGORIES.filter((c) => c.id !== 'Dochód').map((c) => ({
+    id: `${BUILTIN_EXPENSE_CATEGORY_ID_PREFIX}${c.id}`,
+    label: c.label,
+    name: c.id,
+    color: c.color,
+  }))
+}
+
+/**
+ * Domyślne kategorie (jak seed); wpisy z API nadpisują te same nazwy.
+ * `hidden` — nazwy usunięte przez użytkownika (nie pokazuj nawet jako fallback).
+ */
+function mergeLoadedWithBuiltIn(loaded: FinanceCategory[], hidden: Set<string>): FinanceCategory[] {
+  const mergedBase: FinanceCategory[] = []
+  for (const b of builtInExpenseCategories()) {
+    const ln = b.name.toLowerCase()
+    if (hidden.has(ln)) continue
+    const fromStore = loaded.find((l) => l.name.toLowerCase() === ln)
+    mergedBase.push(fromStore ?? b)
+  }
+  const extra = loaded.filter((l) => {
+    const ln = l.name.toLowerCase()
+    if (hidden.has(ln)) return false
+    if (DEFAULT_EXPENSE_NAMES_LOWER.has(ln)) return false
+    return true
+  })
+  extra.sort((a, b) => a.name.localeCompare(b.name, 'pl'))
+  return [...mergedBase, ...extra]
+}
+
 export function useFinanceCategories() {
-  const { isDemoMode, user } = useAuth()
+  const { isDemoMode, user, token } = useAuth()
   const queryClient = useQueryClient()
   const userId = user?.id ?? ''
-  const queryEnabled = useAuthenticatedQueryEnabled() && !!userId
+  /** API tylko przy JWT i poza trydem demo (demo zawsze localStorage). */
+  const fetchFromApi = Boolean(token) && !isDemoMode
   const key = queryKeys.expenseCategories(userId)
+
+  const [hiddenBuiltinLower, setHiddenBuiltinLower] = useState<Set<string>>(() => new Set())
+  useEffect(() => {
+    setHiddenBuiltinLower(readHiddenBuiltinSet(userId))
+  }, [userId])
+
+  const hideBuiltinName = useCallback(
+    (nameLower: string) => {
+      if (!nameLower) return
+      setHiddenBuiltinLower((prev) => {
+        const next = new Set(prev)
+        next.add(nameLower)
+        writeHiddenBuiltinSet(userId, next)
+        return next
+      })
+    },
+    [userId]
+  )
+
+  const unhideBuiltinName = useCallback(
+    (nameLower: string) => {
+      if (!nameLower) return
+      setHiddenBuiltinLower((prev) => {
+        if (!prev.has(nameLower)) return prev
+        const next = new Set(prev)
+        next.delete(nameLower)
+        writeHiddenBuiltinSet(userId, next)
+        return next
+      })
+    },
+    [userId]
+  )
 
   const { data: customCategories = [], isPending } = useQuery({
     queryKey: key,
-    queryFn: isDemoMode
-      ? () => loadDemoCategories()
-      : () => expenseCategoriesApi.getAll().then(mapApiCategories),
-    enabled: isDemoMode || queryEnabled,
-    staleTime: isDemoMode ? Infinity : undefined,
-    gcTime: isDemoMode ? Infinity : undefined,
+    queryFn: fetchFromApi
+      ? () => expenseCategoriesApi.getAll().then(mapApiCategories)
+      : () => Promise.resolve(loadDemoCategories()),
+    enabled: true,
+    staleTime: isDemoMode && !fetchFromApi ? Infinity : undefined,
+    gcTime: isDemoMode && !fetchFromApi ? Infinity : undefined,
   })
 
-  const isLoading = !isDemoMode && isPending
+  const isLoading = fetchFromApi && isPending
   const categories = useMemo(
-    () => [...DEFAULT_CATEGORIES, ...customCategories],
-    [customCategories]
+    () => mergeLoadedWithBuiltIn(customCategories, hiddenBuiltinLower),
+    [customCategories, hiddenBuiltinLower]
   )
 
   const getColor = useCallback(
     (categoryName: string): string => {
-      const lower = categoryName?.toLowerCase() ?? ''
+      if (!categoryName?.trim()) return '#6b6b8a'
+      const lower = categoryName.toLowerCase()
       const cat = categories.find(
         (c) =>
           c.name.toLowerCase() === lower ||
           c.id.toLowerCase() === lower ||
           c.label.toLowerCase() === lower
       )
-      return cat?.color ?? '#9d4edd'
+      return cat?.color ?? '#6b6b8a'
     },
     [categories]
   )
 
   const getLabel = useCallback(
     (categoryNameOrId: string): string => {
+      if (!categoryNameOrId?.trim()) return EXPENSE_CATEGORY_DISPLAY_NONE
       const cat = categories.find((c) => c.name === categoryNameOrId || c.id === categoryNameOrId)
-      if (cat) return cat.label
-      if (categoryNameOrId.startsWith('demo-') && categoryNameOrId.includes('-')) {
-        const parts = categoryNameOrId.split('-')
-        if (parts.length >= 3) return parts.slice(2).join('-')
-      }
-      return categoryNameOrId
+      if (cat) return capitalizeFirstPl(cat.label)
+      return EXPENSE_CATEGORY_DISPLAY_NONE
     },
     [categories]
   )
@@ -109,34 +214,64 @@ export function useFinanceCategories() {
   const addCategory = async (name: string, color: string) => {
     const trimmed = name.trim()
     if (!trimmed) return
-    if (categories.some((c) => c.name.toLowerCase() === trimmed.toLowerCase())) return
+    const normalized = capitalizeFirstPl(trimmed)
+    if (categories.some((c) => c.name.toLowerCase() === normalized.toLowerCase())) return
 
-    if (isDemoMode) {
+    if (fetchFromApi) {
+      await expenseCategoriesApi.create({ name: normalized, color })
+      unhideBuiltinName(normalized.toLowerCase())
+      queryClient.invalidateQueries({ queryKey: key })
+    } else {
+      unhideBuiltinName(normalized.toLowerCase())
+      const prev = loadDemoCategories()
       const newCat: FinanceCategory = {
-        id: `demo-${Date.now()}-${trimmed}`,
-        label: trimmed,
-        name: trimmed,
+        id: `demo-${Date.now()}-${normalized}`,
+        label: normalized,
+        name: normalized,
         color,
       }
-      const updated = [...customCategories, newCat]
+      const updated = [...prev, newCat]
       saveDemoCategories(updated)
-      queryClient.setQueryData<FinanceCategory[]>(key, updated)
-    } else {
-      await expenseCategoriesApi.create({ name: trimmed, color })
-      queryClient.invalidateQueries({ queryKey: key })
+      await queryClient.invalidateQueries({ queryKey: key })
     }
   }
 
   const deleteCategory = async (id: string) => {
-    if (isDemoMode) {
-      const updated = customCategories.filter((c) => c.id !== id)
-      saveDemoCategories(updated)
-      queryClient.setQueryData<FinanceCategory[]>(key, updated)
-    } else {
+    if (id.startsWith(BUILTIN_EXPENSE_CATEGORY_ID_PREFIX)) {
+      const raw = id.slice(BUILTIN_EXPENSE_CATEGORY_ID_PREFIX.length).trim()
+      if (raw) hideBuiltinName(raw.toLowerCase())
+      return
+    }
+
+    if (fetchFromApi) {
+      const victim = customCategories.find((c) => c.id === id)
+      const nameLower = (victim?.name ?? '').toLowerCase()
       await expenseCategoriesApi.delete(id)
+      if (nameLower) hideBuiltinName(nameLower)
       queryClient.invalidateQueries({ queryKey: key })
+    } else {
+      const prev = loadDemoCategories()
+      const victimDemo = prev.find((c) => c.id === id)
+      const nameLower = (victimDemo?.name ?? '').toLowerCase()
+      const updated = prev.filter((c) => c.id !== id)
+      if (nameLower) hideBuiltinName(nameLower)
+      if (updated.length === 0) {
+        resetDemoCategoriesStorageToDefaults()
+      } else {
+        saveDemoCategories(updated)
+      }
+      await queryClient.invalidateQueries({ queryKey: key })
     }
   }
 
-  return { categories, customCategories, getColor, getLabel, addCategory, deleteCategory, isLoading }
+  return {
+    categories,
+    /** @deprecated alias — wszystkie kategorie są „własne”; użyj `categories`. */
+    customCategories: categories,
+    getColor,
+    getLabel,
+    addCategory,
+    deleteCategory,
+    isLoading,
+  }
 }

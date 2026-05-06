@@ -6,8 +6,15 @@ import { prisma } from '../lib/prisma.js'
 const createSchema = z.object({
   name: z.string().min(1),
   amount: z.number().positive(),
-  category: z.string().min(1),
+  category: z.string().max(100),
   date: z.union([z.string().datetime(), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]),
+})
+
+const updateSchema = z.object({
+  name: z.string().min(1).optional(),
+  amount: z.number().positive().optional(),
+  category: z.string().max(100).optional(),
+  date: z.union([z.string().datetime(), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]).optional(),
 })
 
 export const expensesRouter = Router()
@@ -34,6 +41,24 @@ expensesRouter.post('/', async (req, res) => {
     },
   })
   res.status(201).json(expense)
+})
+
+expensesRouter.patch('/:id', async (req, res) => {
+  const userId = getAuthUser(req).userId
+  const { id } = req.params
+  const data = updateSchema.parse(req.body)
+  const existing = await prisma.expense.findFirst({ where: { id, userId } })
+  if (!existing) return res.status(404).json({ error: 'Nie znaleziono' })
+  const updated = await prisma.expense.update({
+    where: { id },
+    data: {
+      ...(data.name !== undefined ? { name: data.name } : {}),
+      ...(data.amount !== undefined ? { amount: data.amount } : {}),
+      ...(data.category !== undefined ? { category: data.category } : {}),
+      ...(data.date !== undefined ? { date: new Date(data.date) } : {}),
+    },
+  })
+  res.json(updated)
 })
 
 expensesRouter.delete('/:id', async (req, res) => {

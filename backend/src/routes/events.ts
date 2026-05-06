@@ -10,6 +10,7 @@ const createSchema = z.object({
   category: z.string().optional(),
   color: z.string().optional(),
   notes: z.string().optional(),
+  linkedTodoId: z.string().nullable().optional(),
 })
 
 const updateSchema = createSchema.partial()
@@ -37,6 +38,7 @@ eventsRouter.post('/', async (req, res) => {
       category: data.category ?? null,
       color: data.color ?? null,
       notes: data.notes ?? null,
+      linkedTodoId: data.linkedTodoId ?? null,
     },
   })
   res.status(201).json(event)
@@ -57,6 +59,7 @@ eventsRouter.patch('/:id', async (req, res) => {
       ...(data.category !== undefined && { category: data.category ?? null }),
       ...(data.color !== undefined && { color: data.color ?? null }),
       ...(data.notes !== undefined && { notes: data.notes ?? null }),
+      ...(data.linkedTodoId !== undefined && { linkedTodoId: data.linkedTodoId ?? null }),
     },
   })
   res.json(updated)

@@ -1,14 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Plus, Trash2 } from 'lucide-react'
+import { X } from 'lucide-react'
 import { useModalMotion } from '../lib/modalMotion'
-
-const PRESET_COLORS = [
-  '#00ff9d', '#00e5ff', '#ffb800', '#ff00d4', '#e57373', '#64b5f6', '#9d4edd',
-  '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dfe6e9', '#fd79a8',
-  '#a29bfe', '#6c5ce7', '#00b894', '#e17055',
-]
+import { ExpenseCategoryPicker, DEFAULT_NEW_EXPENSE_CATEGORY_COLOR } from './finance/ExpenseCategoryPicker'
+import { EXPENSE_CATEGORY_NONE } from '../lib/expenseCategoryConstants'
 
 interface Category {
   id: string
@@ -22,7 +18,6 @@ interface RecurringModalProps {
   onClose: () => void
   onSubmit: (data: { name: string; amount: number; category: string; dayOfMonth: number }) => void
   categories: Category[]
-  customCategories: Category[]
   onAddCategory?: (name: string, color: string) => Promise<void>
   onDeleteCategory?: (id: string) => Promise<void>
 }
@@ -32,7 +27,6 @@ export function RecurringModal({
   onClose,
   onSubmit,
   categories,
-  customCategories,
   onAddCategory,
   onDeleteCategory,
 }: RecurringModalProps) {
@@ -41,11 +35,11 @@ export function RecurringModal({
     () => ({
       name: '',
       amount: '',
-      category: categories[0]?.name ?? 'Inne',
+      category: categories[0]?.name ?? EXPENSE_CATEGORY_NONE,
       dayOfMonth: 1,
       showAddCategory: false,
       newCategoryName: '',
-      newCategoryColor: PRESET_COLORS[0],
+      newCategoryColor: DEFAULT_NEW_EXPENSE_CATEGORY_COLOR,
     }),
     [categories]
   )
@@ -63,7 +57,7 @@ export function RecurringModal({
     e.preventDefault()
     const amt = parseFloat(amount)
     if (!name.trim() || isNaN(amt) || amt <= 0) return
-    onSubmit({ name: name.trim(), amount: amt, category: category || 'Inne', dayOfMonth })
+    onSubmit({ name: name.trim(), amount: amt, category: category || EXPENSE_CATEGORY_NONE, dayOfMonth })
     onClose()
   }
 
@@ -134,102 +128,20 @@ export function RecurringModal({
                 />
               </div>
             </div>
-            <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">Kategoria</label>
-              <select
-                value={category}
-                onChange={(e) => updateField('category', e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
-              >
-                {categories.map((c) => (
-                  <option key={c.id} value={c.name}>{c.label}</option>
-                ))}
-              </select>
-              {customCategories.length > 0 && onDeleteCategory && (
-                <div className="flex flex-wrap gap-2 mt-1">
-                  <span className="text-sm text-(--text-muted) self-center">Usuń:</span>
-                  {customCategories.map((c) => (
-                    <span
-                      key={c.id}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded text-sm"
-                      style={{ backgroundColor: `${c.color}25`, color: c.color }}
-                    >
-                      {c.label}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onDeleteCategory(c.id)
-                          if (category === c.name) updateField('category', categories[0]?.name ?? 'Inne')
-                        }}
-                        className="p-0.5 rounded hover:bg-black/20 text-(--text-muted) hover:text-red-400"
-                        title="Usuń kategorię"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-              {onAddCategory && (
-                <>
-                  {!showAddCategory ? (
-                    <button
-                      type="button"
-                      onClick={() => updateField('showAddCategory', true)}
-                      className="flex items-center gap-2 text-sm text-(--accent-cyan) hover:underline mt-1"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      Dodaj własną kategorię
-                    </button>
-                  ) : (
-                    <div className="p-3 rounded-lg bg-(--bg-dark) border border-(--border) space-y-2 mt-2">
-                      <input
-                        type="text"
-                        value={newCategoryName}
-                        onChange={(e) => updateField('newCategoryName', e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg bg-(--bg-card) border border-(--border) text-(--text-primary) text-sm focus:border-(--accent-cyan) focus:outline-none"
-                      />
-                      <div className="flex gap-2 flex-wrap items-center">
-                        <span className="text-sm text-(--text-muted)">Kolor:</span>
-                        {PRESET_COLORS.map((col) => (
-                          <button
-                            key={col}
-                            type="button"
-                            onClick={() => updateField('newCategoryColor', col)}
-                            className={`w-6 h-6 rounded-full border-2 transition-all ${
-                              newCategoryColor === col ? 'border-(--accent-cyan) scale-110' : 'border-transparent hover:scale-105'
-                            }`}
-                            style={{ backgroundColor: col }}
-                            title={col}
-                          />
-                        ))}
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            if (newCategoryName.trim()) {
-                              await onAddCategory(newCategoryName.trim(), newCategoryColor)
-                              setForm((f) => ({ ...f, category: f.newCategoryName.trim(), showAddCategory: false, newCategoryName: '' }))
-                            }
-                          }}
-                          className="px-3 py-1.5 rounded-lg bg-(--accent-cyan)/20 text-(--accent-cyan) text-sm font-gaming"
-                        >
-                          Zapisz
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setForm((f) => ({ ...f, showAddCategory: false, newCategoryName: '' }))}
-                          className="px-3 py-1.5 rounded-lg border border-(--border) text-(--text-muted) text-sm"
-                        >
-                          Anuluj
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
+            <ExpenseCategoryPicker
+              categories={categories}
+              category={category}
+              onCategoryChange={(v) => updateField('category', v)}
+              onDeleteCategory={onDeleteCategory}
+              onAddCategory={onAddCategory}
+              showAddCategory={showAddCategory}
+              setShowAddCategory={(v) => updateField('showAddCategory', v)}
+              newCategoryName={newCategoryName}
+              setNewCategoryName={(v) => updateField('newCategoryName', v)}
+              newCategoryColor={newCategoryColor}
+              setNewCategoryColor={(v) => updateField('newCategoryColor', v)}
+              onAddedCategory={(normalized) => updateField('category', normalized)}
+            />
             <div className="flex gap-2 pt-2">
               <button
                 type="button"
