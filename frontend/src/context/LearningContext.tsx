@@ -1,5 +1,9 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
+import { createContext, useContext, type ReactNode } from 'react'
+import { useQuery, useQueryClient, type QueryKey } from '@tanstack/react-query'
 import { useAuth } from './AuthContext'
+import { learningApi } from '../lib/api'
+import { queryKeys } from '../lib/queryKeys'
+import { useAuthenticatedQueryEnabled } from '../hooks/useAuthenticatedQueryEnabled'
 
 export type SessionType = 'kurs' | 'ksiazka' | 'projekt' | 'praktyka' | 'powtorka' | 'inne'
 
@@ -14,13 +18,6 @@ export interface LearningSession {
   courseId?: string
   projectId?: string
   bookId?: string
-}
-
-interface LegacyCodingHour {
-  id: string
-  date: string
-  hours: number
-  note?: string
 }
 
 export interface Course {
@@ -74,10 +71,6 @@ export interface Certification {
   verificationUrl?: string
   renewalReminderDays?: number
 }
-
-const STORAGE_KEY_DEMO = 'lifeos_nauka_demo'
-/** Izolacja danych Nauki per konto (bez współdzielonego „lifeos_nauka_user”). */
-const STORAGE_KEY_USER_PREFIX = 'lifeos_nauka_u'
 
 const currentYear = new Date().getFullYear()
 const pad = (m: number, d: number) =>
@@ -193,31 +186,22 @@ const DEMO_CERTIFICATES: Certification[] = [
 
 const DEFAULT_WEEKLY_GOAL_MINUTES = 600
 
-function migrateLegacyCodingHours(legacy: LegacyCodingHour[]): LearningSession[] {
-  return legacy.map((h) => ({
-    id: h.id,
-    date: h.date,
-    minutes: Math.round(h.hours * 60),
-    topic: h.note || 'Nauka',
-    type: 'inne' as SessionType,
-  }))
+interface LearningSettings {
+  weeklyGoalMinutes: number
+  sessionCategories: string[]
+  bookCategories: string[]
 }
 
-function normalizeBooksFromStorage(raw: unknown[]): Book[] {
-  return (raw as Array<Record<string, unknown>>).map((b) => ({
-    status: 'przeczytane' as ReadingStatus,
-    ...b,
-  })) as Book[]
+const DEFAULT_SETTINGS: LearningSettings = {
+  weeklyGoalMinutes: DEFAULT_WEEKLY_GOAL_MINUTES,
+  sessionCategories: [],
+  bookCategories: [],
 }
 
-function normalizeProjectsFromStorage(raw: unknown[]): Project[] {
-  return (raw as Array<Record<string, unknown>>).map((p) => ({
-    ...p,
-    status:
-      p.status === 'zaplanowany'
-        ? 'pomysl'
-        : (p.status as ProjectStatus) || 'w_trakcie',
-  })) as Project[]
+const DEMO_SETTINGS: LearningSettings = {
+  weeklyGoalMinutes: DEFAULT_WEEKLY_GOAL_MINUTES,
+  sessionCategories: DEMO_SESSION_CATEGORIES,
+  bookCategories: [],
 }
 
 interface LearningContextType {
@@ -253,178 +237,139 @@ interface LearningContextType {
 
 const LearningContext = createContext<LearningContextType | null>(null)
 
-function loadFromStorage<T>(storagePrefix: string, key: string, fallback: T): T {
-  try {
-    const s = localStorage.getItem(`${storagePrefix}_${key}`)
-    if (s) return JSON.parse(s) as T
-  } catch {
-    /* ignore */
+/** API zwraca null dla pól opcjonalnych; UI oczekuje undefined. */
+function cleanNulls<T>(row: T): T {
+  const out: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries(row as Record<string, unknown>)) {
+    out[k] = v === null ? undefined : v
   }
-  return fallback
+  return out as T
 }
 
-function saveToStorage<T>(storagePrefix: string, key: string, data: T) {
-  try {
-    localStorage.setItem(`${storagePrefix}_${key}`, JSON.stringify(data))
-  } catch {
-    /* ignore */
-  }
-}
-
-function loadDemoSessions(): LearningSession[] {
-  try {
-    const raw = localStorage.getItem(`${STORAGE_KEY_DEMO}_sessions`)
-    if (raw != null) return JSON.parse(raw) as LearningSession[]
-  } catch {
-    /* ignore */
-  }
-  try {
-    const legacyRaw = localStorage.getItem(`${STORAGE_KEY_DEMO}_codingHours`)
-    if (legacyRaw != null) {
-      return migrateLegacyCodingHours(JSON.parse(legacyRaw) as LegacyCodingHour[])
-    }
-  } catch {
-    /* ignore */
-  }
-  return DEMO_SESSIONS
+interface ResourceApi<T extends { id: string }> {
+  getAll: () => Promise<T[]>
+  create: (data: Omit<T, 'id'>) => Promise<T>
+  update: (id: string, data: Partial<Omit<T, 'id'>>) => Promise<T>
+  delete: (id: string) => Promise<unknown>
 }
 
 export function LearningProvider({ children }: { children: ReactNode }) {
   const { isDemoMode, user } = useAuth()
-  const storagePrefix = isDemoMode
-    ? STORAGE_KEY_DEMO
-    : `${STORAGE_KEY_USER_PREFIX}_${user?.id ?? '_'}`
+  const queryClient = useQueryClient()
+  const userId = user?.id ?? ''
+  const scope = userId || 'demo'
+  const queryEnabled = useAuthenticatedQueryEnabled() && !!userId
+  const enabled = isDemoMode || queryEnabled
 
-  const [sessions, setSessions] = useState<LearningSession[]>(() =>
-    isDemoMode ? loadDemoSessions() : loadFromStorage(storagePrefix, 'sessions', []),
-  )
-  const [courses, setCourses] = useState<Course[]>(() =>
-    isDemoMode
-      ? loadFromStorage(storagePrefix, 'courses', DEMO_COURSES)
-      : loadFromStorage(storagePrefix, 'courses', []),
-  )
-  const [projects, setProjects] = useState<Project[]>(() => {
-    const raw = isDemoMode
-      ? loadFromStorage<unknown[]>(storagePrefix, 'projects', DEMO_PROJECTS as unknown[])
-      : loadFromStorage<unknown[]>(storagePrefix, 'projects', [])
-    return normalizeProjectsFromStorage(raw)
-  })
-  const [books, setBooks] = useState<Book[]>(() => {
-    const raw = isDemoMode
-      ? loadFromStorage<unknown[]>(storagePrefix, 'books', DEMO_BOOKS as unknown[])
-      : loadFromStorage<unknown[]>(storagePrefix, 'books', [])
-    return normalizeBooksFromStorage(raw)
-  })
-  const [bookCategories, setBookCategories] = useState<string[]>(() =>
-    loadFromStorage(storagePrefix, 'bookCategories', []),
-  )
-  const [sessionCategories, setSessionCategories] = useState<string[]>(() =>
-    isDemoMode
-      ? loadFromStorage(storagePrefix, 'sessionCategories', DEMO_SESSION_CATEGORIES)
-      : loadFromStorage(storagePrefix, 'sessionCategories', []),
-  )
-  const [certifications, setCertifications] = useState<Certification[]>(() =>
-    isDemoMode
-      ? loadFromStorage(storagePrefix, 'certifications', DEMO_CERTIFICATES)
-      : loadFromStorage(storagePrefix, 'certifications', []),
-  )
-  const [weeklyGoalMinutes, setWeeklyGoalMinutesState] = useState<number>(() => {
-    try {
-      const raw = localStorage.getItem(`${storagePrefix}_weeklyGoalMinutes`)
-      if (raw != null) return parseInt(raw, 10) || DEFAULT_WEEKLY_GOAL_MINUTES
-    } catch {
-      /* ignore */
-    }
-    return DEFAULT_WEEKLY_GOAL_MINUTES
-  })
-
-  useEffect(() => {
-    saveToStorage(storagePrefix, 'sessions', sessions)
-  }, [sessions, storagePrefix])
-  useEffect(() => {
-    saveToStorage(storagePrefix, 'courses', courses)
-  }, [courses, storagePrefix])
-  useEffect(() => {
-    saveToStorage(storagePrefix, 'projects', projects)
-  }, [projects, storagePrefix])
-  useEffect(() => {
-    saveToStorage(storagePrefix, 'books', books)
-  }, [books, storagePrefix])
-  useEffect(() => {
-    saveToStorage(storagePrefix, 'bookCategories', bookCategories)
-  }, [bookCategories, storagePrefix])
-  useEffect(() => {
-    saveToStorage(storagePrefix, 'sessionCategories', sessionCategories)
-  }, [sessionCategories, storagePrefix])
-  useEffect(() => {
-    saveToStorage(storagePrefix, 'certifications', certifications)
-  }, [certifications, storagePrefix])
-  useEffect(() => {
-    try {
-      localStorage.setItem(`${storagePrefix}_weeklyGoalMinutes`, String(weeklyGoalMinutes))
-    } catch {
-      /* ignore */
-    }
-  }, [weeklyGoalMinutes, storagePrefix])
-
-  const setWeeklyGoalMinutes = (m: number) => setWeeklyGoalMinutesState(Math.max(30, m))
-
-  const addSession = (s: Omit<LearningSession, 'id'>) =>
-    setSessions((prev) => [...prev, { ...s, id: Date.now().toString() }])
-  const updateSession = (id: string, u: Partial<LearningSession>) =>
-    setSessions((prev) => prev.map((x) => (x.id === id ? { ...x, ...u } : x)))
-  const deleteSession = (id: string) =>
-    setSessions((prev) => prev.filter((x) => x.id !== id))
-
-  const addCourse = (c: Omit<Course, 'id'>) =>
-    setCourses((prev) => [...prev, { ...c, id: Date.now().toString() }])
-  const updateCourse = (id: string, u: Partial<Course>) =>
-    setCourses((prev) => prev.map((x) => (x.id === id ? { ...x, ...u } : x)))
-  const deleteCourse = (id: string) =>
-    setCourses((prev) => prev.filter((x) => x.id !== id))
-
-  const addProject = (p: Omit<Project, 'id'>) =>
-    setProjects((prev) => [...prev, { ...p, id: Date.now().toString() }])
-  const updateProject = (id: string, u: Partial<Project>) =>
-    setProjects((prev) => prev.map((x) => (x.id === id ? { ...x, ...u } : x)))
-  const deleteProject = (id: string) =>
-    setProjects((prev) => prev.filter((x) => x.id !== id))
-
-  const addBook = (b: Omit<Book, 'id'>) =>
-    setBooks((prev) => [...prev, { ...b, id: Date.now().toString() }])
-  const updateBook = (id: string, u: Partial<Book>) =>
-    setBooks((prev) => prev.map((x) => (x.id === id ? { ...x, ...u } : x)))
-  const deleteBook = (id: string) =>
-    setBooks((prev) => prev.filter((x) => x.id !== id))
-
-  const addBookCategory = (name: string) => {
-    const trimmed = name.trim()
-    if (!trimmed) return
-    setBookCategories((prev) => {
-      if (prev.includes(trimmed)) return prev
-      return [...prev, trimmed].sort((a, b) => a.localeCompare(b))
+  function useList<T extends { id: string }>(key: QueryKey, demoData: T[], resource: ResourceApi<T>): T[] {
+    const { data } = useQuery({
+      queryKey: key,
+      queryFn: isDemoMode
+        ? () => demoData
+        : () => resource.getAll().then((rows) => rows.map(cleanNulls)),
+      enabled,
+      staleTime: isDemoMode ? Infinity : undefined,
+      gcTime: isDemoMode ? Infinity : undefined,
     })
+    return data ?? []
   }
-  const removeBookCategory = (name: string) =>
-    setBookCategories((prev) => prev.filter((c) => c !== name))
+
+  function makeCrud<T extends { id: string }>(key: QueryKey, resource: ResourceApi<T>) {
+    const setList = (updater: (prev: T[]) => T[]) =>
+      queryClient.setQueryData<T[]>(key, (old) => updater(old ?? []))
+
+    const add = (data: Omit<T, 'id'>) => {
+      const tempId = `tmp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+      setList((prev) => [...prev, { ...(data as object), id: tempId } as T])
+      if (isDemoMode) return
+      resource
+        .create(data)
+        .then((created) => {
+          const row = cleanNulls(created)
+          setList((prev) => prev.map((x) => (x.id === tempId ? row : x)))
+        })
+        .catch(() => queryClient.invalidateQueries({ queryKey: key }))
+    }
+
+    const update = (id: string, u: Partial<Omit<T, 'id'>>) => {
+      setList((prev) => prev.map((x) => (x.id === id ? { ...x, ...u } : x)))
+      if (isDemoMode || id.startsWith('tmp-')) return
+      resource
+        .update(id, u)
+        .then((updated) => {
+          const row = cleanNulls(updated)
+          setList((prev) => prev.map((x) => (x.id === id ? row : x)))
+        })
+        .catch(() => queryClient.invalidateQueries({ queryKey: key }))
+    }
+
+    const remove = (id: string) => {
+      setList((prev) => prev.filter((x) => x.id !== id))
+      if (isDemoMode || id.startsWith('tmp-')) return
+      resource.delete(id).catch(() => queryClient.invalidateQueries({ queryKey: key }))
+    }
+
+    return { add, update, remove }
+  }
+
+  const sessionsKey = queryKeys.learningSessions(scope)
+  const coursesKey = queryKeys.learningCourses(scope)
+  const projectsKey = queryKeys.learningProjects(scope)
+  const booksKey = queryKeys.learningBooks(scope)
+  const certsKey = queryKeys.learningCertifications(scope)
+  const settingsKey = queryKeys.learningSettings(scope)
+
+  const sessions = useList<LearningSession>(sessionsKey, DEMO_SESSIONS, learningApi.sessions)
+  const courses = useList<Course>(coursesKey, DEMO_COURSES, learningApi.courses)
+  const projects = useList<Project>(projectsKey, DEMO_PROJECTS, learningApi.projects)
+  const books = useList<Book>(booksKey, DEMO_BOOKS, learningApi.books)
+  const certifications = useList<Certification>(certsKey, DEMO_CERTIFICATES, learningApi.certifications)
+
+  const { data: settingsData } = useQuery({
+    queryKey: settingsKey,
+    queryFn: isDemoMode ? () => DEMO_SETTINGS : () => learningApi.getSettings(),
+    enabled,
+    staleTime: isDemoMode ? Infinity : undefined,
+    gcTime: isDemoMode ? Infinity : undefined,
+  })
+  const settings = settingsData ?? (isDemoMode ? DEMO_SETTINGS : DEFAULT_SETTINGS)
+
+  const sessionsCrud = makeCrud<LearningSession>(sessionsKey, learningApi.sessions)
+  const coursesCrud = makeCrud<Course>(coursesKey, learningApi.courses)
+  const projectsCrud = makeCrud<Project>(projectsKey, learningApi.projects)
+  const booksCrud = makeCrud<Book>(booksKey, learningApi.books)
+  const certsCrud = makeCrud<Certification>(certsKey, learningApi.certifications)
+
+  const patchSettings = (patch: Partial<LearningSettings>) => {
+    queryClient.setQueryData<LearningSettings>(settingsKey, (old) => ({
+      ...(old ?? DEFAULT_SETTINGS),
+      ...patch,
+    }))
+    if (isDemoMode) return
+    learningApi.updateSettings(patch).catch(() => queryClient.invalidateQueries({ queryKey: settingsKey }))
+  }
+
+  const setWeeklyGoalMinutes = (m: number) => patchSettings({ weeklyGoalMinutes: Math.max(30, m) })
 
   const addSessionCategory = (name: string) => {
     const trimmed = name.trim()
-    if (!trimmed) return
-    setSessionCategories((prev) => {
-      if (prev.includes(trimmed)) return prev
-      return [...prev, trimmed].sort((a, b) => a.localeCompare(b))
+    if (!trimmed || settings.sessionCategories.includes(trimmed)) return
+    patchSettings({
+      sessionCategories: [...settings.sessionCategories, trimmed].sort((a, b) => a.localeCompare(b)),
     })
   }
   const removeSessionCategory = (name: string) =>
-    setSessionCategories((prev) => prev.filter((c) => c !== name))
+    patchSettings({ sessionCategories: settings.sessionCategories.filter((c) => c !== name) })
 
-  const addCertification = (c: Omit<Certification, 'id'>) =>
-    setCertifications((prev) => [...prev, { ...c, id: Date.now().toString() }])
-  const updateCertification = (id: string, u: Partial<Certification>) =>
-    setCertifications((prev) => prev.map((x) => (x.id === id ? { ...x, ...u } : x)))
-  const deleteCertification = (id: string) =>
-    setCertifications((prev) => prev.filter((x) => x.id !== id))
+  const addBookCategory = (name: string) => {
+    const trimmed = name.trim()
+    if (!trimmed || settings.bookCategories.includes(trimmed)) return
+    patchSettings({
+      bookCategories: [...settings.bookCategories, trimmed].sort((a, b) => a.localeCompare(b)),
+    })
+  }
+  const removeBookCategory = (name: string) =>
+    patchSettings({ bookCategories: settings.bookCategories.filter((c) => c !== name) })
 
   return (
     <LearningContext.Provider
@@ -433,30 +378,30 @@ export function LearningProvider({ children }: { children: ReactNode }) {
         courses,
         projects,
         books,
-        bookCategories,
-        sessionCategories,
+        bookCategories: settings.bookCategories,
+        sessionCategories: settings.sessionCategories,
         certifications,
-        weeklyGoalMinutes,
+        weeklyGoalMinutes: settings.weeklyGoalMinutes,
         setWeeklyGoalMinutes,
-        addSession,
-        updateSession,
-        deleteSession,
-        addCourse,
-        updateCourse,
-        deleteCourse,
-        addProject,
-        updateProject,
-        deleteProject,
-        addBook,
-        updateBook,
-        deleteBook,
-        addBookCategory,
-        removeBookCategory,
+        addSession: sessionsCrud.add,
+        updateSession: sessionsCrud.update,
+        deleteSession: sessionsCrud.remove,
         addSessionCategory,
         removeSessionCategory,
-        addCertification,
-        updateCertification,
-        deleteCertification,
+        addCourse: coursesCrud.add,
+        updateCourse: coursesCrud.update,
+        deleteCourse: coursesCrud.remove,
+        addProject: projectsCrud.add,
+        updateProject: projectsCrud.update,
+        deleteProject: projectsCrud.remove,
+        addBook: booksCrud.add,
+        updateBook: booksCrud.update,
+        deleteBook: booksCrud.remove,
+        addBookCategory,
+        removeBookCategory,
+        addCertification: certsCrud.add,
+        updateCertification: certsCrud.update,
+        deleteCertification: certsCrud.remove,
       }}
     >
       {children}

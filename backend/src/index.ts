@@ -8,13 +8,15 @@ import { authRouter } from './routes/auth.js'
 import { expensesRouter } from './routes/expenses.js'
 import { incomeRouter } from './routes/income.js'
 import { todosRouter } from './routes/todos.js'
-import { wishesRouter } from './routes/wishes.js'
 import { eventsRouter } from './routes/events.js'
 import { habitsRouter } from './routes/habits.js'
 import { goalsRouter } from './routes/goals.js'
 import { scheduledExpensesRouter } from './routes/scheduledExpenses.js'
 import { expenseCategoriesRouter } from './routes/expenseCategories.js'
 import { netWorthRouter } from './routes/netWorth.js'
+import { notesRouter } from './routes/notes.js'
+import { learningRouter } from './routes/learning.js'
+import { aiRouter } from './routes/ai.js'
 import { authMiddleware } from './middleware/auth.js'
 
 const app = express()
@@ -39,13 +41,15 @@ app.use('/api/auth', authRouter)
 app.use('/api/expenses', authMiddleware, expensesRouter)
 app.use('/api/income', authMiddleware, incomeRouter)
 app.use('/api/todos', authMiddleware, todosRouter)
-app.use('/api/wishes', authMiddleware, wishesRouter)
 app.use('/api/events', authMiddleware, eventsRouter)
 app.use('/api/habits', authMiddleware, habitsRouter)
 app.use('/api/goals', authMiddleware, goalsRouter)
 app.use('/api/scheduled-expenses', authMiddleware, scheduledExpensesRouter)
 app.use('/api/expense-categories', authMiddleware, expenseCategoriesRouter)
 app.use('/api/net-worth', authMiddleware, netWorthRouter)
+app.use('/api/notes', authMiddleware, notesRouter)
+app.use('/api/learning', authMiddleware, learningRouter)
+app.use('/api/ai', authMiddleware, aiRouter)
 
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('[API]', err)

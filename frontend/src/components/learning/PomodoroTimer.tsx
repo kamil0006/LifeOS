@@ -339,17 +339,20 @@ export function PomodoroCardButton() {
   )
 }
 
-export function PomodoroInlineButton() {
+export function PomodoroInlineButton({ className }: { className?: string }) {
   const [open, setOpen] = useState(false)
   return (
     <>
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-(--accent-cyan)/10 border border-(--accent-cyan)/30 text-(--accent-cyan) font-gaming text-sm hover:bg-(--accent-cyan)/20 transition-colors"
+        className={
+          className ??
+          'flex items-center gap-1.5 rounded-lg border border-(--accent-cyan)/30 bg-(--accent-cyan)/10 px-3 py-1.5 text-sm font-gaming text-(--accent-cyan) transition-colors hover:bg-(--accent-cyan)/20'
+        }
         title="Uruchom timer"
       >
-        <Timer className="w-3.5 h-3.5" />
+        <Timer className="h-3.5 w-3.5 shrink-0" />
         Timer
       </button>
       <AnimatePresence>

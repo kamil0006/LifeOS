@@ -1,11 +1,19 @@
-import { useState } from 'react'
-import { createPortal } from 'react-dom'
+import { useState, memo } from 'react'
 import { Card } from '../../components/Card'
 import { LearningCard } from '../../components/learning/LearningCard'
-import { Plus, ExternalLink, Github, X } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { LearningFormShell } from '../../components/learning/LearningFormShell'
+import { LearningModal } from '../../components/learning/LearningModal'
+import {
+  learningFieldClass,
+  learningLabelClass,
+  learningFormActionsClass,
+  learningPrimaryBtnClass,
+  learningSecondaryBtnClass,
+  learningAddBtnClass,
+  learningChipClass,
+} from '../../components/learning/learningFormClasses'
+import { Plus, ExternalLink, Github } from 'lucide-react'
 import { useLearning } from '../../context/LearningContext'
-import { useModalMotion } from '../../lib/modalMotion'
 import type { Project, ProjectStatus } from '../../context/LearningContext'
 
 const STATUS_OPTIONS: { value: ProjectStatus; label: string }[] = [
@@ -59,10 +67,14 @@ function PriorityBadge({ priority }: { priority?: Project['priority'] }) {
   )
 }
 
-export function LearningProjects() {
-  const learning = useLearning()
-  const { backdrop, panel } = useModalMotion()
+// ─── ADD FORM (isolated to prevent list re-renders while typing) ───────────────
 
+interface ProjectAddFormProps {
+  onAdd: (p: Omit<Project, 'id'>) => void
+  onCancel: () => void
+}
+
+const ProjectAddForm = memo(function ProjectAddForm({ onAdd, onCancel }: ProjectAddFormProps) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [tech, setTech] = useState('')
@@ -72,24 +84,10 @@ export function LearningProjects() {
   const [priority, setPriority] = useState<Project['priority']>('sredni')
   const [nextStep, setNextStep] = useState('')
 
-  const [editingProject, setEditingProject] = useState<Project | null>(null)
-  const [editName, setEditName] = useState('')
-  const [editDescription, setEditDescription] = useState('')
-  const [editTech, setEditTech] = useState('')
-  const [editUrl, setEditUrl] = useState('')
-  const [editGithubUrl, setEditGithubUrl] = useState('')
-  const [editStatus, setEditStatus] = useState<ProjectStatus>('w_trakcie')
-  const [editPriority, setEditPriority] = useState<Project['priority']>('sredni')
-  const [editNextStep, setEditNextStep] = useState('')
-
-  if (!learning) return null
-
-  const { projects, addProject, updateProject, deleteProject } = learning
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim()) return
-    addProject({
+    onAdd({
       name: name.trim(),
       description: description.trim() || undefined,
       tech: tech.trim() || undefined,
@@ -109,22 +107,135 @@ export function LearningProjects() {
     setNextStep('')
   }
 
-  const openEdit = (p: Project) => {
-    setEditingProject(p)
-    setEditName(p.name)
-    setEditDescription(p.description ?? '')
-    setEditTech(p.tech ?? '')
-    setEditUrl(p.url ?? '')
-    setEditGithubUrl(p.githubUrl ?? '')
-    setEditStatus(p.status)
-    setEditPriority(p.priority)
-    setEditNextStep(p.nextStep ?? '')
-  }
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label className={learningLabelClass}>Nazwa *</label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className={learningFieldClass}
+          />
+        </div>
+        <div>
+          <label className={learningLabelClass}>Opis</label>
+          <input
+            type="text"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className={learningFieldClass}
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label className={learningLabelClass}>Technologie</label>
+          <input
+            type="text"
+            value={tech}
+            onChange={(e) => setTech(e.target.value)}
+            placeholder="np. React, Node.js"
+            className={learningFieldClass}
+          />
+        </div>
+        <div>
+          <label className={learningLabelClass}>Następny krok</label>
+          <input
+            type="text"
+            value={nextStep}
+            onChange={(e) => setNextStep(e.target.value)}
+            placeholder="np. Dodać autoryzację"
+            className={learningFieldClass}
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label className={learningLabelClass}>URL</label>
+          <input
+            type="url"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            className={learningFieldClass}
+          />
+        </div>
+        <div>
+          <label className={learningLabelClass}>GitHub</label>
+          <input
+            type="url"
+            value={githubUrl}
+            onChange={(e) => setGithubUrl(e.target.value)}
+            className={learningFieldClass}
+          />
+        </div>
+      </div>
+      <div>
+        <label className={learningLabelClass}>Status</label>
+        <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
+          {STATUS_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setStatus(opt.value)}
+              className={learningChipClass(status === opt.value)}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div>
+        <label className={learningLabelClass}>Priorytet</label>
+        <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
+          {PRIORITY_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setPriority(opt.value)}
+              className={learningChipClass(priority === opt.value)}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className={learningFormActionsClass}>
+        <button type="submit" className={learningPrimaryBtnClass} disabled={!name.trim()}>
+          <Plus className="h-4 w-4 shrink-0" />
+          Dodaj projekt
+        </button>
+        <button type="button" onClick={onCancel} className={learningSecondaryBtnClass}>
+          Anuluj
+        </button>
+      </div>
+    </form>
+  )
+})
 
-  const handleEditSubmit = (e: React.FormEvent) => {
+// ─── EDIT MODAL ───────────────────────────────────────────────────────────────
+
+interface EditProjectModalProps {
+  project: Project
+  onSave: (id: string, u: Partial<Project>) => void
+  onClose: () => void
+}
+
+function EditProjectModal({ project, onSave, onClose }: EditProjectModalProps) {
+  const [editName, setEditName] = useState(project.name)
+  const [editDescription, setEditDescription] = useState(project.description ?? '')
+  const [editTech, setEditTech] = useState(project.tech ?? '')
+  const [editUrl, setEditUrl] = useState(project.url ?? '')
+  const [editGithubUrl, setEditGithubUrl] = useState(project.githubUrl ?? '')
+  const [editStatus, setEditStatus] = useState<ProjectStatus>(project.status)
+  const [editPriority, setEditPriority] = useState<Project['priority']>(project.priority)
+  const [editNextStep, setEditNextStep] = useState(project.nextStep ?? '')
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!editingProject || !editName.trim()) return
-    updateProject(editingProject.id, {
+    if (!editName.trim()) return
+    onSave(project.id, {
       name: editName.trim(),
       description: editDescription.trim() || undefined,
       tech: editTech.trim() || undefined,
@@ -134,132 +245,132 @@ export function LearningProjects() {
       priority: editPriority,
       nextStep: editNextStep.trim() || undefined,
     })
-    setEditingProject(null)
+    onClose()
   }
 
   return (
-    <div className="space-y-6">
-      <Card title="Dodaj projekt">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="flex flex-wrap gap-4">
-            <div className="flex-1 min-w-[180px]">
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">Nazwa *</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
-              />
-            </div>
-            <div className="flex-1 min-w-[180px]">
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">Opis</label>
-              <input
-                type="text"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
-              />
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-4">
-            <div className="flex-1 min-w-[180px]">
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">Technologie</label>
-              <input
-                type="text"
-                value={tech}
-                onChange={(e) => setTech(e.target.value)}
-                placeholder="np. React, Node.js"
-                className="w-full px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
-              />
-            </div>
-            <div className="flex-1 min-w-[180px]">
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">Następny krok</label>
-              <input
-                type="text"
-                value={nextStep}
-                onChange={(e) => setNextStep(e.target.value)}
-                placeholder="np. Dodać autoryzację"
-                className="w-full px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
-              />
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-4">
-            <div className="flex-1 min-w-[150px]">
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">URL</label>
-              <input
-                type="url"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
-              />
-            </div>
-            <div className="flex-1 min-w-[150px]">
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">GitHub</label>
-              <input
-                type="url"
-                value={githubUrl}
-                onChange={(e) => setGithubUrl(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
-              />
-            </div>
+    <LearningModal isOpen onClose={onClose} title="Edytuj projekt">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className={learningLabelClass}>Nazwa</label>
+          <input
+            type="text"
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            autoFocus
+            className={learningFieldClass}
+          />
+        </div>
+        <div>
+          <label className={learningLabelClass}>Opis</label>
+          <input
+            type="text"
+            value={editDescription}
+            onChange={(e) => setEditDescription(e.target.value)}
+            className={learningFieldClass}
+          />
+        </div>
+        <div>
+          <label className={learningLabelClass}>Technologie</label>
+          <input
+            type="text"
+            value={editTech}
+            onChange={(e) => setEditTech(e.target.value)}
+            className={learningFieldClass}
+          />
+        </div>
+        <div>
+          <label className={learningLabelClass}>Następny krok</label>
+          <input
+            type="text"
+            value={editNextStep}
+            onChange={(e) => setEditNextStep(e.target.value)}
+            className={learningFieldClass}
+          />
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label className={learningLabelClass}>URL</label>
+            <input
+              type="url"
+              value={editUrl}
+              onChange={(e) => setEditUrl(e.target.value)}
+              className={learningFieldClass}
+            />
           </div>
           <div>
-            <label className="block text-base text-(--text-muted) font-gaming mb-1">Status</label>
-            <div className="flex flex-wrap gap-2">
-              {STATUS_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setStatus(opt.value)}
-                  className={`px-3 py-1.5 rounded-lg font-gaming text-sm transition-colors ${
-                    status === opt.value
-                      ? 'bg-(--accent-cyan)/20 text-(--accent-cyan) border border-(--accent-cyan)/40'
-                      : 'bg-(--bg-dark) text-(--text-muted) border border-(--border) hover:border-(--accent-cyan)/40'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
+            <label className={learningLabelClass}>GitHub</label>
+            <input
+              type="url"
+              value={editGithubUrl}
+              onChange={(e) => setEditGithubUrl(e.target.value)}
+              className={learningFieldClass}
+            />
           </div>
-          <div>
-            <label className="block text-base text-(--text-muted) font-gaming mb-1">Priorytet</label>
-            <div className="flex gap-2">
-              {PRIORITY_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setPriority(opt.value)}
-                  className={`px-3 py-1.5 rounded-lg font-gaming text-sm transition-colors ${
-                    priority === opt.value
-                      ? 'bg-(--accent-cyan)/20 text-(--accent-cyan) border border-(--accent-cyan)/40'
-                      : 'bg-(--bg-dark) text-(--text-muted) border border-(--border) hover:border-(--accent-cyan)/40'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
+        </div>
+        <div>
+          <label className={learningLabelClass}>Status</label>
+          <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
+            {STATUS_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setEditStatus(opt.value)}
+                className={learningChipClass(editStatus === opt.value)}
+              >
+                {opt.label}
+              </button>
+            ))}
           </div>
-          <button
-            type="submit"
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-(--accent-cyan) text-(--bg-dark) font-gaming font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
-            disabled={!name.trim()}
-          >
-            <Plus className="w-4 h-4" />
-            Dodaj
+        </div>
+        <div>
+          <label className={learningLabelClass}>Priorytet</label>
+          <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
+            {PRIORITY_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setEditPriority(opt.value)}
+                className={learningChipClass(editPriority === opt.value)}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className={learningFormActionsClass}>
+          <button type="submit" className={learningPrimaryBtnClass} disabled={!editName.trim()}>
+            Zapisz
           </button>
-        </form>
-      </Card>
+          <button type="button" onClick={onClose} className={learningSecondaryBtnClass}>
+            Anuluj
+          </button>
+        </div>
+      </form>
+    </LearningModal>
+  )
+}
 
-      {/* Grouped project list */}
+// ─── MAIN PAGE ─────────────────────────────────────────────────────────────────
+
+export function LearningProjects() {
+  const learning = useLearning()
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [editingProject, setEditingProject] = useState<Project | null>(null)
+
+  if (!learning) return null
+
+  const { projects, addProject, updateProject, deleteProject } = learning
+
+  return (
+    <div className="space-y-6">
       {projects.length > 0 ? (
         <div className="space-y-6">
           {STATUS_GROUPS.map((group) => {
             const items = projects.filter((p) => p.status === group.status)
             if (items.length === 0) return null
             return (
-              <Card key={group.status} title={group.label}>
+              <Card key={group.status} title={group.label} className="max-md:p-4">
                 <div className="space-y-2">
                   {items.map((p) => (
                     <LearningCard
@@ -299,7 +410,7 @@ export function LearningProjects() {
                           )}
                         </div>
                       }
-                      onEdit={() => openEdit(p)}
+                      onEdit={() => setEditingProject(p)}
                       onDelete={() => deleteProject(p.id)}
                     />
                   ))}
@@ -309,158 +420,41 @@ export function LearningProjects() {
           })}
         </div>
       ) : (
-        <Card title="Lista projektów">
+        <Card title="Lista projektów" className="max-md:p-4">
           <p className="text-base text-(--text-muted)">Brak projektów. Dodaj pierwszy.</p>
         </Card>
       )}
 
-      {/* Edit modal */}
-      {createPortal(
-        <AnimatePresence>
-          {editingProject && (
-            <>
-              <motion.div
-                key="project-edit-backdrop"
-                {...backdrop}
-                className="fixed inset-0 z-9998 bg-black/60 backdrop-blur-sm"
-                onClick={() => setEditingProject(null)}
-              />
-              <div className="fixed inset-0 z-9999 flex items-start justify-center overflow-y-auto p-4 pt-12 pointer-events-none">
-                <motion.div
-                  key="project-edit-panel"
-                  {...panel}
-                  className="pointer-events-auto relative z-10 w-full max-w-md rounded-lg border border-(--border) bg-(--bg-card) p-6 shadow-xl"
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold text-(--text-primary) font-gaming">Edytuj projekt</h3>
-                    <button
-                      onClick={() => setEditingProject(null)}
-                      className="p-2 rounded-lg hover:bg-(--bg-card-hover) text-(--text-muted)"
-                      aria-label="Zamknij"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
-                  <form onSubmit={handleEditSubmit} className="space-y-4">
-                    <div>
-                      <label className="block text-base text-(--text-muted) font-gaming mb-1">Nazwa</label>
-                      <input
-                        type="text"
-                        value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
-                        autoFocus
-                        className="w-full px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-base text-(--text-muted) font-gaming mb-1">Opis</label>
-                      <input
-                        type="text"
-                        value={editDescription}
-                        onChange={(e) => setEditDescription(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-base text-(--text-muted) font-gaming mb-1">Technologie</label>
-                      <input
-                        type="text"
-                        value={editTech}
-                        onChange={(e) => setEditTech(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-base text-(--text-muted) font-gaming mb-1">
-                        Następny krok
-                      </label>
-                      <input
-                        type="text"
-                        value={editNextStep}
-                        onChange={(e) => setEditNextStep(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-base text-(--text-muted) font-gaming mb-1">URL</label>
-                        <input
-                          type="url"
-                          value={editUrl}
-                          onChange={(e) => setEditUrl(e.target.value)}
-                          className="w-full px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-base text-(--text-muted) font-gaming mb-1">GitHub</label>
-                        <input
-                          type="url"
-                          value={editGithubUrl}
-                          onChange={(e) => setEditGithubUrl(e.target.value)}
-                          className="w-full px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-base text-(--text-muted) font-gaming mb-1">Status</label>
-                      <div className="flex flex-wrap gap-2">
-                        {STATUS_OPTIONS.map((opt) => (
-                          <button
-                            key={opt.value}
-                            type="button"
-                            onClick={() => setEditStatus(opt.value)}
-                            className={`px-3 py-1.5 rounded-lg font-gaming text-sm transition-colors ${
-                              editStatus === opt.value
-                                ? 'bg-(--accent-cyan)/20 text-(--accent-cyan) border border-(--accent-cyan)/40'
-                                : 'bg-(--bg-dark) text-(--text-muted) border border-(--border)'
-                            }`}
-                          >
-                            {opt.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-base text-(--text-muted) font-gaming mb-1">Priorytet</label>
-                      <div className="flex gap-2">
-                        {PRIORITY_OPTIONS.map((opt) => (
-                          <button
-                            key={opt.value}
-                            type="button"
-                            onClick={() => setEditPriority(opt.value)}
-                            className={`px-3 py-1.5 rounded-lg font-gaming text-sm transition-colors ${
-                              editPriority === opt.value
-                                ? 'bg-(--accent-cyan)/20 text-(--accent-cyan) border border-(--accent-cyan)/40'
-                                : 'bg-(--bg-dark) text-(--text-muted) border border-(--border)'
-                            }`}
-                          >
-                            {opt.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setEditingProject(null)}
-                        className="flex-1 py-2 rounded-lg border border-(--border) text-(--text-muted) font-gaming hover:bg-(--bg-card-hover)"
-                      >
-                        Anuluj
-                      </button>
-                      <button
-                        type="submit"
-                        className="flex-1 py-2 rounded-lg bg-(--accent-cyan) text-(--bg-dark) font-gaming font-bold hover:opacity-90"
-                      >
-                        Zapisz
-                      </button>
-                    </div>
-                  </form>
-                </motion.div>
-              </div>
-            </>
-          )}
-        </AnimatePresence>,
-        document.body,
+      <div className={projects.length > 0 ? 'border-t border-(--border)/60 pt-4' : ''}>
+        {showAddForm ? (
+          <LearningFormShell
+            isOpen
+            onClose={() => setShowAddForm(false)}
+            title="Dodaj projekt"
+          >
+            <ProjectAddForm
+              onAdd={(p) => {
+                addProject(p)
+                setShowAddForm(false)
+              }}
+              onCancel={() => setShowAddForm(false)}
+            />
+          </LearningFormShell>
+        ) : (
+          <button type="button" onClick={() => setShowAddForm(true)} className={learningAddBtnClass}>
+            <Plus className="h-4 w-4" />
+            Dodaj projekt
+          </button>
+        )}
+      </div>
+
+      {editingProject && (
+        <EditProjectModal
+          key={editingProject.id}
+          project={editingProject}
+          onSave={updateProject}
+          onClose={() => setEditingProject(null)}
+        />
       )}
     </div>
   )

@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
-import { createPortal } from 'react-dom'
-import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
-import { useModalMotion } from '../lib/modalMotion'
+import { ModalShell } from './ModalShell'
 import { ExpenseCategoryPicker, DEFAULT_NEW_EXPENSE_CATEGORY_COLOR } from './finance/ExpenseCategoryPicker'
 import { EXPENSE_CATEGORY_NONE } from '../lib/expenseCategoryConstants'
 
@@ -31,8 +29,6 @@ export function TransactionModal({
   submitLabel,
   title,
 }: TransactionModalProps) {
-  const { backdrop, panel } = useModalMotion()
-
   const initialDataKey =
     initialData == null
       ? 'new'
@@ -115,7 +111,7 @@ export function TransactionModal({
         onSubmit({
           name: f.name.trim(),
           amount: amt,
-          category: type === 'expense' ? (f.category || EXPENSE_CATEGORY_NONE) : undefined,
+          category: f.category || EXPENSE_CATEGORY_NONE,
           date: f.date,
         })
       )
@@ -126,107 +122,91 @@ export function TransactionModal({
     }
   }
 
-  const modalContent = (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          <motion.div
-            key="transaction-backdrop"
-            {...backdrop}
-            className="fixed inset-0 z-9998 bg-black/60 backdrop-blur-sm"
-            onClick={onClose}
+  return (
+    <ModalShell
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="max-w-md"
+      backdropKey="transaction-backdrop"
+      panelKey="transaction-panel"
+    >
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-bold text-(--text-primary) font-gaming">
+          {title ?? (type === 'income' ? 'Nowy przychód' : 'Nowy wydatek')}
+        </h3>
+        <button
+          onClick={onClose}
+          className="p-2 rounded-lg hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-(--text-primary) transition-colors"
+          aria-label="Zamknij"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-base text-(--text-muted) font-gaming mb-1">
+            {type === 'income' ? 'Źródło' : 'Nazwa'}
+          </label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => updateField('name', e.target.value)}
+            required
+            autoFocus
+            className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
           />
-          <div className="fixed inset-0 z-9999 flex items-start justify-center overflow-y-auto p-4 pt-12 pointer-events-none">
-            <motion.div
-              key="transaction-panel"
-              {...panel}
-              className="pointer-events-auto relative z-10 w-full max-w-md rounded-lg border border-(--border) bg-(--bg-card) p-6 shadow-xl"
-            >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-(--text-primary) font-gaming">
-              {title ?? (type === 'income' ? 'Nowy przychód' : 'Nowy wydatek')}
-            </h3>
-            <button
-              onClick={onClose}
-              className="p-2 rounded-lg hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-(--text-primary) transition-colors"
-              aria-label="Zamknij"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">
-                {type === 'income' ? 'Źródło' : 'Nazwa'}
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => updateField('name', e.target.value)}
-                required
-                autoFocus
-                className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">Data</label>
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => updateField('date', e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">Kwota (zł)</label>
-              <input
-                type="number"
-                step="0.01"
-                value={amount}
-                onChange={(e) => updateField('amount', e.target.value)}
-                required
-                className="no-spinners w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
-              />
-            </div>
-            {type === 'expense' && (
-              <ExpenseCategoryPicker
-                categories={categories}
-                category={category}
-                onCategoryChange={(v) => updateField('category', v)}
-                onDeleteCategory={onDeleteCategory}
-                onAddCategory={onAddCategory}
-                showAddCategory={showAddCategory}
-                setShowAddCategory={(v) => updateField('showAddCategory', v)}
-                newCategoryName={newCategoryName}
-                setNewCategoryName={(v) => updateField('newCategoryName', v)}
-                newCategoryColor={newCategoryColor}
-                setNewCategoryColor={(v) => updateField('newCategoryColor', v)}
-                onAddedCategory={(normalized) => updateField('category', normalized)}
-              />
-            )}
-            <div className="flex gap-2 pt-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 rounded-lg border border-(--border) text-(--text-muted) font-gaming hover:text-(--text-primary)"
-              >
-                Anuluj
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 rounded-lg bg-(--accent-cyan) text-(--bg-dark) font-gaming hover:opacity-90"
-              >
-                {submitLabel ?? 'Zapisz'}
-              </button>
-            </div>
-          </form>
-            </motion.div>
-          </div>
-        </>
-      )}
-    </AnimatePresence>
+        </div>
+        <div>
+          <label className="block text-base text-(--text-muted) font-gaming mb-1">Data</label>
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => updateField('date', e.target.value)}
+            className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
+          />
+        </div>
+        <div>
+          <label className="block text-base text-(--text-muted) font-gaming mb-1">Kwota (zł)</label>
+          <input
+            type="number"
+            step="0.01"
+            value={amount}
+            onChange={(e) => updateField('amount', e.target.value)}
+            required
+            className="no-spinners w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
+          />
+        </div>
+        <ExpenseCategoryPicker
+          categories={categories}
+          category={category}
+          onCategoryChange={(v) => updateField('category', v)}
+          onDeleteCategory={onDeleteCategory}
+          onAddCategory={onAddCategory}
+          showAddCategory={showAddCategory}
+          setShowAddCategory={(v) => updateField('showAddCategory', v)}
+          newCategoryName={newCategoryName}
+          setNewCategoryName={(v) => updateField('newCategoryName', v)}
+          newCategoryColor={newCategoryColor}
+          setNewCategoryColor={(v) => updateField('newCategoryColor', v)}
+          onAddedCategory={(normalized) => updateField('category', normalized)}
+        />
+        <div className="flex gap-2 pt-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg border border-(--border) text-(--text-muted) font-gaming hover:text-(--text-primary)"
+          >
+            Anuluj
+          </button>
+          <button
+            type="submit"
+            className="px-4 py-2 rounded-lg bg-(--accent-cyan) text-(--bg-dark) font-gaming hover:opacity-90"
+          >
+            {submitLabel ?? 'Zapisz'}
+          </button>
+        </div>
+      </form>
+    </ModalShell>
   )
-
-  return createPortal(modalContent, document.body)
 }

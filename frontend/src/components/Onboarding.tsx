@@ -34,7 +34,7 @@ const STEPS = [
   {
     icon: Wallet,
     title: 'Finanse',
-    desc: 'Wydatki, przychody, stałe koszty, zachcianki i wartość netto. Pełna kontrola nad budżetem.',
+    desc: 'Wydatki, przychody, stałe koszty i wartość netto. Pełna kontrola nad budżetem.',
     path: '/finances',
   },
   {

@@ -62,14 +62,19 @@ export const scheduledExpensesApi = {
 
 export const incomeApi = {
   getAll: () =>
-    api<{ id: string; source: string; amount: number; date: string; recurring: boolean }[]>('/income'),
-  create: (data: { source: string; amount: number; date: string; recurring?: boolean }) =>
-    api<{ id: string; source: string; amount: number; date: string; recurring: boolean }>(
+    api<{ id: string; source: string; amount: number; date: string; recurring: boolean; category: string }[]>(
+      '/income'
+    ),
+  create: (data: { source: string; amount: number; date: string; recurring?: boolean; category?: string }) =>
+    api<{ id: string; source: string; amount: number; date: string; recurring: boolean; category: string }>(
       '/income',
       { method: 'POST', body: JSON.stringify(data) }
     ),
-  update: (id: string, data: { source?: string; amount?: number; date?: string; recurring?: boolean }) =>
-    api<{ id: string; source: string; amount: number; date: string; recurring: boolean }>(
+  update: (
+    id: string,
+    data: { source?: string; amount?: number; date?: string; recurring?: boolean; category?: string }
+  ) =>
+    api<{ id: string; source: string; amount: number; date: string; recurring: boolean; category: string }>(
       `/income/${id}`,
       { method: 'PATCH', body: JSON.stringify(data) }
     ),
@@ -81,6 +86,8 @@ export type NetWorthAccountDto = {
   name: string
   kind: 'asset' | 'liability'
   balance: number
+  iconKey?: string | null
+  accentKey?: string | null
   createdAt: string
   updatedAt: string
 }
@@ -96,14 +103,36 @@ export type NetWorthAdjustmentDto = {
 
 export const netWorthApi = {
   getAccounts: () => api<NetWorthAccountDto[]>('/net-worth/accounts'),
-  createAccount: (data: { name: string; kind: 'asset' | 'liability'; balance: number }) =>
+  createAccount: (data: {
+    name: string
+    kind: 'asset' | 'liability'
+    balance: number
+    iconKey?: string | null
+    accentKey?: string | null
+  }) =>
     api<NetWorthAccountDto>('/net-worth/accounts', { method: 'POST', body: JSON.stringify(data) }),
-  updateAccount: (id: string, data: Partial<{ name: string; kind: 'asset' | 'liability'; balance: number }>) =>
+  updateAccount: (
+    id: string,
+    data: Partial<{
+      name: string
+      kind: 'asset' | 'liability'
+      balance: number
+      iconKey?: string | null
+      accentKey?: string | null
+    }>
+  ) =>
     api<NetWorthAccountDto>(`/net-worth/accounts/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteAccount: (id: string) => api<void>(`/net-worth/accounts/${id}`, { method: 'DELETE' }),
   getAdjustments: () => api<NetWorthAdjustmentDto[]>('/net-worth/adjustments'),
   createAdjustment: (data: { accountId: string; amount: number; description?: string }) =>
     api<{ adjustment: NetWorthAdjustmentDto; account: NetWorthAccountDto }>('/net-worth/adjustments', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
+  updateAdjustment: (id: string, data: { description?: string; amount?: number }) =>
+    api<NetWorthAdjustmentDto>(`/net-worth/adjustments/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+  deleteAdjustment: (id: string) => api<void>(`/net-worth/adjustments/${id}`, { method: 'DELETE' }),
 }

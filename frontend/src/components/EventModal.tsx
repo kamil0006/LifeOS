@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, Eye, EyeOff, Pencil, Plus, Trash2, X } from 'lucide-react'
-import { useModalMotion } from '../lib/modalMotion'
+import { ModalShell } from './ModalShell'
 import { normalizeEventDate, type DemoEvent, type RecurrenceType, type RecurrenceUnit } from '../context/EventsContext'
 import { EVENT_CATEGORY_COLOR_OPTIONS, type EventCategory } from '../lib/eventCategories'
 
@@ -51,7 +50,6 @@ export function EventModal({
     )
   }
 
-  const { backdrop, panel } = useModalMotion()
   const getInitialForm = useCallback(
     () =>
       event
@@ -208,22 +206,16 @@ export function EventModal({
     showToast('Kategoria zapisana')
   }
 
-  const modalContent = (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          <motion.div
-            key="event-backdrop"
-            {...backdrop}
-            className="fixed inset-0 z-9998 bg-black/60 backdrop-blur-sm"
-            onClick={onClose}
-          />
-          <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 pointer-events-none">
-            <motion.div
-              key="event-panel"
-              {...panel}
-              className="pointer-events-auto relative w-full max-w-md rounded-lg border border-(--border) bg-(--bg-card) p-6 shadow-xl"
-            >
+  return (
+    <ModalShell
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="max-w-md"
+      backdropKey="event-backdrop"
+      panelKey="event-panel"
+    >
+      {/* relative wrapper needed for internal toast positioning */}
+      <div className="relative">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-lg font-bold text-(--text-primary) font-gaming">
@@ -680,24 +672,19 @@ export function EventModal({
             </div>
           </form>
           )}
-          <AnimatePresence>
-            {toastMessage && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 8 }}
-                className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 rounded-lg border border-(--accent-cyan)/40 bg-(--bg-dark) px-3 py-2 text-sm text-(--text-primary) shadow-lg"
-              >
-                {toastMessage}
-              </motion.div>
-            )}
-          </AnimatePresence>
+        <AnimatePresence>
+          {toastMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 rounded-lg border border-(--accent-cyan)/40 bg-(--bg-dark) px-3 py-2 text-sm text-(--text-primary) shadow-lg"
+            >
+              {toastMessage}
             </motion.div>
-          </div>
-        </>
-      )}
-    </AnimatePresence>
+          )}
+        </AnimatePresence>
+      </div>
+    </ModalShell>
   )
-
-  return createPortal(modalContent, document.body)
 }

@@ -77,29 +77,15 @@ export function AppNavPanel({ onNavigate, mobileClose }: AppNavPanelProps) {
               <span className="text-(--text-primary)">OS</span>
             </Link>
             <p className="text-sm text-(--text-muted) mt-1 font-mono tracking-wider">v0.1.0</p>
-            <div className="mt-2 flex gap-2">
-              <Tooltip content="Szybkie wyszukiwanie (Ctrl+K)">
-                <button
-                  type="button"
-                  onClick={() => {
-                    openSearch()
-                    onNavigate?.()
-                  }}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-xs font-gaming text-(--text-muted) transition-colors hover:border-(--accent-cyan)/50 hover:text-(--accent-cyan) min-h-[44px]"
-                >
-                  <Search className="h-3.5 w-3.5 shrink-0" />
-                  <span>Wyszukaj</span>
-                  <kbd className="ml-1 hidden rounded border border-(--border) bg-(--bg-card) px-1.5 py-0.5 font-mono text-[10px] sm:inline">Ctrl+K</kbd>
-                </button>
-              </Tooltip>
-              <Tooltip content="Samouczek – co jest w aplikacji">
+            <div className="mt-2 grid grid-cols-[2.75rem_minmax(0,1fr)] gap-2">
+              <Tooltip content="Samouczek – co jest w aplikacji" align="start">
                 <button
                   type="button"
                   onClick={() => {
                     openOnboarding()
                     onNavigate?.()
                   }}
-                  className="grid size-11 shrink-0 place-items-center rounded-lg border border-(--border) bg-(--bg-dark) p-0 text-(--text-muted) transition-colors hover:border-(--accent-cyan)/50 hover:text-(--accent-cyan)"
+                  className="grid size-11 place-items-center rounded-lg border border-(--border) bg-(--bg-dark) p-0 text-(--text-muted) transition-colors hover:border-(--accent-cyan)/50 hover:text-(--accent-cyan)"
                   aria-label="Otwórz samouczek"
                 >
                   <HelpCircle
@@ -107,6 +93,19 @@ export function AppNavPanel({ onNavigate, mobileClose }: AppNavPanelProps) {
                     strokeWidth={2}
                     aria-hidden
                   />
+                </button>
+              </Tooltip>
+              <Tooltip content="Szybkie wyszukiwanie (Ctrl+K)" wrapperClassName="min-w-0 w-full">
+                <button
+                  type="button"
+                  onClick={() => {
+                    openSearch()
+                    onNavigate?.()
+                  }}
+                  className="flex min-h-11 w-full min-w-0 items-center justify-center gap-1.5 rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-sm font-gaming text-(--text-muted) transition-colors hover:border-(--accent-cyan)/50 hover:text-(--accent-cyan)"
+                >
+                  <Search className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">Wyszukaj</span>
                 </button>
               </Tooltip>
             </div>
@@ -123,7 +122,7 @@ export function AppNavPanel({ onNavigate, mobileClose }: AppNavPanelProps) {
           )}
         </div>
       </div>
-      <nav className="scrollbar-theme min-h-0 flex-1 space-y-7 overflow-y-auto p-5">
+      <nav className="scrollbar-hidden min-h-0 flex-1 space-y-7 overflow-y-auto overflow-x-hidden p-5">
         {navSections.map((section) => (
           <div key={section.label ?? 'dashboard'}>
             {section.label && (
@@ -194,7 +193,7 @@ export function AppNavPanel({ onNavigate, mobileClose }: AppNavPanelProps) {
 
 export function Sidebar() {
   return (
-    <aside className="relative hidden h-full min-h-0 w-64 shrink-0 overflow-y-auto border-r border-(--border) bg-(--bg-card)/95 scrollbar-theme lg:flex lg:flex-col">
+    <aside className="relative hidden h-full min-h-0 w-64 shrink-0 overflow-hidden border-r border-(--border) bg-(--bg-card)/95 lg:flex lg:flex-col">
       <div className="absolute top-0 left-0 h-px w-full bg-linear-to-r from-transparent via-(--accent-cyan)/50 to-transparent" />
       <AppNavPanel />
     </aside>

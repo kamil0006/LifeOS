@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
-import { useModalMotion } from '../lib/modalMotion'
+import { ModalShell } from './ModalShell'
 import type { NetWorthPositionKey } from '../context/DemoDataContext'
 
 const POSITION_LABELS: Record<NetWorthPositionKey, string> = {
@@ -13,7 +12,7 @@ const POSITION_LABELS: Record<NetWorthPositionKey, string> = {
 interface NetWorthAdjustModalProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (position: NetWorthPositionKey, amount: number, isAdd: boolean) => void
+  onSubmit: (position: NetWorthPositionKey, amount: number, isAdd: boolean, description: string) => void
   /** Gdy ustawione – blokuje zmianę pozycji, edytujemy tylko tę kartę */
   initialPosition?: NetWorthPositionKey
   /** Aktualna wartość pozycji – do podglądu przed zatwierdzeniem */
@@ -21,16 +20,17 @@ interface NetWorthAdjustModalProps {
 }
 
 export function NetWorthAdjustModal({ isOpen, onClose, onSubmit, initialPosition, currentValue = 0 }: NetWorthAdjustModalProps) {
-  const { backdrop, panel } = useModalMotion()
   const [position, setPosition] = useState<NetWorthPositionKey>(initialPosition ?? 'cash')
   const [amount, setAmount] = useState('')
   const [isAdd, setIsAdd] = useState(true)
+  const [description, setDescription] = useState('')
 
   useEffect(() => {
     if (isOpen) {
       setPosition(initialPosition ?? 'cash')
       setAmount('')
       setIsAdd(true)
+      setDescription('')
     }
   }, [isOpen, initialPosition])
 
@@ -38,26 +38,18 @@ export function NetWorthAdjustModal({ isOpen, onClose, onSubmit, initialPosition
     e.preventDefault()
     const amt = parseFloat(amount.replace(',', '.'))
     if (isNaN(amt) || amt <= 0) return
-    onSubmit(position, amt, isAdd)
+    onSubmit(position, amt, isAdd, description.trim())
     onClose()
   }
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          <motion.div
-            key="networth-backdrop"
-            {...backdrop}
-            className="fixed inset-0 z-9998 bg-black/60 backdrop-blur-sm"
-            onClick={onClose}
-          />
-          <div className="fixed inset-0 z-9999 flex items-start justify-center overflow-y-auto p-4 pt-12 pointer-events-none">
-            <motion.div
-              key="networth-panel"
-              {...panel}
-              className="pointer-events-auto relative z-10 w-full max-w-md rounded-lg border border-(--border) bg-(--bg-card) p-6 shadow-xl"
-            >
+    <ModalShell
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="max-w-md"
+      backdropKey="networth-backdrop"
+      panelKey="networth-panel"
+    >
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold text-(--text-primary) font-gaming">
               Korekta: {POSITION_LABELS[position]}
@@ -148,6 +140,18 @@ export function NetWorthAdjustModal({ isOpen, onClose, onSubmit, initialPosition
               )
             })()}
 
+            <div>
+              <label className="block text-base text-(--text-muted) font-gaming mb-1">Opis korekty</label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={2}
+                maxLength={200}
+                placeholder="Opcjonalnie: np. wypłata z bankomatu, dopłata do portfela…"
+                className="w-full px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base focus:border-(--accent-cyan) focus:outline-none resize-y min-h-[72px]"
+              />
+            </div>
+
             <div className="flex gap-2 pt-2">
               <button
                 type="button"
@@ -165,10 +169,6 @@ export function NetWorthAdjustModal({ isOpen, onClose, onSubmit, initialPosition
               </button>
             </div>
           </form>
-            </motion.div>
-          </div>
-        </>
-      )}
-    </AnimatePresence>
+    </ModalShell>
   )
 }

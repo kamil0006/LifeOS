@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react'
-import { createPortal } from 'react-dom'
-import { motion } from 'framer-motion'
 import { X } from 'lucide-react'
-import { useModalMotion } from '../lib/modalMotion'
+import { ModalShell } from './ModalShell'
 import type { Book, ReadingStatus } from '../context/LearningContext'
 
 const DEFAULT_CATEGORIES = ['Programowanie', 'Biznes', 'Psychologia', 'Rozwój osobisty', 'Inne']
@@ -47,8 +45,6 @@ function buildInitialForm(book: Book): BookFormState {
 }
 
 export function BookModal({ book, bookCategories, onSave, onClose }: BookModalProps) {
-  const { backdrop, panel } = useModalMotion()
-
   /** Mała lista — koszt budowy Set przy każdym renderze jest znikomy; useMemo i tak często się przelicza przy nowej referencji `bookCategories`. */
   const allCategories = [...new Set([...DEFAULT_CATEGORIES, ...bookCategories])]
 
@@ -81,20 +77,14 @@ export function BookModal({ book, bookCategories, onSave, onClose }: BookModalPr
     })
   }
 
-  return createPortal(
-    <>
-      <motion.div
-        key="book-backdrop"
-        {...backdrop}
-        className="fixed inset-0 z-9998 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      <div className="fixed inset-0 z-9999 flex items-start justify-center overflow-y-auto p-4 pt-12 pointer-events-none">
-        <motion.div
-          key="book-panel"
-          {...panel}
-          className="pointer-events-auto relative w-full max-w-md rounded-lg border border-(--border) bg-(--bg-card) p-6 shadow-xl"
-        >
+  return (
+    <ModalShell
+      isOpen={true}
+      onClose={onClose}
+      maxWidth="max-w-md"
+      backdropKey="book-backdrop"
+      panelKey="book-panel"
+    >
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold text-(--text-primary) font-gaming">Edytuj książkę</h3>
             <button
@@ -245,9 +235,6 @@ export function BookModal({ book, bookCategories, onSave, onClose }: BookModalPr
               </button>
             </div>
           </form>
-        </motion.div>
-      </div>
-    </>,
-    document.body,
+    </ModalShell>
   )
 }

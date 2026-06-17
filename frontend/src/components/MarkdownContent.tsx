@@ -1,4 +1,8 @@
-import ReactMarkdown from 'react-markdown'
+import { lazy, Suspense } from 'react'
+
+// react-markdown + remark/rehype/micromark to ~110 KB. Ładujemy je leniwie,
+// żeby nie wciągać tego ciężaru do bundla startowego (Layout montuje NoteModal globalnie).
+const ReactMarkdown = lazy(() => import('react-markdown'))
 
 interface MarkdownContentProps {
   content: string
@@ -8,6 +12,7 @@ interface MarkdownContentProps {
 export function MarkdownContent({ content, className = '' }: MarkdownContentProps) {
   return (
     <div className={`text-sm text-(--text-primary) ${className}`}>
+      <Suspense fallback={<p className="mb-2 whitespace-pre-wrap text-(--text-primary)">{content}</p>}>
       <ReactMarkdown
         components={{
           p: ({ children }) => <p className="mb-2 last:mb-0 text-(--text-primary)">{children}</p>,
@@ -30,6 +35,7 @@ export function MarkdownContent({ content, className = '' }: MarkdownContentProp
       >
         {content}
       </ReactMarkdown>
+      </Suspense>
     </div>
   )
 }

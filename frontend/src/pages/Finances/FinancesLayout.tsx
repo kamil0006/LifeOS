@@ -1,13 +1,12 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
-import { LayoutDashboard, Receipt, Repeat, BarChart3, Sparkles, Wallet } from 'lucide-react'
+import { LayoutDashboard, Receipt, Repeat, BarChart3, Wallet } from 'lucide-react'
 import { getSubpageOutletVariants } from '../../lib/layoutSectionMotion'
 
 const subNavItems = [
   { to: '/finances', end: true, icon: LayoutDashboard, label: 'Przegląd' },
   { to: '/finances/transactions', end: false, icon: Receipt, label: 'Transakcje' },
   { to: '/finances/recurring', end: false, icon: Repeat, label: 'Stałe koszty' },
-  { to: '/finances/wishes', end: false, icon: Sparkles, label: 'Zachcianki' },
   { to: '/finances/net-worth', end: false, icon: Wallet, label: 'Wartość netto' },
   { to: '/finances/analytics', end: false, icon: BarChart3, label: 'Analityka' },
 ]
@@ -18,29 +17,27 @@ export function FinancesLayout() {
   const contentVariants = getSubpageOutletVariants(reduceMotion)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-(--text-primary) font-gaming tracking-wider">FINANSE</h1>
-        <p className="text-base text-(--text-muted) mt-1 font-gaming tracking-wide">
-          Przegląd, transakcje i analityka
-        </p>
+        <h1 className="font-gaming text-2xl font-bold tracking-wider text-(--text-primary)">FINANSE</h1>
+        <p className="mt-1 text-base text-(--text-muted)">Przegląd, transakcje i analityka</p>
       </div>
 
-      <nav className="-mx-1 flex flex-nowrap gap-2 overflow-x-auto px-1 pb-1 scrollbar-theme md:flex-wrap">
+      <nav className="-mx-1 flex flex-nowrap gap-1.5 overflow-x-auto px-1 pb-1 scrollbar-theme sm:gap-2 md:flex-wrap">
         {subNavItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             end={item.end}
             className={({ isActive }) =>
-              `flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 transition-[background-color,color,border-color,box-shadow] duration-200 ease-out font-gaming tracking-wide text-sm ${
+              `flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg border px-3 py-2.5 text-sm transition-colors sm:px-4 ${
                 isActive
-                  ? 'bg-(--glow-cyan) text-(--accent-cyan) border border-(--accent-cyan)/40 shadow-[0_0_15px_rgba(0,229,255,0.2)]'
-                  : 'text-(--text-muted) hover:bg-(--bg-card-hover) hover:text-(--text-primary) border border-transparent'
+                  ? 'border-(--border) bg-(--bg-dark) font-gaming tracking-wide text-(--text-primary)'
+                  : 'border-transparent text-(--text-muted) hover:bg-(--bg-card-hover)/60 hover:text-(--text-primary)'
               }`
             }
           >
-            <item.icon className="w-4 h-4" />
+            <item.icon className="h-4 w-4 shrink-0" />
             {item.label}
           </NavLink>
         ))}

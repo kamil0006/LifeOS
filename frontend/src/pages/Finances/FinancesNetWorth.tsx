@@ -12,31 +12,185 @@ import {
   ReferenceLine,
 } from 'recharts'
 import { motion, AnimatePresence } from 'framer-motion'
-import { PiggyBank, TrendingUp, Wallet, Banknote, CreditCard, BarChart3, Pencil, Undo2 } from 'lucide-react'
-import { MonthSelector } from '../../components/MonthSelector'
+import { Banknote, CreditCard, BarChart3, Pencil, Undo2, Plus, ChevronDown, ChevronUp, TrendingUp, Trash2 } from 'lucide-react'
 import { ChartPeriodSelector } from '../../components/ChartPeriodSelector'
 import { useChartPeriod, getMonthsInQuarter } from '../../context/ChartPeriodContext'
 import { NetWorthAdjustModal } from '../../components/NetWorthAdjustModal'
+import { NetWorthAccountCreateModal } from '../../components/NetWorthAccountCreateModal'
+import { NetWorthCorrectionModal, type NetWorthCorrectionAccountRef } from '../../components/NetWorthCorrectionModal'
+import { NetWorthAdjustmentEditModal } from '../../components/NetWorthAdjustmentEditModal'
+import { ConfirmDialog } from '../../components/ConfirmDialog'
+import { getNetWorthAccountIcon, getNetWorthAccountIconKey } from '../../lib/netWorthAccountIcons'
+import { getNwAssetAccentClasses, normalizeNwAssetAccentKey } from '../../lib/netWorthAssetAccent'
 import { useAuth } from '../../context/AuthContext'
 import { useDemoData, DEMO_EXPENSES, DEMO_INCOME, DEMO_SCHEDULED_EXPENSES, DEMO_NET_WORTH } from '../../context/DemoDataContext'
 import type { NetWorthPositionKey } from '../../context/DemoDataContext'
 import { mergeExpensesWithScheduled } from '../../lib/expensesUtils'
-import { useMonth, parseDate, inMonth } from '../../context/MonthContext'
+import { useMonth, parseDate } from '../../context/MonthContext'
 import { useFinanceListsQuery } from '../../hooks/useFinanceListsQuery'
 import { useFinanceUsesApi } from '../../hooks/useFinanceUsesApi'
 import { netWorthApi, type NetWorthAccountDto, type NetWorthAdjustmentDto } from '../../lib/api/financeApi'
 import { queryKeys } from '../../lib/queryKeys'
 import { NetWorthPageSkeleton } from '../../components/skeletons'
+import { useIsMobile } from '../../hooks/useIsMobile'
+import { safeRandomId } from '../../lib/safeId'
 
 const monthNames = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru']
 
-const POSITION_CONFIG: { key: NetWorthPositionKey; label: string; icon: typeof Banknote; desc: string; borderClass: string; iconClass: string }[] = [
-  { key: 'cash', label: 'Gotówka', icon: Banknote, desc: 'W portfelu', borderClass: 'border-(--accent-green)/20', iconClass: 'text-(--accent-green)' },
-  { key: 'bankAccount', label: 'Konto bankowe', icon: CreditCard, desc: 'Karta, konto', borderClass: 'border-(--accent-cyan)/20', iconClass: 'text-(--accent-cyan)' },
-  { key: 'assets', label: 'Aktywa', icon: BarChart3, desc: 'Inwestycje, nieruchomości', borderClass: 'border-(--accent-magenta)/20', iconClass: 'text-(--accent-magenta)' },
+const DEMO_POSITION_LABEL: Record<NetWorthPositionKey, string> = {
+  cash: 'Gotówka',
+  bankAccount: 'Konto bankowe',
+  assets: 'Aktywa',
+}
+
+const DEMO_NW_LIAB_KEY = 'lifeos_demo_nw_liabilities_v1'
+const DEMO_NW_LOG_KEY = 'lifeos_demo_nw_adjustment_log_v1'
+const DEMO_NW_CUSTOM_ASSETS_KEY = 'lifeos_demo_nw_custom_assets_v1'
+const NW_HISTORY_COLLAPSED_KEY = 'lifeos_nw_history_collapsed'
+
+const DEMO_DETAIL_PLACEHOLDER = '—'
+
+type DemoLiability = { id: string; name: string; balance: number; iconKey?: string; accentKey?: string }
+
+type DemoAdjUndo =
+  | { type: 'position'; key: NetWorthPositionKey }
+  | { type: 'liability'; id: string }
+  | { type: 'demoAsset'; id: string }
+
+type DemoAdjLog = {
+  id: string
+  at: string
+  headline: string
+  detail: string
+  amount: number
+  undo?: DemoAdjUndo
+}
+
+function inferDemoUndo(
+  row: DemoAdjLog,
+  demoLiabilities: DemoLiability[],
+  demoCustomAssets: DemoLiability[]
+): DemoAdjUndo | null {
+  const m = row.headline.match(/^(.+?)\s*\(zobowiązanie\)\s*$/i)
+  if (m) {
+    const name = m[1].trim()
+    const li = demoLiabilities.find((l) => l.name === name)
+    if (li) return { type: 'liability', id: li.id }
+    return null
+  }
+  const key = (Object.keys(DEMO_POSITION_LABEL) as NetWorthPositionKey[]).find(
+    (k) => DEMO_POSITION_LABEL[k] === row.headline.trim()
+  )
+  if (key) return { type: 'position', key }
+  const da = demoCustomAssets.find((a) => a.name === row.headline.trim())
+  if (da) return { type: 'demoAsset', id: da.id }
+  return null
+}
+
+function loadDemoLiabilities(): DemoLiability[] {
+  try {
+    const s = localStorage.getItem(DEMO_NW_LIAB_KEY)
+    if (!s) return []
+    const p = JSON.parse(s) as unknown
+    if (!Array.isArray(p)) return []
+    return p.filter((x): x is DemoLiability => {
+      if (x == null || typeof x !== 'object') return false
+      const o = x as DemoLiability & { iconKey?: unknown; accentKey?: unknown }
+      if (typeof o.id !== 'string' || typeof o.name !== 'string' || typeof o.balance !== 'number') return false
+      if (o.iconKey != null && typeof o.iconKey !== 'string') return false
+      if (o.accentKey != null && typeof o.accentKey !== 'string') return false
+      return true
+    })
+  } catch {
+    return []
+  }
+}
+
+function loadDemoCustomAssets(): DemoLiability[] {
+  try {
+    const s = localStorage.getItem(DEMO_NW_CUSTOM_ASSETS_KEY)
+    if (!s) return []
+    const p = JSON.parse(s) as unknown
+    if (!Array.isArray(p)) return []
+    return p.filter((x): x is DemoLiability => {
+      if (x == null || typeof x !== 'object') return false
+      const o = x as DemoLiability & { iconKey?: unknown; accentKey?: unknown }
+      if (typeof o.id !== 'string' || typeof o.name !== 'string' || typeof o.balance !== 'number') return false
+      if (o.iconKey != null && typeof o.iconKey !== 'string') return false
+      if (o.accentKey != null && typeof o.accentKey !== 'string') return false
+      return true
+    })
+  } catch {
+    return []
+  }
+}
+
+function loadDemoAdjLog(): DemoAdjLog[] {
+  try {
+    const s = localStorage.getItem(DEMO_NW_LOG_KEY)
+    if (!s) return []
+    const p = JSON.parse(s) as unknown
+    if (!Array.isArray(p)) return []
+    return p.filter(
+      (x): x is DemoAdjLog =>
+        x != null &&
+        typeof x === 'object' &&
+        typeof (x as DemoAdjLog).id === 'string' &&
+        typeof (x as DemoAdjLog).at === 'string' &&
+        typeof (x as DemoAdjLog).headline === 'string' &&
+        typeof (x as DemoAdjLog).detail === 'string' &&
+        typeof (x as DemoAdjLog).amount === 'number'
+    )
+  } catch {
+    return []
+  }
+}
+
+const POSITION_CONFIG: {
+  key: NetWorthPositionKey
+  label: string
+  icon: typeof Banknote
+  desc: string
+  borderClass: string
+  iconClass: string
+  balanceClass: string
+  rowAccentClass: string
+}[] = [
+  {
+    key: 'cash',
+    label: 'Gotówka',
+    icon: Banknote,
+    desc: 'W portfelu',
+    borderClass: 'border-(--accent-green)/20',
+    iconClass: 'text-(--accent-green)',
+    balanceClass: 'text-(--accent-green)',
+    rowAccentClass: 'border-l-[3px] border-l-(--accent-green)/60 bg-(--accent-green)/5',
+  },
+  {
+    key: 'bankAccount',
+    label: 'Konto bankowe',
+    icon: CreditCard,
+    desc: 'Karta, konto',
+    borderClass: 'border-(--accent-cyan)/20',
+    iconClass: 'text-(--accent-cyan)',
+    balanceClass: 'text-(--accent-cyan)',
+    rowAccentClass: 'border-l-[3px] border-l-(--accent-cyan)/60 bg-(--accent-cyan)/5',
+  },
+  {
+    key: 'assets',
+    label: 'Aktywa',
+    icon: BarChart3,
+    desc: 'Inwestycje, nieruchomości',
+    borderClass: 'border-(--accent-magenta)/20',
+    iconClass: 'text-(--accent-magenta)',
+    balanceClass: 'text-(--accent-magenta)',
+    rowAccentClass: 'border-l-[3px] border-l-(--accent-magenta)/55 bg-(--accent-magenta)/5',
+  },
 ]
 
 export function FinancesNetWorth() {
+  const isMobile = useIsMobile()
+  const chartHeight = isMobile ? 200 : 240
   const { user } = useAuth()
   const useApiFinance = useFinanceUsesApi()
   const queryClient = useQueryClient()
@@ -47,11 +201,84 @@ export function FinancesNetWorth() {
     expenses: qExpenses,
     income: qIncome,
     scheduledExpenses: qScheduled,
-    isLoading: financeLoading,
   } = useFinanceListsQuery()
   const [adjustModalOpen, setAdjustModalOpen] = useState(false)
   const [adjustTarget, setAdjustTarget] = useState<NetWorthPositionKey | null>(null)
-  const [undoInfo, setUndoInfo] = useState<{ position: NetWorthPositionKey; delta: number } | null>(null)
+  const [undoInfo, setUndoInfo] = useState<{
+    delta: number
+    logId: string
+    undo: DemoAdjUndo
+  } | null>(null)
+  const [accountCreateKind, setAccountCreateKind] = useState<'asset' | 'liability' | null>(null)
+  const [correctionOpen, setCorrectionOpen] = useState(false)
+  const [correctionRef, setCorrectionRef] = useState<NetWorthCorrectionAccountRef | null>(null)
+  const [correctionBalance, setCorrectionBalance] = useState(0)
+
+  const [demoLiabilities, setDemoLiabilities] = useState<DemoLiability[]>(loadDemoLiabilities)
+  const [demoCustomAssets, setDemoCustomAssets] = useState<DemoLiability[]>(loadDemoCustomAssets)
+  const [demoAdjLog, setDemoAdjLog] = useState<DemoAdjLog[]>(loadDemoAdjLog)
+  const [historyCollapsed, setHistoryCollapsed] = useState(() => {
+    try {
+      const v = localStorage.getItem(NW_HISTORY_COLLAPSED_KEY)
+      if (v === '0') return false
+      if (v === '1') return true
+      return true
+    } catch {
+      return true
+    }
+  })
+  const [adjustmentEdit, setAdjustmentEdit] = useState<
+    | { mode: 'api'; row: NetWorthAdjustmentDto }
+    | { mode: 'demo'; row: DemoAdjLog }
+    | null
+  >(null)
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string
+    description: string
+    variant: 'danger' | 'neutral'
+    confirmLabel: string
+    onConfirm: () => void | Promise<void>
+  } | null>(null)
+  const [alertDialog, setAlertDialog] = useState<{ title: string; description: string } | null>(null)
+
+  const toggleHistoryCollapsed = () => {
+    setHistoryCollapsed((v) => {
+      const n = !v
+      try {
+        localStorage.setItem(NW_HISTORY_COLLAPSED_KEY, n ? '1' : '0')
+      } catch {
+        /* ignore */
+      }
+      return n
+    })
+  }
+
+  useEffect(() => {
+    if (useApiFinance) return
+    try {
+      localStorage.setItem(DEMO_NW_LIAB_KEY, JSON.stringify(demoLiabilities))
+    } catch {
+      /* ignore */
+    }
+  }, [demoLiabilities, useApiFinance])
+
+  useEffect(() => {
+    if (useApiFinance) return
+    try {
+      localStorage.setItem(DEMO_NW_CUSTOM_ASSETS_KEY, JSON.stringify(demoCustomAssets))
+    } catch {
+      /* ignore */
+    }
+  }, [demoCustomAssets, useApiFinance])
+
+  useEffect(() => {
+    if (useApiFinance) return
+    try {
+      localStorage.setItem(DEMO_NW_LOG_KEY, JSON.stringify(demoAdjLog))
+    } catch {
+      /* ignore */
+    }
+  }, [demoAdjLog, useApiFinance])
 
   const netWorthAccountsQuery = useQuery<NetWorthAccountDto[]>({
     queryKey: queryKeys.netWorthAccounts(userId),
@@ -66,11 +293,14 @@ export function FinancesNetWorth() {
   const addAccountMutation = useMutation<
     NetWorthAccountDto,
     Error,
-    { name: string; kind: 'asset' | 'liability'; balance: number }
+    { name: string; kind: 'asset' | 'liability'; balance: number; iconKey?: string | null; accentKey?: string | null }
   >({
     mutationFn: netWorthApi.createAccount,
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.netWorthAccounts(userId) })
+    onSuccess: (created) => {
+      queryClient.setQueryData<NetWorthAccountDto[]>(queryKeys.netWorthAccounts(userId), (prev) => [
+        ...(prev ?? []),
+        created,
+      ])
     },
   })
   const addAdjustmentMutation = useMutation<
@@ -86,6 +316,50 @@ export function FinancesNetWorth() {
       ])
     },
   })
+  const updateAccountMutation = useMutation<
+    NetWorthAccountDto,
+    Error,
+    { id: string } & Partial<{ iconKey: string | null; accentKey: string | null }>
+  >({
+    mutationFn: ({ id, ...body }) => netWorthApi.updateAccount(id, body),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.netWorthAccounts(userId) })
+    },
+  })
+
+  const patchAdjustmentMutation = useMutation<
+    NetWorthAdjustmentDto,
+    Error,
+    { id: string; description?: string; amount?: number }
+  >({
+    mutationFn: ({ id, ...body }) => netWorthApi.updateAdjustment(id, body),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.netWorthAdjustments(userId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.netWorthAccounts(userId) }),
+      ])
+    },
+  })
+
+  const deleteAdjustmentMutation = useMutation<void, Error, string>({
+    mutationFn: (id) => netWorthApi.deleteAdjustment(id),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.netWorthAdjustments(userId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.netWorthAccounts(userId) }),
+      ])
+    },
+  })
+
+  const deleteAccountMutation = useMutation<void, Error, string>({
+    mutationFn: (id) => netWorthApi.deleteAccount(id),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.netWorthAccounts(userId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.netWorthAdjustments(userId) }),
+      ])
+    },
+  })
 
   const selectedMonth = monthCtx?.selectedMonth ?? new Date().getMonth()
   const selectedYear = monthCtx?.selectedYear ?? new Date().getFullYear()
@@ -94,18 +368,16 @@ export function FinancesNetWorth() {
   const effectiveExpenses = useApiFinance ? qExpenses : (demoData?.expenses ?? DEMO_EXPENSES)
   const effectiveScheduled = useApiFinance ? qScheduled : (demoData?.scheduledExpenses ?? DEMO_SCHEDULED_EXPENSES)
   const effectiveIncome = useApiFinance ? qIncome : (demoData?.income ?? DEMO_INCOME)
-  const loading = useApiFinance ? (financeLoading || netWorthAccountsQuery.isPending || netWorthAdjustmentsQuery.isPending) : false
   const netWorthPositions = demoData?.netWorth ?? DEMO_NET_WORTH
-  const accounts: Array<{ id: string; name: string; kind: 'asset' | 'liability'; balance: number }> = !useApiFinance
-    ? [
-        { id: 'demo-cash', name: 'Gotówka', kind: 'asset' as const, balance: netWorthPositions.cash },
-        { id: 'demo-bank', name: 'Konto bankowe', kind: 'asset' as const, balance: netWorthPositions.bankAccount },
-        { id: 'demo-assets', name: 'Aktywa', kind: 'asset' as const, balance: netWorthPositions.assets },
-      ]
-    : (netWorthAccountsQuery.data ?? [])
 
-  const { cumulativeSavings, trendData, currentIncome, currentExpenses, savingsRate } = useMemo(() => {
+  const apiAccounts = netWorthAccountsQuery.data ?? []
+  const assetAccounts = useMemo(() => apiAccounts.filter((a) => a.kind === 'asset'), [apiAccounts])
+  const liabilityAccounts = useMemo(() => apiAccounts.filter((a) => a.kind === 'liability'), [apiAccounts])
+
+  const { cumulativeSavings, trendData, periodIncomeTotal, periodExpenseTotal, periodSavingsRate } = useMemo(() => {
     let cumulative = 0
+    let periodIncomeTotal = 0
+    let periodExpenseTotal = 0
     const trend: { label: string; wartość: number; bilans: number }[] = []
 
     if (chartPeriod?.period.type === 'quarter') {
@@ -124,6 +396,8 @@ export function FinancesNetWorth() {
             return im === m && iy === y
           })
           .reduce((s, i) => s + i.amount, 0)
+        periodIncomeTotal += przychody
+        periodExpenseTotal += wydatki
         const bilans = przychody - wydatki
         cumulative += bilans
         trend.push({ label: `${monthNames[m]} ${y}`, wartość: cumulative, bilans })
@@ -143,6 +417,8 @@ export function FinancesNetWorth() {
             return im === m && iy === y
           })
           .reduce((s, i) => s + i.amount, 0)
+        periodIncomeTotal += przychody
+        periodExpenseTotal += wydatki
         const bilans = przychody - wydatki
         cumulative += bilans
         trend.push({ label: monthNames[m], wartość: cumulative, bilans })
@@ -164,6 +440,8 @@ export function FinancesNetWorth() {
         const dayStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
         const wydatki = merged.filter((e) => e.date === dayStr).reduce((s, e) => s + e.amount, 0)
         const przychody = monthIncome.filter((i) => i.date === dayStr).reduce((s, i) => s + i.amount, 0)
+        periodIncomeTotal += przychody
+        periodExpenseTotal += wydatki
         const bilans = przychody - wydatki
         cumulative += bilans
         trend.push({ label: String(d), wartość: cumulative, bilans })
@@ -187,32 +465,54 @@ export function FinancesNetWorth() {
             return month === mo && year === yr
           })
           .reduce((s, i) => s + i.amount, 0)
+        periodIncomeTotal += przychody
+        periodExpenseTotal += wydatki
         const bilans = przychody - wydatki
         cumulative += bilans
         trend.push({ label: `${monthNames[mo]} ${yr}`, wartość: cumulative, bilans })
       }
     }
 
-    const monthExp = effectiveExpenses.filter((e) => inMonth(e.date, selectedMonth, selectedYear))
-    const merged = mergeExpensesWithScheduled(monthExp, effectiveScheduled, selectedMonth, selectedYear)
-    const monthInc = effectiveIncome.filter((i) => inMonth(i.date, selectedMonth, selectedYear))
-    const inc = monthInc.reduce((s, i) => s + i.amount, 0)
-    const exp = merged.reduce((s, e) => s + e.amount, 0)
-    const rate = inc > 0 ? ((inc - exp) / inc) * 100 : 0
+    const periodSavingsRate = periodIncomeTotal > 0 ? ((periodIncomeTotal - periodExpenseTotal) / periodIncomeTotal) * 100 : 0
     return {
       cumulativeSavings: cumulative,
       trendData: trend,
-      currentIncome: inc,
-      currentExpenses: exp,
-      savingsRate: rate,
+      periodIncomeTotal,
+      periodExpenseTotal,
+      periodSavingsRate,
     }
   }, [effectiveExpenses, effectiveScheduled, effectiveIncome, selectedMonth, selectedYear, chartPeriod])
 
-  const accountsNetWorth = accounts.reduce((sum, acc) => {
-    if (acc.kind === 'liability') return sum - acc.balance
-    return sum + acc.balance
-  }, 0)
-  const totalNetWorth = cumulativeSavings + accountsNetWorth
+  const assetsTotal = useMemo(() => {
+    if (useApiFinance) return assetAccounts.reduce((s, a) => s + a.balance, 0)
+    return (
+      netWorthPositions.cash +
+      netWorthPositions.bankAccount +
+      netWorthPositions.assets +
+      demoCustomAssets.reduce((s, a) => s + a.balance, 0)
+    )
+  }, [useApiFinance, assetAccounts, netWorthPositions, demoCustomAssets])
+
+  const liabilitiesTotal = useMemo(() => {
+    if (useApiFinance) return liabilityAccounts.reduce((s, a) => s + a.balance, 0)
+    return demoLiabilities.reduce((s, l) => s + l.balance, 0)
+  }, [useApiFinance, liabilityAccounts, demoLiabilities])
+
+  const accountsNetWorth = useMemo(() => {
+    if (useApiFinance) {
+      return apiAccounts.reduce((sum, acc) => {
+        if (acc.kind === 'liability') return sum - acc.balance
+        return sum + acc.balance
+      }, 0)
+    }
+    const assetsSum =
+      netWorthPositions.cash +
+      netWorthPositions.bankAccount +
+      netWorthPositions.assets +
+      demoCustomAssets.reduce((s, a) => s + a.balance, 0)
+    const liabSum = demoLiabilities.reduce((s, l) => s + l.balance, 0)
+    return assetsSum - liabSum
+  }, [useApiFinance, apiAccounts, netWorthPositions, demoLiabilities, demoCustomAssets])
 
   const cumulativePeriodLabel = useMemo(() => {
     if (!chartPeriod) return `${monthNames[selectedMonth]} ${selectedYear}`
@@ -221,42 +521,274 @@ export function FinancesNetWorth() {
     return `${monthNames[chartPeriod.period.month]} ${chartPeriod.period.year}`
   }, [chartPeriod, selectedMonth, selectedYear])
 
+  const pulseDemoDelta = (undo: DemoAdjUndo, delta: number) => {
+    if (undo.type === 'position') {
+      demoData?.updateNetWorthPosition(undo.key, delta)
+    } else if (undo.type === 'liability') {
+      setDemoLiabilities((prev) =>
+        prev.map((l) => (l.id === undo.id ? { ...l, balance: Math.max(0, l.balance + delta) } : l))
+      )
+    } else if (undo.type === 'demoAsset') {
+      setDemoCustomAssets((prev) =>
+        prev.map((a) => (a.id === undo.id ? { ...a, balance: Math.max(0, a.balance + delta) } : a))
+      )
+    }
+  }
+
+  const resolveDemoUndo = (row: DemoAdjLog) => row.undo ?? inferDemoUndo(row, demoLiabilities, demoCustomAssets)
+
+  const deleteDemoAdjustmentRow = (row: DemoAdjLog): boolean => {
+    const undo = resolveDemoUndo(row)
+    if (!undo) return false
+    pulseDemoDelta(undo, -row.amount)
+    setDemoAdjLog((prev) => prev.filter((r) => r.id !== row.id))
+    return true
+  }
+
+  const quickDeleteApiAdjustment = (row: NetWorthAdjustmentDto) => {
+    setConfirmDialog({
+      title: 'Usunąć wpis z historii?',
+      description:
+        'Cofniemy wpływ tej korekty na saldo powiązanego konta. Operacji nie da się cofnąć.',
+      variant: 'danger',
+      confirmLabel: 'Usuń',
+      onConfirm: async () => {
+        await deleteAdjustmentMutation.mutateAsync(row.id)
+        setAdjustmentEdit((e) => (e?.mode === 'api' && e.row.id === row.id ? null : e))
+      },
+    })
+  }
+
+  const quickDeleteDemoAdjustment = (row: DemoAdjLog) => {
+    setConfirmDialog({
+      title: 'Usunąć wpis z historii?',
+      description: 'Cofniemy wpływ tej korekty na saldo pozycji w trybie demo.',
+      variant: 'danger',
+      confirmLabel: 'Usuń',
+      onConfirm: async () => {
+        if (!deleteDemoAdjustmentRow(row)) {
+          setAlertDialog({
+            title: 'Nie można usunąć',
+            description:
+              'Ten wpis nie jest powiązany z żadną pozycją demo (np. stary zapis). Usuń go tylko z listy albo popraw dane ręcznie.',
+          })
+          return
+        }
+        setAdjustmentEdit((e) => (e?.mode === 'demo' && e.row.id === row.id ? null : e))
+      },
+    })
+  }
+
+  const quickDeleteApiAccount = (id: string) => {
+    setConfirmDialog({
+      title: 'Usunąć pozycję?',
+      description: 'Konto zniknie z majątku, a powiązane korekty w historii zostaną trwale usunięte.',
+      variant: 'danger',
+      confirmLabel: 'Usuń',
+      onConfirm: async () => {
+        await deleteAccountMutation.mutateAsync(id)
+      },
+    })
+  }
+
+  const quickDeleteDemoLiability = (id: string) => {
+    setConfirmDialog({
+      title: 'Usunąć zobowiązanie?',
+      description: 'Pozycja zostanie usunięta z listy. Powiązane wpisy historii (o tym koncie) też znikną.',
+      variant: 'danger',
+      confirmLabel: 'Usuń',
+      onConfirm: async () => {
+        setDemoLiabilities((p) => p.filter((l) => l.id !== id))
+        setDemoAdjLog((p) => p.filter((r) => !(r.undo?.type === 'liability' && r.undo.id === id)))
+      },
+    })
+  }
+
+  const quickDeleteDemoCustomAsset = (id: string) => {
+    setConfirmDialog({
+      title: 'Usunąć aktywo?',
+      description: 'Pozycja zostanie usunięta z listy. Powiązane wpisy historii (o tym aktywie) też znikną.',
+      variant: 'danger',
+      confirmLabel: 'Usuń',
+      onConfirm: async () => {
+        setDemoCustomAssets((p) => p.filter((a) => a.id !== id))
+        setDemoAdjLog((p) => p.filter((r) => !(r.undo?.type === 'demoAsset' && r.undo.id === id)))
+      },
+    })
+  }
+
+  const openCorrection = (target: {
+    id: string
+    name: string
+    kind: 'asset' | 'liability'
+    balance: number
+    iconKey?: string | null
+    accentKey?: string | null
+  }) => {
+    const ref: NetWorthCorrectionAccountRef = {
+      id: target.id,
+      name: target.name,
+      kind: target.kind,
+      iconKey: target.iconKey ?? undefined,
+    }
+    if (target.kind === 'asset') ref.accentKey = target.accentKey ?? undefined
+    setCorrectionRef(ref)
+    setCorrectionBalance(target.balance)
+    setCorrectionOpen(true)
+  }
+
+  const handleCorrectionSubmit = async ({
+    amount,
+    description,
+    iconKey,
+    accentKey,
+  }: {
+    amount: number
+    description: string
+    iconKey: string
+    accentKey: string | null
+  }) => {
+    if (!correctionRef) return
+    const defIcon = correctionRef.iconKey ?? getNetWorthAccountIconKey(correctionRef.kind)
+    const iconChanged = iconKey !== defIcon
+    const accentChanged =
+      correctionRef.kind === 'asset' &&
+      normalizeNwAssetAccentKey(accentKey) !== normalizeNwAssetAccentKey(correctionRef.accentKey)
+
+    if (useApiFinance) {
+      const patch: Partial<{ iconKey: string | null; accentKey: string | null }> = {}
+      if (iconChanged) patch.iconKey = iconKey
+      if (accentChanged) patch.accentKey = accentKey
+      if (Object.keys(patch).length > 0) {
+        await updateAccountMutation.mutateAsync({ id: correctionRef.id, ...patch })
+      }
+      if (amount !== 0) {
+        await addAdjustmentMutation.mutateAsync({
+          accountId: correctionRef.id,
+          amount,
+          description: description || undefined,
+        })
+      }
+      return
+    }
+    const logId = safeRandomId()
+    const detail = description.trim() || DEMO_DETAIL_PLACEHOLDER
+    if (correctionRef.kind === 'liability') {
+      setDemoLiabilities((prev) =>
+        prev.map((l) =>
+          l.id === correctionRef.id
+            ? {
+                ...l,
+                ...(iconChanged ? { iconKey } : {}),
+                balance: amount !== 0 ? Math.max(0, l.balance + amount) : l.balance,
+              }
+            : l
+        )
+      )
+      if (amount !== 0) {
+        setDemoAdjLog((prev) => [
+          {
+            id: logId,
+            at: new Date().toISOString(),
+            headline: `${correctionRef.name} (zobowiązanie)`,
+            detail,
+            amount,
+            undo: { type: 'liability', id: correctionRef.id },
+          },
+          ...prev,
+        ])
+      }
+    } else {
+      setDemoCustomAssets((prev) =>
+        prev.map((a) =>
+          a.id === correctionRef.id
+            ? {
+                ...a,
+                ...(iconChanged ? { iconKey } : {}),
+                ...(accentChanged ? { accentKey: accentKey ?? undefined } : {}),
+                balance: amount !== 0 ? Math.max(0, a.balance + amount) : a.balance,
+              }
+            : a
+        )
+      )
+      if (amount !== 0) {
+        setDemoAdjLog((prev) => [
+          {
+            id: logId,
+            at: new Date().toISOString(),
+            headline: correctionRef.name,
+            detail,
+            amount,
+            undo: { type: 'demoAsset', id: correctionRef.id },
+          },
+          ...prev,
+        ])
+      }
+    }
+  }
+
   const handleAdjust = (position: NetWorthPositionKey) => {
     if (useApiFinance) return
     setAdjustTarget(position)
     setAdjustModalOpen(true)
   }
 
-  const handleAdjustSubmit = (position: NetWorthPositionKey, amount: number, isAdd: boolean) => {
+  const handleAdjustSubmit = (position: NetWorthPositionKey, amount: number, isAdd: boolean, description: string) => {
     const delta = isAdd ? amount : -amount
+    const logId = safeRandomId()
     demoData?.updateNetWorthPosition(position, delta)
     setAdjustModalOpen(false)
     setAdjustTarget(null)
-    setUndoInfo({ position, delta })
+    setUndoInfo({ delta, logId, undo: { type: 'position', key: position } })
+    setDemoAdjLog((prev) => [
+      {
+        id: logId,
+        at: new Date().toISOString(),
+        headline: DEMO_POSITION_LABEL[position],
+        detail: description.trim() || DEMO_DETAIL_PLACEHOLDER,
+        amount: delta,
+        undo: { type: 'position', key: position },
+      },
+      ...prev,
+    ])
   }
 
   const handleUndo = () => {
     if (!undoInfo) return
-    demoData?.updateNetWorthPosition(undoInfo.position, -undoInfo.delta)
+    pulseDemoDelta(undoInfo.undo, -undoInfo.delta)
+    setDemoAdjLog((prev) => prev.filter((r) => r.id !== undoInfo.logId))
     setUndoInfo(null)
   }
 
-  const handleAdjustAccount = async (accountId: string) => {
-    const amountRaw = window.prompt('Kwota korekty (np. -200 lub 350):')
-    if (!amountRaw) return
-    const amount = Number(amountRaw.replace(',', '.'))
-    if (Number.isNaN(amount) || amount === 0) return
-    const description = window.prompt('Opis korekty (opcjonalnie):') ?? undefined
-    await addAdjustmentMutation.mutateAsync({ accountId, amount, description })
-  }
-
-  const handleCreateAccount = async (kind: 'asset' | 'liability') => {
-    const name = window.prompt(kind === 'asset' ? 'Nazwa aktywa:' : 'Nazwa zobowiązania (np. kredyt):')
-    if (!name?.trim()) return
-    const balanceRaw = window.prompt('Kwota początkowa:', '0') ?? '0'
-    const balance = Number(balanceRaw.replace(',', '.'))
-    if (Number.isNaN(balance) || balance < 0) return
-    await addAccountMutation.mutateAsync({ name: name.trim(), kind, balance })
+  const handleCreateAccountSubmit = async ({
+    name,
+    balance,
+    kind,
+    iconKey,
+    accentKey,
+  }: {
+    name: string
+    balance: number
+    kind: 'asset' | 'liability'
+    iconKey: string
+    accentKey: string | null
+  }) => {
+    if (useApiFinance) {
+      await addAccountMutation.mutateAsync({
+        name,
+        kind,
+        balance,
+        iconKey,
+        accentKey: kind === 'asset' ? accentKey : null,
+      })
+    } else if (kind === 'asset') {
+      setDemoCustomAssets((prev) => [
+        ...prev,
+        { id: safeRandomId(), name, balance, iconKey, accentKey: accentKey ?? undefined },
+      ])
+    } else {
+      setDemoLiabilities((prev) => [...prev, { id: safeRandomId(), name, balance, iconKey }])
+    }
   }
 
   useEffect(() => {
@@ -265,141 +797,351 @@ export function FinancesNetWorth() {
     return () => clearTimeout(t)
   }, [undoInfo])
 
-  if (loading) {
-    return <NetWorthPageSkeleton />
-  }
+  /** Skeleton tylko przed pierwszym fetch — nigdy nie zastępuj całej strony podczas refetch/mutacji. */
+  const showInitialSkeleton =
+    useApiFinance &&
+    netWorthAccountsQuery.data === undefined &&
+    netWorthAdjustmentsQuery.data === undefined &&
+    (netWorthAccountsQuery.isPending || netWorthAdjustmentsQuery.isPending)
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <MonthSelector />
-        {chartPeriod && <ChartPeriodSelector />}
+    <>
+      {showInitialSkeleton ? (
+        <NetWorthPageSkeleton />
+      ) : (
+    <div className="space-y-5">
+      <div className="w-full min-w-0">
+        {chartPeriod ? <ChartPeriodSelector leadingLabel="Okres:" /> : null}
       </div>
+
       <div>
-        <h3 className="text-base font-semibold text-(--text-primary) font-gaming tracking-wider">Wartość netto</h3>
-        <p className="text-base text-(--text-muted) mt-1">
-          Oszczędności, gotówka, konto, aktywa – korekta przy pomyłce
+        <h3 className="text-base font-semibold text-(--text-primary) font-gaming tracking-wide">Wartość netto</h3>
+        <p className="mt-1 text-base text-(--text-muted)">
+          Majątek, zobowiązania i trend dla wybranego okresu.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card className="border-(--accent-cyan)/20">
-          <div className="flex items-center gap-2">
-            <PiggyBank className="w-5 h-5 text-(--accent-cyan)" />
-            <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">Oszczędności</p>
+      <Card title="Podsumowanie" className="border-(--accent-cyan)/20 max-md:p-4">
+        <div className="space-y-4">
+          <div>
+            <p className="text-base text-(--text-muted)">Wartość netto</p>
+            <p
+              className={`mt-1 font-gaming text-2xl font-bold tabular-nums sm:text-3xl ${
+                accountsNetWorth >= 0 ? 'text-(--accent-cyan)' : 'text-[#e74c3c]'
+              }`}
+            >
+              {accountsNetWorth.toLocaleString('pl-PL')} zł
+            </p>
+            <p className="mt-1 text-base text-(--text-muted)">Aktywa łącznie minus zobowiązania łącznie</p>
           </div>
-          <p className="text-2xl font-bold text-(--accent-cyan) mt-1 font-gaming">
-            {cumulativeSavings.toLocaleString('pl-PL')} zł
-          </p>
-          <p className="text-sm text-(--text-muted) mt-0.5">Bilans skumulowany ({cumulativePeriodLabel})</p>
-        </Card>
-
-        {!useApiFinance
-          ? POSITION_CONFIG.map(({ key, label, icon: Icon, desc, borderClass, iconClass }) => (
-              <Card key={key} className={`${borderClass} group relative`}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Icon className={`w-5 h-5 ${iconClass}`} />
-                    <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">{label}</p>
-                  </div>
-                  <button
-                    onClick={() => handleAdjust(key)}
-                    className="p-1.5 rounded-lg text-(--text-muted) hover:text-(--accent-cyan) hover:bg-(--bg-card-hover) transition-colors"
-                    title="Korekta – dodaj lub odejmij"
-                    aria-label="Korekta"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
-                </div>
-                <p className={`text-2xl font-bold mt-1 font-gaming ${iconClass}`}>
-                  {(netWorthPositions[key] ?? 0).toLocaleString('pl-PL')} zł
-                </p>
-                <p className="text-sm text-(--text-muted) mt-0.5">{desc}</p>
-              </Card>
-            ))
-          : accounts.map((account) => (
-              <Card key={account.id} className={account.kind === 'liability' ? 'border-[#e74c3c]/30' : 'border-(--accent-cyan)/20'}>
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">
-                    {account.kind === 'liability' ? 'Zobowiązanie' : 'Aktywo'}
-                  </p>
-                  <button
-                    onClick={() => void handleAdjustAccount(account.id)}
-                    className="p-1.5 rounded-lg text-(--text-muted) hover:text-(--accent-cyan) hover:bg-(--bg-card-hover) transition-colors"
-                    title="Korekta"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
-                </div>
-                <p className="text-base text-(--text-primary) mt-1">{account.name}</p>
-                <p className={`text-2xl font-bold mt-1 font-gaming ${account.kind === 'liability' ? 'text-[#e74c3c]' : 'text-(--accent-cyan)'}`}>
-                  {account.balance.toLocaleString('pl-PL')} zł
-                </p>
-              </Card>
-            ))}
-
-        {useApiFinance && (
-          <Card className="border-(--border)">
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => void handleCreateAccount('asset')}
-                className="px-3 py-2 rounded-lg border border-(--accent-cyan)/40 bg-(--accent-cyan)/15 text-(--accent-cyan) text-sm"
-              >
-                Dodaj aktywo
-              </button>
-              <button
-                onClick={() => void handleCreateAccount('liability')}
-                className="px-3 py-2 rounded-lg border border-[#e74c3c]/40 bg-[#e74c3c]/15 text-[#e74c3c] text-sm"
-              >
-                Dodaj dług/kredyt
-              </button>
+          <dl className="grid gap-3 sm:grid-cols-2">
+            <div className="flex justify-between gap-4 border-b border-(--border)/50 pb-2">
+              <dt className="text-base text-(--text-muted)">Aktywa</dt>
+              <dd className="text-base font-gaming text-(--text-primary) tabular-nums">
+                {assetsTotal.toLocaleString('pl-PL')} zł
+              </dd>
             </div>
-          </Card>
-        )}
-
-        <Card className="border-(--accent-amber)/20">
-          <div className="flex items-center gap-2">
-            <Wallet className="w-5 h-5 text-(--accent-amber)" />
-            <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">Wartość netto</p>
+            <div className="flex justify-between gap-4 border-b border-(--border)/50 pb-2">
+              <dt className="text-base text-(--text-muted)">Zobowiązania</dt>
+              <dd className="text-base font-gaming tabular-nums text-[#e74c3c]">
+                −{liabilitiesTotal.toLocaleString('pl-PL')} zł
+              </dd>
+            </div>
+            <div className="flex justify-between gap-4 border-b border-(--border)/50 pb-2 sm:col-span-2">
+              <dt className="text-base text-(--text-muted)">Bilans okresu ({cumulativePeriodLabel})</dt>
+              <dd
+                className={`text-base font-gaming tabular-nums ${
+                  cumulativeSavings >= 0 ? 'text-(--accent-green)' : 'text-[#e74c3c]'
+                }`}
+              >
+                {cumulativeSavings >= 0 ? '+' : ''}
+                {cumulativeSavings.toLocaleString('pl-PL')} zł
+              </dd>
+            </div>
+          </dl>
+          <div className="flex flex-col gap-2 border-t border-(--border)/50 pt-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+            <div className="inline-flex w-fit max-w-full items-center gap-2 rounded-full border border-(--accent-green)/30 bg-(--accent-green)/10 px-3 py-1.5">
+              <TrendingUp className="h-4 w-4 shrink-0 text-(--accent-green)" />
+              <span className="text-sm font-gaming text-(--accent-green)">
+                Oszczędności: {periodSavingsRate >= 0 ? periodSavingsRate.toFixed(0) : '0'}%
+              </span>
+            </div>
+            <p className="text-sm text-(--text-muted) sm:text-base">
+              {(periodIncomeTotal - periodExpenseTotal).toLocaleString('pl-PL')} zł z{' '}
+              {periodIncomeTotal.toLocaleString('pl-PL')} zł przychodów
+            </p>
           </div>
-          <p
-            className={`text-2xl font-bold mt-1 font-gaming ${
-              totalNetWorth >= 0 ? 'text-(--accent-cyan)' : 'text-[#e74c3c]'
-            }`}
-          >
-            {totalNetWorth.toLocaleString('pl-PL')} zł
-          </p>
-          <p className="text-sm text-(--text-muted) mt-0.5">Suma wszystkich pozycji</p>
-        </Card>
-      </div>
-
-      <Card title="Wskaźnik oszczędności">
-        <div className="flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-(--accent-green)" />
-          <p className="text-base text-(--text-muted)">{monthNames[selectedMonth]} {selectedYear}</p>
         </div>
-        <p className="text-2xl font-bold text-(--accent-green) mt-1 font-gaming">
-          {savingsRate >= 0 ? savingsRate.toFixed(0) : 0}%
-        </p>
-        <p className="text-sm text-(--text-muted) mt-0.5">
-          {(currentIncome - currentExpenses).toLocaleString('pl-PL')} zł z {currentIncome.toLocaleString('pl-PL')} zł przychodów
-        </p>
       </Card>
 
-      <Card title={`Trend wartości netto (${
-        chartPeriod?.period.type === 'quarter'
-          ? `Q${chartPeriod.period.quarter} ${chartPeriod.period.year}`
-          : chartPeriod?.period.type === 'year'
-            ? chartPeriod.period.year
-            : chartPeriod?.period.type === 'month'
-              ? `${monthNames[chartPeriod.period.month]} ${chartPeriod.period.year}`
-              : selectedYear
-      })`}>
-        <p className="text-sm text-(--text-muted) mb-2">
-          {chartPeriod?.period.type === 'month' ? 'Skumulowany bilans dzienny' : chartPeriod?.period.type === 'year' ? 'Skumulowany bilans miesięczny (cały rok)' : 'Skumulowany bilans miesięczny'}
+      <Card title="Składniki majątku" className="border-(--border) max-md:p-4">
+        <div className="mb-4 grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => setAccountCreateKind('asset')}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-(--accent-cyan)/40 bg-(--accent-cyan)/15 px-3 py-2.5 text-sm font-gaming text-(--accent-cyan) transition-colors hover:bg-(--accent-cyan)/25"
+          >
+            <Plus className="h-4 w-4 shrink-0" />
+            Dodaj aktywo
+          </button>
+          <button
+            type="button"
+            onClick={() => setAccountCreateKind('liability')}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#e74c3c]/40 bg-[#e74c3c]/15 px-3 py-2.5 text-sm font-gaming text-[#e74c3c] transition-colors hover:bg-[#e74c3c]/25"
+          >
+            <Plus className="h-4 w-4 shrink-0" />
+            Dodaj zobowiązanie
+          </button>
+        </div>
+        <div className="grid gap-6 md:grid-cols-2">
+          <div>
+            <h4 className="mb-2 text-base font-semibold text-(--text-primary) font-gaming tracking-wide">Aktywa</h4>
+            {useApiFinance ? (
+              assetAccounts.length === 0 ? (
+                <p className="text-base text-(--text-muted)">Brak aktywów — dodaj pierwszą pozycję.</p>
+              ) : (
+                <ul className="divide-y divide-(--border)/60 rounded-lg border border-(--border)/60">
+                  {assetAccounts.map((account) => {
+                    const AccIcon = getNetWorthAccountIcon(account.iconKey)
+                    const accAccent = getNwAssetAccentClasses(account.accentKey)
+                    return (
+                    <li key={account.id} className={`flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-center sm:gap-2 sm:py-2 ${accAccent.rowAccent}`}>
+                      <div className="flex min-w-0 flex-1 items-center gap-2">
+                        <AccIcon className={`h-4 w-4 shrink-0 ${accAccent.icon}`} aria-hidden />
+                        <span className="min-w-0 flex-1 truncate text-base text-(--text-primary)">{account.name}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-2 sm:shrink-0">
+                        <span className={`font-mono text-base tabular-nums ${accAccent.amount}`}>
+                          {account.balance.toLocaleString('pl-PL')} zł
+                        </span>
+                        <div className="flex shrink-0 items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            openCorrection({
+                              id: account.id,
+                              name: account.name,
+                              kind: 'asset',
+                              balance: account.balance,
+                              iconKey: account.iconKey,
+                              accentKey: account.accentKey,
+                            })
+                          }
+                          className={`rounded-lg border border-(--border) bg-(--bg-dark) px-2.5 py-1.5 text-sm font-gaming text-(--text-muted) transition-colors ${accAccent.editHover}`}
+                        >
+                          Edytuj
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => quickDeleteApiAccount(account.id)}
+                          className="flex h-9 w-9 items-center justify-center rounded-lg border border-(--border) bg-(--bg-dark) text-(--text-muted) transition-colors hover:border-[#e74c3c]/45 hover:bg-[#e74c3c]/10 hover:text-[#e74c3c]"
+                          title="Usuń aktywo"
+                          aria-label="Usuń aktywo"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                        </div>
+                      </div>
+                    </li>
+                    )
+                  })}
+                </ul>
+              )
+            ) : (
+              <ul className="divide-y divide-(--border)/60 rounded-lg border border-(--border)/60">
+                {POSITION_CONFIG.map(({ key, label, icon: Icon, iconClass, balanceClass, rowAccentClass }) => (
+                  <li
+                    key={key}
+                    className={`flex flex-col gap-2 border-b border-(--border)/50 px-3 py-3 last:border-b-0 sm:flex-row sm:items-center sm:gap-3 sm:py-2.5 ${rowAccentClass}`}
+                  >
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
+                      <Icon className={`h-4 w-4 shrink-0 ${iconClass}`} aria-hidden />
+                      <span className="min-w-0 flex-1 truncate text-base text-(--text-primary)">{label}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 sm:shrink-0">
+                      <span className={`font-mono text-base tabular-nums ${balanceClass}`}>
+                        {(netWorthPositions[key] ?? 0).toLocaleString('pl-PL')} zł
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleAdjust(key)}
+                        className="shrink-0 rounded-lg border border-(--border) bg-(--bg-dark) px-2.5 py-1.5 text-sm font-gaming text-(--text-muted) transition-colors hover:border-(--accent-cyan)/40 hover:text-(--accent-cyan)"
+                      >
+                        Edytuj
+                      </button>
+                    </div>
+                  </li>
+                ))}
+                {demoCustomAssets.map((a) => {
+                  const CustomAIcon = getNetWorthAccountIcon(a.iconKey)
+                  const aAccent = getNwAssetAccentClasses(a.accentKey)
+                  return (
+                  <li key={a.id} className={`flex flex-col gap-2 border-b border-(--border)/50 px-3 py-3 last:border-b-0 sm:flex-row sm:items-center sm:gap-2 sm:py-2 ${aAccent.rowAccent}`}>
+                    <div className="flex min-w-0 flex-1 items-center gap-2">
+                      <CustomAIcon className={`h-4 w-4 shrink-0 ${aAccent.icon}`} aria-hidden />
+                      <span className="min-w-0 flex-1 truncate text-base text-(--text-primary)">{a.name}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 sm:shrink-0">
+                      <span className={`font-mono text-base tabular-nums ${aAccent.amount}`}>
+                        {a.balance.toLocaleString('pl-PL')} zł
+                      </span>
+                      <div className="flex shrink-0 items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openCorrection({
+                            id: a.id,
+                            name: a.name,
+                            kind: 'asset',
+                            balance: a.balance,
+                            iconKey: a.iconKey,
+                            accentKey: a.accentKey,
+                          })
+                        }
+                        className={`rounded-lg border border-(--border) bg-(--bg-dark) px-2.5 py-1.5 text-sm font-gaming text-(--text-muted) transition-colors ${aAccent.editHover}`}
+                      >
+                        Edytuj
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => quickDeleteDemoCustomAsset(a.id)}
+                        className="flex h-9 w-9 items-center justify-center rounded-lg border border-(--border) bg-(--bg-dark) text-(--text-muted) transition-colors hover:border-[#e74c3c]/45 hover:bg-[#e74c3c]/10 hover:text-[#e74c3c]"
+                        title="Usuń aktywo"
+                        aria-label="Usuń aktywo"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                      </div>
+                    </div>
+                  </li>
+                  )
+                })}
+              </ul>
+            )}
+          </div>
+          <div>
+            <h4 className="mb-2 text-base font-semibold text-(--text-primary) font-gaming tracking-wide">Zobowiązania</h4>
+            {useApiFinance ? (
+              liabilityAccounts.length === 0 ? (
+                <p className="text-base text-(--text-muted)">Brak zobowiązań.</p>
+              ) : (
+                <ul className="divide-y divide-(--border)/60 rounded-lg border border-(--border)/60">
+                  {liabilityAccounts.map((account) => {
+                    const LiIcon = getNetWorthAccountIcon(account.iconKey)
+                    return (
+                    <li key={account.id} className="flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-center sm:gap-2 sm:py-2">
+                      <div className="flex min-w-0 flex-1 items-center gap-2">
+                        <LiIcon className="h-4 w-4 shrink-0 text-[#e74c3c]/90" aria-hidden />
+                        <span className="min-w-0 flex-1 truncate text-base text-(--text-primary)">{account.name}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-2 sm:shrink-0">
+                        <span className="font-mono text-base tabular-nums text-[#e74c3c]">
+                          −{account.balance.toLocaleString('pl-PL')} zł
+                        </span>
+                        <div className="flex shrink-0 items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            openCorrection({
+                              id: account.id,
+                              name: account.name,
+                              kind: 'liability',
+                              balance: account.balance,
+                              iconKey: account.iconKey,
+                            })
+                          }
+                          className="rounded-lg border border-(--border) bg-(--bg-dark) px-2.5 py-1.5 text-sm font-gaming text-(--text-muted) transition-colors hover:border-rose-400/40 hover:text-[#e74c3c]"
+                        >
+                          Edytuj
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => quickDeleteApiAccount(account.id)}
+                          className="flex h-9 w-9 items-center justify-center rounded-lg border border-(--border) bg-(--bg-dark) text-(--text-muted) transition-colors hover:border-[#e74c3c]/45 hover:bg-[#e74c3c]/10 hover:text-[#e74c3c]"
+                          title="Usuń zobowiązanie"
+                          aria-label="Usuń zobowiązanie"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                        </div>
+                      </div>
+                    </li>
+                    )
+                  })}
+                </ul>
+              )
+            ) : demoLiabilities.length === 0 ? (
+              <p className="text-base text-(--text-muted)">Brak zobowiązań — dodaj przykładowy kredyt lub pożyczkę.</p>
+            ) : (
+              <ul className="divide-y divide-(--border)/60 rounded-lg border border-(--border)/60">
+                {demoLiabilities.map((l) => {
+                  const DemoLiIcon = getNetWorthAccountIcon(l.iconKey)
+                  return (
+                  <li key={l.id} className="flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-center sm:gap-2 sm:py-2">
+                    <div className="flex min-w-0 flex-1 items-center gap-2">
+                      <DemoLiIcon className="h-4 w-4 shrink-0 text-[#e74c3c]/90" aria-hidden />
+                      <span className="min-w-0 flex-1 truncate text-base text-(--text-primary)">{l.name}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 sm:shrink-0">
+                      <span className="font-mono text-base tabular-nums text-[#e74c3c]">
+                        −{l.balance.toLocaleString('pl-PL')} zł
+                      </span>
+                      <div className="flex shrink-0 items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openCorrection({
+                            id: l.id,
+                            name: l.name,
+                            kind: 'liability',
+                            balance: l.balance,
+                            iconKey: l.iconKey,
+                          })
+                        }
+                        className="rounded-lg border border-(--border) bg-(--bg-dark) px-2.5 py-1.5 text-sm font-gaming text-(--text-muted) transition-colors hover:border-rose-400/40 hover:text-[#e74c3c]"
+                      >
+                        Edytuj
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => quickDeleteDemoLiability(l.id)}
+                        className="flex h-9 w-9 items-center justify-center rounded-lg border border-(--border) bg-(--bg-dark) text-(--text-muted) transition-colors hover:border-[#e74c3c]/45 hover:bg-[#e74c3c]/10 hover:text-[#e74c3c]"
+                        title="Usuń zobowiązanie"
+                        aria-label="Usuń zobowiązanie"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                      </div>
+                    </div>
+                  </li>
+                  )
+                })}
+              </ul>
+            )}
+          </div>
+        </div>
+      </Card>
+
+      <Card
+        title={`Trend wartości netto (${
+          chartPeriod?.period.type === 'quarter'
+            ? `Q${chartPeriod.period.quarter} ${chartPeriod.period.year}`
+            : chartPeriod?.period.type === 'year'
+              ? String(chartPeriod.period.year)
+              : chartPeriod?.period.type === 'month'
+                ? `${monthNames[chartPeriod.period.month]} ${chartPeriod.period.year}`
+                : selectedYear
+        })`}
+      >
+        <p className="mb-2 text-base text-(--text-muted)">
+          {chartPeriod?.period.type === 'month'
+            ? 'Skumulowany bilans dzienny'
+            : chartPeriod?.period.type === 'year'
+              ? 'Skumulowany bilans miesięczny (cały rok)'
+              : 'Skumulowany bilans miesięczny'}
         </p>
-        <div className="h-60 w-full min-h-[200px]">
-          <ResponsiveContainer width="100%" height={240}>
+        <div className="chart-shell h-[200px] w-full min-h-[200px] sm:h-60">
+          <ResponsiveContainer width="100%" height={chartHeight}>
             <AreaChart data={trendData}>
               <defs>
                 <linearGradient id="colorWartosc" x1="0" y1="0" x2="0" y2="1">
@@ -408,8 +1150,8 @@ export function FinancesNetWorth() {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis dataKey="label" stroke="var(--text-muted)" />
-              <YAxis stroke="var(--text-muted)" tickFormatter={(v) => `${v} zł`} />
+              <XAxis dataKey="label" stroke="var(--text-muted)" tick={{ fontSize: isMobile ? 11 : 12 }} />
+              {!isMobile && <YAxis stroke="var(--text-muted)" tickFormatter={(v) => `${v} zł`} />}
               <ReferenceLine y={0} stroke="var(--border)" strokeDasharray="3 3" />
               <Tooltip
                 cursor={false}
@@ -437,43 +1179,217 @@ export function FinancesNetWorth() {
                 fill="url(#colorWartosc)"
                 name="Skumulowany bilans"
                 baseValue={0}
+                activeDot={false}
               />
             </AreaChart>
           </ResponsiveContainer>
         </div>
       </Card>
 
-      <Card title="Historia korekt">
-        {useApiFinance ? (
-          <div className="space-y-1.5">
-            {(netWorthAdjustmentsQuery.data ?? []).length === 0 && (
-              <p className="text-base text-(--text-muted)">Brak korekt.</p>
-            )}
-            {(netWorthAdjustmentsQuery.data ?? []).map((row) => (
-              <div key={row.id} className="flex items-center justify-between gap-2 rounded-lg border border-(--border) px-3 py-2">
-                <div>
-                  <p className="text-sm text-(--text-primary)">
-                    {row.account.name} ({row.account.kind === 'liability' ? 'zobowiązanie' : 'aktywo'})
-                  </p>
-                  <p className="text-sm text-(--text-muted)">
-                    {row.description?.trim() || 'Brak opisu'}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className={`font-mono text-sm ${row.amount >= 0 ? 'text-(--accent-green)' : 'text-[#e74c3c]'}`}>
-                    {row.amount >= 0 ? '+' : ''}{row.amount.toLocaleString('pl-PL')} zł
-                  </p>
-                  <p className="text-xs text-(--text-muted)">
-                    {new Date(row.createdAt).toLocaleString('pl-PL')}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
+      <Card
+        title="Historia zmian (korekty sald)"
+        action={
+          <button
+            type="button"
+            onClick={toggleHistoryCollapsed}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-sm font-gaming text-(--text-muted) hover:border-(--accent-cyan)/30 hover:text-(--text-primary) transition-colors"
+          >
+            {historyCollapsed ? <ChevronDown className="h-4 w-4 shrink-0" /> : <ChevronUp className="h-4 w-4 shrink-0" />}
+            {historyCollapsed ? 'Rozwiń' : 'Zwiń'}
+          </button>
+        }
+      >
+        {historyCollapsed ? (
+          <p className="text-base text-(--text-muted)">
+            Karta jest zwinięta — kliknij „Rozwiń”, aby zobaczyć pełną historię korekt, zmienić kwotę lub opis albo
+            usunąć wpisy.
+          </p>
         ) : (
-          <p className="text-base text-(--text-muted)">Historia korekt jest dostępna w trybie konta (API).</p>
+          <>
+            <p className="text-base text-(--text-muted) mb-3">
+              Każda korekta zapisuje kwotę i opis. Możesz zmienić kwotę (przeliczy się saldo konta), poprawić opis albo
+              usunąć wpis — wtedy korekta zostanie cofnięta z salda.
+            </p>
+            {useApiFinance ? (
+              <div className="space-y-1.5">
+                {(netWorthAdjustmentsQuery.data ?? []).length === 0 && (
+                  <p className="text-base text-(--text-muted)">Brak korekt.</p>
+                )}
+                {(netWorthAdjustmentsQuery.data ?? []).map((row) => (
+                  <div
+                    key={row.id}
+                    className="flex items-center justify-between gap-2 rounded-lg border border-(--border) px-3 py-2"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-base text-(--text-primary)">
+                        {row.account.name}{' '}
+                        <span className="text-(--text-muted)">
+                          ({row.account.kind === 'liability' ? 'zobowiązanie' : 'aktywo'})
+                        </span>
+                      </p>
+                      <p className="text-base text-(--text-muted) mt-0.5">
+                        {row.description?.trim() ? row.description.trim() : 'Brak opisu'}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <div className="text-right">
+                        <p className={`font-mono text-sm ${row.amount >= 0 ? 'text-(--accent-green)' : 'text-[#e74c3c]'}`}>
+                          {row.amount >= 0 ? '+' : ''}
+                          {row.amount.toLocaleString('pl-PL')} zł
+                        </p>
+                        <p className="text-base text-(--text-muted)">
+                          {new Date(row.createdAt).toLocaleString('pl-PL')}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setAdjustmentEdit({ mode: 'api', row })}
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg p-1.5 text-(--text-muted) transition-colors hover:bg-(--bg-card-hover) hover:text-(--accent-cyan)"
+                        title="Edytuj korektę"
+                        aria-label="Edytuj korektę"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => quickDeleteApiAdjustment(row)}
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg p-1.5 text-(--text-muted) transition-colors hover:bg-[#e74c3c]/15 hover:text-[#e74c3c]"
+                        title="Usuń wpis z historii"
+                        aria-label="Usuń wpis z historii"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : demoAdjLog.length === 0 ? (
+              <p className="text-base text-(--text-muted)">Brak wpisów — zrób korektę aktywów lub zobowiązania.</p>
+            ) : (
+              <div className="space-y-1.5">
+                {demoAdjLog.map((row) => (
+                  <div
+                    key={row.id}
+                    className="flex items-center justify-between gap-2 rounded-lg border border-(--border) px-3 py-2"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-base text-(--text-primary)">{row.headline}</p>
+                      <p className="text-base text-(--text-muted) mt-0.5">{row.detail}</p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <div className="text-right">
+                        <p className={`font-mono text-sm ${row.amount >= 0 ? 'text-(--accent-green)' : 'text-[#e74c3c]'}`}>
+                          {row.amount >= 0 ? '+' : ''}
+                          {row.amount.toLocaleString('pl-PL')} zł
+                        </p>
+                        <p className="text-base text-(--text-muted)">{new Date(row.at).toLocaleString('pl-PL')}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setAdjustmentEdit({ mode: 'demo', row })}
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg p-1.5 text-(--text-muted) transition-colors hover:bg-(--bg-card-hover) hover:text-(--accent-cyan)"
+                        title="Edytuj korektę"
+                        aria-label="Edytuj korektę"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => quickDeleteDemoAdjustment(row)}
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg p-1.5 text-(--text-muted) transition-colors hover:bg-[#e74c3c]/15 hover:text-[#e74c3c]"
+                        title="Usuń wpis z historii"
+                        aria-label="Usuń wpis z historii"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </Card>
+    </div>
+      )}
+
+      <NetWorthAdjustmentEditModal
+        isOpen={adjustmentEdit != null}
+        onClose={() => setAdjustmentEdit(null)}
+        title={
+          adjustmentEdit?.mode === 'api'
+            ? `${adjustmentEdit.row.account.name} · ${new Date(adjustmentEdit.row.createdAt).toLocaleString('pl-PL')}`
+            : adjustmentEdit?.mode === 'demo'
+              ? adjustmentEdit.row.headline
+              : ''
+        }
+        initialDescription={
+          adjustmentEdit?.mode === 'api'
+            ? (adjustmentEdit.row.description ?? '')
+            : adjustmentEdit?.mode === 'demo'
+              ? adjustmentEdit.row.detail === DEMO_DETAIL_PLACEHOLDER
+                ? ''
+                : adjustmentEdit.row.detail
+              : ''
+        }
+        initialAmount={adjustmentEdit?.mode === 'api' ? adjustmentEdit.row.amount : adjustmentEdit?.mode === 'demo' ? adjustmentEdit.row.amount : 0}
+        onSave={async ({ description, amount }) => {
+          if (!adjustmentEdit) return
+          if (adjustmentEdit.mode === 'api') {
+            const row = adjustmentEdit.row
+            const descTrim = description.trim()
+            const payload: { description?: string; amount?: number } = {}
+            if (descTrim !== (row.description ?? '')) payload.description = descTrim
+            if (amount !== row.amount) payload.amount = amount
+            if (Object.keys(payload).length > 0) {
+              await patchAdjustmentMutation.mutateAsync({ id: row.id, ...payload })
+            }
+          } else {
+            const row = adjustmentEdit.row
+            const undo = resolveDemoUndo(row)
+            const diff = amount - row.amount
+            if (diff !== 0 && !undo) {
+              throw new Error('Nie da się przeliczyć salda — wpis nie jest powiązany z żadną pozycją demo.')
+            }
+            if (diff !== 0 && undo) pulseDemoDelta(undo, diff)
+            const detailNext = description.trim() || DEMO_DETAIL_PLACEHOLDER
+            setDemoAdjLog((prev) =>
+              prev.map((r) =>
+                r.id === row.id ? { ...r, amount, detail: detailNext, undo: r.undo ?? undo ?? undefined } : r
+              )
+            )
+          }
+        }}
+        onDelete={async () => {
+          if (!adjustmentEdit) return
+          if (adjustmentEdit.mode === 'api') {
+            await deleteAdjustmentMutation.mutateAsync(adjustmentEdit.row.id)
+          } else {
+            const row = adjustmentEdit.row
+            if (!deleteDemoAdjustmentRow(row)) {
+              throw new Error('Nie da się cofnąć kwoty — wpis nie jest powiązany z żadną pozycją demo.')
+            }
+          }
+        }}
+      />
+
+      <NetWorthAccountCreateModal
+        isOpen={accountCreateKind != null}
+        kind={accountCreateKind}
+        onClose={() => setAccountCreateKind(null)}
+        onSubmit={handleCreateAccountSubmit}
+      />
+
+      <NetWorthCorrectionModal
+        isOpen={correctionOpen}
+        onClose={() => {
+          setCorrectionOpen(false)
+          setCorrectionRef(null)
+        }}
+        account={correctionRef}
+        currentBalance={correctionBalance}
+        onSubmit={handleCorrectionSubmit}
+      />
 
       {!useApiFinance && (
         <NetWorthAdjustModal
@@ -488,6 +1404,30 @@ export function FinancesNetWorth() {
         />
       )}
 
+      <ConfirmDialog
+        isOpen={confirmDialog != null}
+        onClose={() => setConfirmDialog(null)}
+        title={confirmDialog?.title ?? ''}
+        description={confirmDialog?.description ?? ''}
+        variant={confirmDialog?.variant ?? 'danger'}
+        confirmLabel={confirmDialog?.confirmLabel}
+        onConfirm={async () => {
+          const fn = confirmDialog?.onConfirm
+          if (fn) await fn()
+        }}
+      />
+
+      <ConfirmDialog
+        isOpen={alertDialog != null}
+        onClose={() => setAlertDialog(null)}
+        title={alertDialog?.title ?? ''}
+        description={alertDialog?.description ?? ''}
+        alertOnly
+        variant="neutral"
+        confirmLabel="Rozumiem"
+        onConfirm={async () => {}}
+      />
+
       <AnimatePresence>
         {undoInfo && (
           <motion.div
@@ -498,6 +1438,7 @@ export function FinancesNetWorth() {
           >
             <span className="text-sm text-(--text-primary)">Zastosowano</span>
             <button
+              type="button"
               onClick={handleUndo}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-(--accent-cyan)/20 text-(--accent-cyan) font-gaming text-sm hover:bg-(--accent-cyan)/30 transition-colors"
             >
@@ -507,6 +1448,6 @@ export function FinancesNetWorth() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </>
   )
 }

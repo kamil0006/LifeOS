@@ -175,9 +175,10 @@ export function ExpenseCategoryPicker({
       </div>
 
       <ConfirmDialog
-        zLayer="stacked"
+        zBackdrop={10030}
+        zPanel={10031}
         isOpen={deleteTarget != null}
-        onCancel={() => setDeleteTarget(null)}
+        onClose={() => setDeleteTarget(null)}
         onConfirm={() => {
           if (!deleteTarget || !onDeleteCategory) return
           const t = deleteTarget
@@ -189,6 +190,7 @@ export function ExpenseCategoryPicker({
         title="Usunąć kategorię?"
         description="Tej operacji nie można cofnąć. W istniejących wydatkach może pozostać stara nazwa kategorii."
         emphasis={deleteTarget ? capitalizeFirstPl(deleteTarget.label) : undefined}
+        variant="danger"
         confirmLabel="Usuń"
         cancelLabel="Anuluj"
       />

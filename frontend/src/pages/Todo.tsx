@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
-import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { ConfirmDialog } from '../components/ConfirmDialog'
+import { ModalShell } from '../components/ModalShell'
 import { TodoDueQuickPick, type TodoDuePickMode } from '../components/todo/TodoDueQuickPick'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import {
@@ -26,7 +26,7 @@ import { useHabits } from '../context/HabitsContext'
 import { SimplePageSkeleton } from '../components/skeletons'
 import { TODO_ITEM_SPRING, todoItemEnterVariants } from '../lib/todoMotion'
 import { parseQuickTodoInput } from '../lib/todoQuickParse'
-import { useModalMotion } from '../lib/modalMotion'
+import { useIsMobile } from '../hooks/useIsMobile'
 import {
   TODO_CATEGORY_LABEL,
   TODO_CATEGORIES,
@@ -77,49 +77,155 @@ function formatTodoTitleForDisplay(text: string): string {
   return s.charAt(0).toLocaleUpperCase('pl-PL') + s.slice(1)
 }
 
+function TodoQuickParseHintContent() {
+  const categoryTags = TODO_CATEGORIES.map((c) => `#${c}`).join(' ')
+
+  return (
+    <div className="space-y-4 text-base text-(--text-muted)">
+      <p className="leading-relaxed">
+        Możesz ustawić termin, priorytet i obszar bezpośrednio w treści zadania — reszta tekstu zostanie jako
+        tytuł.
+      </p>
+
+      <section className="space-y-2">
+        <h4 className="font-gaming text-sm tracking-wide text-(--text-primary)">Priorytet na końcu</h4>
+        <ul className="space-y-1.5 leading-relaxed">
+          <li>
+            <code className="text-(--text-primary)">?</code> — {TODO_PRIORITY_LABEL.low}
+          </li>
+          <li>Bez znaku — {TODO_PRIORITY_LABEL.medium} (domyślnie)</li>
+          <li>
+            <code className="text-(--text-primary)">!</code> — {TODO_PRIORITY_LABEL.high}
+          </li>
+        </ul>
+      </section>
+
+      <section className="space-y-2">
+        <h4 className="font-gaming text-sm tracking-wide text-(--text-primary)">Termin w treści</h4>
+        <ul className="space-y-1.5 leading-relaxed">
+          <li>
+            Słowa: <code className="text-(--text-primary)">dziś</code>,{' '}
+            <code className="text-(--text-primary)">jutro</code>,{' '}
+            <code className="text-(--text-primary)">pojutrze</code>
+          </li>
+          <li>
+            Data: <code className="text-(--text-primary)">RRRR-MM-DD</code> (np.{' '}
+            <code className="text-(--text-primary)">2026-06-20</code>)
+          </li>
+          <li>
+            Godzina: <code className="text-(--text-primary)">14:30</code>
+          </li>
+        </ul>
+      </section>
+
+      <section className="space-y-2">
+        <h4 className="font-gaming text-sm tracking-wide text-(--text-primary)">Obszar</h4>
+        <p className="leading-relaxed">
+          Hasztag w tekście:{' '}
+          <code className="wrap-break-word text-(--text-primary)">{categoryTags}</code>
+        </p>
+      </section>
+
+      <section className="space-y-2 rounded-lg border border-(--border)/70 bg-(--bg-dark)/40 px-3 py-2.5">
+        <h4 className="font-gaming text-sm tracking-wide text-(--text-primary)">Przykład</h4>
+        <p>
+          <code className="text-(--text-primary)">Zapłacić rachunki jutro 14:30 #finanse !</code>
+        </p>
+        <ul className="mt-2 space-y-1 text-sm leading-relaxed">
+          <li>
+            <span className="text-(--text-primary)">Tytuł:</span> Zapłacić rachunki
+          </li>
+          <li>
+            <span className="text-(--text-primary)">Termin:</span> jutro, 14:30
+          </li>
+          <li>
+            <span className="text-(--text-primary)">Obszar:</span> {TODO_CATEGORY_LABEL.finanse}
+          </li>
+          <li>
+            <span className="text-(--text-primary)">Priorytet:</span> {TODO_PRIORITY_LABEL.high}
+          </li>
+        </ul>
+      </section>
+
+      <p className="leading-relaxed">
+        <span className="font-gaming text-(--text-primary)">Opcje</span> — jeśli ustawisz termin, priorytet lub
+        obszar w panelu poniżej, te wartości mają pierwszeństwo przed skrótami w tekście.
+      </p>
+    </div>
+  )
+}
+
 function TodoQuickParseHint() {
   const [open, setOpen] = useState(false)
+  const isMobile = useIsMobile()
   const wrapRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!open) return
+    if (!open || isMobile) return
     const onDoc = (e: MouseEvent) => {
       if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false)
     }
     document.addEventListener('mousedown', onDoc)
     return () => document.removeEventListener('mousedown', onDoc)
-  }, [open])
+  }, [open, isMobile])
+
+  useEffect(() => {
+    if (!open || !isMobile) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [open, isMobile])
 
   return (
-    <div className="relative shrink-0" ref={wrapRef}>
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-(--border) bg-(--bg-dark) text-(--text-muted) transition-colors hover:border-(--border) hover:bg-(--bg-card-hover) hover:text-(--text-primary)"
-        aria-label="Skróty wpisywania zadania"
-        aria-expanded={open}
-      >
-        <HelpCircle className="h-5 w-5" />
-      </button>
-      {open && (
-        <div
-          role="tooltip"
-          className="absolute right-0 top-[calc(100%+0.35rem)] z-50 w-[min(20rem,calc(100vw-2rem))] rounded-lg border border-(--border) bg-(--bg-card) p-3 text-base text-(--text-muted) shadow-lg"
+    <>
+      <div className="relative shrink-0" ref={wrapRef}>
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-(--border) bg-(--bg-dark) text-(--text-muted) transition-colors hover:border-(--border) hover:bg-(--bg-card-hover) hover:text-(--text-primary)"
+          aria-label="Skróty wpisywania zadania"
+          aria-expanded={open}
         >
-          <p className="leading-relaxed">
-            Na końcu: <code className="text-(--text-primary)">?</code> — {TODO_PRIORITY_LABEL.low},{' '}
-            <code className="text-(--text-primary)">!</code> — {TODO_PRIORITY_LABEL.high}; bez znaku —{' '}
-            {TODO_PRIORITY_LABEL.medium}. W treści: np. <code className="text-(--text-primary)">jutro</code>, data{' '}
-            <code className="text-(--text-primary)">RRRR-MM-DD</code>, <code className="text-(--text-primary)">14:30</code>,{' '}
-            <code className="text-(--text-primary)">#finanse</code>.
-          </p>
-          <p className="mt-2 leading-relaxed">
-            <span className="font-gaming text-(--text-primary)">Opcje</span> — pierwszeństwo nad tekstem przy ustawionych
-            polach.
-          </p>
-        </div>
+          <HelpCircle className="h-5 w-5" />
+        </button>
+        {open && !isMobile && (
+          <div
+            role="dialog"
+            aria-label="Skróty wpisywania zadania"
+            className="absolute right-0 top-[calc(100%+0.35rem)] z-50 w-[min(26rem,calc(100vw-2rem))] max-h-[min(70vh,28rem)] overflow-y-auto rounded-lg border border-(--border) bg-(--bg-card) p-4 shadow-lg"
+          >
+            <p className="mb-3 font-gaming text-sm tracking-wide text-(--text-primary)">Skróty wpisywania</p>
+            <TodoQuickParseHintContent />
+          </div>
+        )}
+      </div>
+      {open && isMobile && (
+        <ModalShell
+          isOpen={open}
+          onClose={() => setOpen(false)}
+          maxWidth="max-w-md"
+          backdropKey="todo-hint-backdrop"
+          panelKey="todo-hint-panel"
+          zBackdrop={60}
+          zPanel={70}
+        >
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <span className="font-gaming text-sm tracking-wide text-(--text-primary)">Skróty wpisywania</span>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="rounded-lg p-1.5 text-(--text-muted) hover:bg-(--bg-card-hover) hover:text-(--text-primary)"
+              aria-label="Zamknij"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+          <TodoQuickParseHintContent />
+        </ModalShell>
       )}
-    </div>
+    </>
   )
 }
 
@@ -330,7 +436,6 @@ function TodoEditModal({
     category: TodoCategory
   }) => void
 }) {
-  const { backdrop, panel } = useModalMotion()
   const [text, setText] = useState(todo.text)
   const [dueDate, setDueDate] = useState(todo.dueDate ?? '')
   const [dueTime, setDueTime] = useState(todo.dueTime ?? '')
@@ -358,105 +463,94 @@ function TodoEditModal({
     onClose()
   }
 
-  const modal = (
-    <AnimatePresence>
-      <motion.div
-        key="todo-edit-backdrop"
-        {...backdrop}
-        className="fixed inset-0 z-9998 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      <div className="fixed inset-0 z-9999 flex items-start justify-center overflow-y-auto p-4 pt-16 pointer-events-none">
-        <motion.div
-          key="todo-edit-panel"
-          {...panel}
-          className="pointer-events-auto relative z-10 w-full max-w-md rounded-lg border border-(--border) bg-(--bg-card) p-6 shadow-xl"
-          onClick={(e) => e.stopPropagation()}
+  return (
+    <ModalShell
+      isOpen
+      onClose={onClose}
+      maxWidth="max-w-md"
+      backdropKey="todo-edit-backdrop"
+      panelKey="todo-edit-panel"
+    >
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <h3 className="font-gaming text-lg font-bold text-(--text-primary)">Zadanie</h3>
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-lg p-2 text-(--text-muted) hover:bg-(--bg-card-hover) hover:text-(--text-primary)"
+          aria-label="Zamknij"
         >
-          <div className="mb-4 flex items-center justify-between gap-2">
-            <h3 className="font-gaming text-lg font-bold text-(--text-primary)">Zadanie</h3>
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg p-2 text-(--text-muted) hover:bg-(--bg-card-hover) hover:text-(--text-primary)"
-              aria-label="Zamknij"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-          <div className="space-y-4">
-            <div>
-              <label className="mb-1 block text-base text-(--text-muted)">Treść</label>
-              <textarea
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                rows={3}
-                className="w-full resize-none rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none"
-              />
-            </div>
-            <TodoDueQuickPick
-              mode="explicit"
-              onModeExplicit={() => {}}
-              hideInheritHint
-              quickDueDate={dueDate}
-              quickDueTime={dueTime}
-              onChangeQuickDueDate={setDueDate}
-              onChangeQuickDueTime={setDueTime}
-            />
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="mb-1 block text-base text-(--text-muted)">Priorytet</label>
-                <select
-                  value={priority}
-                  onChange={(e) => setPriority(e.target.value as TodoPriority)}
-                  className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none"
-                >
-                  {(Object.keys(TODO_PRIORITY_LABEL) as TodoPriority[]).map((p) => (
-                    <option key={p} value={p}>
-                      {TODO_PRIORITY_LABEL[p]}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="mb-1 block text-base text-(--text-muted)">Obszar</label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value as TodoCategory)}
-                  className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none"
-                >
-                  {TODO_CATEGORIES.map((c) => (
-                    <option key={c} value={c}>
-                      {TODO_CATEGORY_LABEL[c]}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-          <div className="mt-6 flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg border border-(--border) px-4 py-2 text-base text-(--text-muted) hover:bg-(--bg-card-hover) hover:text-(--text-primary)"
-            >
-              Anuluj
-            </button>
-            <button
-              type="button"
-              onClick={save}
-              disabled={!text.trim()}
-              className="rounded-lg bg-(--accent-cyan)/20 px-4 py-2 font-gaming text-base text-(--accent-cyan) border border-(--accent-cyan)/40 hover:bg-(--accent-cyan)/30 disabled:opacity-40"
-            >
-              Zapisz
-            </button>
-          </div>
-        </motion.div>
+          <X className="h-5 w-5" />
+        </button>
       </div>
-    </AnimatePresence>
+      <div className="space-y-4">
+        <div>
+          <label className="mb-1 block text-base text-(--text-muted)">Treść</label>
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            rows={3}
+            className="w-full resize-none rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none"
+          />
+        </div>
+        <TodoDueQuickPick
+          mode="explicit"
+          onModeExplicit={() => {}}
+          hideInheritHint
+          quickDueDate={dueDate}
+          quickDueTime={dueTime}
+          onChangeQuickDueDate={setDueDate}
+          onChangeQuickDueTime={setDueTime}
+        />
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="mb-1 block text-base text-(--text-muted)">Priorytet</label>
+            <select
+              value={priority}
+              onChange={(e) => setPriority(e.target.value as TodoPriority)}
+              className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none"
+            >
+              {(Object.keys(TODO_PRIORITY_LABEL) as TodoPriority[]).map((p) => (
+                <option key={p} value={p}>
+                  {TODO_PRIORITY_LABEL[p]}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-base text-(--text-muted)">Obszar</label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value as TodoCategory)}
+              className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none"
+            >
+              {TODO_CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {TODO_CATEGORY_LABEL[c]}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+      <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end">
+        <button
+          type="button"
+          onClick={onClose}
+          className="w-full rounded-lg border border-(--border) px-4 py-2.5 text-base text-(--text-muted) hover:bg-(--bg-card-hover) hover:text-(--text-primary) sm:w-auto"
+        >
+          Anuluj
+        </button>
+        <button
+          type="button"
+          onClick={save}
+          disabled={!text.trim()}
+          className="w-full rounded-lg border border-(--accent-cyan)/40 bg-(--accent-cyan)/20 px-4 py-2.5 font-gaming text-base text-(--accent-cyan) hover:bg-(--accent-cyan)/30 disabled:opacity-40 sm:w-auto"
+        >
+          Zapisz
+        </button>
+      </div>
+    </ModalShell>
   )
-
-  return createPortal(modal, document.body)
 }
 
 function partitionTodayTodos(items: TodoItem[]) {
@@ -468,7 +562,11 @@ function partitionTodayTodos(items: TodoItem[]) {
   return { overdue, todayDated, undated }
 }
 
+const QUICK_ADD_PLACEHOLDER_MOBILE = 'Nowe zadanie…'
+const QUICK_ADD_PLACEHOLDER_DESKTOP = 'Co masz do zrobienia? np. Zapłacić rachunki jutro #finanse !'
+
 export function Todo() {
+  const isMobile = useIsMobile()
   const { isDemoMode } = useAuth()
   const { todos, addTodo, updateTodo, toggleTodo, removeTodo, clearCompletedTodos, loading } =
     useTodos()
@@ -722,7 +820,7 @@ export function Todo() {
             value={newText}
             onChange={(e) => setNewText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && add()}
-            placeholder="Co masz do zrobienia? np. Zapłacić rachunki jutro #finanse !"
+            placeholder={isMobile ? QUICK_ADD_PLACEHOLDER_MOBILE : QUICK_ADD_PLACEHOLDER_DESKTOP}
             className="min-h-11 min-w-0 flex-1 rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) placeholder:text-(--text-muted) focus:border-(--border) focus:outline-none focus:ring-1 focus:ring-(--text-primary)/15"
           />
           <TodoQuickParseHint />
@@ -732,17 +830,17 @@ export function Todo() {
             title="Dodaj zadanie"
             whileHover={reduceMotion ? undefined : { scale: 1.02 }}
             whileTap={reduceMotion ? undefined : { scale: 0.97 }}
-            className="flex h-11 min-w-0 max-sm:flex-1 shrink-0 items-center justify-center gap-2 rounded-lg border border-(--accent-cyan)/45 bg-(--accent-cyan)/18 px-4 font-gaming text-sm tracking-wide text-(--accent-cyan) shadow-[0_0_0_1px_rgba(0,229,255,0.08)] transition-colors hover:bg-(--accent-cyan)/26 sm:w-11 sm:max-w-none sm:gap-0 sm:px-0"
+            className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-(--accent-cyan)/45 bg-(--accent-cyan)/18 px-4 font-gaming text-sm tracking-wide text-(--accent-cyan) shadow-[0_0_0_1px_rgba(0,229,255,0.08)] transition-colors hover:bg-(--accent-cyan)/26"
             aria-label="Dodaj zadanie"
           >
             <Plus className="h-5 w-5 shrink-0" />
-            <span className="sm:hidden">Dodaj</span>
+            <span className="hidden sm:inline">Dodaj</span>
           </motion.button>
         </div>
         <button
           type="button"
           onClick={() => setOptionsOpen((o) => !o)}
-          className="flex w-full items-center justify-center gap-2 rounded-lg border border-(--border) bg-(--bg-card)/30 px-3 py-2 font-gaming text-sm tracking-wide text-(--text-muted) transition-colors hover:border-(--border) hover:bg-(--bg-dark) hover:text-(--text-primary) sm:inline-flex sm:w-auto"
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-(--border) bg-(--bg-card)/30 px-3 py-2.5 font-gaming text-sm tracking-wide text-(--text-muted) transition-colors hover:border-(--border) hover:bg-(--bg-dark) hover:text-(--text-primary) sm:inline-flex sm:w-auto sm:py-2"
           aria-expanded={optionsOpen}
         >
           {optionsOpen ? <ChevronUp className="h-4 w-4 shrink-0" /> : <ChevronDown className="h-4 w-4 shrink-0" />}
@@ -752,8 +850,9 @@ export function Todo() {
           )}
         </button>
         {optionsOpen && (
-          <div className="space-y-4 rounded-lg border border-(--border)/80 bg-(--bg-card)/25 p-4">
+          <div className="space-y-4 rounded-lg border border-(--border)/80 bg-(--bg-card)/25 p-3 sm:p-4">
             <TodoDueQuickPick
+              embedded
               mode={duePickMode}
               onModeExplicit={() => setDuePickMode('explicit')}
               hideInheritHint
@@ -762,7 +861,7 @@ export function Todo() {
               onChangeQuickDueDate={setQuickDueDate}
               onChangeQuickDueTime={setQuickDueTime}
             />
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <label className="flex flex-col gap-1">
                 <span className="text-base text-(--text-muted)">Priorytet</span>
                 <select
@@ -901,13 +1000,14 @@ export function Todo() {
 
       <ConfirmDialog
         isOpen={clearPrompt}
-        onCancel={() => setClearPrompt(false)}
+        onClose={() => setClearPrompt(false)}
         onConfirm={() => {
           clearCompletedTodos()
           setClearPrompt(false)
         }}
         title="Wyczyścić zrobione?"
         description="Wszystkie ukończone zadania zostaną trwale usunięte z listy."
+        variant="danger"
         confirmLabel="Wyczyść"
       />
     </motion.div>

@@ -38,7 +38,7 @@ export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
         role="presentation"
       />
       <aside
-        className={`absolute inset-y-0 left-0 z-10 flex w-[min(18rem,100vw-2rem)] max-w-full flex-col border-r border-(--border) bg-(--bg-card)/98 pb-[env(safe-area-inset-bottom)] shadow-2xl transition-transform duration-300 ease-out ${
+        className={`absolute inset-y-0 left-0 z-10 flex w-[min(18rem,100vw-2rem)] max-w-full flex-col border-r border-(--border) bg-(--bg-card)/98 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top,0px)] shadow-2xl transition-transform duration-300 ease-out ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
         role="dialog"

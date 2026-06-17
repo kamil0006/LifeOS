@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react'
-import { createPortal } from 'react-dom'
-import { AnimatePresence, motion } from 'framer-motion'
-import { X, Plus } from 'lucide-react'
-import { useModalMotion } from '../lib/modalMotion'
+import { Plus, X } from 'lucide-react'
+import { ModalShell } from './ModalShell'
 import { useQuickAdd } from '../context/QuickAddContext'
 import { useTodos } from '../context/TodosContext'
 import { parseQuickTodoInput } from '../lib/todoQuickParse'
@@ -11,7 +9,6 @@ import { parseQuickTodoInput } from '../lib/todoQuickParse'
 export function GlobalQuickTodo() {
   const { quickTodoOpen, closeQuickTodo } = useQuickAdd()
   const { addTodo } = useTodos()
-  const { backdrop, panel } = useModalMotion()
   const [text, setText] = useState('')
 
   useEffect(() => {
@@ -34,69 +31,55 @@ export function GlobalQuickTodo() {
     closeQuickTodo()
   }
 
-  const modalContent = (
-    <AnimatePresence>
-      {quickTodoOpen && (
-        <>
-          <motion.div
-            key="todo-quick-backdrop"
-            {...backdrop}
-            className="fixed inset-0 z-9998 bg-black/60 backdrop-blur-sm"
-            onClick={closeQuickTodo}
+  return (
+    <ModalShell
+      isOpen={quickTodoOpen}
+      onClose={closeQuickTodo}
+      maxWidth="max-w-md"
+      backdropKey="todo-quick-backdrop"
+      panelKey="todo-quick-panel"
+    >
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-lg font-bold text-(--text-primary) font-gaming">Nowe zadanie</h3>
+        <button
+          type="button"
+          onClick={closeQuickTodo}
+          className="rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-(--bg-card-hover) hover:text-(--text-primary)"
+          aria-label="Zamknij"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="mb-1 block text-base text-(--text-muted) font-gaming">Treść</label>
+          <input
+            type="text"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            autoFocus
+            placeholder="Np. Spotkanie jutro 10:00 #praca !"
+            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-4 py-2.5 text-base font-gaming text-(--text-primary) focus:border-(--accent-cyan) focus:outline-none"
           />
-          <div className="fixed inset-0 z-9999 flex items-start justify-center overflow-y-auto p-4 pt-12 pointer-events-none">
-            <motion.div
-              key="todo-quick-panel"
-              {...panel}
-              className="pointer-events-auto relative z-10 w-full max-w-md rounded-lg border border-(--border) bg-(--bg-card) p-6 shadow-xl"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-(--text-primary) font-gaming">Nowe zadanie</h3>
-                <button
-                  type="button"
-                  onClick={closeQuickTodo}
-                  className="p-2 rounded-lg hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-(--text-primary) transition-colors"
-                  aria-label="Zamknij"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-base text-(--text-muted) font-gaming mb-1">Treść</label>
-                  <input
-                    type="text"
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    autoFocus
-                    placeholder="Np. Spotkanie jutro 10:00 #praca !"
-                    className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
-                  />
-                </div>
-                <div className="flex justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={closeQuickTodo}
-                    className="px-4 py-2 rounded-lg border border-(--border) text-(--text-muted) font-gaming hover:text-(--text-primary)"
-                  >
-                    Anuluj
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={!text.trim()}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-(--accent-cyan) text-(--bg-dark) font-gaming font-bold hover:opacity-90 disabled:opacity-50"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Dodaj
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        </>
-      )}
-    </AnimatePresence>
+        </div>
+        <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={closeQuickTodo}
+            className="w-full rounded-lg border border-(--border) px-4 py-2.5 font-gaming text-(--text-muted) hover:text-(--text-primary) sm:w-auto"
+          >
+            Anuluj
+          </button>
+          <button
+            type="submit"
+            disabled={!text.trim()}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-(--accent-cyan) px-4 py-2.5 font-gaming font-bold text-(--bg-dark) hover:opacity-90 disabled:opacity-50 sm:w-auto"
+          >
+            <Plus className="h-4 w-4" />
+            Dodaj
+          </button>
+        </div>
+      </form>
+    </ModalShell>
   )
-
-  return createPortal(modalContent, document.body)
 }

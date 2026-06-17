@@ -16,7 +16,7 @@ The codebase is **actively developed** (≈ v0.1). The interface is **Polish-fir
 
 | Area | Where data lives (non-demo, logged-in) |
 |------|----------------------------------------|
-| **Auth**, **finances** (expenses, income, categories, recurring / scheduled expenses), **wishes**, **to-dos**, **calendar events**, **habits**, **goals** | **PostgreSQL** via the Express API |
+| **Auth**, **finances** (expenses, income, categories, recurring / scheduled expenses), **to-dos**, **calendar events**, **habits**, **goals** | **PostgreSQL** via the Express API |
 | **Notes** (inbox, ideas, references, archive) | **Browser `localStorage` only** — no REST sync to the database yet |
 | **Learning** (sessions, courses, books, projects, certificates, Pomodoro-style flows, etc.) | **Browser `localStorage` only** — same limitation |
 
@@ -25,7 +25,7 @@ The codebase is **actively developed** (≈ v0.1). The interface is **Polish-fir
 ### App routes (high level)
 
 - **Dashboard** — overview and shortcuts  
-- **Finances** — overview, transactions, recurring, wishes, net worth, analytics (legacy `/expenses` / `/income` redirect into finances)  
+- **Finances** — overview, transactions, recurring, net worth, analytics (legacy `/expenses` / `/income` redirect into finances)  
 - **To-do** — tabs (today / upcoming / all / done), priorities & areas, due date/time, compact options panel, natural-language shortcuts (`jutro`, `#tag`, `!` / `?`, etc.), optional link to a note (`noteId`)  
 - **Calendar** — events  
 - **Habits** — habits and **goals** (goals are edited here; backed by `/api/goals` when not in demo)  

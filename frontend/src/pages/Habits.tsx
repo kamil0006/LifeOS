@@ -34,19 +34,21 @@ import { useAuth } from '../context/AuthContext'
 import { useHabits, type HabitItem } from '../context/HabitsContext'
 import type { HabitCheckInStatus, HabitScheduleType } from '../lib/api/habitsApi'
 import { SimplePageSkeleton } from '../components/skeletons'
-import { useModalMotion } from '../lib/modalMotion'
+import { ModalShell } from '../components/ModalShell'
+import { ConfirmDialog } from '../components/ConfirmDialog'
+import { useIsMobile } from '../hooks/useIsMobile'
 import { TODO_ITEM_SPRING } from '../lib/todoMotion'
 
 /** Gdy nie ma żadnego wpisu — pokazujemy tyle dni kończąc na dziś (bez sztucznej historii). */
 const EMPTY_GRID_DAYS = 10
-/**
- * Szerokość siatki ≈ EMPTY_GRID_DAYS × komórka + gapy (widać naraz; starsze: suwak).
- */
+/** Minimalna historia w siatce — umożliwia przewijanie / suwak także bez starych wpisów. */
+const MIN_GRID_HISTORY_DAYS = 90
 const HABIT_GRID_WRAP_CLASS =
-  'w-full max-w-[min(100%,27rem)] pb-1.5 self-start'
-/** Kratka dnia: większy box, wygodniejszy klik. */
-const HABIT_GRID_CELL = 'h-9 w-9 min-h-9 min-w-9'
-const HABIT_GRID_COL_GAP = 'gap-2'
+  'w-full min-w-0 max-w-full pb-1.5 self-start sm:max-w-[min(100%,27rem)]'
+const HABIT_GRID_COLS = 'grid grid-cols-10 gap-2'
+const HABIT_GRID_CELL = 'h-9 w-9 min-h-9 min-w-9 shrink-0'
+/** Szerokość jednej kolumny przy 10 widocznych dniach (9 × gap-1.5 = 3.375rem). */
+const HABIT_MOBILE_CELL_WIDTH = 'w-[calc((100%-3.375rem)/10)]'
 /** Suma pod kratką: ostatnie tyle dni od dziś. */
 const SUM_LAST_DAYS = 10
 /** Domyślny zakres wykresu nawyku (ostatnie N dni). */
@@ -188,24 +190,20 @@ function formatMonthLabel(key: string): string {
 }
 
 /**
- * Zakres: co najmniej ostatnie EMPTY_GRID_DAYS dni + ewentualnie starsze dni z wpisów.
- * Okno pokazuje ~10 kolumn naraz; reszta — suwakiem wstecz w czasie.
+ * Zakres: co najmniej MIN_GRID_HISTORY_DAYS dni + ewentualnie starsze dni z wpisów.
+ * Okno pokazuje ~10 kolumn naraz; reszta — suwakiem (web) lub przewijaniem (mobile).
  */
 function getHabitGridDates(habit: HabitItem): { dates: string[]; letters: string[] } {
   const today = new Date()
   const endStr = formatLocalYmd(today)
-  const lastWindowStartDate = new Date(today)
-  lastWindowStartDate.setDate(lastWindowStartDate.getDate() - (EMPTY_GRID_DAYS - 1))
-  const lastWindowStartStr = formatLocalYmd(lastWindowStartDate)
+  const minHistoryStartDate = new Date(today)
+  minHistoryStartDate.setDate(minHistoryStartDate.getDate() - (MIN_GRID_HISTORY_DAYS - 1))
+  let startStr = formatLocalYmd(minHistoryStartDate)
 
-  let startStr: string
-  if (habit.checkIns.length === 0) {
-    startStr = lastWindowStartStr
-  } else {
+  if (habit.checkIns.length > 0) {
     const sorted = [...habit.checkIns].sort((a, b) => a.date.localeCompare(b.date))
     const earliestCheck = sorted[0].date
-    startStr =
-      earliestCheck < lastWindowStartStr ? earliestCheck : lastWindowStartStr
+    if (earliestCheck < startStr) startStr = earliestCheck
   }
 
   const dates: string[] = []
@@ -801,6 +799,7 @@ function HabitCreateForm({
   }) => void
   onCancel: () => void
 }) {
+  const isMobile = useIsMobile()
   const [name, setName] = useState('')
   const [unit, setUnit] = useState('')
   const [targetRaw, setTargetRaw] = useState('')
@@ -810,6 +809,9 @@ function HabitCreateForm({
   const [weeklyTargetRaw, setWeeklyTargetRaw] = useState('')
   const [monthlyTargetRaw, setMonthlyTargetRaw] = useState('')
   const [accentId, setAccentId] = useState<HabitAccentId>(HABIT_ACCENT_PRESETS[1].id)
+
+  const accentHex =
+    HABIT_ACCENT_PRESETS.find((p) => p.id === accentId)?.hex ?? HABIT_ACCENT_PRESETS[1].hex
 
   const submit = () => {
     if (!name.trim()) return
@@ -822,164 +824,374 @@ function HabitCreateForm({
       unit: unit.trim() || null,
       targetPerDay,
       category: category.trim() || null,
-      color: HABIT_ACCENT_PRESETS.find((p) => p.id === accentId)?.hex ?? null,
+      color: accentHex,
       ...buildHabitSchedulePayload(scheduleType, scheduleDays, weeklyTargetRaw, monthlyTargetRaw),
     })
   }
 
-  return (
-    <div className="space-y-2">
-      <label className="block text-base text-(--text-muted) font-gaming">Nazwa nawyku</label>
-      <div className="flex flex-col gap-3">
+  const formFields = (
+    <div className="space-y-4">
+      <div>
+        <label htmlFor="new-habit-name" className="mb-2 block text-base text-(--text-muted)">
+          Nazwa
+        </label>
         <input
+          id="new-habit-name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && submit()}
-          className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base focus:border-(--accent-cyan) focus:outline-none"
-          autoFocus
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') onCancel()
+            if (e.key === 'Enter') submit()
+          }}
+          className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
+          autoFocus={!isMobile}
+          placeholder="Np. Bieg"
         />
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <div>
-            <label className="block text-base text-(--text-muted) font-gaming mb-1">
-              Kategoria
-            </label>
-            <input
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base"
-              placeholder="np. Zdrowie"
-            />
-          </div>
-          <div>
-            <label className="block text-base text-(--text-muted) font-gaming mb-1">
-              Harmonogram
-            </label>
-            <select
-              value={scheduleType}
-              onChange={(e) => setScheduleType(e.target.value as HabitScheduleType)}
-              className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base"
-            >
-              {Object.entries(SCHEDULE_LABEL).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-        {scheduleType === 'weekdays' && (
-          <div className="flex flex-wrap gap-2">
-            {WEEKDAY_SHORT_PL.map((day, i) => (
-              <button
-                key={day}
-                type="button"
-                onClick={() => toggleScheduleDayValue(i, setScheduleDays)}
-                className={`rounded-lg border px-3 py-2 text-base ${
-                  scheduleDays.includes(i)
-                    ? 'border-(--accent-green)/50 bg-(--accent-green)/15 text-(--accent-green)'
-                    : 'border-(--border) text-(--text-muted)'
-                }`}
-              >
-                {day}
-              </button>
-            ))}
-          </div>
-        )}
-        {scheduleType === 'weekly' && (
+      </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label htmlFor="new-habit-category" className="mb-2 block text-base text-(--text-muted)">
+            Kategoria
+          </label>
           <input
+            id="new-habit-category"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
+            placeholder="np. Zdrowie"
+          />
+        </div>
+        <div>
+          <label htmlFor="new-habit-schedule" className="mb-2 block text-base text-(--text-muted)">
+            Harmonogram
+          </label>
+          <select
+            id="new-habit-schedule"
+            value={scheduleType}
+            onChange={(e) => setScheduleType(e.target.value as HabitScheduleType)}
+            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
+          >
+            {Object.entries(SCHEDULE_LABEL).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+      {scheduleType === 'weekdays' && (
+        <div className="grid grid-cols-4 gap-2 sm:flex sm:flex-wrap">
+          {WEEKDAY_SHORT_PL.map((day, i) => (
+            <button
+              key={day}
+              type="button"
+              onClick={() => toggleScheduleDayValue(i, setScheduleDays)}
+              className={`rounded-lg border px-2 py-2.5 text-base sm:px-3 sm:py-2 ${
+                scheduleDays.includes(i)
+                  ? 'border-(--accent-cyan)/50 bg-(--accent-cyan)/15 text-(--accent-cyan)'
+                  : 'border-(--border) text-(--text-muted)'
+              }`}
+            >
+              {day}
+            </button>
+          ))}
+        </div>
+      )}
+      {scheduleType === 'weekly' && (
+        <div>
+          <label htmlFor="new-habit-weekly" className="mb-2 block text-base text-(--text-muted)">
+            Ile razy w tygodniu
+          </label>
+          <input
+            id="new-habit-weekly"
             type="text"
             inputMode="numeric"
             value={weeklyTargetRaw}
             onChange={(e) => setWeeklyTargetRaw(sanitizeGoalNumber(e.target.value))}
-            className="w-full max-w-xs px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base"
-            placeholder="Ile razy w tygodniu, np. 3"
+            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) sm:max-w-xs"
+            placeholder="np. 3"
           />
-        )}
-        {scheduleType === 'monthly' && (
+        </div>
+      )}
+      {scheduleType === 'monthly' && (
+        <div>
+          <label htmlFor="new-habit-monthly" className="mb-2 block text-base text-(--text-muted)">
+            Ile razy w miesiącu
+          </label>
           <input
+            id="new-habit-monthly"
             type="text"
             inputMode="numeric"
             value={monthlyTargetRaw}
             onChange={(e) => setMonthlyTargetRaw(sanitizeGoalNumber(e.target.value))}
-            className="w-full max-w-xs px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base"
-            placeholder="Ile razy w miesiącu, np. 12"
+            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) sm:max-w-xs"
+            placeholder="np. 12"
           />
-        )}
-        <div>
-          <label className="block text-base text-(--text-muted) font-gaming mb-2">
-            Kolor nawyku
-          </label>
-          <div className="flex flex-wrap gap-2" role="group" aria-label="Kolor nowego nawyku">
-            {HABIT_ACCENT_PRESETS.map((p) => {
-              const selected = accentId === p.id
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  title={p.label}
-                  aria-label={p.label}
-                  aria-pressed={selected}
-                  onClick={() => setAccentId(p.id)}
-                  className={`h-8 w-8 shrink-0 rounded-full border-2 transition-transform ${
-                    selected
-                      ? 'scale-105 ring-2 ring-(--text-primary) ring-offset-2 ring-offset-(--bg-card)'
-                      : 'border-(--border) hover:scale-105'
-                  }`}
-                  style={{ backgroundColor: p.hex }}
-                />
-              )
-            })}
-          </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      )}
+      <div>
+        <p className="mb-2 text-base font-medium text-(--text-primary)">Opcje mierzalne</p>
+        <p className="mb-3 text-base text-(--text-muted)">
+          Puste pole = nawyk binarny (klik tak/nie). Wpisz jednostkę lub cel, żeby logować liczby i
+          pasek postępu.
+        </p>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className="block text-base text-(--text-muted) font-gaming mb-1">
-              Jednostka (opcj., np. km)
+            <label htmlFor="new-habit-unit" className="mb-2 block text-base text-(--text-muted)">
+              Jednostka
             </label>
             <input
+              id="new-habit-unit"
               value={unit}
               onChange={(e) => setUnit(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base"
-              placeholder="np. km"
+              className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
+              placeholder="np. km, min"
             />
           </div>
           <div>
-            <label className="block text-base text-(--text-muted) font-gaming mb-1">
-              Cel dziennie (opcj.)
+            <label htmlFor="new-habit-target" className="mb-2 block text-base text-(--text-muted)">
+              Cel dziennie
             </label>
             <input
+              id="new-habit-target"
               type="text"
               inputMode="decimal"
               value={targetRaw}
               onChange={(e) => setTargetRaw(sanitizeGoalNumber(e.target.value))}
-              className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base"
-              placeholder="np. 10"
+              className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
+              placeholder="opcjonalnie"
             />
           </div>
         </div>
-        <p className="text-base text-(--text-muted)">
-          Bez jednostki i celu — nawyk binarny (klik = tak/nie). Z jednostką lub celem — wpisujesz
-          liczby i widzisz pasek wypełnienia.
-        </p>
-        <div className="flex gap-2 flex-wrap">
-          <button
-            type="button"
-            onClick={submit}
-            className="px-4 py-2 rounded-lg bg-(--accent-green)/15 text-(--accent-green) border border-(--accent-green)/40 font-gaming hover:bg-(--accent-green)/25 hover:border-(--accent-green)/50 transition-colors"
-          >
-            Dodaj
-          </button>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-4 py-2 rounded-lg border border-(--border) text-(--text-muted) font-gaming hover:bg-(--bg-card-hover) hover:text-(--text-primary) hover:border-(--border) transition-colors"
-          >
-            Anuluj
-          </button>
+      </div>
+      <div>
+        <p className="mb-2 text-base text-(--text-muted)">Kolor nawyku</p>
+        <div className="flex flex-wrap gap-2.5 sm:gap-2" role="group" aria-label="Kolor nowego nawyku">
+          {HABIT_ACCENT_PRESETS.map((p) => {
+            const selected = accentId === p.id
+            return (
+              <button
+                key={p.id}
+                type="button"
+                title={p.label}
+                aria-label={p.label}
+                aria-pressed={selected}
+                onClick={() => setAccentId(p.id)}
+                className={`h-9 w-9 shrink-0 rounded-full border-2 transition-transform sm:h-7 sm:w-7 ${
+                  selected
+                    ? 'scale-105 ring-2 ring-(--text-primary) ring-offset-2 ring-offset-(--bg-card)'
+                    : 'border-(--border) hover:scale-105'
+                }`}
+                style={{ backgroundColor: p.hex }}
+              />
+            )
+          })}
         </div>
+      </div>
+      <div className="space-y-2 border-t border-(--border)/60 pt-4 sm:flex sm:flex-wrap sm:gap-2 sm:space-y-0">
+        <button
+          type="button"
+          onClick={submit}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border px-4 py-3 text-base hover:opacity-90 sm:w-auto sm:py-2"
+          style={{
+            borderColor: hexAlpha(accentHex, 0.45),
+            backgroundColor: hexAlpha(accentHex, 0.14),
+            color: accentHex,
+          }}
+        >
+          <Plus className="h-4 w-4 shrink-0" />
+          Dodaj nawyk
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-(--border) px-4 py-2.5 text-base text-(--text-muted) hover:bg-(--bg-card) sm:w-auto sm:py-2"
+        >
+          <X className="h-4 w-4 shrink-0" />
+          Anuluj
+        </button>
       </div>
     </div>
   )
+
+  if (isMobile) {
+    return (
+      <ModalShell isOpen onClose={onCancel} maxWidth="max-w-lg" padding="px-4 pt-2 pb-4">
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div>
+            <p className="text-lg font-semibold text-(--text-primary)">Nowy nawyk</p>
+            <p className="text-sm text-(--text-muted)">Dodaj nawyk do śledzenia</p>
+          </div>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="shrink-0 rounded-lg p-2 text-(--text-muted) hover:bg-(--bg-card) hover:text-(--text-primary)"
+            aria-label="Zamknij"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        {formFields}
+      </ModalShell>
+    )
+  }
+
+  return (
+    <div className="rounded-lg border border-(--border)/55 bg-(--bg-card)/20 p-4">
+      <p className="mb-4 text-base font-medium text-(--text-primary)">Nowy nawyk</p>
+      {formFields}
+    </div>
+  )
+}
+
+function GoalCreateForm({
+  onAdd,
+  onCancel,
+}: {
+  onAdd: (data: { name: string; target: number; current: number; unit?: string }) => void
+  onCancel: () => void
+}) {
+  const isMobile = useIsMobile()
+  const [name, setName] = useState('')
+  const [target, setTarget] = useState('')
+  const [current, setCurrent] = useState('0')
+  const [unit, setUnit] = useState('')
+
+  const submit = () => {
+    const trimmedName = name.trim()
+    const parsedTarget = parseGoalNumber(target)
+    const parsedCurrent = parseGoalNumber(current)
+    if (!trimmedName || Number.isNaN(parsedTarget) || parsedTarget <= 0) return
+    onAdd({
+      name: trimmedName,
+      target: parsedTarget,
+      current: parsedCurrent,
+      unit: unit.trim() || undefined,
+    })
+    setName('')
+    setTarget('')
+    setCurrent('0')
+    setUnit('')
+  }
+
+  const formFields = (
+    <div className="space-y-4">
+      <div>
+        <label htmlFor="new-goal-name" className="mb-2 block text-base text-(--text-muted)">
+          Nazwa
+        </label>
+        <input
+          id="new-goal-name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') onCancel()
+            if (e.key === 'Enter') submit()
+          }}
+          className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
+          autoFocus={!isMobile}
+          placeholder="Np. Przeczytać 12 książek"
+        />
+      </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div>
+          <label htmlFor="new-goal-current" className="mb-2 block text-base text-(--text-muted)">
+            Obecnie
+          </label>
+          <input
+            id="new-goal-current"
+            type="text"
+            inputMode="decimal"
+            value={current}
+            onChange={(e) => setCurrent(sanitizeGoalNumber(e.target.value))}
+            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
+          />
+        </div>
+        <div>
+          <label htmlFor="new-goal-target" className="mb-2 block text-base text-(--text-muted)">
+            Cel
+          </label>
+          <input
+            id="new-goal-target"
+            type="text"
+            inputMode="decimal"
+            value={target}
+            onChange={(e) => setTarget(sanitizeGoalNumber(e.target.value))}
+            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
+            placeholder="np. 12"
+          />
+        </div>
+        <div>
+          <label htmlFor="new-goal-unit" className="mb-2 block text-base text-(--text-muted)">
+            Jednostka
+          </label>
+          <input
+            id="new-goal-unit"
+            value={unit}
+            onChange={(e) => setUnit(e.target.value)}
+            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
+            placeholder="np. książki, km"
+          />
+        </div>
+      </div>
+      <div className="space-y-2 border-t border-(--border)/60 pt-4 sm:flex sm:flex-wrap sm:gap-2 sm:space-y-0">
+        <button
+          type="button"
+          onClick={submit}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-(--accent-cyan)/40 bg-(--accent-cyan)/15 px-4 py-3 text-base text-(--accent-cyan) hover:bg-(--accent-cyan)/25 sm:w-auto sm:py-2"
+        >
+          <Plus className="h-4 w-4 shrink-0" />
+          Dodaj cel
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-(--border) px-4 py-2.5 text-base text-(--text-muted) hover:bg-(--bg-card) sm:w-auto sm:py-2"
+        >
+          <X className="h-4 w-4 shrink-0" />
+          Anuluj
+        </button>
+      </div>
+    </div>
+  )
+
+  if (isMobile) {
+    return (
+      <ModalShell isOpen onClose={onCancel} maxWidth="max-w-lg" padding="px-4 pt-2 pb-4">
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div>
+            <p className="text-lg font-semibold text-(--text-primary)">Nowy cel</p>
+            <p className="text-sm text-(--text-muted)">Ustaw cel do śledzenia postępu</p>
+          </div>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="shrink-0 rounded-lg p-2 text-(--text-muted) hover:bg-(--bg-card) hover:text-(--text-primary)"
+            aria-label="Zamknij"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        {formFields}
+      </ModalShell>
+    )
+  }
+
+  return (
+    <div className="rounded-lg border border-(--border)/55 bg-(--bg-card)/20 p-4">
+      <p className="mb-4 text-base font-medium text-(--text-primary)">Nowy cel</p>
+      {formFields}
+    </div>
+  )
+}
+
+function formatHabitEditorDate(date: string): string {
+  return parseLocalYmd(date).toLocaleDateString('pl-PL', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
 }
 
 function HabitDayEditor({
@@ -1002,6 +1214,7 @@ function HabitDayEditor({
   onRemove: () => void
   onClose: () => void
 }) {
+  const isMobile = useIsMobile()
   const checkIn = checkInForDay(habit, date)
   const [valueRaw, setValueRaw] = useState(() =>
     checkIn?.value != null && checkIn.value > 0 ? String(checkIn.value) : ''
@@ -1016,93 +1229,131 @@ function HabitDayEditor({
     setNote(next?.note ?? '')
   }, [habit, date])
 
-  return (
-    <div className="mt-2 w-full space-y-4 rounded-lg border border-(--border) bg-(--bg-card)/25 p-4 sm:p-5">
-      <p className="text-base font-medium text-(--text-primary)">Wpis dla dnia {date}</p>
-      <div>
-        <label
-          htmlFor={`day-status-${habit.id}-${date}`}
-          className="mb-1.5 block text-base text-(--text-muted)"
-        >
-          Status dnia
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {(Object.entries(CHECK_IN_STATUS_LABEL) as [HabitCheckInStatus, string][]).map(
-            ([value, label]) => (
+  const handleSave = async () => {
+    const n = parseGoalNumber(valueRaw)
+    if (measurable && status === 'done' && (Number.isNaN(n) || n <= 0)) return
+    const ok = await onSave(measurable ? n : null, {
+      status,
+      note: note.trim() || null,
+    })
+    if (ok) onClose()
+  }
+
+  const statusOptions = Object.entries(CHECK_IN_STATUS_LABEL) as [HabitCheckInStatus, string][]
+
+  const editorBody = (
+    <>
+      <div className="mb-4 flex items-start justify-between gap-3 sm:mb-0">
+        <div className="min-w-0">
+          {isMobile && (
+            <p className="truncate text-base font-medium text-(--text-primary)">{habit.name}</p>
+          )}
+          <p
+            className={`font-medium text-(--text-primary) ${
+              isMobile ? 'text-sm text-(--text-muted)' : 'text-base'
+            }`}
+          >
+            {isMobile ? formatHabitEditorDate(date) : `Wpis dla dnia ${date}`}
+          </p>
+        </div>
+        {isMobile && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="shrink-0 rounded-lg p-2 text-(--text-muted) hover:bg-(--bg-card) hover:text-(--text-primary)"
+            aria-label="Zamknij"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        )}
+      </div>
+
+      <div className="space-y-4 sm:space-y-4">
+        <div>
+          <label
+            htmlFor={`day-status-${habit.id}-${date}`}
+            className="mb-2 block text-base text-(--text-muted)"
+          >
+            Status dnia
+          </label>
+          <div
+            id={`day-status-${habit.id}-${date}`}
+            className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap"
+            role="radiogroup"
+            aria-label="Status dnia"
+          >
+            {statusOptions.map(([value, label]) => (
               <button
                 key={value}
                 type="button"
+                role="radio"
+                aria-checked={status === value}
                 onClick={() => setStatus(value)}
-                className={`rounded-lg border px-3 py-1.5 text-base transition-colors ${
+                className={`rounded-lg border px-4 py-3 text-base transition-colors sm:px-3 sm:py-1.5 ${
                   status === value
                     ? 'border-(--accent-cyan)/50 bg-(--accent-cyan)/15 text-(--accent-cyan)'
                     : 'border-(--border) text-(--text-muted) hover:bg-(--bg-card)'
-                }`}
+                } ${isMobile ? 'w-full text-left' : ''}`}
               >
                 {label}
               </button>
-            )
-          )}
-        </div>
-      </div>
-      {measurable && (
-        <div>
-          <label
-            htmlFor={`day-value-${habit.id}-${date}`}
-            className="mb-1.5 block text-base text-(--text-muted)"
-          >
-            Wartość{habit.unit ? ` (${habit.unit})` : ''}
-          </label>
-          <div className="flex flex-wrap items-center gap-2">
-            <input
-              id={`day-value-${habit.id}-${date}`}
-              type="text"
-              inputMode="decimal"
-              value={valueRaw}
-              onChange={(e) => setValueRaw(sanitizeGoalNumber(e.target.value))}
-              className="w-full max-w-xs rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
-            />
-            {habit.targetPerDay != null && habit.targetPerDay > 0 && (
-              <button
-                type="button"
-                onClick={() => setValueRaw(String(habit.targetPerDay))}
-                className="rounded-lg border border-(--border) px-3 py-2 text-base text-(--text-muted) hover:bg-(--bg-card) hover:text-(--text-primary)"
-              >
-                Użyj celu dziennego
-              </button>
-            )}
+            ))}
           </div>
         </div>
-      )}
-      <div>
-        <label
-          htmlFor={`day-note-${habit.id}-${date}`}
-          className="mb-1.5 block text-base text-(--text-muted)"
-        >
-          Notatka
-        </label>
-        <textarea
-          id={`day-note-${habit.id}-${date}`}
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          rows={3}
-          className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
-          placeholder="np. energia, kontekst, przeszkody"
-        />
+
+        {measurable && (
+          <div>
+            <label
+              htmlFor={`day-value-${habit.id}-${date}`}
+              className="mb-2 block text-base text-(--text-muted)"
+            >
+              Wartość{habit.unit ? ` (${habit.unit})` : ''}
+            </label>
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+              <input
+                id={`day-value-${habit.id}-${date}`}
+                type="text"
+                inputMode="decimal"
+                value={valueRaw}
+                onChange={(e) => setValueRaw(sanitizeGoalNumber(e.target.value))}
+                className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25 sm:max-w-xs"
+              />
+              {habit.targetPerDay != null && habit.targetPerDay > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setValueRaw(String(habit.targetPerDay))}
+                  className="w-full rounded-lg border border-(--border) px-3 py-2.5 text-base text-(--text-muted) hover:bg-(--bg-card) hover:text-(--text-primary) sm:w-auto sm:py-2"
+                >
+                  Użyj celu dziennego
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div>
+          <label
+            htmlFor={`day-note-${habit.id}-${date}`}
+            className="mb-2 block text-base text-(--text-muted)"
+          >
+            Notatka
+          </label>
+          <textarea
+            id={`day-note-${habit.id}-${date}`}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            rows={isMobile ? 2 : 3}
+            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
+            placeholder="np. energia, kontekst, przeszkody"
+          />
+        </div>
       </div>
-      <div className="flex flex-wrap gap-2 border-t border-(--border)/60 pt-4">
+
+      <div className="mt-6 space-y-2 border-t border-(--border)/60 pt-4 sm:mt-4 sm:flex sm:flex-wrap sm:gap-2 sm:space-y-0">
         <button
           type="button"
-          onClick={async () => {
-            const n = parseGoalNumber(valueRaw)
-            if (measurable && status === 'done' && (Number.isNaN(n) || n <= 0)) return
-            const ok = await onSave(measurable ? n : null, {
-              status,
-              note: note.trim() || null,
-            })
-            if (ok) onClose()
-          }}
-          className="rounded-lg border px-4 py-2 text-base hover:opacity-90"
+          onClick={handleSave}
+          className="w-full rounded-lg border px-4 py-3 text-base hover:opacity-90 sm:w-auto sm:py-2"
           style={{
             borderColor: hexAlpha(accentHex, 0.45),
             backgroundColor: hexAlpha(accentHex, 0.14),
@@ -1111,28 +1362,482 @@ function HabitDayEditor({
         >
           Zapisz
         </button>
+        <div className="grid grid-cols-2 gap-2 sm:contents">
+          <button
+            type="button"
+            onClick={onRemove}
+            className="rounded-lg border border-(--border) px-4 py-2.5 text-base text-(--text-muted) hover:bg-(--bg-card) sm:py-2"
+          >
+            Usuń dzień
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg border border-(--border) px-4 py-2.5 text-base text-(--text-muted) hover:bg-(--bg-card) hover:text-(--text-primary) sm:border-0 sm:py-2 sm:hover:bg-transparent"
+          >
+            Zamknij
+          </button>
+        </div>
+      </div>
+    </>
+  )
+
+  if (isMobile) {
+    return (
+      <ModalShell isOpen onClose={onClose} maxWidth="max-w-lg" padding="px-4 pt-2 pb-4">
+        {editorBody}
+      </ModalShell>
+    )
+  }
+
+  return (
+    <div className="mt-2 w-full space-y-4 rounded-lg border border-(--border) bg-(--bg-card)/25 p-4 sm:p-5">
+      {editorBody}
+    </div>
+  )
+}
+
+function formatHabitGridDayLabel(date: string): string {
+  return String(parseLocalYmd(date).getDate())
+}
+
+type HabitEditFormProps = {
+  habit: HabitItem
+  accentHex: string
+  name: string
+  setName: (value: string) => void
+  category: string
+  setCategory: (value: string) => void
+  scheduleType: HabitScheduleType
+  setScheduleType: (value: HabitScheduleType) => void
+  scheduleDays: number[]
+  setScheduleDays: Dispatch<SetStateAction<number[]>>
+  weeklyTargetRaw: string
+  setWeeklyTargetRaw: (value: string) => void
+  monthlyTargetRaw: string
+  setMonthlyTargetRaw: (value: string) => void
+  unit: string
+  setUnit: (value: string) => void
+  targetRaw: string
+  setTargetRaw: (value: string) => void
+  color: string | null
+  setColor: (value: string | null) => void
+  onCancel: () => void
+  onSave: () => void
+}
+
+function HabitEditForm({
+  habit,
+  accentHex,
+  name,
+  setName,
+  category,
+  setCategory,
+  scheduleType,
+  setScheduleType,
+  scheduleDays,
+  setScheduleDays,
+  weeklyTargetRaw,
+  setWeeklyTargetRaw,
+  monthlyTargetRaw,
+  setMonthlyTargetRaw,
+  unit,
+  setUnit,
+  targetRaw,
+  setTargetRaw,
+  color,
+  setColor,
+  onCancel,
+  onSave,
+}: HabitEditFormProps) {
+  const isMobile = useIsMobile()
+
+  const formFields = (
+    <div className="space-y-4">
+      <div>
+        <label
+          htmlFor={`edit-habit-name-${habit.id}`}
+          className="mb-2 block text-base text-(--text-muted)"
+        >
+          Nazwa
+        </label>
+        <input
+          id={`edit-habit-name-${habit.id}`}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') onCancel()
+          }}
+          className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
+          autoFocus={!isMobile}
+          placeholder="Np. Bieg"
+        />
+      </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label
+            htmlFor={`edit-habit-category-${habit.id}`}
+            className="mb-2 block text-base text-(--text-muted)"
+          >
+            Kategoria
+          </label>
+          <input
+            id={`edit-habit-category-${habit.id}`}
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
+            placeholder="np. Zdrowie"
+          />
+        </div>
+        <div>
+          <label
+            htmlFor={`edit-habit-schedule-${habit.id}`}
+            className="mb-2 block text-base text-(--text-muted)"
+          >
+            Harmonogram
+          </label>
+          <select
+            id={`edit-habit-schedule-${habit.id}`}
+            value={scheduleType}
+            onChange={(e) => setScheduleType(e.target.value as HabitScheduleType)}
+            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
+          >
+            {Object.entries(SCHEDULE_LABEL).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+      {scheduleType === 'weekdays' && (
+        <div className="grid grid-cols-4 gap-2 sm:flex sm:flex-wrap">
+          {WEEKDAY_SHORT_PL.map((day, i) => (
+            <button
+              key={day}
+              type="button"
+              onClick={() => toggleScheduleDayValue(i, setScheduleDays)}
+              className={`rounded-lg border px-2 py-2.5 text-base sm:px-3 sm:py-2 ${
+                scheduleDays.includes(i)
+                  ? 'border-(--accent-cyan)/50 bg-(--accent-cyan)/15 text-(--accent-cyan)'
+                  : 'border-(--border) text-(--text-muted)'
+              }`}
+            >
+              {day}
+            </button>
+          ))}
+        </div>
+      )}
+      {scheduleType === 'weekly' && (
+        <div>
+          <label className="mb-2 block text-base text-(--text-muted)">Ile razy w tygodniu</label>
+          <input
+            type="text"
+            inputMode="numeric"
+            value={weeklyTargetRaw}
+            onChange={(e) => setWeeklyTargetRaw(sanitizeGoalNumber(e.target.value))}
+            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) sm:max-w-xs"
+            placeholder="np. 3"
+          />
+        </div>
+      )}
+      {scheduleType === 'monthly' && (
+        <div>
+          <label className="mb-2 block text-base text-(--text-muted)">Ile razy w miesiącu</label>
+          <input
+            type="text"
+            inputMode="numeric"
+            value={monthlyTargetRaw}
+            onChange={(e) => setMonthlyTargetRaw(sanitizeGoalNumber(e.target.value))}
+            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) sm:max-w-xs"
+            placeholder="np. 12"
+          />
+        </div>
+      )}
+      <div>
+        <p className="mb-2 text-base font-medium text-(--text-primary)">Opcje mierzalne</p>
+        <p className="mb-3 text-base text-(--text-muted)">
+          Puste pole = nawyk binarny (klik tak/nie). Wpisz jednostkę lub cel, żeby logować liczby i
+          pasek postępu.
+        </p>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label
+              htmlFor={`edit-habit-unit-${habit.id}`}
+              className="mb-2 block text-base text-(--text-muted)"
+            >
+              Jednostka
+            </label>
+            <input
+              id={`edit-habit-unit-${habit.id}`}
+              value={unit}
+              onChange={(e) => setUnit(e.target.value)}
+              className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
+              placeholder="np. km, min"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor={`edit-habit-target-${habit.id}`}
+              className="mb-2 block text-base text-(--text-muted)"
+            >
+              Cel dziennie
+            </label>
+            <input
+              id={`edit-habit-target-${habit.id}`}
+              type="text"
+              inputMode="decimal"
+              value={targetRaw}
+              onChange={(e) => setTargetRaw(sanitizeGoalNumber(e.target.value))}
+              className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
+              placeholder="opcjonalnie"
+            />
+          </div>
+        </div>
+      </div>
+      <div>
+        <p className="mb-2 text-base text-(--text-muted)">Kolor nawyku</p>
+        <div className="flex flex-wrap gap-2.5 sm:gap-2" role="group" aria-label="Kolor nawyku">
+          {HABIT_ACCENT_PRESETS.map((p) => {
+            const selected = (color ?? accentHex) === p.hex
+            return (
+              <button
+                key={p.id}
+                type="button"
+                title={p.label}
+                aria-label={p.label}
+                aria-pressed={selected}
+                onClick={() => setColor(p.hex)}
+                className={`h-9 w-9 shrink-0 rounded-full border-2 transition-transform sm:h-7 sm:w-7 ${
+                  selected
+                    ? 'scale-105 ring-2 ring-(--text-primary) ring-offset-2 ring-offset-(--bg-card)'
+                    : 'border-(--border) hover:scale-105'
+                }`}
+                style={{ backgroundColor: p.hex }}
+              />
+            )
+          })}
+        </div>
+      </div>
+      <div className="space-y-2 border-t border-(--border)/60 pt-4 sm:flex sm:flex-wrap sm:gap-2 sm:space-y-0">
         <button
           type="button"
-          onClick={onRemove}
-          className="rounded-lg border border-(--border) px-4 py-2 text-base text-(--text-muted) hover:bg-(--bg-card)"
+          onClick={onSave}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border px-4 py-3 text-base hover:opacity-90 sm:w-auto sm:py-2"
+          style={{
+            borderColor: hexAlpha(accentHex, 0.45),
+            backgroundColor: hexAlpha(accentHex, 0.14),
+            color: accentHex,
+          }}
         >
-          Usuń dzień
+          <Check className="h-4 w-4 shrink-0" />
+          Zapisz
         </button>
         <button
           type="button"
-          onClick={onClose}
-          className="rounded-lg px-4 py-2 text-base text-(--text-muted) hover:text-(--text-primary)"
+          onClick={onCancel}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-(--border) px-4 py-2.5 text-base text-(--text-muted) hover:bg-(--bg-card) sm:w-auto sm:py-2"
         >
-          Zamknij
+          <X className="h-4 w-4 shrink-0" />
+          Anuluj
         </button>
       </div>
+    </div>
+  )
+
+  if (isMobile) {
+    return (
+      <ModalShell isOpen onClose={onCancel} maxWidth="max-w-lg" padding="px-4 pt-2 pb-4">
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-lg font-semibold text-(--text-primary)">Edytuj nawyk</p>
+            <p className="truncate text-sm text-(--text-muted)">{habit.name}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="shrink-0 rounded-lg p-2 text-(--text-muted) hover:bg-(--bg-card) hover:text-(--text-primary)"
+            aria-label="Zamknij"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        {formFields}
+      </ModalShell>
+    )
+  }
+
+  return (
+    <div className="w-full space-y-4 rounded-lg border border-(--border) bg-(--bg-card)/30 p-4">
+      {formFields}
+    </div>
+  )
+}
+
+type HabitDayCellProps = {
+  habit: HabitItem
+  date: string
+  accentHex: string
+  measurable: boolean
+  isArchived: boolean
+  isSelected: boolean
+  cellClassName: string
+  onSelect: (date: string) => void
+}
+
+function HabitDayCell({
+  habit,
+  date,
+  accentHex,
+  measurable,
+  isArchived,
+  isSelected,
+  cellClassName,
+  onSelect,
+}: HabitDayCellProps) {
+  const checkIn = checkInForDay(habit, date)
+  const checked = !!checkIn
+  const pct =
+    checkIn?.status === 'done' ? dayFillPercent(habit, checkIn.value ?? null) : 0
+  const titleBits = [date]
+  if (checkIn?.status) titleBits.push(CHECK_IN_STATUS_LABEL[checkIn.status])
+  if (checkIn && checkIn.value != null && checkIn.value > 0) {
+    titleBits.push(`${checkIn.value} ${habit.unit ?? ''}`.trim())
+  } else if (checked) {
+    titleBits.push('zaznaczone')
+  }
+  if (checkIn?.note) titleBits.push(checkIn.note)
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        if (!isArchived) onSelect(date)
+      }}
+      className={`relative overflow-hidden rounded-md border transition-colors ${cellClassName} ${
+        measurable
+          ? 'border-(--border) hover:opacity-90'
+          : checked
+            ? 'border-transparent'
+            : 'border-transparent bg-(--border) hover:bg-(--border)/80'
+      } ${
+        isSelected
+          ? 'z-10 ring-2 ring-(--accent-cyan) ring-offset-2 ring-offset-(--bg-card)'
+          : ''
+      }`}
+      title={titleBits.join(' — ')}
+    >
+      {measurable ? (
+        <>
+          <span className="absolute inset-0 bg-(--border)" />
+          <span
+            className="absolute bottom-0 left-0 right-0"
+            style={{
+              height: `${pct}%`,
+              backgroundColor: hexAlpha(accentHex, 0.92),
+            }}
+          />
+          {checkIn?.status && checkIn.status !== 'done' && (
+            <span
+              className="absolute right-0.5 top-0.5 h-1.5 w-1.5 rounded-full sm:right-1 sm:top-1 sm:h-2 sm:w-2"
+              style={{
+                backgroundColor: checkIn.status === 'missed' ? '#f87171' : '#94a3b8',
+              }}
+            />
+          )}
+        </>
+      ) : (
+        <span
+          className={`block h-full w-full rounded-sm ${
+            checked ? '' : 'bg-(--border) hover:bg-(--border)/80'
+          }`}
+          style={
+            checked
+              ? {
+                  backgroundColor:
+                    checkIn?.status === 'missed'
+                      ? '#f87171'
+                      : checkIn?.status === 'skipped'
+                        ? '#94a3b8'
+                        : accentHex,
+                }
+              : undefined
+          }
+        />
+      )}
+    </button>
+  )
+}
+
+type HabitGridMobileStripProps = {
+  habit: HabitItem
+  dates: string[]
+  letters: string[]
+  accentHex: string
+  measurable: boolean
+  isArchived: boolean
+  selectedDate: string | null
+  onSelectDate: (date: string) => void
+}
+
+function HabitGridMobileStrip({
+  habit,
+  dates,
+  letters,
+  accentHex,
+  measurable,
+  isArchived,
+  selectedDate,
+  onSelectDate,
+}: HabitGridMobileStripProps) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  useLayoutEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    el.scrollLeft = el.scrollWidth - el.clientWidth
+  }, [habit.id, dates.length, dates[dates.length - 1]])
+
+  return (
+    <div className="pt-0.5 sm:hidden">
+      <div
+        ref={scrollRef}
+        className="flex touch-pan-x gap-1.5 overflow-x-auto overscroll-x-contain py-1 pb-2.5 scrollbar-hidden"
+      >
+        {dates.map((date, i) => (
+            <div
+              key={date}
+              className={`flex ${HABIT_MOBILE_CELL_WIDTH} shrink-0 flex-col items-center gap-1 px-0.5`}
+            >
+              <span className="text-xs leading-none text-(--text-muted)">{letters[i]}</span>
+              <HabitDayCell
+                habit={habit}
+                date={date}
+                accentHex={accentHex}
+                measurable={measurable}
+                isArchived={isArchived}
+                isSelected={selectedDate === date}
+                cellClassName="aspect-square w-full min-w-0"
+                onSelect={onSelectDate}
+              />
+              <span className="min-h-4.5 pt-0.5 text-xs leading-tight tabular-nums text-(--text-muted)">
+                {formatHabitGridDayLabel(date)}
+              </span>
+            </div>
+          ))}
+      </div>
+      {dates.length > EMPTY_GRID_DAYS && (
+        <p className="mt-2.5 text-xs text-(--text-muted)">
+          Przesuń w lewo, by zobaczyć starsze dni
+        </p>
+      )}
     </div>
   )
 }
 
 export function Habits() {
-  const { backdrop, panel } = useModalMotion()
   const reduceMotion = useReducedMotion()
+  const isMobile = useIsMobile()
   const { isDemoMode } = useAuth()
   const {
     habits,
@@ -1153,7 +1858,6 @@ export function Habits() {
   const [showHabitForm, setShowHabitForm] = useState(false)
   const [showGoalForm, setShowGoalForm] = useState(false)
   const [showArchivedHabits, setShowArchivedHabits] = useState(false)
-  const [newGoal, setNewGoal] = useState({ name: '', target: '', current: '0', unit: '' })
   const [editingHabitId, setEditingHabitId] = useState<string | null>(null)
   const [editingHabitName, setEditingHabitName] = useState('')
   const [editingHabitUnit, setEditingHabitUnit] = useState('')
@@ -1255,24 +1959,6 @@ export function Habits() {
     })
   }, [habits, habitGrids])
 
-  useEffect(() => {
-    if (!habitPendingDelete) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setHabitPendingDelete(null)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [habitPendingDelete])
-
-  useEffect(() => {
-    if (!goalPendingDelete) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setGoalPendingDelete(null)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [goalPendingDelete])
-
   const getStreak = (habit: HabitItem) => {
     let streak = 0
     const today = new Date().toISOString().split('T')[0]
@@ -1289,24 +1975,14 @@ export function Habits() {
     return streak
   }
 
-  const handleAddGoal = () => {
-    const name = newGoal.name.trim()
-    const target = parseGoalNumber(newGoal.target)
-    const current = parseGoalNumber(newGoal.current)
-    if (!name || isNaN(target) || target <= 0) return
-    addGoal({ name, target, current, unit: newGoal.unit.trim() || undefined })
-    setNewGoal({ name: '', target: '', current: '0', unit: '' })
-    setShowGoalForm(false)
-  }
-
   if (loading) {
     return <SimplePageSkeleton titleWidth="w-44" />
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-(--text-primary) font-gaming tracking-wider">
+        <h1 className="text-2xl sm:text-3xl font-bold text-(--text-primary) font-gaming tracking-wider">
           NAWYKI I CELE
         </h1>
         <p className="text-base text-(--text-muted) mt-1 font-gaming tracking-wide">
@@ -1314,16 +1990,16 @@ export function Habits() {
         </p>
       </div>
       {/* Nawyki */}
-      <Card title="Nawyki" className="border-(--accent-green)/20">
+      <Card title="Nawyki" className="border-(--accent-green)/20 max-md:p-4">
         <div className="flex flex-col">
           <div className="mb-5 flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() => setShowArchivedHabits(false)}
-              className={`rounded-lg border px-3 py-2 text-base ${
+              className={`rounded-lg border px-3 py-2 text-base transition-colors ${
                 !showArchivedHabits
-                  ? 'border-(--accent-green)/50 bg-(--accent-green)/15 text-(--accent-green)'
-                  : 'border-(--border) text-(--text-muted) hover:bg-(--bg-card)'
+                  ? 'border-(--border) bg-(--bg-dark) font-gaming tracking-wide text-(--text-primary)'
+                  : 'border-transparent text-(--text-muted) hover:bg-(--bg-card-hover)/60 hover:text-(--text-primary)'
               }`}
             >
               Aktywne ({activeHabits.length})
@@ -1331,10 +2007,10 @@ export function Habits() {
             <button
               type="button"
               onClick={() => setShowArchivedHabits(true)}
-              className={`rounded-lg border px-3 py-2 text-base ${
+              className={`rounded-lg border px-3 py-2 text-base transition-colors ${
                 showArchivedHabits
-                  ? 'border-(--accent-cyan)/50 bg-(--accent-cyan)/15 text-(--accent-cyan)'
-                  : 'border-(--border) text-(--text-muted) hover:bg-(--bg-card)'
+                  ? 'border-(--border) bg-(--bg-dark) font-gaming tracking-wide text-(--text-primary)'
+                  : 'border-transparent text-(--text-muted) hover:bg-(--bg-card-hover)/60 hover:text-(--text-primary)'
               }`}
             >
               Archiwum ({archivedHabits.length})
@@ -1355,6 +2031,8 @@ export function Habits() {
             const windowStart = maxStart - sliderBack
             const visibleDates = gridDates.slice(windowStart, windowStart + EMPTY_GRID_DAYS)
             const visibleLetters = gridDayLetters.slice(windowStart, windowStart + EMPTY_GRID_DAYS)
+            const selectedGridDate =
+              measurableEditor?.habitId === habit.id ? measurableEditor.date : null
             const streak = getStreak(habit)
             const isEditing = editingHabitId === habit.id
             const isArchived = !!habit.archivedAt
@@ -1390,7 +2068,9 @@ export function Habits() {
             const chartGradId = `hg${habit.id.replace(/[^a-zA-Z0-9]/g, '')}`
             const fallbackAccentId = defaultHabitAccentId(`${habit.id}-${habit.name}`)
             const accentHex =
-              habit.color ?? resolveHabitAccentHex(habitAccentChoice, habit.id, fallbackAccentId)
+              (isEditing && editingHabitColor) ||
+              habit.color ||
+              resolveHabitAccentHex(habitAccentChoice, habit.id, fallbackAccentId)
             const stats7 = isExpanded ? computeHabitWindowStats(habit, 7) : null
             const stats30 = computeHabitWindowStats(habit, 30)
             const stats90 = isExpanded ? computeHabitWindowStats(habit, 90) : null
@@ -1405,11 +2085,68 @@ export function Habits() {
               ? computeHabitMonthSummary(habit, selectedCalendarMonth)
               : null
 
+            const saveEditedHabit = () => {
+              const name = editingHabitName.trim()
+              if (!name) return
+              const unit = editingHabitUnit.trim() || null
+              const t = parseGoalNumber(editingHabitTargetRaw)
+              const targetPerDay =
+                editingHabitTargetRaw.trim() !== '' && !Number.isNaN(t) && t > 0 ? t : null
+              updateHabit(habit.id, {
+                name,
+                unit,
+                targetPerDay,
+                category: editingHabitCategory.trim() || null,
+                color: editingHabitColor,
+                ...buildHabitSchedulePayload(
+                  editingHabitScheduleType,
+                  editingHabitScheduleDays,
+                  editingHabitWeeklyTargetRaw,
+                  editingHabitMonthlyTargetRaw
+                ),
+              })
+              if (editingHabitColor) {
+                setHabitAccentChoice((prev) => {
+                  const matched = HABIT_ACCENT_PRESETS.find((p) => p.hex === editingHabitColor)
+                  if (!matched) return prev
+                  const next = { ...prev, [habit.id]: matched.id }
+                  writeHabitAccentStorage(next)
+                  return next
+                })
+              }
+              setEditingHabitId(null)
+            }
+
+            const habitEditFormProps = {
+              habit,
+              accentHex,
+              name: editingHabitName,
+              setName: setEditingHabitName,
+              category: editingHabitCategory,
+              setCategory: setEditingHabitCategory,
+              scheduleType: editingHabitScheduleType,
+              setScheduleType: setEditingHabitScheduleType,
+              scheduleDays: editingHabitScheduleDays,
+              setScheduleDays: setEditingHabitScheduleDays,
+              weeklyTargetRaw: editingHabitWeeklyTargetRaw,
+              setWeeklyTargetRaw: setEditingHabitWeeklyTargetRaw,
+              monthlyTargetRaw: editingHabitMonthlyTargetRaw,
+              setMonthlyTargetRaw: setEditingHabitMonthlyTargetRaw,
+              unit: editingHabitUnit,
+              setUnit: setEditingHabitUnit,
+              targetRaw: editingHabitTargetRaw,
+              setTargetRaw: setEditingHabitTargetRaw,
+              color: editingHabitColor,
+              setColor: setEditingHabitColor,
+              onCancel: () => setEditingHabitId(null),
+              onSave: saveEditedHabit,
+            }
+
             return (
               <div
                 key={habit.id}
                 className={
-                  habitIdx > 0 ? 'mt-10 border-t border-(--border)/45 pt-10' : ''
+                  habitIdx > 0 ? 'mt-8 border-t border-(--border)/45 pt-8 sm:mt-10 sm:pt-10' : ''
                 }
               >
               <motion.div
@@ -1417,13 +2154,27 @@ export function Habits() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: reduceMotion ? 0.12 : 0.2 }}
-                className="flex flex-col gap-5 rounded-xl border border-(--border)/55 bg-(--bg-card)/20 p-4 transition-[border-color,box-shadow] duration-200 sm:p-5"
-                style={{ '--habit-accent': accentHex } as CSSProperties}
+                className={`flex flex-col gap-4 rounded-xl border bg-(--bg-card)/20 p-3 transition-[border-color,box-shadow] duration-200 sm:gap-5 sm:p-5 ${
+                  isEditing ? '' : 'border-(--border)/55'
+                }`}
+                style={
+                  {
+                    '--habit-accent': accentHex,
+                    ...(isEditing
+                      ? {
+                          borderColor: hexAlpha(accentHex, 0.38),
+                          boxShadow: `0 0 0 1px ${hexAlpha(accentHex, 0.12)}`,
+                        }
+                      : {}),
+                  } as CSSProperties
+                }
                 onMouseEnter={(e) => {
+                  if (isEditing) return
                   e.currentTarget.style.borderColor = hexAlpha(accentHex, 0.38)
                   e.currentTarget.style.boxShadow = `0 0 0 1px ${hexAlpha(accentHex, 0.12)}`
                 }}
                 onMouseLeave={(e) => {
+                  if (isEditing) return
                   e.currentTarget.style.removeProperty('border-color')
                   e.currentTarget.style.removeProperty('box-shadow')
                 }}
@@ -1431,252 +2182,13 @@ export function Habits() {
                 <div className="flex items-start justify-between gap-4">
                   <div
                     className={`flex min-w-0 flex-1 ${
-                      isEditing
+                      isEditing && !isMobile
                         ? 'flex-col'
                         : 'flex-row flex-wrap items-center gap-3'
                     }`}
                   >
-                    {isEditing ? (
-                      <div className="w-full space-y-4 rounded-lg border border-(--border) bg-(--bg-card)/30 p-4">
-                        <div>
-                          <label
-                            htmlFor={`edit-habit-name-${habit.id}`}
-                            className="mb-1.5 block text-base text-(--text-muted)"
-                          >
-                            Nazwa
-                          </label>
-                          <input
-                            id={`edit-habit-name-${habit.id}`}
-                            value={editingHabitName}
-                            onChange={(e) => setEditingHabitName(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Escape') setEditingHabitId(null)
-                            }}
-                            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
-                            autoFocus
-                            placeholder="Np. Bieg"
-                          />
-                        </div>
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                          <div>
-                            <label
-                              htmlFor={`edit-habit-category-${habit.id}`}
-                              className="mb-1.5 block text-base text-(--text-muted)"
-                            >
-                              Kategoria
-                            </label>
-                            <input
-                              id={`edit-habit-category-${habit.id}`}
-                              value={editingHabitCategory}
-                              onChange={(e) => setEditingHabitCategory(e.target.value)}
-                              className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
-                              placeholder="np. Zdrowie"
-                            />
-                          </div>
-                          <div>
-                            <label
-                              htmlFor={`edit-habit-schedule-${habit.id}`}
-                              className="mb-1.5 block text-base text-(--text-muted)"
-                            >
-                              Harmonogram
-                            </label>
-                            <select
-                              id={`edit-habit-schedule-${habit.id}`}
-                              value={editingHabitScheduleType}
-                              onChange={(e) =>
-                                setEditingHabitScheduleType(e.target.value as HabitScheduleType)
-                              }
-                              className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
-                            >
-                              {Object.entries(SCHEDULE_LABEL).map(([value, label]) => (
-                                <option key={value} value={value}>
-                                  {label}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                        </div>
-                        {editingHabitScheduleType === 'weekdays' && (
-                          <div className="flex flex-wrap gap-2">
-                            {WEEKDAY_SHORT_PL.map((day, i) => (
-                              <button
-                                key={day}
-                                type="button"
-                                onClick={() => toggleScheduleDayValue(i, setEditingHabitScheduleDays)}
-                                className={`rounded-lg border px-3 py-2 text-base ${
-                                  editingHabitScheduleDays.includes(i)
-                                    ? 'border-(--accent-cyan)/50 bg-(--accent-cyan)/15 text-(--accent-cyan)'
-                                    : 'border-(--border) text-(--text-muted)'
-                                }`}
-                              >
-                                {day}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                        {editingHabitScheduleType === 'weekly' && (
-                          <div>
-                            <label className="mb-1.5 block text-base text-(--text-muted)">
-                              Ile razy w tygodniu
-                            </label>
-                            <input
-                              type="text"
-                              inputMode="numeric"
-                              value={editingHabitWeeklyTargetRaw}
-                              onChange={(e) =>
-                                setEditingHabitWeeklyTargetRaw(sanitizeGoalNumber(e.target.value))
-                              }
-                              className="w-full max-w-xs rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary)"
-                              placeholder="np. 3"
-                            />
-                          </div>
-                        )}
-                        {editingHabitScheduleType === 'monthly' && (
-                          <div>
-                            <label className="mb-1.5 block text-base text-(--text-muted)">
-                              Ile razy w miesiącu
-                            </label>
-                            <input
-                              type="text"
-                              inputMode="numeric"
-                              value={editingHabitMonthlyTargetRaw}
-                              onChange={(e) =>
-                                setEditingHabitMonthlyTargetRaw(sanitizeGoalNumber(e.target.value))
-                              }
-                              className="w-full max-w-xs rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary)"
-                              placeholder="np. 12"
-                            />
-                          </div>
-                        )}
-                        <div>
-                          <p className="mb-2 text-base font-medium text-(--text-primary)">
-                            Opcje mierzalne
-                          </p>
-                          <p className="mb-3 text-base text-(--text-muted)">
-                            Puste pole = nawyk binarny (klik tak/nie). Wpisz jednostkę lub cel, żeby
-                            logować liczby i pasek postępu.
-                          </p>
-                          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <div>
-                              <label
-                                htmlFor={`edit-habit-unit-${habit.id}`}
-                                className="mb-1.5 block text-base text-(--text-muted)"
-                              >
-                                Jednostka
-                              </label>
-                              <input
-                                id={`edit-habit-unit-${habit.id}`}
-                                value={editingHabitUnit}
-                                onChange={(e) => setEditingHabitUnit(e.target.value)}
-                                className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
-                                placeholder="np. km, min"
-                              />
-                            </div>
-                            <div>
-                              <label
-                                htmlFor={`edit-habit-target-${habit.id}`}
-                                className="mb-1.5 block text-base text-(--text-muted)"
-                              >
-                                Cel dziennie
-                              </label>
-                              <input
-                                id={`edit-habit-target-${habit.id}`}
-                                type="text"
-                                inputMode="decimal"
-                                value={editingHabitTargetRaw}
-                                onChange={(e) =>
-                                  setEditingHabitTargetRaw(sanitizeGoalNumber(e.target.value))
-                                }
-                                className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
-                                placeholder="opcjonalnie"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                        <div>
-                          <p className="mb-2 text-base text-(--text-muted)">Kolor nawyku</p>
-                          <div className="flex flex-wrap gap-2" role="group" aria-label="Kolor nawyku">
-                            {HABIT_ACCENT_PRESETS.map((p) => {
-                              const selected = (editingHabitColor ?? accentHex) === p.hex
-                              return (
-                                <button
-                                  key={p.id}
-                                  type="button"
-                                  title={p.label}
-                                  aria-label={p.label}
-                                  aria-pressed={selected}
-                                  onClick={() => setEditingHabitColor(p.hex)}
-                                  className={`h-7 w-7 shrink-0 rounded-full border-2 transition-transform ${
-                                    selected
-                                      ? 'ring-2 ring-(--text-primary) ring-offset-2 ring-offset-(--bg-card) scale-105'
-                                      : 'border-(--border) hover:scale-105'
-                                  }`}
-                                  style={{ backgroundColor: p.hex }}
-                                />
-                              )
-                            })}
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap gap-2 border-t border-(--border)/60 pt-4">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const name = editingHabitName.trim()
-                              if (!name) return
-                              const unit = editingHabitUnit.trim() || null
-                              const t = parseGoalNumber(editingHabitTargetRaw)
-                              const targetPerDay =
-                                editingHabitTargetRaw.trim() !== '' &&
-                                !Number.isNaN(t) &&
-                                t > 0
-                                  ? t
-                                  : null
-                              updateHabit(habit.id, {
-                                name,
-                                unit,
-                                targetPerDay,
-                                category: editingHabitCategory.trim() || null,
-                                color: editingHabitColor,
-                                ...buildHabitSchedulePayload(
-                                  editingHabitScheduleType,
-                                  editingHabitScheduleDays,
-                                  editingHabitWeeklyTargetRaw,
-                                  editingHabitMonthlyTargetRaw
-                                ),
-                              })
-                              if (editingHabitColor) {
-                                setHabitAccentChoice((prev) => {
-                                  const matched = HABIT_ACCENT_PRESETS.find(
-                                    (p) => p.hex === editingHabitColor
-                                  )
-                                  if (!matched) return prev
-                                  const next = { ...prev, [habit.id]: matched.id }
-                                  writeHabitAccentStorage(next)
-                                  return next
-                                })
-                              }
-                              setEditingHabitId(null)
-                            }}
-                            className="flex items-center gap-2 rounded-lg border px-4 py-2 text-base hover:opacity-90"
-                            style={{
-                              borderColor: hexAlpha(accentHex, 0.45),
-                              backgroundColor: hexAlpha(accentHex, 0.14),
-                              color: accentHex,
-                            }}
-                          >
-                            <Check className="h-4 w-4 shrink-0" />
-                            Zapisz
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setEditingHabitId(null)}
-                            className="flex items-center gap-2 rounded-lg border border-(--border) px-4 py-2 text-base text-(--text-muted) hover:bg-(--bg-card)"
-                          >
-                            <X className="h-4 w-4 shrink-0" />
-                            Anuluj
-                          </button>
-                        </div>
-                      </div>
+                    {isEditing && !isMobile ? (
+                      <HabitEditForm {...habitEditFormProps} />
                     ) : (
                       <div className="flex min-w-0 items-start gap-2">
                         <button
@@ -1732,6 +2244,7 @@ export function Habits() {
                       </span>
                     )}
                   </div>
+                  {isEditing && isMobile && <HabitEditForm {...habitEditFormProps} />}
                   {!isEditing && (
                     <div className="flex items-center gap-1">
                       {isArchived ? (
@@ -1803,9 +2316,9 @@ export function Habits() {
                     </div>
                   )}
                 </div>
-                <div className="border-t border-(--border)/35 pt-4">
-                  <div className="flex items-start gap-4">
-                    <div className="min-w-0 flex-1">
+                <div className="border-t border-(--border)/35 pt-3 sm:pt-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
+                    <div className="min-w-0 w-full flex-1">
                       {measurable && (
                         <p className="mb-1.5 text-base text-(--text-muted)">
                           Ostatnie {SUM_LAST_DAYS} dni
@@ -1818,102 +2331,47 @@ export function Habits() {
                         Kliknij dzień, aby oznaczyć wykonanie
                       </p>
                       <div className={HABIT_GRID_WRAP_CLASS}>
-                        <div className="flex flex-col gap-1.5 py-1 pl-0.5 pr-0.5">
+                        <HabitGridMobileStrip
+                          habit={habit}
+                          dates={gridDates}
+                          letters={gridDayLetters}
+                          accentHex={accentHex}
+                          measurable={measurable}
+                          isArchived={isArchived}
+                          selectedDate={selectedGridDate}
+                          onSelectDate={(date) => setMeasurableEditor({ habitId: habit.id, date })}
+                        />
+                        <div className="hidden flex-col gap-1.5 py-1 sm:flex">
                           <div
-                            className={`flex ${HABIT_GRID_COL_GAP} text-base font-medium leading-none text-(--text-muted)`}
+                            className={`${HABIT_GRID_COLS} text-base font-medium leading-none text-(--text-muted)`}
                           >
                             {visibleLetters.map((letter: string, i: number) => (
                               <span
                                 key={i}
-                                className={`flex ${HABIT_GRID_CELL} shrink-0 items-center justify-center`}
+                                className={`flex ${HABIT_GRID_CELL} items-center justify-center`}
                               >
                                 {letter}
                               </span>
                             ))}
                           </div>
-                          <div className={`flex ${HABIT_GRID_COL_GAP}`} role="group" aria-label="Zaznaczanie dni nawyku">
-                            {visibleDates.map((date: string) => {
-                              const checkIn = checkInForDay(habit, date)
-                              const checked = !!checkIn
-                              const pct =
-                                checkIn?.status === 'done'
-                                  ? dayFillPercent(habit, checkIn.value ?? null)
-                                  : 0
-                              const titleBits = [date]
-                              if (checkIn?.status) titleBits.push(CHECK_IN_STATUS_LABEL[checkIn.status])
-                              if (checkIn && checkIn.value != null && checkIn.value > 0) {
-                                titleBits.push(`${checkIn.value} ${habit.unit ?? ''}`.trim())
-                              } else if (checked) {
-                                titleBits.push('zaznaczone')
-                              }
-                              if (checkIn?.note) titleBits.push(checkIn.note)
-                              return (
-                                <button
-                                  key={date}
-                                  type="button"
-                                  onClick={() => {
-                                    if (!isArchived) setMeasurableEditor({ habitId: habit.id, date })
-                                  }}
-                                  className={`relative ${HABIT_GRID_CELL} shrink-0 overflow-hidden rounded-md border transition-colors ${
-                                    measurable
-                                      ? 'border-(--border) hover:opacity-90'
-                                      : checked
-                                        ? 'border-transparent'
-                                        : 'border-transparent bg-(--border) hover:bg-(--border)/80'
-                                  } ${
-                                    measurableEditor?.habitId === habit.id &&
-                                    measurableEditor?.date === date
-                                      ? 'z-10 ring-2 ring-(--accent-cyan) ring-offset-2 ring-offset-(--bg-card)'
-                                      : ''
-                                  }`}
-                                  title={titleBits.join(' — ')}
-                                >
-                                  {measurable ? (
-                                    <>
-                                      <span className="absolute inset-0 bg-(--border)" />
-                                      <span
-                                        className="absolute bottom-0 left-0 right-0"
-                                        style={{
-                                          height: `${pct}%`,
-                                          backgroundColor: hexAlpha(accentHex, 0.92),
-                                        }}
-                                      />
-                                      {checkIn?.status && checkIn.status !== 'done' && (
-                                        <span
-                                          className="absolute right-1 top-1 h-2 w-2 rounded-full"
-                                          style={{
-                                            backgroundColor:
-                                              checkIn.status === 'missed' ? '#f87171' : '#94a3b8',
-                                          }}
-                                        />
-                                      )}
-                                    </>
-                                  ) : (
-                                    <span
-                                      className={`block h-full w-full rounded-sm ${
-                                        checked ? '' : 'bg-(--border) hover:bg-(--border)/80'
-                                      }`}
-                                      style={
-                                        checked
-                                          ? {
-                                              backgroundColor:
-                                                checkIn?.status === 'missed'
-                                                  ? '#f87171'
-                                                  : checkIn?.status === 'skipped'
-                                                    ? '#94a3b8'
-                                                    : accentHex,
-                                            }
-                                          : undefined
-                                      }
-                                    />
-                                  )}
-                                </button>
-                              )
-                            })}
+                          <div className={HABIT_GRID_COLS} role="group" aria-label="Zaznaczanie dni nawyku">
+                            {visibleDates.map((date: string) => (
+                              <HabitDayCell
+                                key={date}
+                                habit={habit}
+                                date={date}
+                                accentHex={accentHex}
+                                measurable={measurable}
+                                isArchived={isArchived}
+                                isSelected={selectedGridDate === date}
+                                cellClassName={HABIT_GRID_CELL}
+                                onSelect={(d) => setMeasurableEditor({ habitId: habit.id, date: d })}
+                              />
+                            ))}
                           </div>
                         </div>
                         {maxStart > 0 && (
-                          <div className="mt-2 flex flex-col gap-1">
+                          <div className="mt-2 hidden flex-col gap-1 sm:flex">
                             <label
                               htmlFor={`habit-history-${habit.id}`}
                               className="sr-only"
@@ -1938,15 +2396,18 @@ export function Habits() {
                           </div>
                         )}
                         {visibleDates.length > 0 && (
-                          <p className="mt-1.5 text-xs text-(--text-muted)" aria-live="polite">
+                          <p
+                            className="mt-1.5 hidden text-xs text-(--text-muted) sm:block"
+                            aria-live="polite"
+                          >
                             {formatVisibleDateRange(visibleDates)}
                           </p>
                         )}
                       </div>
                     </div>
                     {stats30 && !isEditing && (
-                      <div className="shrink-0 space-y-1 pt-0.5 text-right">
-                        <p className="text-xs text-(--text-muted)">30 dni</p>
+                      <div className="flex shrink-0 items-center gap-4 rounded-lg border border-(--border)/35 bg-(--bg-dark)/10 px-3 py-2 sm:block sm:space-y-1 sm:border-0 sm:bg-transparent sm:p-0 sm:text-right sm:pt-0.5">
+                        <p className="text-xs text-(--text-muted) sm:mb-0">30 dni</p>
                         <p
                           className="text-lg font-semibold tabular-nums"
                           style={{ color: accentHex }}
@@ -2419,20 +2880,13 @@ export function Habits() {
           >
           <AnimatePresence>
             {showHabitForm ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: reduceMotion ? 0.12 : 0.2 }}
-              >
-                <HabitCreateForm
-                  onAdd={(name, extras) => {
-                    addHabit(name, extras)
-                    setShowHabitForm(false)
-                  }}
-                  onCancel={() => setShowHabitForm(false)}
-                />
-              </motion.div>
+              <HabitCreateForm
+                onAdd={(name, extras) => {
+                  addHabit(name, extras)
+                  setShowHabitForm(false)
+                }}
+                onCancel={() => setShowHabitForm(false)}
+              />
             ) : (
               <button
                 onClick={() => setShowHabitForm(true)}
@@ -2449,17 +2903,17 @@ export function Habits() {
       </Card>
 
       {/* Cele */}
-      <Card title="Cele" className="border-(--accent-cyan)/20">
+      <Card title="Cele" className="border-(--accent-cyan)/20 max-md:p-4">
         <div className="space-y-4">
           {/* Filter tabs */}
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() => setShowCompletedGoals(false)}
-              className={`rounded-lg border px-3 py-2 text-base ${
+              className={`rounded-lg border px-3 py-2 text-base transition-colors ${
                 !showCompletedGoals
-                  ? 'border-(--accent-cyan)/50 bg-(--accent-cyan)/15 text-(--accent-cyan)'
-                  : 'border-(--border) text-(--text-muted) hover:bg-(--bg-card)'
+                  ? 'border-(--border) bg-(--bg-dark) font-gaming tracking-wide text-(--text-primary)'
+                  : 'border-transparent text-(--text-muted) hover:bg-(--bg-card-hover)/60 hover:text-(--text-primary)'
               }`}
             >
               Aktywne ({activeGoals.length})
@@ -2467,10 +2921,10 @@ export function Habits() {
             <button
               type="button"
               onClick={() => setShowCompletedGoals(true)}
-              className={`rounded-lg border px-3 py-2 text-base ${
+              className={`rounded-lg border px-3 py-2 text-base transition-colors ${
                 showCompletedGoals
-                  ? 'border-(--accent-green)/50 bg-(--accent-green)/15 text-(--accent-green)'
-                  : 'border-(--border) text-(--text-muted) hover:bg-(--bg-card)'
+                  ? 'border-(--border) bg-(--bg-dark) font-gaming tracking-wide text-(--text-primary)'
+                  : 'border-transparent text-(--text-muted) hover:bg-(--bg-card-hover)/60 hover:text-(--text-primary)'
               }`}
             >
               Ukończone ({completedGoals.length})
@@ -2679,224 +3133,103 @@ export function Habits() {
             </p>
           )}
 
-          {!showCompletedGoals && <AnimatePresence>
-            {showGoalForm ? (
-              <motion.form
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: reduceMotion ? 0.12 : 0.2 }}
-                onSubmit={(e) => {
-                  e.preventDefault()
-                  handleAddGoal()
-                }}
-                className="space-y-3 p-3 rounded-lg bg-(--bg-dark) border border-(--border)"
-              >
-                <div>
-                  <label className="block text-base text-(--text-muted) font-gaming mb-1">Nazwa celu</label>
-                  <input
-                    value={newGoal.name}
-                    onChange={(e) => setNewGoal((g) => ({ ...g, name: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-lg bg-(--bg-card) border border-(--border) text-(--text-primary) text-base"
-                    required
+          {!showCompletedGoals && (
+            <div
+              className={
+                activeGoals.length > 0
+                  ? 'mt-10 border-t border-(--border)/40 pt-8'
+                  : 'mt-2'
+              }
+            >
+              <AnimatePresence>
+                {showGoalForm ? (
+                  <GoalCreateForm
+                    onAdd={(data) => {
+                      addGoal(data)
+                      setShowGoalForm(false)
+                    }}
+                    onCancel={() => setShowGoalForm(false)}
                   />
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <div>
-                    <label className="block text-base text-(--text-muted) font-gaming mb-1">Obecnie</label>
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      value={newGoal.current}
-                      onChange={(e) => setNewGoal((g) => ({ ...g, current: sanitizeGoalNumber(e.target.value) }))}
-                      className="w-full px-4 py-2.5 rounded-lg bg-(--bg-card) border border-(--border) text-(--text-primary) text-base"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-base text-(--text-muted) font-gaming mb-1">Cel</label>
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      value={newGoal.target}
-                      onChange={(e) => setNewGoal((g) => ({ ...g, target: sanitizeGoalNumber(e.target.value) }))}
-                      className="w-full px-4 py-2.5 rounded-lg bg-(--bg-card) border border-(--border) text-(--text-primary) text-base"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-base text-(--text-muted) font-gaming mb-1">Jednostka</label>
-                    <input
-                      value={newGoal.unit}
-                      onChange={(e) => setNewGoal((g) => ({ ...g, unit: e.target.value }))}
-                      className="w-full px-4 py-2.5 rounded-lg bg-(--bg-card) border border-(--border) text-(--text-primary) text-base"
-                    />
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="submit"
-                    className="px-4 py-2 rounded-lg bg-(--accent-cyan)/15 text-(--accent-cyan) border border-(--accent-cyan)/40 font-gaming hover:bg-(--accent-cyan)/25 hover:border-(--accent-cyan)/50 transition-colors"
-                  >
-                    Dodaj
-                  </button>
+                ) : (
                   <button
                     type="button"
-                    onClick={() => setShowGoalForm(false)}
-                    className="px-4 py-2 rounded-lg border border-(--border) text-(--text-muted) font-gaming hover:bg-(--bg-card-hover) hover:text-(--text-primary) hover:border-(--border) transition-colors"
+                    onClick={() => setShowGoalForm(true)}
+                    className="flex items-center gap-2 rounded-lg border border-(--accent-cyan)/40 bg-(--accent-cyan)/15 px-4 py-2 font-gaming text-(--accent-cyan) transition-colors hover:bg-(--accent-cyan)/25"
                   >
-                    Anuluj
+                    <Plus className="h-4 w-4" />
+                    Dodaj cel
                   </button>
-                </div>
-              </motion.form>
-            ) : (
-              <button
-                onClick={() => setShowGoalForm(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-(--accent-cyan)/15 text-(--accent-cyan) border border-(--accent-cyan)/40 font-gaming hover:bg-(--accent-cyan)/25 transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                Dodaj cel
-              </button>
-            )}
-          </AnimatePresence>}
+                )}
+              </AnimatePresence>
+            </div>
+          )}
         </div>
       </Card>
 
-      {createPortal(
-        <AnimatePresence>
-          {habitPendingDelete && (
-            <>
-              <motion.div
-                key="habit-delete-backdrop"
-                {...backdrop}
-                className="fixed inset-0 z-9998 bg-black/60 backdrop-blur-sm"
-                onClick={() => setHabitPendingDelete(null)}
-              />
-              <div className="fixed inset-0 z-9999 flex items-start justify-center overflow-y-auto p-4 pt-24 pointer-events-none">
-                <motion.div
-                  key="habit-delete-panel"
-                  {...panel}
-                  className="pointer-events-auto relative z-10 w-full max-w-md rounded-lg border border-(--border) bg-(--bg-card) p-6 shadow-xl"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <h3 className="mb-2 text-lg font-bold text-(--text-primary) font-gaming">
-                    {habitPendingDelete.permanent ? 'Usunąć na stałe?' : 'Zarchiwizować nawyk?'}
-                  </h3>
-                  <p className="mb-1 text-base text-(--text-muted)">
-                    {habitPendingDelete.permanent
-                      ? 'Ten nawyk i cała jego historia zostaną trwale usunięte. Tej operacji nie można cofnąć.'
-                      : 'Nawyku nie będzie w aktywnej liście, ale historia zostanie w bazie.'}
-                  </p>
-                  <p className="mb-6 text-base font-medium text-(--text-primary)">
-                    „{habitPendingDelete.name}”
-                  </p>
-                  <div className="flex flex-wrap gap-2 justify-end">
-                    <button
-                      type="button"
-                      onClick={() => setHabitPendingDelete(null)}
-                      className="rounded-lg border border-(--border) px-4 py-2 text-base text-(--text-muted) hover:bg-(--bg-card-hover) hover:text-(--text-primary)"
-                    >
-                      Anuluj
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const { id, permanent } = habitPendingDelete
-                        if (permanent) {
-                          deleteHabitPermanently(id)
-                        } else {
-                          removeHabit(id)
-                        }
-                        if (measurableEditor?.habitId === id) setMeasurableEditor(null)
-                        if (editingHabitId === id) setEditingHabitId(null)
-                        if (habitExpandedId === id) setHabitExpandedId(null)
-                        setHabitAccentChoice((prev) => {
-                          if (!(id in prev)) return prev
-                          const next = { ...prev }
-                          delete next[id]
-                          writeHabitAccentStorage(next)
-                          return next
-                        })
-                        setHabitChartPeriod((prev) => {
-                          if (!(id in prev)) return prev
-                          const next = { ...prev }
-                          delete next[id]
-                          return next
-                        })
-                        setHabitCalendarMonth((prev) => {
-                          if (!(id in prev)) return prev
-                          const next = { ...prev }
-                          delete next[id]
-                          return next
-                        })
-                        setHabitPendingDelete(null)
-                      }}
-                      className="rounded-lg border border-red-500/50 bg-red-500/15 px-4 py-2 text-base text-red-400 hover:bg-red-500/25"
-                    >
-                      {habitPendingDelete.permanent ? 'Usuń na stałe' : 'Archiwizuj'}
-                    </button>
-                  </div>
-                </motion.div>
-              </div>
-            </>
-          )}
-        </AnimatePresence>,
-        document.body
-      )}
+      <ConfirmDialog
+        isOpen={habitPendingDelete != null}
+        onClose={() => setHabitPendingDelete(null)}
+        title={habitPendingDelete?.permanent ? 'Usunąć na stałe?' : 'Zarchiwizować nawyk?'}
+        description={
+          habitPendingDelete?.permanent
+            ? 'Ten nawyk i cała jego historia zostaną trwale usunięte. Tej operacji nie można cofnąć.'
+            : 'Nawyku nie będzie w aktywnej liście, ale historia zostanie w bazie.'
+        }
+        emphasis={habitPendingDelete ? `„${habitPendingDelete.name}"` : undefined}
+        variant="danger"
+        confirmLabel={habitPendingDelete?.permanent ? 'Usuń na stałe' : 'Archiwizuj'}
+        onConfirm={() => {
+          if (!habitPendingDelete) return
+          const { id, permanent } = habitPendingDelete
+          if (permanent) {
+            deleteHabitPermanently(id)
+          } else {
+            removeHabit(id)
+          }
+          if (measurableEditor?.habitId === id) setMeasurableEditor(null)
+          if (editingHabitId === id) setEditingHabitId(null)
+          if (habitExpandedId === id) setHabitExpandedId(null)
+          setHabitAccentChoice((prev) => {
+            if (!(id in prev)) return prev
+            const next = { ...prev }
+            delete next[id]
+            writeHabitAccentStorage(next)
+            return next
+          })
+          setHabitChartPeriod((prev) => {
+            if (!(id in prev)) return prev
+            const next = { ...prev }
+            delete next[id]
+            return next
+          })
+          setHabitCalendarMonth((prev) => {
+            if (!(id in prev)) return prev
+            const next = { ...prev }
+            delete next[id]
+            return next
+          })
+          setHabitPendingDelete(null)
+        }}
+      />
 
-      {createPortal(
-        <AnimatePresence>
-          {goalPendingDelete && (
-            <>
-              <motion.div
-                key="goal-delete-backdrop"
-                {...backdrop}
-                className="fixed inset-0 z-9998 bg-black/60 backdrop-blur-sm"
-                onClick={() => setGoalPendingDelete(null)}
-              />
-              <div className="fixed inset-0 z-9999 flex items-start justify-center overflow-y-auto p-4 pt-24 pointer-events-none">
-                <motion.div
-                  key="goal-delete-panel"
-                  {...panel}
-                  className="pointer-events-auto relative z-10 w-full max-w-md rounded-lg border border-(--border) bg-(--bg-card) p-6 shadow-xl"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <h3 className="mb-2 font-gaming text-lg font-bold text-(--text-primary)">
-                    {goalPendingDelete.completed ? 'Usunąć ukończony cel?' : 'Usunąć cel?'}
-                  </h3>
-                  <p className="mb-1 text-base text-(--text-muted)">
-                    {goalPendingDelete.completed
-                      ? 'Ten cel został ukończony. Usunięcie jest nieodwracalne.'
-                      : 'Cel zostanie trwale usunięty z listy. Tej operacji nie można cofnąć.'}
-                  </p>
-                  <p className="mb-6 text-base font-medium text-(--text-primary)">
-                    „{goalPendingDelete.name}"
-                  </p>
-                  <div className="flex flex-wrap justify-end gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setGoalPendingDelete(null)}
-                      className="rounded-lg border border-(--border) px-4 py-2 text-base text-(--text-muted) hover:bg-(--bg-card-hover) hover:text-(--text-primary)"
-                    >
-                      Anuluj
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        removeGoal(goalPendingDelete.id)
-                        setGoalPendingDelete(null)
-                      }}
-                      className="rounded-lg border border-red-500/50 bg-red-500/15 px-4 py-2 text-base text-red-400 hover:bg-red-500/25"
-                    >
-                      Usuń
-                    </button>
-                  </div>
-                </motion.div>
-              </div>
-            </>
-          )}
-        </AnimatePresence>,
-        document.body
-      )}
+      <ConfirmDialog
+        isOpen={goalPendingDelete != null}
+        onClose={() => setGoalPendingDelete(null)}
+        title={goalPendingDelete?.completed ? 'Usunąć ukończony cel?' : 'Usunąć cel?'}
+        description={
+          goalPendingDelete?.completed
+            ? 'Ten cel został ukończony. Usunięcie jest nieodwracalne.'
+            : 'Cel zostanie trwale usunięty z listy. Tej operacji nie można cofnąć.'
+        }
+        emphasis={goalPendingDelete ? `„${goalPendingDelete.name}"` : undefined}
+        variant="danger"
+        confirmLabel="Usuń"
+        onConfirm={() => {
+          if (!goalPendingDelete) return
+          removeGoal(goalPendingDelete.id)
+          setGoalPendingDelete(null)
+        }}
+      />
 
       {goalToast && createPortal(
         <AnimatePresence>

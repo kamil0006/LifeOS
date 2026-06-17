@@ -12,6 +12,8 @@ export interface TodoDueQuickPickProps {
   onChangeQuickDueTime: (v: string) => void
   /** Ukryj tekst o dziedziczeniu z pola treści (np. w modalu edycji). */
   hideInheritHint?: boolean
+  /** Bez własnej ramki — gdy komponent jest w większym panelu (np. Opcje). */
+  embedded?: boolean
 }
 
 function addDaysFromToday(delta: number): string {
@@ -30,6 +32,7 @@ export function TodoDueQuickPick({
   onChangeQuickDueDate,
   onChangeQuickDueTime,
   hideInheritHint,
+  embedded,
 }: TodoDueQuickPickProps) {
   const preset = (fn: () => void) => () => {
     onModeExplicit()
@@ -37,12 +40,18 @@ export function TodoDueQuickPick({
   }
 
   const chip =
-    'rounded-lg border px-3 py-1.5 font-gaming text-sm tracking-wide transition-colors shrink-0'
+    'min-h-11 w-full rounded-lg border px-3 py-2 font-gaming text-sm tracking-wide transition-colors sm:w-auto sm:min-h-0 sm:py-1.5 shrink-0'
 
   return (
-    <div className="space-y-3 rounded-lg border border-(--border)/60 bg-(--bg-card)/20 p-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="w-full text-base text-(--text-muted) sm:w-auto sm:mr-1">Termin:</span>
+    <div
+      className={
+        embedded
+          ? 'space-y-3'
+          : 'space-y-3 rounded-lg border border-(--border)/60 bg-(--bg-card)/20 p-3'
+      }
+    >
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
+        <span className="col-span-2 text-base text-(--text-muted) sm:col-span-1 sm:mr-1 sm:w-auto">Termin:</span>
         <button
           type="button"
           className={`${chip} border-(--border) text-(--text-muted) hover:border-(--border) hover:bg-(--bg-dark) hover:text-(--text-primary)`}
@@ -81,8 +90,8 @@ export function TodoDueQuickPick({
           Za tydzień
         </button>
       </div>
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
-        <label className="flex flex-col gap-1">
+      <div className="grid grid-cols-1 gap-3 sm:flex sm:flex-row sm:flex-wrap sm:items-end">
+        <label className="flex min-w-0 flex-col gap-1 sm:flex-1">
           <span className="text-base text-(--text-muted)">Data</span>
           <input
             type="date"
@@ -91,10 +100,10 @@ export function TodoDueQuickPick({
               onModeExplicit()
               onChangeQuickDueDate(e.target.value)
             }}
-            className="min-h-[44px] rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--border) focus:outline-none focus:ring-1 focus:ring-(--text-primary)/15"
+            className="min-h-11 w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--border) focus:outline-none focus:ring-1 focus:ring-(--text-primary)/15"
           />
         </label>
-        <label className="flex flex-col gap-1">
+        <label className="flex min-w-0 flex-col gap-1 sm:flex-1">
           <span className="text-base text-(--text-muted)">Godzina</span>
           <input
             type="time"
@@ -103,7 +112,7 @@ export function TodoDueQuickPick({
               onModeExplicit()
               onChangeQuickDueTime(e.target.value)
             }}
-            className="min-h-[44px] rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--border) focus:outline-none focus:ring-1 focus:ring-(--text-primary)/15"
+            className="min-h-11 w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--border) focus:outline-none focus:ring-1 focus:ring-(--text-primary)/15"
           />
         </label>
       </div>

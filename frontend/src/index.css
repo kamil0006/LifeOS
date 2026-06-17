@@ -15,19 +15,67 @@
   --tx-income: #28f0b0;
   --tx-expense: #ff4ede;
   --text-primary: #e8e8f5;
-  --text-muted: #6b6b8a;
+  --text-muted: #9494b0;
   --glow-cyan: rgba(0, 229, 255, 0.25);
   --glow-magenta: rgba(255, 0, 212, 0.2);
   --glow-green: rgba(0, 255, 157, 0.2);
   --glow-amber: rgba(255, 184, 0, 0.2);
+
+  /* Mobilny nagłówek — burger, logo, wyszukiwarka */
+  --mobile-header-pad-top: max(0.75rem, env(safe-area-inset-top, 0px));
+  --mobile-header-pad-x: max(0.75rem, env(safe-area-inset-left, 0px));
+  --mobile-header-pad-right: max(0.75rem, env(safe-area-inset-right, 0px));
+  --mobile-header-pad-bottom: 0.625rem;
+  --mobile-header-content: 2.75rem;
+  --mobile-header-height: calc(
+    var(--mobile-header-pad-top) + var(--mobile-header-content) + var(--mobile-header-pad-bottom)
+  );
+}
+
+html {
+  overflow-x: hidden;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
+  overflow-x: hidden;
   background: var(--bg-dark);
   color: var(--text-primary);
   font-family: 'Inter', system-ui, sans-serif;
+}
+
+.chart-shell,
+.chart-shell *:focus,
+.chart-shell *:focus-visible,
+.chart-shell .recharts-surface {
+  outline: none !important;
+}
+.app-shell {
+  height: 100svh;
+  max-height: 100svh;
+}
+
+@media (min-width: 1024px) {
+  .app-shell {
+    height: 100dvh;
+    max-height: 100dvh;
+  }
+}
+
+/* Wysokość mobilnego nagłówka (burger + logo + szukaj) — spacer w Layout */
+.mobile-header-bar {
+  box-sizing: border-box;
+  min-height: var(--mobile-header-height);
+  padding-top: var(--mobile-header-pad-top);
+  padding-bottom: var(--mobile-header-pad-bottom);
+  padding-left: var(--mobile-header-pad-x);
+  padding-right: var(--mobile-header-pad-right);
+}
+
+.mobile-header-spacer {
+  flex-shrink: 0;
+  height: var(--mobile-header-height);
 }
 
 /* Orbitron dla nagłówków i wyróżnień */
@@ -89,10 +137,13 @@ a:focus, button:focus, [role="button"]:focus {
   outline: none;
 }
 
-/* Pasek przewijania – cyberpunk/neon */
+/* Pasek przewijania – cyberpunk/neon (tylko pionowy, w panelach z .scrollbar-theme) */
 ::-webkit-scrollbar {
   width: 8px;
-  height: 8px;
+  height: 0;
+}
+::-webkit-scrollbar:horizontal {
+  display: none;
 }
 ::-webkit-scrollbar-track {
   background: var(--bg-dark);

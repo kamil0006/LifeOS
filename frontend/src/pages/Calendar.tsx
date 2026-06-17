@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowRight, CalendarDays, CalendarRange, CheckSquare2, ChevronDown, ChevronLeft, ChevronRight, Plus, Square } from 'lucide-react'
+import { CalendarDays, CalendarRange, CheckSquare2, ChevronDown, ChevronLeft, ChevronRight, Plus, Square } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Card } from '../components/Card'
 import { EventModal } from '../components/EventModal'
@@ -9,6 +9,7 @@ import { getPolishHolidays } from '../lib/polishHolidays'
 import { getCategoryColor } from '../lib/eventCategories'
 import { SimplePageSkeleton } from '../components/skeletons'
 import { useTodos } from '../context/TodosContext'
+import { useIsMobile } from '../hooks/useIsMobile'
 import { TODO_CATEGORY_LABEL, TODO_PRIORITY_LABEL, formatTodoDueSummary, localISODate, type TodoItem } from '../lib/todoDomain'
 
 const monthNames = ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień']
@@ -32,6 +33,7 @@ export function Calendar() {
     loading,
   } = useEvents()
   const { todos, toggleTodo, updateTodo } = useTodos()
+  const isMobile = useIsMobile()
   const [viewDate, setViewDate] = useState(() => new Date())
   const [modalOpen, setModalOpen] = useState(false)
   const [editingEvent, setEditingEvent] = useState<DemoEvent | null>(null)
@@ -333,22 +335,23 @@ export function Calendar() {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="flex flex-wrap items-end justify-between gap-4"
+        className="flex items-end justify-between gap-3"
       >
-        <div>
-          <h1 className="text-3xl font-bold text-(--text-primary) font-gaming tracking-wider">
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold text-(--text-primary) font-gaming tracking-wider">
             KALENDARZ
           </h1>
-          <p className="text-base text-(--text-muted) mt-1 font-gaming tracking-wide">
+          <p className="text-sm sm:text-base text-(--text-muted) mt-1 font-gaming tracking-wide">
             Twoje wydarzenia — lista aktualizuje się od razu po zapisie.
           </p>
         </div>
         <button
           onClick={() => openAddModal()}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-(--accent-cyan) text-(--bg-dark) font-gaming hover:opacity-90 transition-opacity"
+          className="flex shrink-0 items-center gap-2 px-3 sm:px-4 py-2 rounded-lg bg-(--accent-cyan) text-(--bg-dark) font-gaming hover:opacity-90 transition-opacity"
         >
           <Plus className="w-4 h-4" />
-          Dodaj wydarzenie
+          <span className="hidden sm:inline">Dodaj wydarzenie</span>
+          <span className="sm:hidden">Dodaj</span>
         </button>
       </motion.div>
 
@@ -372,9 +375,9 @@ export function Calendar() {
         openCategoryManager={openCategoryManagerOnOpen}
       />
 
-      <Card className="overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-          <div className="flex items-center gap-2">
+      <Card className="overflow-hidden max-md:p-4">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-3 sm:gap-4 mb-6">
+          <div className="flex items-center justify-between sm:justify-start gap-2">
             <button
               onClick={viewMode === 'month' ? prevMonth : prevWeek}
               className="p-2 rounded-lg hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-(--accent-cyan) transition-colors"
@@ -382,7 +385,7 @@ export function Calendar() {
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <h2 className="text-xl font-bold text-(--text-primary) font-gaming min-w-[200px] text-center">
+            <h2 className="text-base sm:text-xl font-bold text-(--text-primary) font-gaming flex-1 sm:flex-none sm:min-w-[200px] text-center">
               {viewMode === 'month'
                 ? `${monthNames[month]} ${year}`
                 : weekDays[0]
@@ -396,15 +399,15 @@ export function Calendar() {
             >
               <ChevronRight className="w-5 h-5" />
             </button>
-            <span className="px-3 py-1.5 rounded-lg border border-(--border) text-sm text-(--text-muted)">
+            <span className="hidden md:inline-flex px-3 py-1.5 rounded-lg border border-(--border) text-sm text-(--text-muted)">
               Dziś: {todayLabel}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex rounded-lg border border-(--border) p-0.5">
+            <div className="flex w-full sm:w-auto rounded-lg border border-(--border) p-0.5">
               <button
                 onClick={switchToMonthView}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-gaming transition-colors ${
+                className={`flex flex-1 sm:flex-none items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-gaming transition-colors ${
                   viewMode === 'month' ? 'bg-(--accent-cyan) text-(--bg-dark)' : 'text-(--text-muted) hover:text-(--text-primary)'
                 }`}
               >
@@ -413,7 +416,7 @@ export function Calendar() {
               </button>
               <button
                 onClick={switchToWeekView}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-gaming transition-colors ${
+                className={`flex flex-1 sm:flex-none items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-gaming transition-colors ${
                   viewMode === 'week' ? 'bg-(--accent-cyan) text-(--bg-dark)' : 'text-(--text-muted) hover:text-(--text-primary)'
                 }`}
               >
@@ -426,7 +429,7 @@ export function Calendar() {
 
         {selectedDayKey && (selectedDayEvents.length > 0 || selectedDayTodos.length > 0) && (
           <div className="mb-3 rounded-lg border border-(--border) bg-(--bg-dark) p-3">
-            <div className="flex items-center justify-between gap-3 mb-2">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
               <div>
                 <h3 className="text-lg font-gaming text-(--text-primary)">{selectedDayHeader?.fullDate}</h3>
                 <p className="text-base text-(--text-muted)">{selectedDayHeader?.weekday}</p>
@@ -461,7 +464,7 @@ export function Calendar() {
                           todo.done ? 'opacity-60' : ''
                         }`}
                       >
-                        <div className="flex items-center justify-between gap-2">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
                           <div className="flex items-center gap-1.5">
                             <span className="inline-flex items-center gap-1 rounded-full border border-[#6b7280]/50 bg-(--bg-card-hover) px-2 py-0.5 text-xs text-(--text-primary)">
                               {todo.done ? <CheckSquare2 className="w-3 h-3" /> : <Square className="w-3 h-3" />}
@@ -496,10 +499,10 @@ export function Calendar() {
                             </button>
                             <button
                               onClick={() => navigate('/todo')}
-                              className="p-1 rounded hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-(--text-primary)"
-                              title="Przejdź do To-Do"
+                              className="px-2 py-0.5 rounded text-xs border border-(--border) text-(--text-muted) hover:text-(--text-primary)"
+                              title="Przejdź do To-do"
                             >
-                              <ArrowRight className="w-4 h-4" />
+                              To-do
                             </button>
                           </div>
                         </div>
@@ -541,7 +544,81 @@ export function Calendar() {
           </div>
         )}
 
-        {viewMode === 'week' ? (
+        {viewMode === 'week' && isMobile ? (
+          <div className="space-y-2">
+            {weekDays.map(({ date, key }) => {
+              const dayEvents = eventsByDate[key] ?? []
+              const dayTodos = showTodos ? (todosByDate[key] ?? []) : []
+              const holiday = holidays[key]
+              const today = isToday(date)
+              const weekdayLabel = new Intl.DateTimeFormat('pl-PL', { weekday: 'long' }).format(date)
+              const items = [
+                ...dayEvents.map((ev) => ({ kind: 'event' as const, ev })),
+                ...dayTodos.map((todo) => ({ kind: 'todo' as const, todo })),
+              ]
+
+              return (
+                <div
+                  key={key}
+                  className={`rounded-lg border p-3 ${
+                    today ? 'border-(--accent-cyan)/50 bg-(--accent-cyan)/5' : 'border-(--border) bg-(--bg-card)'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="flex items-baseline gap-2">
+                      <span className={`text-lg font-gaming font-bold ${today ? 'text-(--accent-cyan)' : 'text-(--text-primary)'}`}>
+                        {date.getDate()}
+                      </span>
+                      <span className="text-sm text-(--text-muted) capitalize">{weekdayLabel}</span>
+                    </div>
+                    <button
+                      onClick={() => openAddModal(key)}
+                      className="shrink-0 p-1.5 rounded-lg border border-(--border) text-(--text-muted) hover:text-(--accent-cyan) active:bg-(--bg-card-hover)"
+                      aria-label="Dodaj w tym dniu"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                  {holiday && (
+                    <p className="text-xs font-mono mb-2" style={{ color: '#e57373' }}>{holiday}</p>
+                  )}
+                  {items.length === 0 ? (
+                    <p className="text-sm text-(--text-muted)">Brak wpisów</p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {items.map((item) =>
+                        item.kind === 'event' ? (
+                          <button
+                            key={item.ev.id}
+                            onClick={() => openEditModal(item.ev)}
+                            className="w-full text-left text-sm px-2.5 py-2 rounded border-l-2 active:opacity-80"
+                            style={{ borderLeftColor: getEventCardColor(item.ev), backgroundColor: `${getEventCardColor(item.ev)}20` }}
+                          >
+                            <span className="inline-flex items-center gap-1.5">
+                              <CalendarDays className="w-3.5 h-3.5 shrink-0 text-(--text-muted)" />
+                              <span className="text-(--text-primary)">{item.ev.time ? `${item.ev.time} · ` : ''}{item.ev.title}</span>
+                            </span>
+                          </button>
+                        ) : (
+                          <div
+                            key={item.todo.id}
+                            className={`text-sm px-2.5 py-2 rounded border-l-2 ${item.todo.done ? 'opacity-60 line-through' : ''}`}
+                            style={{ borderLeftColor: getTodoPriorityAccent(item.todo.priority), backgroundColor: '#6b728014' }}
+                          >
+                            <span className="inline-flex items-center gap-1.5">
+                              {item.todo.done ? <CheckSquare2 className="w-3.5 h-3.5 shrink-0" /> : <Square className="w-3.5 h-3.5 shrink-0" />}
+                              <span className="text-(--text-primary)">{item.todo.dueTime ? `${item.todo.dueTime} · ` : ''}{item.todo.text}</span>
+                            </span>
+                          </div>
+                        )
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        ) : viewMode === 'week' ? (
           <div className="grid grid-cols-7 gap-px bg-(--border) rounded-lg overflow-hidden">
             {dayNames.map((name) => (
               <div
@@ -632,7 +709,7 @@ export function Calendar() {
           {dayNames.map((name) => (
             <div
               key={name}
-              className="bg-(--bg-card) p-2 text-center text-base font-gaming text-(--text-muted) uppercase"
+              className="bg-(--bg-card) p-1 sm:p-2 text-center text-xs sm:text-base font-gaming text-(--text-muted) uppercase"
             >
               {name}
             </div>
@@ -648,6 +725,40 @@ export function Calendar() {
             const hiddenCount = dayEvents.length + dayTodos.length - previewItems.length
             const holiday = holidays[key]
             const today = isToday(date)
+
+            const dotItems = [
+              ...dayEvents.map((ev) => ({ id: ev.id, color: getEventCardColor(ev) })),
+              ...dayTodos.map((todo) => ({ id: todo.id, color: getTodoPriorityAccent(todo.priority) })),
+            ].slice(0, 4)
+            const totalCount = dayEvents.length + dayTodos.length
+
+            if (isMobile) {
+              return (
+                <div
+                  key={key}
+                  className={`relative aspect-square p-1 bg-(--bg-card) flex flex-col items-center ${
+                    !isCurrentMonth ? 'opacity-40' : 'active:bg-(--bg-card-hover)'
+                  } ${holiday ? 'ring-1 ring-inset ring-[#e57373]/40' : ''}`}
+                  onClick={() => handleDayClick(key, dayEvents, dayTodos, isCurrentMonth)}
+                >
+                  <span
+                    className={`text-sm font-gaming w-7 h-7 flex items-center justify-center rounded-full ${
+                      today ? 'bg-(--accent-cyan) text-(--bg-dark) font-bold' : 'text-(--text-primary)'
+                    }`}
+                  >
+                    {day}
+                  </span>
+                  <div className="mt-auto mb-0.5 flex flex-wrap items-center justify-center gap-0.5 max-w-full">
+                    {dotItems.map((d) => (
+                      <span key={d.id} className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: d.color }} />
+                    ))}
+                    {totalCount > 4 && (
+                      <span className="text-xs leading-none text-(--text-muted)">+{totalCount - 4}</span>
+                    )}
+                  </div>
+                </div>
+              )
+            }
 
             return (
               <div
@@ -726,12 +837,13 @@ export function Calendar() {
         )}
 
         {/* Legenda + filtry */}
-        <div className="mt-6 pt-4 border-t border-(--border) space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-base text-(--text-muted) font-gaming uppercase">Widoczność:</span>
+        <div className="mt-8 pt-6 border-t border-(--border) space-y-5">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-3">
+            <span className="text-sm sm:text-base text-(--text-muted) font-gaming uppercase shrink-0">Widoczność:</span>
+            <div className="flex flex-wrap gap-2 sm:gap-2.5">
             <button
               onClick={() => setShowEvents((v) => !v)}
-              className={`inline-flex items-center px-2.5 py-1 rounded-md border text-sm transition-colors ${
+              className={`inline-flex items-center px-3 py-2 sm:px-2.5 sm:py-1 rounded-md border text-sm transition-colors ${
                 showEvents
                   ? 'border-(--accent-cyan)/50 text-(--accent-cyan) hover:bg-(--bg-card-hover)'
                   : 'border-(--border) text-(--text-muted) hover:text-(--accent-cyan) hover:border-(--accent-cyan)/50 hover:bg-(--bg-card-hover)'
@@ -741,7 +853,7 @@ export function Calendar() {
             </button>
             <button
               onClick={() => setShowTodos((v) => !v)}
-              className={`inline-flex items-center px-2.5 py-1 rounded-md border text-sm transition-colors ${
+              className={`inline-flex items-center px-3 py-2 sm:px-2.5 sm:py-1 rounded-md border text-sm transition-colors ${
                 showTodos
                   ? 'border-(--accent-cyan)/50 text-(--accent-cyan) hover:bg-(--bg-card-hover)'
                   : 'border-(--border) text-(--text-muted) hover:text-(--accent-cyan) hover:border-(--accent-cyan)/50 hover:bg-(--bg-card-hover)'
@@ -749,12 +861,14 @@ export function Calendar() {
             >
               {showTodos ? 'Ukryj zadania' : 'Pokaż zadania'}
             </button>
+            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-base text-(--text-muted) font-gaming uppercase">Kategorie:</span>
+          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-3">
+            <span className="text-sm sm:text-base text-(--text-muted) font-gaming uppercase shrink-0">Kategorie:</span>
+            <div className="flex flex-wrap gap-2 sm:gap-2.5">
             <button
               onClick={openCategoryManagerModal}
-              className="inline-flex items-center px-2.5 py-1 rounded-md border border-(--border) text-sm text-(--text-muted) hover:text-(--accent-cyan) hover:border-(--accent-cyan)/50 hover:bg-(--bg-card-hover) transition-colors"
+              className="inline-flex items-center px-3 py-2 sm:px-2.5 sm:py-1 rounded-md border border-(--border) text-sm text-(--text-muted) hover:text-(--accent-cyan) hover:border-(--accent-cyan)/50 hover:bg-(--bg-card-hover) transition-colors"
             >
               Zarządzaj
             </button>
@@ -762,7 +876,7 @@ export function Calendar() {
               <span key={id} className="flex items-center gap-1 text-sm">
                 <button
                   onClick={() => toggleCategoryVisibility(id)}
-                  className={`flex items-center gap-1.5 px-2 py-1 rounded border ${
+                  className={`flex items-center gap-1.5 px-3 py-2 sm:px-2 sm:py-1 rounded border ${
                     isVisible ? 'border-(--accent-cyan)' : 'border-(--border) opacity-50'
                   } hover:bg-(--bg-card-hover) transition-colors`}
                   title={isVisible ? 'Ukryj kategorię' : 'Pokaż kategorię'}
@@ -772,79 +886,92 @@ export function Calendar() {
                 </button>
               </span>
             ))}
-            <span className="flex items-center gap-1.5 px-2 py-1 rounded border border-(--border) text-(--text-muted) text-sm">
+            <span className="flex items-center gap-1.5 px-3 py-2 sm:px-2 sm:py-1 rounded border border-(--border) text-(--text-muted) text-sm">
               <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: '#6b7280' }} />
               Bez kategorii
             </span>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 pt-1">
             <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: '#e57373' }} />
             <span className="text-sm">Święto państwowe</span>
           </div>
         </div>
 
-        <div className="mt-6 pt-4 border-t border-(--border)">
-          <div className="flex items-center justify-between gap-3 mb-3">
+        <div className="mt-8 pt-6 border-t border-(--border)">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-5">
             <h3 className="text-lg font-gaming text-(--text-primary)">Nadchodzące</h3>
-            <div className="flex items-center gap-1 rounded-md border border-(--border) p-0.5">
+            <div className="-mx-1 flex w-full items-center gap-1.5 overflow-x-auto px-1 pb-1 scrollbar-theme sm:w-auto">
               <button
+                type="button"
                 onClick={() => setFeedFilter('all')}
-                className={`px-2 py-1 text-xs rounded ${feedFilter === 'all' ? 'bg-(--accent-cyan) text-(--bg-dark)' : 'text-(--text-muted)'}`}
+                className={`shrink-0 rounded-lg border px-3 py-2 text-sm transition-colors ${
+                  feedFilter === 'all'
+                    ? 'border-(--border) bg-(--bg-dark) font-gaming tracking-wide text-(--text-primary)'
+                    : 'border-transparent text-(--text-muted) hover:bg-(--bg-card-hover)/60 hover:text-(--text-primary)'
+                }`}
               >
                 Wszystko
               </button>
               <button
+                type="button"
                 onClick={() => setFeedFilter('events')}
-                className={`px-2 py-1 text-xs rounded ${feedFilter === 'events' ? 'bg-(--accent-cyan) text-(--bg-dark)' : 'text-(--text-muted)'}`}
+                className={`shrink-0 rounded-lg border px-3 py-2 text-sm transition-colors ${
+                  feedFilter === 'events'
+                    ? 'border-(--border) bg-(--bg-dark) font-gaming tracking-wide text-(--text-primary)'
+                    : 'border-transparent text-(--text-muted) hover:bg-(--bg-card-hover)/60 hover:text-(--text-primary)'
+                }`}
               >
                 Wydarzenia
               </button>
               <button
+                type="button"
                 onClick={() => setFeedFilter('todos')}
-                className={`px-2 py-1 text-xs rounded ${feedFilter === 'todos' ? 'bg-(--accent-cyan) text-(--bg-dark)' : 'text-(--text-muted)'}`}
+                className={`shrink-0 rounded-lg border px-3 py-2 text-sm transition-colors ${
+                  feedFilter === 'todos'
+                    ? 'border-(--border) bg-(--bg-dark) font-gaming tracking-wide text-(--text-primary)'
+                    : 'border-transparent text-(--text-muted) hover:bg-(--bg-card-hover)/60 hover:text-(--text-primary)'
+                }`}
               >
                 Zadania
               </button>
             </div>
           </div>
-          <div className="space-y-1">
+          <div className="space-y-3">
             {upcomingFeed.length === 0 && (
-              <p className="text-base text-(--text-muted)">Brak nadchodzących wydarzeń.</p>
+              <p className="text-base text-(--text-muted) py-2">Brak nadchodzących wydarzeń.</p>
             )}
             {upcomingFeed.map((item) =>
               item.kind === 'event' ? (
                 <button
                   key={`event-${item.event.id}`}
                   onClick={() => openEditModal(item.event)}
-                  className="group w-full text-left px-3 py-1.5 rounded-lg hover:bg-(--bg-card-hover) border border-transparent hover:border-(--border)"
+                  className="group w-full text-left px-4 py-3.5 rounded-xl border border-(--border)/60 bg-(--bg-dark)/40 hover:bg-(--bg-card-hover) hover:border-(--border) transition-colors"
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <span className="mb-0.5 inline-flex items-center gap-1 rounded-full border border-(--accent-cyan)/40 bg-(--bg-card-hover) px-2 py-0.5 text-xs text-(--text-primary)">
-                        <CalendarDays className="w-3 h-3" />
-                        Wydarzenie
-                      </span>
-                      <br />
-                      <span className="text-base text-(--text-muted)">
-                        {formatHumanDate(item.event.date)}{item.event.time ? ` · ${item.event.time}` : ''} ·{' '}
-                      </span>
-                      <span className="text-base text-(--text-primary)">{item.event.title}</span>
-                      <span className="ml-2 inline-flex items-center gap-1.5 text-sm text-(--text-muted)">
-                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: getEventCardColor(item.event) }} />
-                        {getEventCategoryLabel(item.event)}
-                      </span>
-                    </div>
-                  </div>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-(--accent-cyan)/40 bg-(--bg-card-hover) px-2.5 py-1 text-xs text-(--text-primary)">
+                    <CalendarDays className="w-3.5 h-3.5" />
+                    Wydarzenie
+                  </span>
+                  <p className="mt-2.5 text-sm text-(--text-muted)">
+                    {formatHumanDate(item.event.date)}
+                    {item.event.time ? ` · ${item.event.time}` : ''}
+                  </p>
+                  <p className="mt-1 text-base font-medium text-(--text-primary) leading-snug">{item.event.title}</p>
+                  <p className="mt-2 inline-flex items-center gap-1.5 text-sm text-(--text-muted)">
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: getEventCardColor(item.event) }} />
+                    {getEventCategoryLabel(item.event)}
+                  </p>
                 </button>
               ) : (
                 <div
                   key={`todo-${item.todo.id}`}
-                  className={`group w-full text-left px-3 py-1.5 rounded-lg border border-transparent hover:border-(--border) ${
+                  className={`group w-full text-left max-sm:px-4 max-sm:py-3.5 max-sm:rounded-xl max-sm:border-(--border)/60 max-sm:bg-(--bg-dark)/40 px-3 py-1.5 rounded-lg border border-transparent hover:border-(--border) ${
                     item.todo.done ? 'opacity-60' : ''
                   }`}
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 flex-wrap">
+                  {/* Desktop: meta + akcje w jednym rzędzie, zawsze widoczne */}
+                  <div className="hidden sm:flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-wrap min-w-0">
                       <span className="inline-flex items-center gap-1 rounded-full border border-[#6b7280]/50 bg-(--bg-card-hover) px-2 py-0.5 text-xs text-(--text-primary)">
                         {item.todo.done ? <CheckSquare2 className="w-3 h-3" /> : <Square className="w-3 h-3" />}
                         Zadanie
@@ -860,10 +987,11 @@ export function Calendar() {
                         {TODO_PRIORITY_LABEL[item.todo.priority]}
                       </span>
                     </div>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center gap-1">
                       <button
                         onClick={() => toggleTodo(item.todo.id, !item.todo.done)}
                         className="p-1 rounded hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-(--accent-cyan)"
+                        title={item.todo.done ? 'Oznacz jako niezrobione' : 'Oznacz jako zrobione'}
                       >
                         {item.todo.done ? <CheckSquare2 className="w-4 h-4" /> : <Square className="w-4 h-4" />}
                       </button>
@@ -884,16 +1012,70 @@ export function Calendar() {
                       </button>
                       <button
                         onClick={() => navigate('/todo')}
-                        className="p-1 rounded hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-(--text-primary)"
+                        className="px-2 py-0.5 rounded text-xs border border-(--border) text-(--text-muted) hover:text-(--text-primary)"
+                        title="Przejdź do To-do"
                       >
-                        <ArrowRight className="w-4 h-4" />
+                        To-do
                       </button>
                     </div>
                   </div>
-                  <span className={`inline-flex items-center gap-1.5 text-base ${item.todo.done ? 'line-through text-(--text-muted)' : 'text-(--text-primary)'}`}>
-                    <span className="w-2 h-2 rounded-full bg-[#6b7280]" />
+
+                  {/* Mobile: meta */}
+                  <div className="sm:hidden flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-[#6b7280]/50 bg-(--bg-card-hover) px-2.5 py-1 text-xs text-(--text-primary)">
+                      {item.todo.done ? <CheckSquare2 className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
+                      Zadanie
+                    </span>
+                    <span className="text-sm text-(--text-muted)">
+                      {formatHumanDate(item.todo.dueDate ?? localISODate())}
+                      {item.todo.dueTime ? ` · ${item.todo.dueTime}` : ''}
+                    </span>
+                    <span
+                      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${getTodoPriorityBadgeClass(item.todo.priority)}`}
+                      title={`Priorytet: ${TODO_PRIORITY_LABEL[item.todo.priority]}`}
+                    >
+                      {TODO_PRIORITY_LABEL[item.todo.priority]}
+                    </span>
+                  </div>
+                  <p className={`max-sm:mt-2.5 flex items-start gap-2 text-base leading-snug ${item.todo.done ? 'line-through text-(--text-muted)' : 'text-(--text-primary)'}`}>
+                    <span className="mt-1.5 w-2 h-2 rounded-full shrink-0 bg-[#6b7280]" />
                     {item.todo.text}
-                  </span>
+                  </p>
+                  {/* Mobile: akcje w dwóch rzędach */}
+                  <div className="mt-3 flex flex-col gap-2 sm:hidden">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => toggleTodo(item.todo.id, !item.todo.done)}
+                        className="p-2 rounded-lg border border-(--border) hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-(--accent-cyan) shrink-0"
+                        aria-label={item.todo.done ? 'Oznacz jako niezrobione' : 'Oznacz jako zrobione'}
+                      >
+                        {item.todo.done ? <CheckSquare2 className="w-4 h-4" /> : <Square className="w-4 h-4" />}
+                      </button>
+                      <input
+                        type="date"
+                        value={rescheduleDateByTodoId[item.todo.id] ?? item.todo.dueDate ?? localISODate()}
+                        onChange={(e) =>
+                          setRescheduleDateByTodoId((prev) => ({ ...prev, [item.todo.id]: e.target.value }))
+                        }
+                        className="flex-1 min-w-0 px-2 py-1.5 rounded-lg text-sm border border-(--border) bg-(--bg-card) text-(--text-muted)"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => rescheduleTodoToDate(item.todo)}
+                        className="flex-1 px-3 py-1.5 rounded-lg text-sm border border-(--border) text-(--text-muted) hover:text-(--text-primary) hover:bg-(--bg-card-hover)"
+                        title="Przełóż na wybraną datę"
+                      >
+                        Przełóż
+                      </button>
+                      <button
+                        onClick={() => navigate('/todo')}
+                        className="flex-1 px-3 py-1.5 rounded-lg text-sm border border-(--border) text-(--text-muted) hover:text-(--text-primary) hover:bg-(--bg-card-hover)"
+                      >
+                        To-do
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )
             )}

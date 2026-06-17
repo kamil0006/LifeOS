@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import { Card } from '../../components/Card'
 import { EmptyState } from '../../components/EmptyState'
 import { Tooltip } from '../../components/Tooltip'
 import { RotateCcw, Trash2, Search, Archive, ExternalLink } from 'lucide-react'
@@ -15,9 +14,9 @@ const ARCHIVE_TYPE_LABEL: Record<NoteType, string> = {
 }
 
 const ARCHIVE_TYPE_BADGE: Record<NoteType, string> = {
-  inbox: 'border-sky-400/45 bg-sky-400/10 text-sky-200',
-  idea: 'border-(--accent-amber)/45 bg-(--accent-amber)/12 text-(--accent-amber)',
-  reference: 'border-(--accent-magenta)/45 bg-(--accent-magenta)/12 text-(--accent-magenta)',
+  inbox: 'border-sky-400/30 bg-sky-400/8 text-sky-300',
+  idea: 'border-(--accent-amber)/40 bg-(--accent-amber)/10 text-(--accent-amber)',
+  reference: 'border-(--accent-magenta)/40 bg-(--accent-magenta)/10 text-(--accent-magenta)',
 }
 
 export function NotesArchive() {
@@ -54,116 +53,120 @@ export function NotesArchive() {
     })
   }
 
-  return (
-    <div className="space-y-6">
-      <Card title="Wyszukaj w archiwum">
-        <div className="relative max-w-xl">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--text-muted)" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Szukaj po tytule, treści, tagach…"
-            className="w-full pl-10 pr-4 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
-          />
-        </div>
-      </Card>
+  const notesWord = (n: number) => (n === 1 ? 'pozycja' : n >= 2 && n <= 4 ? 'pozycje' : 'pozycji')
 
-      <Card title="Archiwum">
-        {archived.length === 0 ? (
-          <EmptyState
-            icon={Archive}
-            title={search ? 'Brak wyników' : 'Archiwum jest puste'}
-            description={
-              search
-                ? 'Zmień frazę wyszukiwania.'
-                : 'Zarchiwizowane notatki pojawią się tutaj. Usuń trwale tylko stąd.'
-            }
-          />
-        ) : (
-          <div className="space-y-2">
-            {archived.map((note: Note) => (
-              <div
-                key={note.id}
-                className="rounded-lg border border-(--border) bg-(--bg-dark)/50 px-3.5 py-2.5 hover:border-(--accent-cyan)/25 transition-colors"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2 gap-y-1">
-                      <span
-                        className={`shrink-0 text-xs px-2 py-0.5 rounded-md border font-gaming tracking-wide uppercase ${ARCHIVE_TYPE_BADGE[note.type]}`}
+  return (
+    <div className="space-y-5">
+      <div className="relative max-w-xl">
+        <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-(--text-muted)" aria-hidden />
+        <input
+          type="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Szukaj po tytule, treści, tagach…"
+          className="min-h-11 w-full rounded-lg border border-(--border) bg-(--bg-dark) py-2 pr-4 pl-10 text-base text-(--text-primary) placeholder:text-(--text-muted) focus:border-(--accent-cyan)/50 focus:outline-none"
+        />
+      </div>
+
+      <p className="text-base text-(--text-muted)">
+        <span className="font-gaming text-(--text-primary)">Archiwum</span>
+        {' · '}
+        {archived.length} {notesWord(archived.length)}
+      </p>
+
+      {archived.length === 0 ? (
+        <EmptyState
+          icon={Archive}
+          title={search ? 'Brak wyników' : 'Archiwum jest puste'}
+          description={
+            search
+              ? 'Zmień frazę wyszukiwania.'
+              : 'Zarchiwizowane notatki pojawią się tutaj. Usuń trwale tylko stąd.'
+          }
+          compact
+        />
+      ) : (
+        <div className="space-y-3">
+          {archived.map((note: Note) => (
+            <article
+              key={note.id}
+              className="rounded-lg border border-(--border)/80 bg-(--bg-card)/25 p-4 transition-colors hover:border-(--accent-cyan)/25"
+            >
+              <div className="space-y-2.5">
+                <div className="flex flex-wrap items-start gap-2">
+                  <span
+                    className={`shrink-0 rounded-md border px-2 py-0.5 text-xs ${ARCHIVE_TYPE_BADGE[note.type]}`}
+                  >
+                    {ARCHIVE_TYPE_LABEL[note.type]}
+                  </span>
+                  <h3 className="min-w-0 flex-1 text-base font-semibold leading-snug text-(--text-primary)">
+                    {getNoteDisplayTitle(note)}
+                  </h3>
+                </div>
+                <p className="text-sm leading-relaxed text-(--text-muted) line-clamp-3">
+                  {notePlainExcerpt(note.content)}
+                </p>
+                {note.type === 'reference' && (
+                  <div className="space-y-1 text-sm">
+                    {note.referenceUrl ? (
+                      <a
+                        href={note.referenceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={note.referenceUrl}
+                        className="inline-flex items-center gap-1.5 text-(--accent-cyan) hover:underline"
                       >
-                        {ARCHIVE_TYPE_LABEL[note.type]}
-                      </span>
-                      <p className="font-semibold text-(--text-primary) font-gaming truncate min-w-0 flex-1 basis-[min(100%,12rem)]">
-                        {getNoteDisplayTitle(note)}
+                        <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                        Otwórz link
+                      </a>
+                    ) : null}
+                    {note.referenceSource ? (
+                      <p className="text-(--text-muted)">
+                        <span className="text-(--text-primary)/90">Źródło:</span> {note.referenceSource}
                       </p>
-                    </div>
-                    <p className="text-base text-(--text-muted) mt-1 line-clamp-2">{notePlainExcerpt(note.content)}</p>
-                    {note.type === 'reference' && (
-                      <div className="mt-2 flex flex-col gap-1">
-                        {note.referenceUrl ? (
-                          <a
-                            href={note.referenceUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title={note.referenceUrl}
-                            className="inline-flex items-center gap-1.5 text-sm font-gaming text-(--accent-cyan) hover:underline w-fit"
-                          >
-                            <ExternalLink className="w-4 h-4 shrink-0" />
-                            Otwórz link
-                          </a>
-                        ) : null}
-                        {note.referenceSource ? (
-                          <p className="text-base text-(--text-muted)">
-                            <span className="font-gaming text-(--text-primary)/90">Źródło:</span>{' '}
-                            {note.referenceSource}
-                          </p>
-                        ) : null}
-                      </div>
-                    )}
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {note.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="px-2 py-0.5 rounded text-sm bg-(--bg-card) border border-(--border) text-(--text-muted)"
-                        >
-                          #{tag}
-                        </span>
-                      ))}
-                    </div>
-                    <p className="text-base text-(--text-muted) mt-2">
-                      Zarchiwizowano {note.archivedAt ? formatDate(note.archivedAt) : '—'}
-                    </p>
+                    ) : null}
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
+                )}
+                <div className="flex flex-col gap-2 border-t border-(--border)/50 pt-2.5 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm text-(--text-muted)">
+                    {note.tags.map((tag) => (
+                      <span key={tag} className="rounded border border-(--border)/70 bg-(--bg-dark)/60 px-1.5 py-0.5">
+                        #{tag}
+                      </span>
+                    ))}
+                    <span>
+                      {note.tags.length > 0 ? '· ' : ''}
+                      zarchiwizowano {note.archivedAt ? formatDate(note.archivedAt) : '—'}
+                    </span>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1 self-end sm:self-auto">
                     <Tooltip content="Przywróć">
                       <button
                         type="button"
                         onClick={() => restoreNote(note.id)}
-                        className="p-1.5 rounded-lg text-(--text-muted) hover:text-(--accent-cyan) hover:bg-(--accent-cyan)/10 transition-colors"
+                        className="rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-(--bg-dark) hover:text-(--accent-cyan)"
                         aria-label="Przywróć"
                       >
-                        <RotateCcw className="w-4 h-4" />
+                        <RotateCcw className="h-4 w-4" />
                       </button>
                     </Tooltip>
                     <Tooltip content="Usuń trwale">
                       <button
                         type="button"
                         onClick={() => setNotePendingPermanentDelete(note)}
-                        className="p-1.5 rounded-lg text-(--text-muted) hover:text-[#e74c3c] hover:bg-[#e74c3c]/10 transition-colors"
+                        className="rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-(--bg-dark) hover:text-[#e74c3c]"
                         aria-label="Usuń trwale"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </Tooltip>
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-      </Card>
+            </article>
+          ))}
+        </div>
+      )}
 
       <ConfirmDialog
         isOpen={!!notePendingPermanentDelete}
@@ -173,7 +176,8 @@ export function NotesArchive() {
           notePendingPermanentDelete ? getNoteDisplayTitle(notePendingPermanentDelete) : undefined
         }
         confirmLabel="Usuń na stałe"
-        onCancel={() => setNotePendingPermanentDelete(null)}
+        variant="danger"
+        onClose={() => setNotePendingPermanentDelete(null)}
         onConfirm={() => {
           if (notePendingPermanentDelete) {
             deleteNotePermanently(notePendingPermanentDelete.id)

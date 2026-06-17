@@ -16,7 +16,7 @@ Repozytorium jest **aktywnie rozwijane** (około wersji **0.1**). Interfejs jest
 
 | Obszar | Gdzie leżą dane (tryb bez demo, zalogowany użytkownik) |
 |--------|---------------------------------------------------------|
-| **Logowanie**, **finanse** (wydatki, przychody, kategorie, cykliczne / zaplanowane), **zachcianki**, **to-do**, **wydarzenia w kalendarzu**, **nawyki**, **cele** | **PostgreSQL** przez API Express |
+| **Logowanie**, **finanse** (wydatki, przychody, kategorie, cykliczne / zaplanowane), **to-do**, **wydarzenia w kalendarzu**, **nawyki**, **cele** | **PostgreSQL** przez API Express |
 | **Notatki** (inbox, pomysły, referencje, archiwum) | Wyłącznie **`localStorage` w przeglądarce** — na razie bez synchronizacji z bazą przez REST |
 | **Nauka** (sesje, kursy, książki, projekty, certyfikaty, timer/Pomodoro itd.) | Też **`localStorage`** — to samo ograniczenie |
 
@@ -25,7 +25,7 @@ Repozytorium jest **aktywnie rozwijane** (około wersji **0.1**). Interfejs jest
 ### Główne widoki (routing)
 
 - **Dashboard** — podsumowanie i skróty  
-- **Finanse** — przegląd, transakcje, cykliczne, zachcianki, wartość netto, analityka (stare ścieżki `/expenses` / `/income` przekierowują do finansów)  
+- **Finanse** — przegląd, transakcje, cykliczne, wartość netto, analityka (stare ścieżki `/expenses` / `/income` przekierowują do finansów)  
 - **To-do** — zakładki (dziś / nadchodzące / wszystkie / zrobione), priorytety i obszary, termin i godzina, zwijane opcje, skróty języka naturalnego (`jutro`, `#tag`, `!` / `?` itd.), opcjonalne powiązanie z notatką (`noteId`)  
 - **Kalendarz** — wydarzenia  
 - **Nawyki** — nawyki i **cele** (cele są w tym module; przy pełnym backendzie idą na `/api/goals`)  

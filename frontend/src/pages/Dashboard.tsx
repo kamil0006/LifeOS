@@ -21,7 +21,6 @@ import { useDemoData, DEMO_EXPENSES, DEMO_INCOME, DEMO_SCHEDULED_EXPENSES } from
 import { useMonth } from '../context/MonthContext'
 import { useEvents } from '../context/EventsContext'
 import { useTodos } from '../context/TodosContext'
-import { useWishes } from '../context/WishesContext'
 import { useHabits } from '../context/HabitsContext'
 import { useNotes } from '../context/NotesContext'
 import { MonthSelector } from '../components/MonthSelector'
@@ -34,11 +33,10 @@ import { DashboardSkeleton } from '../components/skeletons'
 import { buildTransactionsDrilldownSearch } from '../lib/buildDrilldownSearch'
 import { DashboardQuickStats } from '../components/dashboard/DashboardQuickStats'
 import { DashboardQuickLinks } from '../components/dashboard/DashboardQuickLinks'
+import { AiWeeklyReport } from '../components/dashboard/AiWeeklyReport'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 const monthNames = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru']
-
-/** Jedna wysokość obszaru wykresu obok siebie (area vs donut). */
-const DASHBOARD_CHART_PX = 280
 
 function DonutTooltip(props: { active?: boolean; payload?: readonly unknown[]; total: number }) {
   const { active, payload, total } = props
@@ -84,13 +82,12 @@ export function Dashboard() {
   } = useFinanceListsQuery()
   const monthCtx = useMonth()
   const { todos, loading: todosLoading } = useTodos()
-  const { wishes, loading: wishesLoading } = useWishes()
   const { habits, goals } = useHabits()
   const notesCtx = useNotes()
+  const isMobile = useIsMobile()
 
   const notesCount = notesCtx?.notes.filter((n) => !n.archivedAt).length ?? 0
   const todoCount = todosLoading ? 0 : todos.filter((t) => !t.done).length
-  const wishesCount = wishesLoading ? 0 : wishes.length
   const selectedMonth = monthCtx?.selectedMonth ?? currentMonth
   const selectedYear = monthCtx?.selectedYear ?? currentYear
   const chartPeriod = useChartPeriod()
@@ -126,8 +123,15 @@ export function Dashboard() {
   }, [habits, todayStr])
 
   const handleCategoryPieClick = (data: unknown) => {
-    const d = data as { kategoria?: string; name?: string; payload?: { kategoria?: string } }
-    const kategoria = d.kategoria ?? d.payload?.kategoria ?? d.name
+    if (!data || typeof data !== 'object') return
+    const d = data as Record<string, unknown>
+    // Recharts v3 spreads original data fields to top level; v2 put them in payload
+    const kategoria =
+      (typeof d.kategoria === 'string' ? d.kategoria : undefined) ??
+      (d.payload && typeof d.payload === 'object' && typeof (d.payload as Record<string, unknown>).kategoria === 'string'
+        ? (d.payload as Record<string, unknown>).kategoria as string
+        : undefined) ??
+      (typeof d.name === 'string' ? d.name : undefined)
     if (!kategoria) return
     const qs = buildTransactionsDrilldownSearch(
       kategoria,
@@ -144,89 +148,92 @@ export function Dashboard() {
 
   return (
     <motion.div
-      className="space-y-10"
+      className="space-y-6 lg:space-y-10"
       variants={dashboardContainerVariants}
       initial="hidden"
       animate="show"
     >
       <motion.div
         variants={getDashboardTileVariants(reduceMotion, 0)}
-        className="flex flex-wrap items-end justify-between gap-4"
+        className="flex flex-wrap items-end justify-between gap-3"
       >
         <div>
-          <h1 className="text-3xl font-bold text-(--text-primary) font-gaming tracking-wider">
+          <h1 className="text-2xl sm:text-3xl font-bold text-(--text-primary) font-gaming tracking-wider">
             DASHBOARD
           </h1>
-          <p className="text-base text-(--text-muted) mt-1 font-gaming tracking-wide">
+          <p className="text-sm sm:text-base text-(--text-muted) mt-1 font-gaming tracking-wide">
             {!useApiFinance ? 'Dane przykładowe' : 'Przegląd Twoich finansów i aktywności'}
           </p>
         </div>
         <MonthSelector />
       </motion.div>
 
-      {/* KPI cards – każdy kafel z innej strony */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* KPI cards – zawsze 3 obok siebie */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
         <motion.div variants={getDashboardTileVariants(reduceMotion, 1)} className="min-w-0">
           <Card
             animateEntrance={false}
-            className="border-(--accent-green)/20 hover:border-(--accent-green)/40 hover:shadow-[0_0_15px_rgba(0,255,157,0.08)]"
+            className="border-(--accent-green)/20 max-md:p-4 hover:border-(--accent-green)/40 hover:shadow-[0_0_15px_rgba(0,255,157,0.08)]"
           >
-            <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">Przychody ({kpiPeriodLabel})</p>
-            <p className="text-2xl font-bold text-(--accent-green) mt-1 font-gaming drop-shadow-[0_0_8px_rgba(0,255,157,0.3)]">
-              {chartFilteredData.incomeTotal.toLocaleString('pl-PL')} zł
+            <p className="truncate text-sm text-(--text-muted) font-gaming">Przychody</p>
+            <p className="truncate text-sm text-(--text-muted) font-gaming">{kpiPeriodLabel}</p>
+            <p className="text-base sm:text-2xl font-bold text-(--accent-green) mt-1 font-gaming drop-shadow-[0_0_8px_rgba(0,255,157,0.3)] break-all leading-tight">
+              {chartFilteredData.incomeTotal.toLocaleString('pl-PL')} <span className="text-xs sm:text-base">zł</span>
             </p>
           </Card>
         </motion.div>
         <motion.div variants={getDashboardTileVariants(reduceMotion, 2)} className="min-w-0">
           <Card
             animateEntrance={false}
-            className="border-(--accent-magenta)/20 hover:border-(--accent-magenta)/40 hover:shadow-[0_0_15px_rgba(255,0,212,0.08)]"
+            className="border-(--accent-magenta)/20 max-md:p-4 hover:border-(--accent-magenta)/40 hover:shadow-[0_0_15px_rgba(255,0,212,0.08)]"
           >
-            <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">Wydatki ({kpiPeriodLabel})</p>
-            <p className="text-2xl font-bold text-(--accent-magenta) mt-1 font-gaming drop-shadow-[0_0_8px_rgba(255,0,212,0.3)]">
-              {chartFilteredData.expensesTotal.toLocaleString('pl-PL')} zł
+            <p className="truncate text-sm text-(--text-muted) font-gaming">Wydatki</p>
+            <p className="truncate text-sm text-(--text-muted) font-gaming">{kpiPeriodLabel}</p>
+            <p className="text-base sm:text-2xl font-bold text-(--accent-magenta) mt-1 font-gaming drop-shadow-[0_0_8px_rgba(255,0,212,0.3)] break-all leading-tight">
+              {chartFilteredData.expensesTotal.toLocaleString('pl-PL')} <span className="text-xs sm:text-base">zł</span>
             </p>
           </Card>
         </motion.div>
         <motion.div variants={getDashboardTileVariants(reduceMotion, 3)} className="min-w-0">
           <Card
             animateEntrance={false}
-            className={
+            className={`max-md:p-4 ${
               chartFilteredData.balance >= 0
                 ? 'border-(--accent-cyan)/20 hover:border-(--accent-cyan)/40'
                 : 'border-[#e74c3c]/30 hover:border-[#e74c3c]/50'
-            }
+            }`}
           >
-            <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">Bilans ({kpiPeriodLabel})</p>
+            <p className="truncate text-sm text-(--text-muted) font-gaming">Bilans</p>
+            <p className="truncate text-sm text-(--text-muted) font-gaming">{kpiPeriodLabel}</p>
             <p
-              className={`text-2xl font-bold mt-1 font-gaming ${
+              className={`text-base sm:text-2xl font-bold mt-1 font-gaming break-all leading-tight ${
                 chartFilteredData.balance >= 0
                   ? 'text-(--accent-cyan) drop-shadow-[0_0_8px_rgba(0,229,255,0.3)]'
                   : 'text-[#e74c3c] drop-shadow-[0_0_8px_rgba(231,76,60,0.3)]'
               }`}
             >
               {chartFilteredData.balance >= 0 ? '+' : ''}
-              {chartFilteredData.balance.toLocaleString('pl-PL')} zł
+              {chartFilteredData.balance.toLocaleString('pl-PL')} <span className="text-xs sm:text-base">zł</span>
             </p>
           </Card>
         </motion.div>
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-stretch">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-stretch">
         <motion.div variants={getDashboardTileVariants(reduceMotion, 4)} className="min-w-0 flex">
           <Card
             animateEntrance={false}
-            className="flex h-full min-h-0 w-full flex-col"
+            className="flex h-full min-h-0 w-full flex-col max-md:p-4"
             title="Wydatki vs Przychody"
             action={chartPeriod ? <ChartPeriodSelector /> : undefined}
           >
           <div className="flex min-h-0 w-full flex-1 flex-col justify-end">
-            <div className="w-full shrink-0" style={{ height: DASHBOARD_CHART_PX }}>
-            <ResponsiveContainer width="100%" height={DASHBOARD_CHART_PX}>
+            <div className="w-full shrink-0 h-[200px] sm:h-[280px] [&_*:focus]:outline-none [&_*:focus-visible]:outline-none">
+            <ResponsiveContainer width="100%" height="100%">
               <AreaChart
                 data={chartData}
-                margin={{ top: 6, right: 8, bottom: 10, left: 4 }}
+                margin={{ top: 6, right: isMobile ? 4 : 8, bottom: 10, left: isMobile ? 0 : 4 }}
               >
                 <defs>
                   <linearGradient id="colorWydatki" x1="0" y1="0" x2="0" y2="1">
@@ -239,8 +246,10 @@ export function Dashboard() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis dataKey="label" stroke="var(--text-muted)" />
-                <YAxis stroke="var(--text-muted)" tickFormatter={(v) => `${v} zł`} />
+                <XAxis dataKey="label" stroke="var(--text-muted)" tick={{ fontSize: isMobile ? 10 : 12 }} />
+                {!isMobile && (
+                  <YAxis stroke="var(--text-muted)" tickFormatter={(v) => `${v} zł`} />
+                )}
                 <Tooltip
                   cursor={false}
                   contentStyle={{
@@ -282,7 +291,7 @@ export function Dashboard() {
         <motion.div variants={getDashboardTileVariants(reduceMotion, 5)} className="min-w-0 flex">
           <Card
             animateEntrance={false}
-            className="flex h-full min-h-0 w-full flex-col"
+            className="flex h-full min-h-0 w-full flex-col max-md:p-4"
             title={`Wydatki po kategoriach (${
             chartPeriod?.period.type === 'quarter'
               ? `Q${chartPeriod.period.quarter} ${chartPeriod.period.year}`
@@ -294,13 +303,15 @@ export function Dashboard() {
           })`}
           action={chartPeriod ? <ChartPeriodSelector /> : undefined}
         >
-          <p className="mb-3 shrink-0 text-sm text-(--text-muted) font-gaming tracking-wide">
-            Kliknij segment kategorii, aby zobaczyć transakcje w tym okresie.
-          </p>
-          <div className="relative w-full shrink-0" style={{ height: DASHBOARD_CHART_PX }}>
+          {!isMobile && (
+            <p className="mb-3 shrink-0 text-sm text-(--text-muted) font-gaming tracking-wide">
+              Kliknij segment kategorii, aby zobaczyć transakcje w tym okresie.
+            </p>
+          )}
+          <div className="relative w-full shrink-0 h-[200px] sm:h-[280px] [&_*:focus]:outline-none [&_*:focus-visible]:outline-none">
             {chartFilteredData.categoryData.length > 0 ? (
               <>
-                <ResponsiveContainer width="100%" height={DASHBOARD_CHART_PX}>
+                <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                   <Pie
                     data={chartFilteredData.categoryData}
@@ -308,13 +319,13 @@ export function Dashboard() {
                     nameKey="kategoria"
                     cx="50%"
                     cy="50%"
-                    innerRadius={72}
-                    outerRadius={95}
+                    innerRadius={isMobile ? 52 : 72}
+                    outerRadius={isMobile ? 72 : 95}
                     paddingAngle={2}
                     stroke="var(--bg-card)"
                     strokeWidth={2}
-                    cursor="pointer"
-                    onClick={handleCategoryPieClick}
+                    cursor={isMobile ? 'default' : 'pointer'}
+                    onClick={isMobile ? undefined : handleCategoryPieClick}
                   >
                     {chartFilteredData.categoryData.map((entry) => (
                       <Cell key={entry.kategoria} fill={getCategoryColor(entry.kategoria)} />
@@ -324,21 +335,21 @@ export function Dashboard() {
                     content={({ active, payload }) => (
                       <DonutTooltip active={active} payload={payload} total={chartFilteredData.expensesTotal} />
                     )}
-                    offset={70}
+                    offset={isMobile ? 30 : 70}
                     cursor={{ fill: 'rgba(0,229,255,0.06)' }}
                   />
                   <Legend
                     verticalAlign="bottom"
                     wrapperStyle={{ paddingTop: '8px' }}
                     formatter={(value) => (
-                      <span className="text-(--text-primary) text-sm font-medium">{value}</span>
+                      <span className="text-(--text-primary) text-xs sm:text-sm font-medium">{value}</span>
                     )}
                   />
                 </PieChart>
               </ResponsiveContainer>
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="text-center w-24">
-                    <p className="text-lg font-bold text-(--accent-cyan) font-gaming drop-shadow-[0_0_8px_rgba(0,229,255,0.3)] leading-tight">
+                  <div className="text-center w-20 sm:w-24">
+                    <p className="text-sm sm:text-lg font-bold text-(--accent-cyan) font-gaming drop-shadow-[0_0_8px_rgba(0,229,255,0.3)] leading-tight">
                       {chartFilteredData.expensesTotal.toLocaleString('pl-PL')} zł
                     </p>
                     <p className="text-xs text-(--text-muted) font-gaming mt-0.5">łącznie</p>
@@ -355,11 +366,15 @@ export function Dashboard() {
         </motion.div>
       </div>
 
+      {/* Asystent AI – raport tygodniowy */}
+      <motion.div variants={getDashboardTileVariants(reduceMotion, 6)} className="min-w-0">
+        <AiWeeklyReport />
+      </motion.div>
+
       {/* Nadchodzące wydarzenia + Quick stats – rozszerzony grid */}
       <DashboardQuickStats
         upcomingEvents={upcomingEvents}
         todoCount={todoCount}
-        wishesCount={wishesCount}
         goals={goals}
         habitsToday={habitsToday}
         reduceMotion={reduceMotion}

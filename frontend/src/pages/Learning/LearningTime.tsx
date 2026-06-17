@@ -1,5 +1,4 @@
 import { useState, useMemo, useCallback, memo } from 'react'
-import { createPortal } from 'react-dom'
 import { Card } from '../../components/Card'
 import {
   AreaChart,
@@ -18,12 +17,23 @@ import {
   X,
   Pencil,
 } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { AnimatePresence } from 'framer-motion'
 import { useLearning } from '../../context/LearningContext'
 import { ChartPeriodSelector } from '../../components/ChartPeriodSelector'
 import { useChartPeriod, getMonthsInQuarter } from '../../context/ChartPeriodContext'
-import { useModalMotion } from '../../lib/modalMotion'
 import { useUndoDelete } from '../../components/learning/UndoToast'
+import { LearningFormShell } from '../../components/learning/LearningFormShell'
+import { LearningModal } from '../../components/learning/LearningModal'
+import {
+  learningFieldClass,
+  learningLabelClass,
+  learningFormActionsClass,
+  learningPrimaryBtnClass,
+  learningSecondaryBtnClass,
+  learningAddBtnClass,
+  learningChipClass,
+} from '../../components/learning/learningFormClasses'
+import { useIsMobile } from '../../hooks/useIsMobile'
 import { SESSION_TYPE_OPTIONS, formatMinutes } from './learningUtils'
 import { PomodoroInlineButton } from '../../components/learning/PomodoroTimer'
 import type { LearningSession, SessionType } from '../../context/LearningContext'
@@ -31,6 +41,12 @@ import type { LearningSession, SessionType } from '../../context/LearningContext
 export { SESSION_TYPE_OPTIONS, formatMinutes }
 
 const monthNames = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru']
+
+const QUICK_SESSION_OPTIONS = [
+  { mins: 30, label: '30 min' },
+  { mins: 60, label: '1 h' },
+  { mins: 90, label: '1,5 h' },
+] as const
 
 // ─── FORM COMPONENT (isolated to prevent re-renders of list/chart) ────────────
 
@@ -84,189 +100,173 @@ const SessionForm = memo(function SessionForm({
   }
 
   return (
-    <Card title="Dodaj sesję">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="flex flex-wrap gap-4 items-end">
-          <div>
-            <label className="block text-base text-(--text-muted) font-gaming mb-1">Data</label>
-            <input
-              type="date"
-              value={date}
-              max="9999-12-31"
-              onChange={(e) => setDate(e.target.value)}
-              className="px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-base text-(--text-muted) font-gaming mb-1">Czas (min)</label>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={minutes}
-              onChange={(e) => setMinutes(e.target.value.replace(/\D/g, ''))}
-              placeholder="np. 90"
-              className="px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-mono w-24 focus:border-(--accent-cyan) focus:outline-none"
-            />
-          </div>
-          <div className="flex-1 min-w-[160px]">
-            <label className="block text-base text-(--text-muted) font-gaming mb-1">Temat</label>
-            <input
-              type="text"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              placeholder="np. React hooks"
-              className="w-full px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
-            />
-          </div>
-        </div>
-
-        {/* Category selector */}
-        <div>
-          <div className="flex items-center justify-between mb-1">
-            <label className="block text-base text-(--text-muted) font-gaming">Kategoria</label>
-            <button
-              type="button"
-              onClick={() => setShowCatManager((v) => !v)}
-              className="text-xs text-(--text-muted) hover:text-(--accent-cyan) font-gaming transition-colors"
-            >
-              {showCatManager ? 'Zamknij' : 'Zarządzaj'}
-            </button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => setCategory('')}
-              className={`px-3 py-1.5 rounded-lg font-gaming text-sm transition-colors ${
-                category === ''
-                  ? 'bg-(--accent-cyan)/20 text-(--accent-cyan) border border-(--accent-cyan)/40'
-                  : 'bg-(--bg-dark) text-(--text-muted) border border-(--border) hover:border-(--accent-cyan)/40'
-              }`}
-            >
-              Bez kategorii
-            </button>
-            {sessionCategories.map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setCategory(cat)}
-                className={`px-3 py-1.5 rounded-lg font-gaming text-sm transition-colors ${
-                  category === cat
-                    ? 'bg-(--accent-cyan)/20 text-(--accent-cyan) border border-(--accent-cyan)/40'
-                    : 'bg-(--bg-dark) text-(--text-muted) border border-(--border) hover:border-(--accent-cyan)/40'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-          {showCatManager && (
-            <div className="mt-3 space-y-2">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={newCatInput}
-                  onChange={(e) => setNewCatInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      handleAddCategory()
-                    }
-                  }}
-                  placeholder="Nowa kategoria"
-                  className="flex-1 px-3 py-1.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming text-sm focus:border-(--accent-cyan) focus:outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={handleAddCategory}
-                  disabled={!newCatInput.trim()}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-(--accent-cyan) text-(--accent-cyan) font-gaming text-sm hover:bg-(--accent-cyan)/10 transition-colors disabled:opacity-50"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  Dodaj
-                </button>
-              </div>
-              {sessionCategories.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {sessionCategories.map((cat) => (
-                    <span
-                      key={cat}
-                      className="flex items-center gap-1 px-2 py-1 rounded bg-(--bg-dark) border border-(--border) text-sm font-gaming text-(--text-muted)"
-                    >
-                      {cat}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onRemoveCategory(cat)
-                          if (category === cat) setCategory('')
-                        }}
-                        className="hover:text-[#e74c3c] transition-colors"
-                        aria-label={`Usuń kategorię ${cat}`}
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Session type */}
-        <div>
-          <label className="block text-base text-(--text-muted) font-gaming mb-2">Typ sesji</label>
-          <div className="flex flex-wrap gap-2">
-            {SESSION_TYPE_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => setType(opt.value)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-gaming text-sm transition-colors ${
-                  type === opt.value
-                    ? 'bg-(--accent-cyan)/20 text-(--accent-cyan) border border-(--accent-cyan)/40'
-                    : 'bg-(--bg-dark) text-(--text-muted) border border-(--border) hover:border-(--accent-cyan)/40'
-                }`}
-              >
-                <opt.icon className="w-3.5 h-3.5" />
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-base text-(--text-muted) font-gaming mb-1">Notatka (opcjonalnie)</label>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
+        <div className="w-full sm:w-auto">
+          <label className={learningLabelClass}>Data</label>
           <input
-            type="text"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
+            type="date"
+            value={date}
+            max="9999-12-31"
+            onChange={(e) => setDate(e.target.value)}
+            className={learningFieldClass}
           />
         </div>
-        <button
-          type="submit"
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-(--accent-cyan) text-(--bg-dark) font-gaming font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
-          disabled={!minutes.trim() || parseInt(minutes, 10) <= 0}
-        >
-          <Plus className="w-4 h-4" />
-          Dodaj sesję
-        </button>
-      </form>
-    </Card>
+        <div className="w-full sm:w-auto">
+          <label className={learningLabelClass}>Czas (min)</label>
+          <input
+            type="text"
+            inputMode="numeric"
+            value={minutes}
+            onChange={(e) => setMinutes(e.target.value.replace(/\D/g, ''))}
+            placeholder="np. 90"
+            className={`${learningFieldClass} sm:w-28`}
+          />
+        </div>
+        <div className="w-full min-w-0 sm:flex-1 sm:min-w-[160px]">
+          <label className={learningLabelClass}>Temat</label>
+          <input
+            type="text"
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            placeholder="np. React hooks"
+            className={learningFieldClass}
+          />
+        </div>
+      </div>
+
+      <div>
+        <div className="mb-2 flex items-center justify-between">
+          <label className={learningLabelClass}>Kategoria</label>
+          <button
+            type="button"
+            onClick={() => setShowCatManager((v) => !v)}
+            className="text-sm text-(--text-muted) transition-colors hover:text-(--accent-cyan)"
+          >
+            {showCatManager ? 'Zamknij' : 'Zarządzaj'}
+          </button>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setCategory('')}
+            className={learningChipClass(category === '')}
+          >
+            Bez kategorii
+          </button>
+          {sessionCategories.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => setCategory(cat)}
+              className={learningChipClass(category === cat)}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+        {showCatManager && (
+          <div className="mt-3 space-y-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <input
+                type="text"
+                value={newCatInput}
+                onChange={(e) => setNewCatInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    handleAddCategory()
+                  }
+                }}
+                placeholder="Nowa kategoria"
+                className={learningFieldClass}
+              />
+              <button
+                type="button"
+                onClick={handleAddCategory}
+                disabled={!newCatInput.trim()}
+                className={`${learningSecondaryBtnClass} shrink-0`}
+              >
+                <Plus className="h-4 w-4" />
+                Dodaj
+              </button>
+            </div>
+            {sessionCategories.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {sessionCategories.map((cat) => (
+                  <span
+                    key={cat}
+                    className="flex items-center gap-1 rounded border border-(--border) bg-(--bg-dark) px-2 py-1 text-sm text-(--text-muted)"
+                  >
+                    {cat}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onRemoveCategory(cat)
+                        if (category === cat) setCategory('')
+                      }}
+                      className="transition-colors hover:text-[#e74c3c]"
+                      aria-label={`Usuń kategorię ${cat}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <label className={learningLabelClass}>Typ sesji</label>
+        <div className="flex flex-wrap gap-2">
+          {SESSION_TYPE_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setType(opt.value)}
+              className={`${learningChipClass(type === opt.value)} flex items-center gap-1.5`}
+            >
+              <opt.icon className="h-3.5 w-3.5" />
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <label className={learningLabelClass}>Notatka (opcjonalnie)</label>
+        <input
+          type="text"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          className={learningFieldClass}
+        />
+      </div>
+      <button
+        type="submit"
+        className={learningPrimaryBtnClass}
+        disabled={!minutes.trim() || parseInt(minutes, 10) <= 0}
+      >
+        <Plus className="h-4 w-4" />
+        Dodaj sesję
+      </button>
+    </form>
   )
 })
 
 // ─── QUICK ADD MODAL ──────────────────────────────────────────────────────────
 
 interface QuickAddModalProps {
+  isOpen: boolean
   minutes: number
   sessionCategories: string[]
   onAdd: (s: Omit<LearningSession, 'id'>) => void
   onClose: () => void
 }
 
-function QuickAddModal({ minutes, sessionCategories, onAdd, onClose }: QuickAddModalProps) {
-  const { backdrop, panel } = useModalMotion()
+function QuickAddModal({ isOpen, minutes, sessionCategories, onAdd, onClose }: QuickAddModalProps) {
   const [topic, setTopic] = useState('')
   const [type, setType] = useState<SessionType>('inne')
   const [category, setCategory] = useState('')
@@ -283,130 +283,90 @@ function QuickAddModal({ minutes, sessionCategories, onAdd, onClose }: QuickAddM
     onClose()
   }
 
-  return createPortal(
-    <>
-      <motion.div
-        key="quick-add-backdrop"
-        {...backdrop}
-        className="fixed inset-0 z-9998 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 pointer-events-none">
-        <motion.div
-          key="quick-add-panel"
-          {...panel}
-          className="pointer-events-auto relative w-full max-w-sm rounded-lg border border-(--border) bg-(--bg-card) p-6 shadow-xl"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-(--text-primary) font-gaming">
-              + {formatMinutes(minutes)}
-            </h3>
-            <button
-              onClick={onClose}
-              className="p-2 rounded-lg hover:bg-(--bg-card-hover) text-(--text-muted)"
-              aria-label="Zamknij"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">Temat</label>
-              <input
-                type="text"
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                placeholder="np. React hooks"
-                autoFocus
-                className="w-full px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
-              />
-            </div>
-            {sessionCategories.length > 0 && (
-              <div>
-                <label className="block text-base text-(--text-muted) font-gaming mb-2">Kategoria</label>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setCategory('')}
-                    className={`px-3 py-1.5 rounded-lg font-gaming text-sm transition-colors ${
-                      category === ''
-                        ? 'bg-(--accent-cyan)/20 text-(--accent-cyan) border border-(--accent-cyan)/40'
-                        : 'bg-(--bg-dark) text-(--text-muted) border border-(--border) hover:border-(--accent-cyan)/40'
-                    }`}
-                  >
-                    —
-                  </button>
-                  {sessionCategories.map((cat) => (
-                    <button
-                      key={cat}
-                      type="button"
-                      onClick={() => setCategory(cat)}
-                      className={`px-3 py-1.5 rounded-lg font-gaming text-sm transition-colors ${
-                        category === cat
-                          ? 'bg-(--accent-cyan)/20 text-(--accent-cyan) border border-(--accent-cyan)/40'
-                          : 'bg-(--bg-dark) text-(--text-muted) border border-(--border) hover:border-(--accent-cyan)/40'
-                      }`}
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-            <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-2">Typ</label>
-              <div className="flex flex-wrap gap-2">
-                {SESSION_TYPE_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setType(opt.value)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-gaming text-sm transition-colors ${
-                      type === opt.value
-                        ? 'bg-(--accent-cyan)/20 text-(--accent-cyan) border border-(--accent-cyan)/40'
-                        : 'bg-(--bg-dark) text-(--text-muted) border border-(--border) hover:border-(--accent-cyan)/40'
-                    }`}
-                  >
-                    <opt.icon className="w-3.5 h-3.5" />
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="flex gap-3">
+  return (
+    <LearningModal isOpen={isOpen} onClose={onClose} title={`+ ${formatMinutes(minutes)}`}>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className={learningLabelClass}>Temat</label>
+          <input
+            type="text"
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            placeholder="np. React hooks"
+            autoFocus
+            className={learningFieldClass}
+          />
+        </div>
+        {sessionCategories.length > 0 && (
+          <div>
+            <label className={learningLabelClass}>Kategoria</label>
+            <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={onClose}
-                className="flex-1 py-2 rounded-lg border border-(--border) text-(--text-muted) font-gaming hover:bg-(--bg-card-hover)"
+                onClick={() => setCategory('')}
+                className={learningChipClass(category === '')}
               >
-                Anuluj
+                —
               </button>
-              <button
-                type="submit"
-                className="flex-1 py-2 rounded-lg bg-(--accent-cyan) text-(--bg-dark) font-gaming font-bold hover:opacity-90"
-              >
-                Dodaj
-              </button>
+              {sessionCategories.map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setCategory(cat)}
+                  className={learningChipClass(category === cat)}
+                >
+                  {cat}
+                </button>
+              ))}
             </div>
-          </form>
-        </motion.div>
-      </div>
-    </>,
-    document.body,
+          </div>
+        )}
+        <div>
+          <label className={learningLabelClass}>Typ</label>
+          <div className="flex flex-wrap gap-2">
+            {SESSION_TYPE_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setType(opt.value)}
+                className={`${learningChipClass(type === opt.value)} flex items-center gap-1.5`}
+              >
+                <opt.icon className="h-3.5 w-3.5" />
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className={learningFormActionsClass}>
+          <button type="button" onClick={onClose} className={learningSecondaryBtnClass}>
+            Anuluj
+          </button>
+          <button type="submit" className={learningPrimaryBtnClass}>
+            Dodaj
+          </button>
+        </div>
+      </form>
+    </LearningModal>
   )
 }
 
 // ─── EDIT SESSION MODAL ───────────────────────────────────────────────────────
 
 interface EditSessionModalProps {
+  isOpen: boolean
   session: LearningSession
   sessionCategories: string[]
   onSave: (id: string, u: Partial<LearningSession>) => void
   onClose: () => void
 }
 
-function EditSessionModal({ session, sessionCategories, onSave, onClose }: EditSessionModalProps) {
-  const { backdrop, panel } = useModalMotion()
+function EditSessionModal({
+  isOpen,
+  session,
+  sessionCategories,
+  onSave,
+  onClose,
+}: EditSessionModalProps) {
   const [date, setDate] = useState(session.date)
   const [minutes, setMinutes] = useState(String(session.minutes))
   const [topic, setTopic] = useState(session.topic)
@@ -429,210 +389,142 @@ function EditSessionModal({ session, sessionCategories, onSave, onClose }: EditS
     onClose()
   }
 
-  return createPortal(
-    <>
-      <motion.div
-        key="edit-session-backdrop"
-        {...backdrop}
-        className="fixed inset-0 z-9998 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 pointer-events-none">
-        <motion.div
-          key="edit-session-panel"
-          {...panel}
-          className="pointer-events-auto relative w-full max-w-sm rounded-lg border border-(--border) bg-(--bg-card) p-6 shadow-xl"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-(--text-primary) font-gaming">Edytuj sesję</h3>
-            <button
-              onClick={onClose}
-              className="p-2 rounded-lg hover:bg-(--bg-card-hover) text-(--text-muted)"
-              aria-label="Zamknij"
-            >
-              <X className="w-5 h-5" />
-            </button>
+  return (
+    <LearningModal isOpen={isOpen} onClose={onClose} title="Edytuj sesję">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="flex flex-col gap-4 sm:flex-row">
+          <div className="w-full sm:w-auto">
+            <label className={learningLabelClass}>Data</label>
+            <input
+              type="date"
+              value={date}
+              max="9999-12-31"
+              onChange={(e) => setDate(e.target.value)}
+              className={learningFieldClass}
+            />
           </div>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="flex gap-4">
-              <div>
-                <label className="block text-base text-(--text-muted) font-gaming mb-1">Data</label>
-                <input
-                  type="date"
-                  value={date}
-                  max="9999-12-31"
-                  onChange={(e) => setDate(e.target.value)}
-                  className="px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-base text-(--text-muted) font-gaming mb-1">Min</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={minutes}
-                  onChange={(e) => setMinutes(e.target.value.replace(/\D/g, ''))}
-                  className="px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-mono w-20 focus:border-(--accent-cyan) focus:outline-none"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">Temat</label>
-              <input
-                type="text"
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                autoFocus
-                className="w-full px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
-              />
-            </div>
-            {sessionCategories.length > 0 && (
-              <div>
-                <label className="block text-base text-(--text-muted) font-gaming mb-2">Kategoria</label>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setCategory('')}
-                    className={`px-3 py-1.5 rounded-lg font-gaming text-sm transition-colors ${
-                      category === ''
-                        ? 'bg-(--accent-cyan)/20 text-(--accent-cyan) border border-(--accent-cyan)/40'
-                        : 'bg-(--bg-dark) text-(--text-muted) border border-(--border) hover:border-(--accent-cyan)/40'
-                    }`}
-                  >
-                    —
-                  </button>
-                  {sessionCategories.map((cat) => (
-                    <button
-                      key={cat}
-                      type="button"
-                      onClick={() => setCategory(cat)}
-                      className={`px-3 py-1.5 rounded-lg font-gaming text-sm transition-colors ${
-                        category === cat
-                          ? 'bg-(--accent-cyan)/20 text-(--accent-cyan) border border-(--accent-cyan)/40'
-                          : 'bg-(--bg-dark) text-(--text-muted) border border-(--border) hover:border-(--accent-cyan)/40'
-                      }`}
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-            <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-2">Typ</label>
-              <div className="flex flex-wrap gap-2">
-                {SESSION_TYPE_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setType(opt.value)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-gaming text-sm transition-colors ${
-                      type === opt.value
-                        ? 'bg-(--accent-cyan)/20 text-(--accent-cyan) border border-(--accent-cyan)/40'
-                        : 'bg-(--bg-dark) text-(--text-muted) border border-(--border) hover:border-(--accent-cyan)/40'
-                    }`}
-                  >
-                    <opt.icon className="w-3.5 h-3.5" />
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">Notatka</label>
-              <input
-                type="text"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
-              />
-            </div>
-            <div className="flex gap-3">
+          <div className="w-full sm:w-auto">
+            <label className={learningLabelClass}>Min</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={minutes}
+              onChange={(e) => setMinutes(e.target.value.replace(/\D/g, ''))}
+              className={`${learningFieldClass} sm:w-24`}
+            />
+          </div>
+        </div>
+        <div>
+          <label className={learningLabelClass}>Temat</label>
+          <input
+            type="text"
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            autoFocus
+            className={learningFieldClass}
+          />
+        </div>
+        {sessionCategories.length > 0 && (
+          <div>
+            <label className={learningLabelClass}>Kategoria</label>
+            <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={onClose}
-                className="flex-1 py-2 rounded-lg border border-(--border) text-(--text-muted) font-gaming hover:bg-(--bg-card-hover)"
+                onClick={() => setCategory('')}
+                className={learningChipClass(category === '')}
               >
-                Anuluj
+                —
               </button>
-              <button
-                type="submit"
-                className="flex-1 py-2 rounded-lg bg-(--accent-cyan) text-(--bg-dark) font-gaming font-bold hover:opacity-90"
-              >
-                Zapisz
-              </button>
+              {sessionCategories.map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setCategory(cat)}
+                  className={learningChipClass(category === cat)}
+                >
+                  {cat}
+                </button>
+              ))}
             </div>
-          </form>
-        </motion.div>
-      </div>
-    </>,
-    document.body,
+          </div>
+        )}
+        <div>
+          <label className={learningLabelClass}>Typ</label>
+          <div className="flex flex-wrap gap-2">
+            {SESSION_TYPE_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setType(opt.value)}
+                className={`${learningChipClass(type === opt.value)} flex items-center gap-1.5`}
+              >
+                <opt.icon className="h-3.5 w-3.5" />
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <label className={learningLabelClass}>Notatka</label>
+          <input
+            type="text"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            className={learningFieldClass}
+          />
+        </div>
+        <div className={learningFormActionsClass}>
+          <button type="button" onClick={onClose} className={learningSecondaryBtnClass}>
+            Anuluj
+          </button>
+          <button type="submit" className={learningPrimaryBtnClass}>
+            Zapisz
+          </button>
+        </div>
+      </form>
+    </LearningModal>
   )
 }
 
 // ─── GOAL EDIT MODAL ──────────────────────────────────────────────────────────
 
 interface GoalEditModalProps {
+  isOpen: boolean
   currentGoalMinutes: number
   onSave: (minutes: number) => void
   onClose: () => void
 }
 
-function GoalEditModal({ currentGoalMinutes, onSave, onClose }: GoalEditModalProps) {
-  const { backdrop, panel } = useModalMotion()
+function GoalEditModal({ isOpen, currentGoalMinutes, onSave, onClose }: GoalEditModalProps) {
   const [value, setValue] = useState(String(Math.round(currentGoalMinutes / 60)))
 
-  return createPortal(
-    <>
-      <motion.div
-        key="goal-edit-backdrop"
-        {...backdrop}
-        className="fixed inset-0 z-9998 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 pointer-events-none">
-        <motion.div
-          key="goal-edit-panel"
-          {...panel}
-          className="pointer-events-auto relative w-full max-w-sm rounded-lg border border-(--border) bg-(--bg-card) p-6 shadow-xl"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-(--text-primary) font-gaming">Cel tygodniowy</h3>
-            <button onClick={onClose} className="p-2 rounded-lg hover:bg-(--bg-card-hover) text-(--text-muted)">
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault()
-              const hours = parseFloat(value.replace(',', '.'))
-              if (!isNaN(hours) && hours > 0) onSave(Math.round(hours * 60))
-              onClose()
-            }}
-            className="space-y-4"
-          >
-            <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">Godzin na tydzień</label>
-              <input
-                type="text"
-                inputMode="decimal"
-                value={value}
-                onChange={(e) => setValue(e.target.value.replace(/[^0-9,.]/g, ''))}
-                autoFocus
-                className="w-full px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-mono focus:border-(--accent-cyan) focus:outline-none"
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full py-2 rounded-lg bg-(--accent-cyan) text-(--bg-dark) font-gaming font-bold hover:opacity-90"
-            >
-              Zapisz
-            </button>
-          </form>
-        </motion.div>
-      </div>
-    </>,
-    document.body,
+  return (
+    <LearningModal isOpen={isOpen} onClose={onClose} title="Cel tygodniowy">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          const hours = parseFloat(value.replace(',', '.'))
+          if (!isNaN(hours) && hours > 0) onSave(Math.round(hours * 60))
+          onClose()
+        }}
+        className="space-y-4"
+      >
+        <div>
+          <label className={learningLabelClass}>Godzin na tydzień</label>
+          <input
+            type="text"
+            inputMode="decimal"
+            value={value}
+            onChange={(e) => setValue(e.target.value.replace(/[^0-9,.]/g, ''))}
+            autoFocus
+            className={learningFieldClass}
+          />
+        </div>
+        <button type="submit" className={`${learningPrimaryBtnClass} w-full sm:w-auto`}>
+          Zapisz
+        </button>
+      </form>
+    </LearningModal>
   )
 }
 
@@ -641,6 +533,7 @@ function GoalEditModal({ currentGoalMinutes, onSave, onClose }: GoalEditModalPro
 export function LearningTime() {
   const learning = useLearning()
   const chartPeriod = useChartPeriod()
+  const isMobile = useIsMobile()
 
   const [quickMinutes, setQuickMinutes] = useState<number | null>(null)
   const [showGoalEdit, setShowGoalEdit] = useState(false)
@@ -733,28 +626,30 @@ export function LearningTime() {
     .filter((s) => s.id !== pendingId)
     .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id))
 
+  const chartHeight = isMobile ? 192 : 240
+
   return (
     <div className="space-y-6">
       {/* Weekly goal bar */}
-      <Card>
-        <div className="flex items-center justify-between mb-3">
+      <Card className="max-md:p-4">
+        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
-            <Target className="w-5 h-5 text-(--accent-cyan)" />
-            <span className="font-gaming text-(--text-primary) tracking-wide">Ten tydzień</span>
+            <Target className="h-5 w-5 text-(--accent-cyan)" />
+            <span className="font-gaming tracking-wide text-(--text-primary)">Ten tydzień</span>
           </div>
           <button
             type="button"
             onClick={() => setShowGoalEdit(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-(--bg-dark) border border-(--border) hover:border-(--accent-cyan)/50 text-(--text-muted) hover:text-(--accent-cyan) transition-colors font-gaming text-sm"
+            className="flex min-h-11 items-center gap-1.5 self-start rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-sm text-(--text-muted) transition-colors hover:border-(--accent-cyan)/50 hover:text-(--accent-cyan) sm:min-h-0 sm:py-1.5"
             title="Zmień cel tygodniowy"
           >
-            <Target className="w-3.5 h-3.5" />
+            <Target className="h-3.5 w-3.5" />
             Cel: {formatMinutes(weeklyGoalMinutes)}
-            <Pencil className="w-3 h-3 opacity-60" />
+            <Pencil className="h-3 w-3 opacity-60" />
           </button>
         </div>
-        <div className="flex items-center gap-3 mb-4">
-          <div className="flex-1 h-2.5 rounded-full bg-(--bg-dark) overflow-hidden">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-(--bg-dark)">
             <div
               className="h-full rounded-full transition-all duration-500"
               style={{
@@ -768,62 +663,61 @@ export function LearningTime() {
               }}
             />
           </div>
-          <span className="text-sm font-mono text-(--text-muted) whitespace-nowrap">
+          <span className="whitespace-nowrap text-sm font-mono text-(--text-muted)">
             {formatMinutes(weekProgress)} / {formatMinutes(weeklyGoalMinutes)}
           </span>
-          <span className="text-sm font-gaming text-(--accent-cyan) w-10 text-right">{goalPercent}%</span>
+          <span className="w-10 text-right text-sm font-gaming text-(--accent-cyan)">{goalPercent}%</span>
         </div>
-        <div className="flex gap-2 flex-wrap">
-          {[30, 60, 120].map((mins) => (
-            <button
-              key={mins}
-              type="button"
-              onClick={() => setQuickMinutes(mins)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-(--accent-cyan)/10 border border-(--accent-cyan)/30 text-(--accent-cyan) font-gaming text-sm hover:bg-(--accent-cyan)/20 transition-colors"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              {mins < 60 ? `${mins} min` : `${mins / 60} h`}
-            </button>
-          ))}
-          <PomodoroInlineButton />
-          <button
-            type="button"
-            onClick={() => setShowAddForm((v) => !v)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-gaming text-sm transition-colors ${
-              showAddForm
-                ? 'bg-(--accent-cyan)/20 text-(--accent-cyan) border-(--accent-cyan)/40'
-                : 'bg-(--bg-dark) text-(--text-muted) border-(--border) hover:border-(--accent-cyan)/40 hover:text-(--text-primary)'
-            }`}
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Dodaj ręcznie
-          </button>
+        <div className="space-y-2">
+          <div className="grid grid-cols-3 gap-2">
+            {QUICK_SESSION_OPTIONS.map(({ mins, label }) => (
+              <button
+                key={mins}
+                type="button"
+                onClick={() => setQuickMinutes(mins)}
+                className="flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-lg border border-(--accent-cyan)/30 bg-(--accent-cyan)/10 px-2 py-2 text-sm font-gaming text-(--accent-cyan) transition-colors hover:bg-(--accent-cyan)/20 sm:flex-row sm:gap-1.5 sm:px-3"
+              >
+                <Plus className="h-3.5 w-3.5 shrink-0" />
+                <span>{label}</span>
+              </button>
+            ))}
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <PomodoroInlineButton
+              className={`flex min-h-11 w-full items-center justify-center gap-1.5 rounded-lg border border-(--accent-cyan)/30 bg-(--accent-cyan)/10 px-3 py-2 text-sm font-gaming text-(--accent-cyan) transition-colors hover:bg-(--accent-cyan)/20${showAddForm ? ' col-span-2' : ''}`}
+            />
+            {!showAddForm && (
+              <button
+                type="button"
+                onClick={() => setShowAddForm(true)}
+                className={`${learningAddBtnClass} mt-0 min-h-11 w-full justify-center`}
+              >
+                <Plus className="h-4 w-4" />
+                Dodaj sesję
+              </button>
+            )}
+          </div>
         </div>
       </Card>
 
-      {/* Collapsible manual add form */}
-      <AnimatePresence>
-        {showAddForm && (
-          <motion.div
-            key="session-form"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
-            <SessionForm
-              sessionCategories={sessionCategories}
-              onAdd={(s) => { addSession(s); setShowAddForm(false) }}
-              onAddCategory={addSessionCategory}
-              onRemoveCategory={removeSessionCategory}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <LearningFormShell
+        isOpen={showAddForm}
+        onClose={() => setShowAddForm(false)}
+        title="Dodaj sesję"
+      >
+        <SessionForm
+          sessionCategories={sessionCategories}
+          onAdd={(s) => {
+            addSession(s)
+            setShowAddForm(false)
+          }}
+          onAddCategory={addSessionCategory}
+          onRemoveCategory={removeSessionCategory}
+        />
+      </LearningFormShell>
 
       {/* Session history */}
-      <Card title="Historia sesji">
+      <Card title="Historia sesji" className="max-md:p-4">
         {sorted.length === 0 ? (
           <p className="text-base text-(--text-muted)">Brak sesji. Dodaj pierwszą.</p>
         ) : (
@@ -834,20 +728,17 @@ export function LearningTime() {
               return (
                 <div
                   key={s.id}
-                  className="flex items-center justify-between py-2 px-3 rounded-lg bg-(--bg-dark)/50 border border-(--border)"
+                  className="flex items-start justify-between gap-2 rounded-lg border border-(--border) bg-(--bg-dark)/50 px-3 py-2.5 sm:items-center"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <TypeIcon className="w-4 h-4 text-(--accent-cyan) shrink-0" />
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p
-                          className="font-gaming text-(--text-primary) truncate max-w-[220px]"
-                          title={s.topic}
-                        >
+                  <div className="flex min-w-0 flex-1 items-start gap-3">
+                    <TypeIcon className="mt-0.5 h-4 w-4 shrink-0 text-(--accent-cyan) sm:mt-0" />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="min-w-0 flex-1 truncate font-gaming text-(--text-primary)" title={s.topic}>
                           {s.topic}
                         </p>
                         {s.category && (
-                          <span className="px-1.5 py-0.5 rounded text-xs bg-(--bg-card) text-(--text-muted) border border-(--border) font-gaming">
+                          <span className="shrink-0 rounded border border-(--border) bg-(--bg-card) px-1.5 py-0.5 text-xs text-(--text-muted)">
                             {s.category}
                           </span>
                         )}
@@ -860,20 +751,20 @@ export function LearningTime() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
+                  <div className="flex shrink-0 items-center gap-1">
                     <button
                       onClick={() => setEditingSession(s)}
-                      className="p-1.5 rounded-lg text-(--text-muted) hover:text-(--accent-cyan) hover:bg-(--accent-cyan)/10 transition-colors"
+                      className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-(--text-muted) transition-colors hover:bg-(--accent-cyan)/10 hover:text-(--accent-cyan) sm:min-h-0 sm:min-w-0 sm:p-1.5"
                       aria-label="Edytuj"
                     >
-                      <Pencil className="w-4 h-4" />
+                      <Pencil className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => scheduleDelete(s, s.topic)}
-                      className="p-1.5 rounded-lg text-(--text-muted) hover:text-[#e74c3c] hover:bg-[#e74c3c]/10 transition-colors"
+                      className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-(--text-muted) transition-colors hover:bg-[#e74c3c]/10 hover:text-[#e74c3c] sm:min-h-0 sm:min-w-0 sm:p-1.5"
                       aria-label="Usuń"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
@@ -896,9 +787,10 @@ export function LearningTime() {
                   : ' (ten rok)'
           }`}
           action={chartPeriod ? <ChartPeriodSelector /> : undefined}
+          className="max-md:p-4"
         >
-          <div className="h-60 w-full min-h-[200px]">
-            <ResponsiveContainer width="100%" height={240}>
+          <div className={`w-full ${isMobile ? 'h-48' : 'h-60'} min-h-[160px]`}>
+            <ResponsiveContainer width="100%" height={chartHeight}>
               <AreaChart data={trendData}>
                 <defs>
                   <linearGradient id="colorMinuty" x1="0" y1="0" x2="0" y2="1">
@@ -937,45 +829,33 @@ export function LearningTime() {
         </Card>
       )}
 
-      {/* Quick add modal */}
-      <AnimatePresence>
-        {quickMinutes !== null && (
-          <QuickAddModal
-            key={quickMinutes}
-            minutes={quickMinutes}
-            sessionCategories={sessionCategories}
-            onAdd={addSession}
-            onClose={() => setQuickMinutes(null)}
-          />
-        )}
-      </AnimatePresence>
+      <QuickAddModal
+        key={quickMinutes ?? 'closed'}
+        isOpen={quickMinutes !== null}
+        minutes={quickMinutes ?? 0}
+        sessionCategories={sessionCategories}
+        onAdd={addSession}
+        onClose={() => setQuickMinutes(null)}
+      />
 
-      {/* Edit session modal */}
-      <AnimatePresence>
-        {editingSession && (
-          <EditSessionModal
-            key={editingSession.id}
-            session={editingSession}
-            sessionCategories={sessionCategories}
-            onSave={updateSession}
-            onClose={() => setEditingSession(null)}
-          />
-        )}
-      </AnimatePresence>
+      {editingSession && (
+        <EditSessionModal
+          key={editingSession.id}
+          isOpen
+          session={editingSession}
+          sessionCategories={sessionCategories}
+          onSave={updateSession}
+          onClose={() => setEditingSession(null)}
+        />
+      )}
 
-      {/* Goal edit modal */}
-      <AnimatePresence>
-        {showGoalEdit && (
-          <GoalEditModal
-            key="goal-edit"
-            currentGoalMinutes={weeklyGoalMinutes}
-            onSave={setWeeklyGoalMinutes}
-            onClose={() => setShowGoalEdit(false)}
-          />
-        )}
-      </AnimatePresence>
+      <GoalEditModal
+        isOpen={showGoalEdit}
+        currentGoalMinutes={weeklyGoalMinutes}
+        onSave={setWeeklyGoalMinutes}
+        onClose={() => setShowGoalEdit(false)}
+      />
 
-      {/* Undo delete toast */}
       <AnimatePresence>{toast}</AnimatePresence>
     </div>
   )

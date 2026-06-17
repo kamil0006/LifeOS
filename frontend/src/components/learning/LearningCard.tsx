@@ -23,51 +23,56 @@ export function LearningCard({
   onDelete,
 }: LearningCardProps) {
   return (
-    <div className="py-3 px-4 rounded-lg bg-(--bg-dark)/50 border border-(--border) space-y-2">
-      <div className="flex items-start justify-between gap-2">
+    <div className="space-y-2 rounded-lg border border-(--border) bg-(--bg-dark)/50 px-3 py-3 sm:px-4">
+      <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <p className="font-gaming text-(--text-primary)">{title}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="font-gaming text-base text-(--text-primary)">{title}</p>
             {badge}
           </div>
-          {subtitle && <p className="text-sm text-(--text-muted) mt-0.5">{subtitle}</p>}
+          {subtitle && <p className="mt-0.5 text-sm text-(--text-muted)">{subtitle}</p>}
           {meta && meta.length > 0 && (
-            <p className="text-sm text-(--text-muted) mt-0.5">{meta.filter(Boolean).join(' • ')}</p>
+            <p className="mt-0.5 text-sm text-(--text-muted)">{meta.filter(Boolean).join(' • ')}</p>
           )}
         </div>
-        <div className="flex items-center gap-1 shrink-0">
-          {quickActions}
+        <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
+          <div className="hidden items-center gap-1 sm:flex">{quickActions}</div>
           {onEdit && (
             <button
               type="button"
               onClick={onEdit}
-              className="p-1.5 rounded-lg text-(--text-muted) hover:text-(--accent-cyan) hover:bg-(--accent-cyan)/10 transition-colors"
+              className="rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-(--accent-cyan)/10 hover:text-(--accent-cyan)"
               aria-label="Edytuj"
             >
-              <Pencil className="w-4 h-4" />
+              <Pencil className="h-4 w-4" />
             </button>
           )}
           {onDelete && (
             <button
               type="button"
               onClick={onDelete}
-              className="p-1.5 rounded-lg text-(--text-muted) hover:text-[#e74c3c] hover:bg-[#e74c3c]/10 transition-colors"
+              className="rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-[#e74c3c]/10 hover:text-[#e74c3c]"
               aria-label="Usuń"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="h-4 w-4" />
             </button>
           )}
         </div>
       </div>
+      {quickActions && (
+        <div className="flex flex-wrap items-center gap-2 border-t border-(--border)/40 pt-2 sm:hidden">
+          {quickActions}
+        </div>
+      )}
       {progress !== undefined && (
         <div className="flex items-center gap-2">
-          <div className="flex-1 h-1.5 rounded-full bg-(--bg-card) overflow-hidden">
+          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-(--bg-card)">
             <div
-              className="h-full bg-(--accent-cyan) rounded-full transition-all"
+              className="h-full rounded-full bg-(--accent-cyan) transition-all"
               style={{ width: `${progress}%` }}
             />
           </div>
-          <span className="text-xs font-mono text-(--text-muted) w-8 text-right">{progress}%</span>
+          <span className="w-8 text-right text-xs font-mono text-(--text-muted)">{progress}%</span>
         </div>
       )}
     </div>

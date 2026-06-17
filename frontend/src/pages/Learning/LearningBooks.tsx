@@ -1,6 +1,16 @@
 import { useState, useCallback, memo } from 'react'
 import { Card } from '../../components/Card'
 import { LearningCard } from '../../components/learning/LearningCard'
+import { LearningFormShell } from '../../components/learning/LearningFormShell'
+import {
+  learningFieldClass,
+  learningLabelClass,
+  learningFormActionsClass,
+  learningPrimaryBtnClass,
+  learningSecondaryBtnClass,
+  learningAddBtnClass,
+  learningChipClass,
+} from '../../components/learning/learningFormClasses'
 import { AnimatePresence } from 'framer-motion'
 import { Plus, X } from 'lucide-react'
 import { useLearning } from '../../context/LearningContext'
@@ -56,6 +66,7 @@ interface BookAddFormProps {
   onAdd: (b: Omit<Book, 'id'>) => void
   onAddCategory: (name: string) => void
   onRemoveCategory: (name: string) => void
+  onCancel?: () => void
 }
 
 const BookAddForm = memo(function BookAddForm({
@@ -63,6 +74,7 @@ const BookAddForm = memo(function BookAddForm({
   onAdd,
   onAddCategory,
   onRemoveCategory,
+  onCancel,
 }: BookAddFormProps) {
   const [title, setTitle] = useState('')
   const [author, setAuthor] = useState('')
@@ -109,158 +121,146 @@ const BookAddForm = memo(function BookAddForm({
   }
 
   return (
-    <Card title="Dodaj książkę">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="flex flex-wrap gap-4 items-end">
-          <div className="flex-1 min-w-[180px]">
-            <label className="block text-base text-(--text-muted) font-gaming mb-1">Tytuł *</label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
-            />
-          </div>
-          <div className="flex-1 min-w-[140px]">
-            <label className="block text-base text-(--text-muted) font-gaming mb-1">Autor</label>
-            <input
-              type="text"
-              value={author}
-              onChange={(e) => setAuthor(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
-            />
-          </div>
-        </div>
-
-        {/* Category selector */}
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-4">
         <div>
-          <div className="flex items-center justify-between mb-1">
-            <label className="block text-base text-(--text-muted) font-gaming">Kategoria</label>
+          <label className={learningLabelClass}>Tytuł *</label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className={learningFieldClass}
+          />
+        </div>
+        <div>
+          <label className={learningLabelClass}>Autor</label>
+          <input
+            type="text"
+            value={author}
+            onChange={(e) => setAuthor(e.target.value)}
+            className={learningFieldClass}
+          />
+        </div>
+      </div>
+
+      <div>
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <label className={learningLabelClass + ' mb-0'}>Kategoria</label>
+          <button
+            type="button"
+            onClick={() => setShowCatManager((v) => !v)}
+            className="text-sm text-(--text-muted) transition-colors hover:text-(--accent-cyan)"
+          >
+            {showCatManager ? 'Zamknij' : 'Zarządzaj'}
+          </button>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {allCategories.map((cat) => (
             <button
+              key={cat}
               type="button"
-              onClick={() => setShowCatManager((v) => !v)}
-              className="text-xs text-(--text-muted) hover:text-(--accent-cyan) font-gaming transition-colors"
+              onClick={() => setCategory(cat)}
+              className={learningChipClass(category === cat)}
             >
-              {showCatManager ? 'Zamknij' : 'Zarządzaj'}
+              {cat}
             </button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {allCategories.map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setCategory(cat)}
-                className={`px-3 py-1.5 rounded-lg font-gaming text-sm transition-colors ${
-                  category === cat
-                    ? 'bg-(--accent-cyan)/20 text-(--accent-cyan) border border-(--accent-cyan)/40'
-                    : 'bg-(--bg-dark) text-(--text-muted) border border-(--border) hover:border-(--accent-cyan)/40'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-          {showCatManager && (
-            <div className="mt-3 space-y-2">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={newCatInput}
-                  onChange={(e) => setNewCatInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      handleAddCategory()
-                    }
-                  }}
-                  placeholder="Nowa kategoria"
-                  className="flex-1 px-3 py-1.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming text-sm focus:border-(--accent-cyan) focus:outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={handleAddCategory}
-                  disabled={!newCatInput.trim()}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-(--accent-cyan) text-(--accent-cyan) font-gaming text-sm hover:bg-(--accent-cyan)/10 transition-colors disabled:opacity-50"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  Dodaj
-                </button>
-              </div>
-              {bookCategories.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {bookCategories.map((cat) => (
-                    <span
-                      key={cat}
-                      className="flex items-center gap-1 px-2 py-1 rounded bg-(--bg-dark) border border-(--border) text-sm font-gaming text-(--text-muted)"
-                    >
-                      {cat}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onRemoveCategory(cat)
-                          if (category === cat) setCategory('')
-                        }}
-                        className="hover:text-[#e74c3c] transition-colors"
-                        aria-label={`Usuń kategorię ${cat}`}
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+          ))}
         </div>
-
-        {/* Status */}
-        <div>
-          <label className="block text-base text-(--text-muted) font-gaming mb-1">Status</label>
-          <div className="flex gap-2 flex-wrap">
-            {READING_STATUS_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => setStatus(opt.value)}
-                className={`px-4 py-2 rounded-lg font-gaming text-sm transition-colors ${
-                  status === opt.value
-                    ? 'bg-(--accent-cyan)/20 text-(--accent-cyan) border border-(--accent-cyan)/40'
-                    : 'bg-(--bg-dark) text-(--text-muted) border border-(--border) hover:border-(--accent-cyan)/40'
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-4 items-end">
-          {(status === 'czytam' || status === 'przeczytane') && (
-            <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">Data rozpoczęcia</label>
+        {showCatManager && (
+          <div className="mt-3 space-y-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <input
-                type="date"
-                value={startedAt}
-                max="9999-12-31"
-                onChange={(e) => setStartedAt(e.target.value)}
-                className="px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
+                type="text"
+                value={newCatInput}
+                onChange={(e) => setNewCatInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    handleAddCategory()
+                  }
+                }}
+                placeholder="Nowa kategoria"
+                className={learningFieldClass}
               />
+              <button
+                type="button"
+                onClick={handleAddCategory}
+                disabled={!newCatInput.trim()}
+                className={learningSecondaryBtnClass + ' shrink-0'}
+              >
+                <Plus className="h-4 w-4" />
+                Dodaj
+              </button>
             </div>
-          )}
+            {bookCategories.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {bookCategories.map((cat) => (
+                  <span
+                    key={cat}
+                    className="flex items-center gap-1 rounded-lg border border-(--border) bg-(--bg-dark) px-2 py-1.5 text-sm text-(--text-muted)"
+                  >
+                    {cat}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onRemoveCategory(cat)
+                        if (category === cat) setCategory('')
+                      }}
+                      className="transition-colors hover:text-[#e74c3c]"
+                      aria-label={`Usuń kategorię ${cat}`}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <label className={learningLabelClass}>Status</label>
+        <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:gap-2">
+          {READING_STATUS_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setStatus(opt.value)}
+              className={`w-full sm:w-auto ${learningChipClass(status === opt.value)}`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {(status === 'czytam' || status === 'przeczytane') && (
+        <div className="space-y-4 sm:flex sm:flex-wrap sm:gap-4 sm:space-y-0">
+          <div className="sm:flex-1 sm:min-w-[160px]">
+            <label className={learningLabelClass}>Data rozpoczęcia</label>
+            <input
+              type="date"
+              value={startedAt}
+              max="9999-12-31"
+              onChange={(e) => setStartedAt(e.target.value)}
+              className={learningFieldClass}
+            />
+          </div>
           {status === 'przeczytane' && (
             <>
-              <div>
-                <label className="block text-base text-(--text-muted) font-gaming mb-1">Data ukończenia</label>
+              <div className="sm:flex-1 sm:min-w-[160px]">
+                <label className={learningLabelClass}>Data ukończenia</label>
                 <input
                   type="date"
                   value={finishedAt}
                   max="9999-12-31"
                   onChange={(e) => setFinishedAt(e.target.value)}
-                  className="px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
+                  className={learningFieldClass}
                 />
               </div>
-              <div>
-                <label className="block text-base text-(--text-muted) font-gaming mb-1">Ocena (1–5)</label>
+              <div className="sm:w-28">
+                <label className={learningLabelClass}>Ocena (1–5)</label>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -269,33 +269,36 @@ const BookAddForm = memo(function BookAddForm({
                     const v = e.target.value.replace(/\D/g, '')
                     if (v === '' || (parseInt(v, 10) >= 1 && parseInt(v, 10) <= 5)) setRating(v)
                   }}
-                  className="px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-mono w-16 focus:border-(--accent-cyan) focus:outline-none"
+                  className={learningFieldClass + ' font-mono'}
                 />
               </div>
             </>
           )}
         </div>
+      )}
 
-        <div>
-          <label className="block text-base text-(--text-muted) font-gaming mb-1">Notatka (opcjonalnie)</label>
-          <input
-            type="text"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
-          />
-        </div>
+      <div>
+        <label className={learningLabelClass}>Notatka (opcjonalnie)</label>
+        <input
+          type="text"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          className={learningFieldClass}
+        />
+      </div>
 
-        <button
-          type="submit"
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-(--accent-cyan) text-(--bg-dark) font-gaming font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
-          disabled={!title.trim()}
-        >
-          <Plus className="w-4 h-4" />
-          Dodaj
+      <div className={learningFormActionsClass}>
+        <button type="submit" className={learningPrimaryBtnClass} disabled={!title.trim()}>
+          <Plus className="h-4 w-4" />
+          Dodaj książkę
         </button>
-      </form>
-    </Card>
+        {onCancel && (
+          <button type="button" onClick={onCancel} className={learningSecondaryBtnClass}>
+            Anuluj
+          </button>
+        )}
+      </div>
+    </form>
   )
 })
 
@@ -304,6 +307,7 @@ const BookAddForm = memo(function BookAddForm({
 export function LearningBooks() {
   const learning = useLearning()
   const [editingBook, setEditingBook] = useState<Book | null>(null)
+  const [showAddForm, setShowAddForm] = useState(false)
 
   const { pendingId, toast, scheduleDelete } = useUndoDelete<Book>(
     useCallback((id) => learning?.deleteBook(id), [learning]),
@@ -317,14 +321,6 @@ export function LearningBooks() {
 
   return (
     <div className="space-y-6">
-      {/* Isolated add form – typing here doesn't re-render the list */}
-      <BookAddForm
-        bookCategories={bookCategories}
-        onAdd={addBook}
-        onAddCategory={addBookCategory}
-        onRemoveCategory={removeBookCategory}
-      />
-
       {visibleBooks.length > 0 ? (
         <div className="space-y-6">
           {STATUS_GROUPS.map((group) => {
@@ -362,7 +358,33 @@ export function LearningBooks() {
         </Card>
       )}
 
-      {/* Edit modal */}
+      <LearningFormShell
+        isOpen={showAddForm}
+        onClose={() => setShowAddForm(false)}
+        title="Dodaj książkę"
+        maxWidth="max-w-2xl"
+      >
+        <BookAddForm
+          bookCategories={bookCategories}
+          onAdd={(b) => {
+            addBook(b)
+            setShowAddForm(false)
+          }}
+          onAddCategory={addBookCategory}
+          onRemoveCategory={removeBookCategory}
+          onCancel={() => setShowAddForm(false)}
+        />
+      </LearningFormShell>
+
+      {!showAddForm && (
+        <div className={visibleBooks.length > 0 ? 'border-t border-(--border)/60 pt-4' : undefined}>
+          <button type="button" onClick={() => setShowAddForm(true)} className={learningAddBtnClass}>
+            <Plus className="h-4 w-4" />
+            Dodaj książkę
+          </button>
+        </div>
+      )}
+
       {editingBook && (
         <BookModal
           book={editingBook}
@@ -375,7 +397,6 @@ export function LearningBooks() {
         />
       )}
 
-      {/* Undo delete toast */}
       <AnimatePresence>{toast}</AnimatePresence>
     </div>
   )

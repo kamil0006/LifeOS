@@ -22,13 +22,19 @@ model User {
   scheduledExpenses ScheduledExpense[]
   income      Income[]
   todos       Todo[]
-  wishes      Wish[]
   events      Event[]
   habits      Habit[]
   habitCheckIns HabitCheckIn[]
   goals       Goal[]
   netWorthAccounts NetWorthAccount[]
   netWorthAdjustments NetWorthAdjustment[]
+  notes       Note[]
+  learningSessions LearningSession[]
+  courses     Course[]
+  projects    Project[]
+  books       Book[]
+  certifications Certification[]
+  learningSettings LearningSettings?
 }
 
 model ExpenseCategory {
@@ -81,6 +87,8 @@ model NetWorthAccount {
   /// asset | liability
   kind      String
   balance   Float    @default(0)
+  iconKey   String?
+  accentKey String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   adjustments NetWorthAdjustment[]
@@ -111,6 +119,8 @@ model Income {
   amount    Float
   date      DateTime
   recurring Boolean  @default(false)
+  /// Klucz kategorii jak w Expense (np. nazwa z ExpenseCategory lub pusty string)
+  category  String   @default("")
   createdAt DateTime @default(now())
 
   @@index([userId])
@@ -138,21 +148,6 @@ model Todo {
 
   @@index([userId])
   @@index([userId, done])
-}
-
-model Wish {
-  id             String   @id @default(cuid())
-  userId         String
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name           String
-  estimatedPrice Float
-  priority       Int      @default(2)
-  stage          String   @default("pomysl")  // pomysl | chce_kupic | odkladam | kupione
-  savedAmount    Float    @default(0)
-  notes          String?
-  createdAt      DateTime @default(now())
-
-  @@index([userId])
 }
 
 model Event {
@@ -227,4 +222,131 @@ model Goal {
   createdAt DateTime @default(now())
 
   @@index([userId])
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// inbox | idea | reference
+  type      String   @default("inbox")
+  content   String
+  tags      String[] @default([])
+  title     String?
+  pinned    Boolean  @default(false)
+  archivedAt DateTime?
+  /// nowy | do_sprawdzenia | w_realizacji | zrobiony | odrzucony (tylko dla type=idea)
+  ideaStatus String  @default("nowy")
+  /// link | ksiazka | artykul | wideo | cytat | inne (tylko dla type=reference)
+  referenceKind String @default("link")
+  referenceUrl String?
+  referenceSource String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([userId, type])
+  @@index([userId, archivedAt])
+}
+
+model LearningSession {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Dzień kalendarzowy "YYYY-MM-DD"
+  date      String
+  minutes   Int
+  topic     String
+  /// kurs | ksiazka | projekt | praktyka | powtorka | inne
+  type      String
+  category  String?
+  note      String?
+  courseId  String?
+  projectId String?
+  bookId    String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([userId, date])
+}
+
+model Course {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  platform    String?
+  platformUrl String?
+  progress    Int      @default(0)
+  /// w_trakcie | ukonczony | zaplanowany
+  status      String   @default("w_trakcie")
+  startedAt   String?
+  completedAt String?
+  nextLesson  String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  tech        String?
+  /// pomysl | w_trakcie | mvp | ukonczony | porzucony
+  status      String   @default("w_trakcie")
+  url         String?
+  githubUrl   String?
+  nextStep    String?
+  /// niski | sredni | wysoki
+  priority    String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Book {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  author      String?
+  category    String?
+  /// chce_przeczytac | czytam | przeczytane
+  status      String   @default("chce_przeczytac")
+  finishedAt  String?
+  startedAt   String?
+  rating      Int?
+  notes       String?
+  keyTakeaway String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Certification {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name            String
+  issuer          String
+  date            String
+  url             String?
+  expiryDate      String?
+  verificationUrl String?
+  renewalReminderDays Int?
+  createdAt       DateTime @default(now())
+
+  @@index([userId])
+}
+
+model LearningSettings {
+  userId            String   @id
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weeklyGoalMinutes Int      @default(600)
+  sessionCategories String[] @default([])
+  bookCategories    String[] @default([])
+  updatedAt         DateTime @updatedAt
 }

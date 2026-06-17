@@ -1,12 +1,21 @@
 import { useState, useCallback, memo } from 'react'
-import { createPortal } from 'react-dom'
 import { Card } from '../../components/Card'
 import { LearningCard } from '../../components/learning/LearningCard'
 import { AnimatePresence } from 'framer-motion'
-import { Plus, ExternalLink, TrendingUp, X, ChevronDown, Archive, RotateCcw } from 'lucide-react'
+import { Plus, ExternalLink, TrendingUp, ChevronDown, Archive, RotateCcw } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useLearning } from '../../context/LearningContext'
-import { useModalMotion } from '../../lib/modalMotion'
+import { LearningFormShell } from '../../components/learning/LearningFormShell'
+import { LearningModal } from '../../components/learning/LearningModal'
+import {
+  learningFieldClass,
+  learningLabelClass,
+  learningFormActionsClass,
+  learningPrimaryBtnClass,
+  learningSecondaryBtnClass,
+  learningAddBtnClass,
+  learningChipClass,
+} from '../../components/learning/learningFormClasses'
 import { useUndoDelete } from '../../components/learning/UndoToast'
 import type { Course } from '../../context/LearningContext'
 
@@ -40,9 +49,10 @@ function StatusBadge({ status }: { status: Course['status'] }) {
 
 interface CourseAddFormProps {
   onAdd: (c: Omit<Course, 'id'>) => void
+  onCancel: () => void
 }
 
-const CourseAddForm = memo(function CourseAddForm({ onAdd }: CourseAddFormProps) {
+const CourseAddForm = memo(function CourseAddForm({ onAdd, onCancel }: CourseAddFormProps) {
   const [name, setName] = useState('')
   const [platform, setPlatform] = useState('')
   const [platformUrl, setPlatformUrl] = useState('')
@@ -74,103 +84,98 @@ const CourseAddForm = memo(function CourseAddForm({ onAdd }: CourseAddFormProps)
   }
 
   return (
-    <Card title="Dodaj kurs">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="flex flex-wrap gap-4 items-end">
-          <div className="flex-1 min-w-[180px]">
-            <label className="block text-base text-(--text-muted) font-gaming mb-1">Nazwa *</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-base text-(--text-muted) font-gaming mb-1">Platforma</label>
-            <input
-              type="text"
-              value={platform}
-              onChange={(e) => setPlatform(e.target.value)}
-              className="px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming w-32 focus:border-(--accent-cyan) focus:outline-none"
-            />
-          </div>
-          <div className="flex-1 min-w-[180px]">
-            <label className="block text-base text-(--text-muted) font-gaming mb-1">URL platformy</label>
-            <input
-              type="url"
-              value={platformUrl}
-              onChange={(e) => setPlatformUrl(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
-            />
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-4 items-end">
-          <div className="flex-1 min-w-[180px]">
-            <label className="block text-base text-(--text-muted) font-gaming mb-1">Następna lekcja</label>
-            <input
-              type="text"
-              value={nextLesson}
-              onChange={(e) => setNextLesson(e.target.value)}
-              placeholder="np. Middleware i autoryzacja"
-              className="w-full px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-base text-(--text-muted) font-gaming mb-1">Data rozpoczęcia</label>
-            <input
-              type="date"
-              value={startedAt}
-              max="9999-12-31"
-              onChange={(e) => setStartedAt(e.target.value)}
-              className="px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
-            />
-          </div>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="sm:col-span-2">
+          <label className={learningLabelClass}>Nazwa *</label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className={learningFieldClass}
+          />
         </div>
         <div>
-          <label className="block text-base text-(--text-muted) font-gaming mb-1">Status</label>
-          <div className="flex gap-2 flex-wrap">
-            {STATUS_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => setStatus(opt.value)}
-                className={`px-4 py-2 rounded-lg font-gaming text-sm transition-colors ${
-                  status === opt.value
-                    ? 'bg-(--accent-cyan)/20 text-(--accent-cyan) border border-(--accent-cyan)/40'
-                    : 'bg-(--bg-dark) text-(--text-muted) border border-(--border) hover:border-(--accent-cyan)/40'
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
+          <label className={learningLabelClass}>Platforma</label>
+          <input
+            type="text"
+            value={platform}
+            onChange={(e) => setPlatform(e.target.value)}
+            className={learningFieldClass}
+          />
         </div>
-        {(status === 'w_trakcie' || status === 'ukonczony') && (
-          <div>
-            <label className="block text-base text-(--text-muted) font-gaming mb-1">
-              Postęp % {status === 'ukonczony' && '(automatycznie 100)'}
-            </label>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={status === 'ukonczony' ? '100' : progress}
-              onChange={(e) => status === 'w_trakcie' && setProgress(e.target.value.replace(/\D/g, ''))}
-              readOnly={status === 'ukonczony'}
-              className="px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-mono w-20 focus:border-(--accent-cyan) focus:outline-none"
-            />
-          </div>
-        )}
-        <button
-          type="submit"
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-(--accent-cyan) text-(--bg-dark) font-gaming font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
-          disabled={!name.trim()}
-        >
-          <Plus className="w-4 h-4" />
+        <div>
+          <label className={learningLabelClass}>URL platformy</label>
+          <input
+            type="url"
+            value={platformUrl}
+            onChange={(e) => setPlatformUrl(e.target.value)}
+            className={learningFieldClass}
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label className={learningLabelClass}>Następna lekcja</label>
+          <input
+            type="text"
+            value={nextLesson}
+            onChange={(e) => setNextLesson(e.target.value)}
+            placeholder="np. Middleware i autoryzacja"
+            className={learningFieldClass}
+          />
+        </div>
+        <div>
+          <label className={learningLabelClass}>Data rozpoczęcia</label>
+          <input
+            type="date"
+            value={startedAt}
+            max="9999-12-31"
+            onChange={(e) => setStartedAt(e.target.value)}
+            className={learningFieldClass}
+          />
+        </div>
+      </div>
+      <div>
+        <label className={learningLabelClass}>Status</label>
+        <div className="flex flex-wrap gap-2">
+          {STATUS_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setStatus(opt.value)}
+              className={learningChipClass(status === opt.value)}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      {(status === 'w_trakcie' || status === 'ukonczony') && (
+        <div>
+          <label className={learningLabelClass}>
+            Postęp % {status === 'ukonczony' && '(automatycznie 100)'}
+          </label>
+          <input
+            type="text"
+            inputMode="numeric"
+            value={status === 'ukonczony' ? '100' : progress}
+            onChange={(e) => status === 'w_trakcie' && setProgress(e.target.value.replace(/\D/g, ''))}
+            readOnly={status === 'ukonczony'}
+            className={`${learningFieldClass} font-mono sm:max-w-32`}
+          />
+        </div>
+      )}
+      <div className={learningFormActionsClass}>
+        <button type="submit" className={learningPrimaryBtnClass} disabled={!name.trim()}>
+          <Plus className="h-4 w-4" />
           Dodaj
         </button>
-      </form>
-    </Card>
+        <button type="button" onClick={onCancel} className={learningSecondaryBtnClass}>
+          Anuluj
+        </button>
+      </div>
+    </form>
   )
 })
 
@@ -183,7 +188,6 @@ interface EditCourseModalProps {
 }
 
 function EditCourseModal({ course, onSave, onClose }: EditCourseModalProps) {
-  const { backdrop, panel } = useModalMotion()
   const [editName, setEditName] = useState(course.name)
   const [editPlatform, setEditPlatform] = useState(course.platform ?? '')
   const [editPlatformUrl, setEditPlatformUrl] = useState(course.platformUrl ?? '')
@@ -213,146 +217,108 @@ function EditCourseModal({ course, onSave, onClose }: EditCourseModalProps) {
     onClose()
   }
 
-  return createPortal(
-    <>
-      <motion.div
-        key="course-edit-backdrop"
-        {...backdrop}
-        className="fixed inset-0 z-9998 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      <div className="fixed inset-0 z-9999 flex items-start justify-center overflow-y-auto p-4 pt-12 pointer-events-none">
-        <motion.div
-          key="course-edit-panel"
-          {...panel}
-          className="pointer-events-auto relative z-10 w-full max-w-md rounded-lg border border-(--border) bg-(--bg-card) p-6 shadow-xl"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-(--text-primary) font-gaming">Edytuj kurs</h3>
-            <button
-              onClick={onClose}
-              className="p-2 rounded-lg hover:bg-(--bg-card-hover) text-(--text-muted)"
-              aria-label="Zamknij"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">Nazwa</label>
-              <input
-                type="text"
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                autoFocus
-                className="w-full px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
-              />
-            </div>
-            <div className="flex gap-4">
-              <div className="flex-1">
-                <label className="block text-base text-(--text-muted) font-gaming mb-1">Platforma</label>
-                <input
-                  type="text"
-                  value={editPlatform}
-                  onChange={(e) => setEditPlatform(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">URL platformy</label>
-              <input
-                type="url"
-                value={editPlatformUrl}
-                onChange={(e) => setEditPlatformUrl(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">Następna lekcja</label>
-              <input
-                type="text"
-                value={editNextLesson}
-                onChange={(e) => setEditNextLesson(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">Status</label>
-              <div className="flex gap-2 flex-wrap">
-                {STATUS_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setEditStatus(opt.value)}
-                    className={`px-4 py-2 rounded-lg font-gaming text-sm transition-colors ${
-                      editStatus === opt.value
-                        ? 'bg-(--accent-cyan)/20 text-(--accent-cyan) border border-(--accent-cyan)/40'
-                        : 'bg-(--bg-dark) text-(--text-muted) border border-(--border)'
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {(editStatus === 'w_trakcie' || editStatus === 'ukonczony') && (
-              <div>
-                <label className="block text-base text-(--text-muted) font-gaming mb-1">Postęp %</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={editStatus === 'ukonczony' ? '100' : editProgress}
-                  onChange={(e) =>
-                    editStatus === 'w_trakcie' && setEditProgress(e.target.value.replace(/\D/g, ''))
-                  }
-                  readOnly={editStatus === 'ukonczony'}
-                  className="px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-mono w-20 focus:border-(--accent-cyan) focus:outline-none"
-                />
-              </div>
-            )}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-base text-(--text-muted) font-gaming mb-1">Data rozpoczęcia</label>
-                <input
-                  type="date"
-                  value={editStartedAt}
-                  max="9999-12-31"
-                  onChange={(e) => setEditStartedAt(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-base text-(--text-muted) font-gaming mb-1">Data ukończenia</label>
-                <input
-                  type="date"
-                  value={editCompletedAt}
-                  max="9999-12-31"
-                  onChange={(e) => setEditCompletedAt(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
-                />
-              </div>
-            </div>
-            <div className="flex gap-2">
+  return (
+    <LearningModal isOpen onClose={onClose} title="Edytuj kurs">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className={learningLabelClass}>Nazwa</label>
+          <input
+            type="text"
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            autoFocus
+            className={learningFieldClass}
+          />
+        </div>
+        <div>
+          <label className={learningLabelClass}>Platforma</label>
+          <input
+            type="text"
+            value={editPlatform}
+            onChange={(e) => setEditPlatform(e.target.value)}
+            className={learningFieldClass}
+          />
+        </div>
+        <div>
+          <label className={learningLabelClass}>URL platformy</label>
+          <input
+            type="url"
+            value={editPlatformUrl}
+            onChange={(e) => setEditPlatformUrl(e.target.value)}
+            className={learningFieldClass}
+          />
+        </div>
+        <div>
+          <label className={learningLabelClass}>Następna lekcja</label>
+          <input
+            type="text"
+            value={editNextLesson}
+            onChange={(e) => setEditNextLesson(e.target.value)}
+            className={learningFieldClass}
+          />
+        </div>
+        <div>
+          <label className={learningLabelClass}>Status</label>
+          <div className="flex flex-wrap gap-2">
+            {STATUS_OPTIONS.map((opt) => (
               <button
+                key={opt.value}
                 type="button"
-                onClick={onClose}
-                className="flex-1 py-2 rounded-lg border border-(--border) text-(--text-muted) font-gaming hover:bg-(--bg-card-hover)"
+                onClick={() => setEditStatus(opt.value)}
+                className={learningChipClass(editStatus === opt.value)}
               >
-                Anuluj
+                {opt.label}
               </button>
-              <button
-                type="submit"
-                className="flex-1 py-2 rounded-lg bg-(--accent-cyan) text-(--bg-dark) font-gaming font-bold hover:opacity-90"
-              >
-                Zapisz
-              </button>
-            </div>
-          </form>
-        </motion.div>
-      </div>
-    </>,
-    document.body,
+            ))}
+          </div>
+        </div>
+        {(editStatus === 'w_trakcie' || editStatus === 'ukonczony') && (
+          <div>
+            <label className={learningLabelClass}>Postęp %</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={editStatus === 'ukonczony' ? '100' : editProgress}
+              onChange={(e) =>
+                editStatus === 'w_trakcie' && setEditProgress(e.target.value.replace(/\D/g, ''))
+              }
+              readOnly={editStatus === 'ukonczony'}
+              className={`${learningFieldClass} font-mono sm:max-w-32`}
+            />
+          </div>
+        )}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label className={learningLabelClass}>Data rozpoczęcia</label>
+            <input
+              type="date"
+              value={editStartedAt}
+              max="9999-12-31"
+              onChange={(e) => setEditStartedAt(e.target.value)}
+              className={learningFieldClass}
+            />
+          </div>
+          <div>
+            <label className={learningLabelClass}>Data ukończenia</label>
+            <input
+              type="date"
+              value={editCompletedAt}
+              max="9999-12-31"
+              onChange={(e) => setEditCompletedAt(e.target.value)}
+              className={learningFieldClass}
+            />
+          </div>
+        </div>
+        <div className={learningFormActionsClass}>
+          <button type="submit" className={learningPrimaryBtnClass}>
+            Zapisz
+          </button>
+          <button type="button" onClick={onClose} className={learningSecondaryBtnClass}>
+            Anuluj
+          </button>
+        </div>
+      </form>
+    </LearningModal>
   )
 }
 
@@ -458,39 +424,10 @@ export function LearningCourses() {
   const activeCourses = courses.filter((c) => c.status !== 'ukonczony' && c.id !== pendingId)
   const completedCourses = courses.filter((c) => c.status === 'ukonczony' && c.id !== pendingId)
   const activeGroups = STATUS_GROUPS.filter((g) => g.status !== 'ukonczony')
+  const visibleCount = courses.filter((c) => c.id !== pendingId).length
 
   return (
     <div className="space-y-6">
-      {/* Collapsed add form */}
-      <div className="space-y-3">
-        <button
-          type="button"
-          onClick={() => setShowAddForm((v) => !v)}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border font-gaming text-sm transition-colors ${
-            showAddForm
-              ? 'bg-(--accent-cyan)/20 text-(--accent-cyan) border-(--accent-cyan)/40'
-              : 'bg-(--bg-dark) text-(--text-muted) border-(--border) hover:border-(--accent-cyan)/40 hover:text-(--text-primary)'
-          }`}
-        >
-          <Plus className="w-4 h-4" />
-          {showAddForm ? 'Anuluj' : 'Dodaj kurs'}
-        </button>
-        <AnimatePresence>
-          {showAddForm && (
-            <motion.div
-              key="course-form"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="overflow-hidden"
-            >
-              <CourseAddForm onAdd={(c) => { addCourse(c); setShowAddForm(false) }} />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
       {activeCourses.length > 0 ? (
         <div className="space-y-6">
           {activeGroups.map((group) => {
@@ -514,14 +451,13 @@ export function LearningCourses() {
           })}
         </div>
       ) : (
-        courses.filter((c) => c.id !== pendingId).length === 0 && (
+        visibleCount === 0 && (
           <Card title="Lista kursów">
             <p className="text-base text-(--text-muted)">Brak kursów. Dodaj pierwszy.</p>
           </Card>
         )
       )}
 
-      {/* Collapsible archive of completed courses */}
       {completedCourses.length > 0 && (
         <Card>
           <button
@@ -571,19 +507,38 @@ export function LearningCourses() {
         </Card>
       )}
 
-      {/* Edit modal */}
-      <AnimatePresence>
-        {editingCourse && (
-          <EditCourseModal
-            key={editingCourse.id}
-            course={editingCourse}
-            onSave={updateCourse}
-            onClose={() => setEditingCourse(null)}
-          />
+      <div className={visibleCount > 0 ? 'border-t border-(--border)/40 pt-8' : ''}>
+        {showAddForm ? (
+          <LearningFormShell
+            isOpen={showAddForm}
+            onClose={() => setShowAddForm(false)}
+            title="Dodaj kurs"
+          >
+            <CourseAddForm
+              onAdd={(c) => {
+                addCourse(c)
+                setShowAddForm(false)
+              }}
+              onCancel={() => setShowAddForm(false)}
+            />
+          </LearningFormShell>
+        ) : (
+          <button type="button" onClick={() => setShowAddForm(true)} className={learningAddBtnClass}>
+            <Plus className="h-4 w-4" />
+            Dodaj kurs
+          </button>
         )}
-      </AnimatePresence>
+      </div>
 
-      {/* Undo delete toast */}
+      {editingCourse && (
+        <EditCourseModal
+          key={editingCourse.id}
+          course={editingCourse}
+          onSave={updateCourse}
+          onClose={() => setEditingCourse(null)}
+        />
+      )}
+
       <AnimatePresence>{toast}</AnimatePresence>
     </div>
   )

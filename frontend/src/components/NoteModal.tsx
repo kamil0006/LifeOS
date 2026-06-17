@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { ModalShell } from './ModalShell'
 import {
   X,
   HelpCircle,
@@ -14,7 +13,6 @@ import {
   BookOpen,
   ChevronDown,
 } from 'lucide-react'
-import { useModalMotion } from '../lib/modalMotion'
 import type { Note, NoteType, IdeaStatus } from '../context/NotesContext'
 import {
   IDEA_STATUS_WORKFLOW_ORDER,
@@ -135,7 +133,6 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
   const { addTodo } = useTodos()
   const learningCtx = useLearning()
   const { addGoal } = useHabits()
-  const { backdrop, panel } = useModalMotion()
   const [archivePromptOpen, setArchivePromptOpen] = useState(false)
 
   const getInitialForm = useCallback(() => {
@@ -300,21 +297,13 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
   const panelMax = showSplit ? 'max-w-5xl' : 'max-w-lg'
 
   const modalContent = (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          <motion.div
-            key="note-backdrop"
-            {...backdrop}
-            className="fixed inset-0 z-9998 bg-black/60 backdrop-blur-sm"
-            onClick={onClose}
-          />
-          <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 pointer-events-none overflow-y-auto">
-            <motion.div
-              key="note-panel"
-              {...panel}
-              className={`pointer-events-auto relative my-8 w-full ${panelMax} rounded-lg border border-(--border) bg-(--bg-card) p-6 shadow-xl`}
-            >
+    <ModalShell
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth={panelMax}
+      backdropKey="note-backdrop"
+      panelKey="note-panel"
+    >
               <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
                 <h3 className="text-lg font-bold text-(--text-primary) font-gaming">
                   {isEdit ? 'Edytuj notatkę' : `Dodaj ${TYPE_LABELS[type]}`}
@@ -598,24 +587,21 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
                   </button>
                 </div>
               </form>
-            </motion.div>
-          </div>
-        </>
-      )}
-    </AnimatePresence>
+    </ModalShell>
   )
 
   return (
     <>
-      {createPortal(modalContent, document.body)}
+      {modalContent}
       <ConfirmDialog
-        zLayer="stacked"
+        zBackdrop={10030}
+        zPanel={10031}
         isOpen={archivePromptOpen && !!note && !!notesCtx}
         title="Zarchiwizować notatkę?"
         description="Notatka zniknie z aktywnej listy. Możesz ją przywrócić z zakładki Archiwum."
         emphasis={note ? getNoteDisplayTitle(note) : undefined}
         confirmLabel="Archiwizuj"
-        onCancel={() => setArchivePromptOpen(false)}
+        onClose={() => setArchivePromptOpen(false)}
         onConfirm={() => {
           if (note && notesCtx) {
             notesCtx.archiveNote(note.id)

@@ -154,32 +154,48 @@ export function AnalyticsPageSkeleton() {
   )
 }
 
-/** Net worth: hero + grid */
+/** Net worth: okres, podsumowanie, składniki, wykres */
 export function NetWorthPageSkeleton() {
   return (
-    <div className="space-y-8 animate-in fade-in duration-200">
+    <div className="space-y-6 animate-in fade-in duration-200">
+      <SkeletonPulse className="h-11 w-full max-w-xl rounded-lg" />
       <div className="space-y-2">
-        <SkeletonPulse className="h-9 w-56" />
-        <SkeletonPulse className="h-4 w-80 max-w-full" />
+        <SkeletonPulse className="h-6 w-48" />
+        <SkeletonPulse className="h-4 w-full max-w-xl" />
       </div>
-      <SkeletonCardShell className="p-8">
-        <SkeletonPulse className="h-4 w-32 mx-auto mb-4" />
-        <SkeletonPulse className="h-12 w-48 mx-auto mb-6" />
-        <SkeletonPulse className="h-3 w-full max-w-md mx-auto" />
+      <SkeletonCardShell className="p-6">
+        <SkeletonPulse className="h-4 w-40 mb-2" />
+        <SkeletonPulse className="h-10 w-56 mb-4" />
+        <div className="space-y-3">
+          <SkeletonPulse className="h-4 w-full" />
+          <SkeletonPulse className="h-4 w-full" />
+          <SkeletonPulse className="h-4 w-full" />
+        </div>
       </SkeletonCardShell>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {[0, 1, 2].map((i) => (
-          <SkeletonCardShell key={i}>
-            <SkeletonPulse className="h-3 w-24 mb-2" />
-            <SkeletonPulse className="h-7 w-28" />
-          </SkeletonCardShell>
-        ))}
-      </div>
+      <SkeletonCardShell className="p-6">
+        <SkeletonPulse className="h-5 w-56 mb-4" />
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="space-y-2">
+            {[0, 1, 2].map((i) => (
+              <SkeletonRow key={i} />
+            ))}
+          </div>
+          <div className="space-y-2">
+            {[0, 1].map((i) => (
+              <SkeletonRow key={i} />
+            ))}
+          </div>
+        </div>
+      </SkeletonCardShell>
+      <SkeletonCardShell className="p-6">
+        <SkeletonPulse className="h-5 w-48 mb-4" />
+        <SkeletonChart />
+      </SkeletonCardShell>
     </div>
   )
 }
 
-/** Todo, Habits, Calendar, Wishes: title + card list */
+/** Todo, Habits, Calendar: title + card list */
 export function SimplePageSkeleton({ titleWidth = 'w-40' }: { titleWidth?: string }) {
   return (
     <div className="space-y-6 animate-in fade-in duration-200">

@@ -31,7 +31,14 @@ export interface UseTransactionsListParams {
     pausedUntil?: string | null
     reminderDaysBefore?: number | null
   }[]
-  effectiveIncome: { id: string; source: string; amount: number; date: string; recurring: boolean }[]
+  effectiveIncome: {
+    id: string
+    source: string
+    amount: number
+    date: string
+    recurring: boolean
+    category?: string
+  }[]
   selectedMonth: number
   selectedYear: number
   loading: boolean
@@ -41,7 +48,14 @@ export interface UseTransactionsListParams {
 function buildTransactionsForDateRange(
   effectiveExpenses: Parameters<typeof mergeExpensesWithScheduled>[0],
   effectiveScheduled: Parameters<typeof mergeExpensesWithScheduled>[1],
-  effectiveIncome: { id: string; source: string; amount: number; date: string; recurring: boolean }[],
+  effectiveIncome: {
+    id: string
+    source: string
+    amount: number
+    date: string
+    recurring: boolean
+    category?: string
+  }[],
   from: string,
   to: string
 ): Transaction[] {
@@ -81,7 +95,7 @@ function buildTransactionsForDateRange(
     id: i.id,
     date: i.date,
     name: i.source,
-    category: EXPENSE_CATEGORY_NONE,
+    category: i.category ?? EXPENSE_CATEGORY_NONE,
     amount: i.amount,
     type: 'income' as const,
   }))
@@ -177,7 +191,7 @@ export function useTransactionsList(params: UseTransactionsListParams) {
       id: i.id,
       date: i.date,
       name: i.source,
-      category: EXPENSE_CATEGORY_NONE,
+      category: i.category ?? EXPENSE_CATEGORY_NONE,
       amount: i.amount,
       type: 'income',
     }))

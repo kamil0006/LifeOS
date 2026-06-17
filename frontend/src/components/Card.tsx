@@ -17,11 +17,11 @@ export function Card({ children, className = '', title, action, animateEntrance 
       {(title || action) && (
         <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           {title && (
-            <h3
+            <h2
               className={`text-base font-semibold text-(--text-primary) font-gaming tracking-wider ${action ? 'min-w-0 sm:pr-2' : ''}`}
             >
               {title}
-            </h3>
+            </h2>
           )}
           {action && (
             <div className="min-w-0 w-full shrink-0 sm:w-auto sm:max-w-full">{action}</div>

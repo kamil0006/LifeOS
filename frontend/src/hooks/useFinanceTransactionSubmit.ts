@@ -23,14 +23,15 @@ export function useFinanceTransactionSubmit() {
     async (formType: 'income' | 'expense', data: TransactionFormData) => {
       const date = data.date ?? new Date().toISOString().split('T')[0]
       if (formType === 'income') {
+        const category = data.category ?? EXPENSE_CATEGORY_NONE
         if (!useApi) {
           if (demoData) {
-            demoData.addIncome({ source: data.name, amount: data.amount, date, recurring: false })
+            demoData.addIncome({ source: data.name, amount: data.amount, date, recurring: false, category })
           } else {
             console.warn('DemoDataProvider brak – przychód nie został zapisany')
           }
         } else {
-          await incomeApi.create({ source: data.name, amount: data.amount, date })
+          await incomeApi.create({ source: data.name, amount: data.amount, date, category })
           await invalidateFinanceQueries(queryClient, userId)
         }
       } else {
@@ -69,9 +70,16 @@ export function useFinanceTransactionSubmit() {
             amount: data.amount,
             date,
             recurring: data.recurring ?? false,
+            category: data.category ?? EXPENSE_CATEGORY_NONE,
           })
         } else {
-          await incomeApi.update(id, { source: data.name, amount: data.amount, date, recurring: data.recurring })
+          await incomeApi.update(id, {
+            source: data.name,
+            amount: data.amount,
+            date,
+            recurring: data.recurring,
+            category: data.category ?? EXPENSE_CATEGORY_NONE,
+          })
           await invalidateFinanceQueries(queryClient, userId)
         }
       } else if (!useApi) {

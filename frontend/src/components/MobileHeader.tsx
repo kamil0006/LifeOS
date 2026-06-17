@@ -11,7 +11,7 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
 
   return (
     <header
-      className="lg:hidden sticky top-0 z-30 flex items-center gap-2 border-b border-(--border) bg-(--bg-card)/95 backdrop-blur-md px-3 py-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))]"
+      className="mobile-header-bar lg:hidden fixed top-0 inset-x-0 z-30 flex items-center gap-2 border-b border-(--border) bg-(--bg-card)/95 backdrop-blur-md"
       role="banner"
     >
       <button

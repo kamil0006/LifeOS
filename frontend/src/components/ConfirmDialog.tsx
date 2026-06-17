@@ -1,97 +1,109 @@
-import { useEffect, type ReactNode } from 'react'
-import { createPortal } from 'react-dom'
-import { motion, AnimatePresence } from 'framer-motion'
-import { useModalMotion } from '../lib/modalMotion'
+import { useState } from 'react'
+import { X } from 'lucide-react'
+import { ModalShell } from './ModalShell'
 
-export type ConfirmDialogZLayer = 'default' | 'stacked'
-
-export interface ConfirmDialogProps {
+export type ConfirmDialogProps = {
   isOpen: boolean
-  onCancel: () => void
-  onConfirm: () => void
+  onClose: () => void
   title: string
-  description: ReactNode
-  /** Opcjonalna wyróżniona nazwa (np. w cudzysłowie), jak w Nawykach */
+  description: string
   emphasis?: string
-  confirmLabel: string
+  variant?: 'danger' | 'neutral'
+  confirmLabel?: string
   cancelLabel?: string
-  /** `stacked` — nad innym modalem (np. edycja notatki) */
-  zLayer?: ConfirmDialogZLayer
+  alertOnly?: boolean
+  onConfirm: () => void | Promise<void>
+  zBackdrop?: number
+  zPanel?: number
 }
 
-/**
- * Ten sam wzorzec co potwierdzenia archiwizacji/usuwania w Nawykach (portal + motion + blur).
- */
 export function ConfirmDialog({
   isOpen,
-  onCancel,
-  onConfirm,
+  onClose,
   title,
   description,
   emphasis,
+  variant = 'neutral',
   confirmLabel,
   cancelLabel = 'Anuluj',
-  zLayer = 'default',
+  alertOnly = false,
+  onConfirm,
+  zBackdrop = 10020,
+  zPanel = 10021,
 }: ConfirmDialogProps) {
-  const { backdrop, panel } = useModalMotion()
+  const [busy, setBusy] = useState(false)
 
-  const zBackdrop = zLayer === 'stacked' ? 'z-[10008]' : 'z-9998'
-  const zWrap = zLayer === 'stacked' ? 'z-[10009]' : 'z-9999'
+  const danger = variant === 'danger'
+  const primaryLabel = confirmLabel ?? (alertOnly ? 'OK' : 'Potwierdź')
 
-  useEffect(() => {
-    if (!isOpen) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onCancel()
+  const handleConfirm = async () => {
+    if (busy) return
+    setBusy(true)
+    try {
+      await onConfirm()
+      onClose()
+    } finally {
+      setBusy(false)
     }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [isOpen, onCancel])
+  }
 
-  return createPortal(
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          <motion.div
-            key="confirm-backdrop"
-            {...backdrop}
-            className={`fixed inset-0 ${zBackdrop} bg-black/60 backdrop-blur-sm`}
-            onClick={onCancel}
-          />
-          <div
-            className={`fixed inset-0 ${zWrap} flex items-start justify-center overflow-y-auto p-4 pt-24 pointer-events-none`}
+  return (
+    <ModalShell
+      isOpen={isOpen}
+      onClose={alertOnly ? onClose : undefined}
+      maxWidth="max-w-md"
+      zBackdrop={zBackdrop}
+      zPanel={zPanel}
+      backdropKey="confirm-backdrop"
+      panelKey="confirm-panel"
+    >
+      <div className="absolute top-0 left-0 h-px w-full bg-linear-to-r from-transparent via-(--accent-cyan)/45 to-transparent" />
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <h3
+          id="confirm-dialog-title"
+          className="text-lg font-bold font-gaming text-(--text-primary) tracking-wide"
+        >
+          {title}
+        </h3>
+        <button
+          type="button"
+          onClick={onClose}
+          className="shrink-0 rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-(--bg-card-hover) hover:text-(--text-primary)"
+          aria-label="Zamknij"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+      <div id="confirm-dialog-desc" className="mb-6 space-y-2">
+        {emphasis?.trim() ? (
+          <p className="text-base font-gaming text-(--text-primary)">{emphasis.trim()}</p>
+        ) : null}
+        <p className="text-base leading-relaxed text-(--text-muted)">{description}</p>
+      </div>
+      <div className={`flex flex-col gap-2 sm:flex-row sm:flex-wrap ${alertOnly ? '' : 'sm:justify-end'}`}>
+        {!alertOnly && (
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={busy}
+            className="w-full rounded-lg border border-(--border) py-2.5 font-gaming text-(--text-muted) transition-colors hover:bg-(--bg-card-hover) sm:min-w-28 sm:w-auto"
           >
-            <motion.div
-              key="confirm-panel"
-              {...panel}
-              className="pointer-events-auto relative z-10 w-full max-w-md rounded-lg border border-(--border) bg-(--bg-card) p-6 shadow-xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h3 className="mb-2 text-lg font-bold text-(--text-primary) font-gaming">{title}</h3>
-              <div className="mb-1 text-base text-(--text-muted)">{description}</div>
-              {emphasis != null && emphasis !== '' && (
-                <p className="mb-6 text-base font-medium text-(--text-primary)">„{emphasis}”</p>
-              )}
-              <div className={`flex flex-wrap gap-2 justify-end ${emphasis ? '' : 'mt-6'}`}>
-                <button
-                  type="button"
-                  onClick={onCancel}
-                  className="rounded-lg border border-(--border) px-4 py-2 text-base text-(--text-muted) hover:bg-(--bg-card-hover) hover:text-(--text-primary)"
-                >
-                  {cancelLabel}
-                </button>
-                <button
-                  type="button"
-                  onClick={onConfirm}
-                  className="rounded-lg border border-red-500/50 bg-red-500/15 px-4 py-2 text-base text-red-400 hover:bg-red-500/25"
-                >
-                  {confirmLabel}
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        </>
-      )}
-    </AnimatePresence>,
-    document.body
+            {cancelLabel}
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => void handleConfirm()}
+          disabled={busy}
+          className={`w-full rounded-lg border py-2.5 font-gaming transition-colors disabled:opacity-50 sm:min-w-28 sm:w-auto ${
+            danger
+              ? 'border-[#e74c3c]/50 bg-[#e74c3c]/15 text-[#e74c3c] hover:bg-[#e74c3c]/25'
+              : 'border-(--accent-cyan)/45 bg-(--accent-cyan)/15 text-(--accent-cyan) hover:bg-(--accent-cyan)/25'
+          }`}
+        >
+          {busy ? '…' : primaryLabel}
+        </button>
+      </div>
+    </ModalShell>
   )
 }

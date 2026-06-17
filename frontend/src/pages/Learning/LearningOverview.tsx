@@ -11,6 +11,7 @@ import {
   FolderKanban,
   Tag,
 } from 'lucide-react'
+import { learningAddBtnClass } from '../../components/learning/learningFormClasses'
 import { useLearning } from '../../context/LearningContext'
 import { formatMinutes, SESSION_TYPE_OPTIONS } from './learningUtils'
 import { PomodoroCardButton } from '../../components/learning/PomodoroTimer'
@@ -107,47 +108,47 @@ export function LearningOverview() {
   return (
     <div className="space-y-6">
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="border-(--accent-cyan)/20">
-          <div className="flex items-center gap-2 mb-1">
-            <Clock className="w-4 h-4 text-(--accent-cyan)" />
-            <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">Łącznie</p>
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <Card className="border-(--accent-cyan)/20 max-md:p-4">
+          <div className="mb-1 flex items-center gap-2">
+            <Clock className="h-4 w-4 shrink-0 text-(--accent-cyan)" />
+            <p className="text-sm text-(--text-muted)">Łącznie</p>
           </div>
-          <p className="text-2xl font-bold font-gaming text-(--accent-cyan)">{formatMinutes(totalMinutes)}</p>
-          <p className="text-sm text-(--text-muted) mt-0.5">{sessions.length} sesji</p>
+          <p className="text-xl font-bold text-(--accent-cyan) sm:text-2xl">{formatMinutes(totalMinutes)}</p>
+          <p className="mt-0.5 text-sm text-(--text-muted)">{sessions.length} sesji</p>
         </Card>
 
-        <Card className="border-(--accent-green)/20">
-          <div className="flex items-center gap-2 mb-1">
-            <Target className="w-4 h-4 text-(--accent-green)" />
-            <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">Ten tydzień</p>
+        <Card className="border-(--accent-green)/20 max-md:p-4">
+          <div className="mb-1 flex items-center gap-2">
+            <Target className="h-4 w-4 shrink-0 text-(--accent-green)" />
+            <p className="text-sm text-(--text-muted)">Ten tydzień</p>
           </div>
-          <p className="text-2xl font-bold font-gaming text-(--accent-green)">{formatMinutes(weekProgress)}</p>
-          <p className="text-sm text-(--text-muted) mt-0.5">{goalPercent}% celu</p>
+          <p className="text-xl font-bold text-(--accent-green) sm:text-2xl">{formatMinutes(weekProgress)}</p>
+          <p className="mt-0.5 text-sm text-(--text-muted)">{goalPercent}% celu</p>
         </Card>
 
-        <Card className="border-(--accent-magenta)/20">
-          <div className="flex items-center gap-2 mb-1">
-            <GraduationCap className="w-4 h-4 text-(--accent-magenta)" />
-            <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">Kursy</p>
+        <Card className="border-(--accent-magenta)/20 max-md:p-4">
+          <div className="mb-1 flex items-center gap-2">
+            <GraduationCap className="h-4 w-4 shrink-0 text-(--accent-magenta)" />
+            <p className="text-sm text-(--text-muted)">Kursy</p>
           </div>
-          <p className="text-2xl font-bold font-gaming text-(--accent-magenta)">
+          <p className="text-xl font-bold text-(--accent-magenta) sm:text-2xl">
             {courses.filter((c) => c.status === 'w_trakcie').length} aktywne
           </p>
-          <p className="text-sm text-(--text-muted) mt-0.5">
+          <p className="mt-0.5 text-sm text-(--text-muted)">
             {courses.filter((c) => c.status === 'ukonczony').length} ukończonych
           </p>
         </Card>
 
-        <Card className="border-(--accent-amber)/20">
-          <div className="flex items-center gap-2 mb-1">
-            <BookOpen className="w-4 h-4 text-(--accent-amber)" />
-            <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">Książki</p>
+        <Card className="border-(--accent-amber)/20 max-md:p-4">
+          <div className="mb-1 flex items-center gap-2">
+            <BookOpen className="h-4 w-4 shrink-0 text-(--accent-amber)" />
+            <p className="text-sm text-(--text-muted)">Książki</p>
           </div>
-          <p className="text-2xl font-bold font-gaming text-(--accent-amber)">
+          <p className="text-xl font-bold text-(--accent-amber) sm:text-2xl">
             {books.filter((b) => b.status === 'czytam').length} czytam
           </p>
-          <p className="text-sm text-(--text-muted) mt-0.5">
+          <p className="mt-0.5 text-sm text-(--text-muted)">
             {books.filter((b) => b.status === 'przeczytane').length} przeczytanych
           </p>
         </Card>
@@ -164,24 +165,30 @@ export function LearningOverview() {
           {!hasAnythingActive ? (
             <div className="space-y-3">
               <p className="text-base text-(--text-muted)">Nic aktywnego. Zacznij kurs, projekt lub książkę.</p>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                 <button
+                  type="button"
                   onClick={() => navigate('/learning/courses')}
-                  className="text-sm text-(--accent-cyan) hover:underline font-gaming"
+                  className={learningAddBtnClass}
                 >
-                  + Dodaj kurs
+                  <Plus className="h-4 w-4" />
+                  Dodaj kurs
                 </button>
                 <button
+                  type="button"
                   onClick={() => navigate('/learning/projects')}
-                  className="text-sm text-(--accent-green) hover:underline font-gaming"
+                  className="flex min-h-11 items-center gap-2 rounded-lg border border-(--accent-green)/40 bg-(--accent-green)/15 px-4 py-2 text-base font-medium text-(--accent-green) transition-colors hover:bg-(--accent-green)/25"
                 >
-                  + Projekt
+                  <Plus className="h-4 w-4" />
+                  Dodaj projekt
                 </button>
                 <button
+                  type="button"
                   onClick={() => navigate('/learning/books')}
-                  className="text-sm text-(--accent-amber) hover:underline font-gaming"
+                  className="flex min-h-11 items-center gap-2 rounded-lg border border-(--accent-amber)/40 bg-(--accent-amber)/15 px-4 py-2 text-base font-medium text-(--accent-amber) transition-colors hover:bg-(--accent-amber)/25"
                 >
-                  + Książka
+                  <Plus className="h-4 w-4" />
+                  Dodaj książkę
                 </button>
               </div>
               {recentTopics.length > 0 && (
@@ -293,10 +300,12 @@ export function LearningOverview() {
             <div className="space-y-3">
               <p className="text-base text-(--text-muted)">Brak sesji.</p>
               <button
+                type="button"
                 onClick={() => navigate('/learning/hours')}
-                className="text-sm text-(--accent-cyan) hover:underline font-gaming"
+                className={learningAddBtnClass}
               >
-                + Dodaj sesję
+                <Plus className="h-4 w-4" />
+                Dodaj sesję
               </button>
             </div>
           ) : (
@@ -352,37 +361,37 @@ export function LearningOverview() {
       )}
 
       {/* Quick actions */}
-      <Card title="Szybkie akcje">
-        <div className="flex flex-wrap gap-3">
+      <Card title="Szybkie akcje" className="max-md:p-4">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3">
           {[
             {
               label: 'Sesja',
               route: '/learning/hours',
-              cls: 'text-(--accent-cyan) border-(--accent-cyan)/30 hover:bg-(--accent-cyan)/10',
+              cls: 'border-(--accent-cyan)/30 text-(--accent-cyan) hover:bg-(--accent-cyan)/10',
             },
             {
               label: 'Kurs',
               route: '/learning/courses',
-              cls: 'text-(--accent-magenta) border-(--accent-magenta)/30 hover:bg-(--accent-magenta)/10',
+              cls: 'border-(--accent-magenta)/30 text-(--accent-magenta) hover:bg-(--accent-magenta)/10',
             },
             {
               label: 'Książka',
               route: '/learning/books',
-              cls: 'text-(--accent-amber) border-(--accent-amber)/30 hover:bg-(--accent-amber)/10',
+              cls: 'border-(--accent-amber)/30 text-(--accent-amber) hover:bg-(--accent-amber)/10',
             },
             {
               label: 'Projekt',
               route: '/learning/projects',
-              cls: 'text-(--accent-green) border-(--accent-green)/30 hover:bg-(--accent-green)/10',
+              cls: 'border-(--accent-green)/30 text-(--accent-green) hover:bg-(--accent-green)/10',
             },
           ].map((action) => (
             <button
               key={action.route}
               type="button"
               onClick={() => navigate(action.route)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg border font-gaming text-sm transition-colors ${action.cls}`}
+              className={`flex min-h-11 items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors sm:px-4 ${action.cls}`}
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="h-4 w-4 shrink-0" />
               {action.label}
             </button>
           ))}

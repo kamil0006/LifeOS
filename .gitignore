@@ -1,5 +1,6 @@
 node_modules
 dist
+dev-dist
 
 # Environment — w repo tylko szablony `.env.example` (bez sekretów)
 .env

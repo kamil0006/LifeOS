@@ -66,20 +66,35 @@ export function NotesOverview() {
 
   const { addNote, updateNote } = notes
 
-  const noteRow = (n: Note, opts?: { showPin?: boolean }) => (
-    <li key={n.id} className="flex items-start gap-2 min-w-0">
-      {opts?.showPin && n.pinned && (
-        <Pin className="w-4 h-4 shrink-0 text-(--accent-amber) mt-0.5 fill-current opacity-60" aria-hidden />
-      )}
-      <button
-        type="button"
-        onClick={() => setOpenNoteId(n.id)}
-        className="text-left text-base text-(--text-primary) font-gaming truncate hover:text-(--accent-cyan) transition-colors"
-      >
-        {getNoteDisplayTitle(n)}
-      </button>
-    </li>
-  )
+  const noteRow = (n: Note, opts?: { showPin?: boolean }) => {
+    const typeLabel =
+      n.type === 'inbox' ? 'Inbox' : n.type === 'idea' ? 'Pomysł' : 'Referencja'
+    const edited = new Date(n.updatedAt).toLocaleDateString('pl-PL', {
+      day: 'numeric',
+      month: 'short',
+    })
+    return (
+      <li key={n.id} className="min-w-0">
+        <button
+          type="button"
+          onClick={() => setOpenNoteId(n.id)}
+          className="flex w-full items-start gap-2 rounded-lg border border-transparent px-2 py-2 text-left transition-colors hover:border-(--border)/70 hover:bg-(--bg-dark)/40"
+        >
+          {opts?.showPin && n.pinned && (
+            <Pin className="mt-0.5 h-4 w-4 shrink-0 fill-current text-(--accent-amber)" aria-hidden />
+          )}
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-base font-medium text-(--text-primary)">
+              {getNoteDisplayTitle(n)}
+            </span>
+            <span className="mt-0.5 block text-sm text-(--text-muted)">
+              {typeLabel} · {edited}
+            </span>
+          </span>
+        </button>
+      </li>
+    )
+  }
 
   const editingNote = openNoteId ? activeNotes.find((x) => x.id === openNoteId) ?? null : null
 
@@ -174,54 +189,48 @@ export function NotesOverview() {
         animate="show"
       >
         <motion.div variants={getOverviewTileVariants(reduceMotion, 0)} className="min-w-0">
-          <Card
-            title="Szybkie akcje"
-            className="border-(--accent-cyan)/35 shadow-[0_0_28px_rgba(0,229,255,0.07)]"
-            animateEntrance={false}
-          >
-            <p className="text-base text-(--text-muted) font-gaming mb-4">
-              Dodaj notatkę, pomysł lub referencję — bez zmiany zakładki.
-            </p>
-            <div className="flex flex-wrap gap-3">
+          <Card title="Dodaj" animateEntrance={false} className="max-md:p-4">
+            <p className="mb-3 text-base text-(--text-muted)">Nowa notatka, pomysł lub referencja.</p>
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               <button
                 type="button"
                 onClick={() => setModalType('inbox')}
-                className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-(--accent-cyan) text-(--bg-dark) border border-(--accent-cyan)/60 font-gaming text-base font-bold tracking-wide hover:opacity-92 transition-opacity shadow-[0_0_20px_rgba(0,229,255,0.25)]"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-(--accent-cyan)/45 bg-(--accent-cyan)/18 px-4 font-gaming text-sm tracking-wide text-(--accent-cyan) transition-colors hover:bg-(--accent-cyan)/26"
               >
-                <Plus className="w-5 h-5" />
+                <Plus className="h-4 w-4" />
                 Notatka
               </button>
               <button
                 type="button"
                 onClick={() => setModalType('idea')}
-                className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-(--accent-amber)/20 text-(--accent-amber) border border-(--accent-amber)/50 font-gaming text-base font-bold tracking-wide hover:bg-(--accent-amber)/28 transition-colors"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-(--border) bg-(--bg-dark) px-4 font-gaming text-sm tracking-wide text-(--text-primary) transition-colors hover:border-(--accent-amber)/40 hover:text-(--accent-amber)"
               >
-                <Plus className="w-5 h-5" />
+                <Plus className="h-4 w-4" />
                 Pomysł
               </button>
               <button
                 type="button"
                 onClick={() => setModalType('reference')}
-                className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-(--accent-magenta)/15 text-(--accent-magenta) border border-(--accent-magenta)/45 font-gaming text-base font-bold tracking-wide hover:bg-(--accent-magenta)/22 transition-colors"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-(--border) bg-(--bg-dark) px-4 font-gaming text-sm tracking-wide text-(--text-primary) transition-colors hover:border-(--accent-magenta)/40 hover:text-(--accent-magenta)"
               >
-                <Plus className="w-5 h-5" />
+                <Plus className="h-4 w-4" />
                 Referencja
               </button>
             </div>
           </Card>
         </motion.div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-5">
           {stats.map(({ icon: Icon, label, value, color, to }, i) => (
             <motion.div key={label} variants={getOverviewTileVariants(reduceMotion, i + 1)} className="min-w-0">
               <Link to={to} className="block h-full">
-                <Card className="border-(--accent-cyan)/20 h-full hover:border-(--accent-cyan)/40 transition-colors" animateEntrance={false}>
+                <Card className="h-full max-md:p-4 transition-colors hover:border-(--accent-cyan)/30" animateEntrance={false}>
                   <div className="flex items-center gap-2">
-                    <Icon className={`w-5 h-5 ${color}`} />
-                    <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">{label}</p>
+                    <Icon className={`h-5 w-5 ${color}`} />
+                    <p className="text-base text-(--text-muted)">{label}</p>
                   </div>
-                  <p className={`mt-1 text-2xl font-bold font-gaming ${color}`}>{value}</p>
-                  <p className="mt-0.5 text-base text-(--text-muted)">aktywnych</p>
+                  <p className={`mt-2 text-2xl font-bold font-gaming ${color}`}>{value}</p>
+                  <p className="mt-0.5 text-sm text-(--text-muted)">aktywnych</p>
                 </Card>
               </Link>
             </motion.div>
@@ -230,31 +239,30 @@ export function NotesOverview() {
 
         {pinned.length > 0 && (
           <motion.div variants={getOverviewTileVariants(reduceMotion, 4)} className="min-w-0">
-            <Card title="Przypięte" animateEntrance={false}>
+            <Card title="Przypięte" animateEntrance={false} className="max-md:p-4">
               <ul className="space-y-2">{pinned.map((n) => noteRow(n, { showPin: true }))}</ul>
             </Card>
           </motion.div>
         )}
 
         <motion.div variants={getOverviewTileVariants(reduceMotion, 5)} className="min-w-0">
-          <Card title="Ostatnio edytowane" animateEntrance={false}>
+          <Card title="Ostatnio edytowane" animateEntrance={false} className="max-md:p-4">
             <ul className="space-y-2">{recent.map((n) => noteRow(n))}</ul>
           </Card>
         </motion.div>
 
         {tagCounts.length > 0 && (
           <motion.div variants={getOverviewTileVariants(reduceMotion, 6)} className="min-w-0">
-            <Card title="Najczęstsze tagi" animateEntrance={false}>
-              <div className="flex flex-wrap gap-2 items-center">
-                <TagIcon className="w-4 h-4 text-(--text-muted) shrink-0" aria-hidden />
+            <Card title="Najczęstsze tagi" animateEntrance={false} className="max-md:p-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <TagIcon className="h-4 w-4 shrink-0 text-(--text-muted)" aria-hidden />
                 {tagCounts.map(([tag, count]) => (
                   <Link
                     key={tag}
                     to={`/notes/inbox?tag=${encodeURIComponent(tag)}`}
-                    className="rounded-md border border-(--border) bg-(--bg-dark) px-2.5 py-1 font-gaming text-sm text-(--text-muted) hover:border-(--accent-cyan)/50 hover:text-(--accent-cyan) transition-colors"
+                    className="rounded-md border border-(--border) bg-(--bg-dark) px-2.5 py-1.5 text-sm text-(--text-muted) transition-colors hover:border-(--accent-cyan)/40 hover:text-(--accent-cyan)"
                   >
-                    #{tag}{' '}
-                    <span className="text-base text-(--text-muted) opacity-80">({count})</span>
+                    #{tag} <span className="text-(--text-muted)">({count})</span>
                   </Link>
                 ))}
               </div>

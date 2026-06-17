@@ -32,11 +32,11 @@ export function Income() {
   const handleAdd = async (source: string, amount: number, recurring: boolean, date?: string) => {
     const incomeDate = date ?? new Date().toISOString().split('T')[0]
     if (isDemoMode && demoData) {
-      demoData.addIncome({ source, amount, date: incomeDate, recurring })
+      demoData.addIncome({ source, amount, date: incomeDate, recurring, category: '' })
       return
     }
     try {
-      await incomeApi.create({ source, amount, date: incomeDate, recurring })
+      await incomeApi.create({ source, amount, date: incomeDate, recurring, category: '' })
       await invalidateFinanceQueries(queryClient, userId)
     } catch {
       // ignore

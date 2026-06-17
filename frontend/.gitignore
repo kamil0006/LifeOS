@@ -10,7 +10,10 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
-*.local
+dev-dist
+
+# Vite / PWA — wygenerowane przy `vite dev` (service worker)
+dev-dist/
 
 # Environment — w repo tylko `.env.example`
 .env

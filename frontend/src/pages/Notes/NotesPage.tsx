@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Card } from '../../components/Card'
 import { EmptyState } from '../../components/EmptyState'
 import { Tooltip } from '../../components/Tooltip'
 import {
@@ -51,19 +50,11 @@ const IDEA_LABELS: Record<IdeaStatus, string> = {
 }
 
 const IDEA_STATUS_BADGE: Record<IdeaStatus, string> = {
-  nowy: 'border-sky-400/50 bg-sky-400/12 text-sky-200',
-  do_sprawdzenia: 'border-(--accent-amber)/55 bg-(--accent-amber)/14 text-(--accent-amber)',
-  w_realizacji: 'border-violet-400/45 bg-violet-500/14 text-violet-200',
-  zrobiony: 'border-(--accent-green)/50 bg-(--accent-green)/14 text-(--accent-green)',
-  odrzucony: 'border-(--border) bg-(--bg-dark)/90 text-(--text-muted)',
-}
-
-const IDEA_CARD_ACCENT: Record<IdeaStatus, string> = {
-  nowy: 'border-l-sky-400/80',
-  do_sprawdzenia: 'border-l-(--accent-amber)',
-  w_realizacji: 'border-l-violet-400/75',
-  zrobiony: 'border-l-(--accent-green)',
-  odrzucony: 'border-l-(--border)',
+  nowy: 'border-sky-400/30 bg-sky-400/8 text-sky-300',
+  do_sprawdzenia: 'border-(--accent-amber)/40 bg-(--accent-amber)/10 text-(--accent-amber)',
+  w_realizacji: 'border-violet-400/35 bg-violet-500/10 text-violet-300',
+  zrobiony: 'border-(--accent-green)/40 bg-(--accent-green)/10 text-(--accent-green)',
+  odrzucony: 'border-(--border) bg-(--bg-dark)/80 text-(--text-muted)',
 }
 
 const REF_ICONS: Record<ReferenceKind, typeof LinkIcon> = {
@@ -171,240 +162,236 @@ export function NotesPage({ type }: NotesPageProps) {
 
   const emptyIcon = type === 'inbox' ? StickyNote : type === 'idea' ? Lightbulb : BookMarked
 
+  const notesWord = (n: number) => (n === 1 ? 'notatka' : n >= 2 && n <= 4 ? 'notatki' : 'notatek')
+
   return (
-    <div className="space-y-6">
-      <Card title="Wyszukaj i filtruj">
-        <div className="flex flex-wrap gap-4 items-end">
-          <div className="flex-1 min-w-[200px]">
-            <label className="block text-base text-(--text-muted) font-gaming mb-1">Wyszukaj</label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--text-muted)" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
-              />
-            </div>
-          </div>
+    <div className="space-y-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative min-w-0 flex-1">
+          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-(--text-muted)" aria-hidden />
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Szukaj po tytule, treści lub tagu…"
+            className="min-h-11 w-full rounded-lg border border-(--border) bg-(--bg-dark) py-2 pr-4 pl-10 text-base text-(--text-primary) placeholder:text-(--text-muted) focus:border-(--accent-cyan)/50 focus:outline-none"
+          />
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsAddOpen(true)}
+          className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-(--accent-cyan)/45 bg-(--accent-cyan)/18 px-4 font-gaming text-sm tracking-wide text-(--accent-cyan) transition-colors hover:bg-(--accent-cyan)/26"
+        >
+          <Plus className="h-4 w-4" />
+          Dodaj
+        </button>
+      </div>
+
+      {(type === 'idea' || allTags.length > 0) && (
+        <div className="space-y-3 rounded-lg border border-(--border)/70 bg-(--bg-card)/20 px-3 py-3 sm:px-4">
           {type === 'idea' && (
-            <div className="min-w-[200px]">
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">Status</label>
+            <label className="flex flex-col gap-1.5 sm:max-w-xs">
+              <span className="text-base text-(--text-muted)">Status pomysłu</span>
               <select
                 value={ideaStatusFilter}
-                onChange={(e) =>
-                  setIdeaStatusFilter(e.target.value as IdeaStatus | 'wszystkie')
-                }
-                className="w-full px-4 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
+                onChange={(e) => setIdeaStatusFilter(e.target.value as IdeaStatus | 'wszystkie')}
+                className="min-h-11 rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none"
               >
-                <option value="wszystkie">Wszystkie</option>
+                <option value="wszystkie">Wszystkie statusy</option>
                 {IDEA_STATUS_WORKFLOW_ORDER.map((k) => (
                   <option key={k} value={k}>
                     {IDEA_LABELS[k]}
                   </option>
                 ))}
               </select>
-            </div>
+            </label>
           )}
           {allTags.length > 0 && (
-            <div className="flex-1 min-w-[200px]">
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">Filtruj tagi</label>
-              <div className="flex flex-wrap gap-2 items-center">
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-base text-(--text-muted)">Tagi</span>
                 {tagFromUrl && (
                   <button
                     type="button"
                     onClick={clearUrlTag}
-                    className="text-sm text-(--accent-cyan) font-gaming underline-offset-2 hover:underline"
+                    className="text-sm text-(--accent-cyan) hover:underline"
                   >
-                    Wyczyść z URL
+                    Wyczyść filtr z linku
                   </button>
                 )}
-                {allTags.map((tag) => (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() => toggleTag(tag)}
-                    className={`px-2.5 py-1 rounded-md text-sm font-gaming transition-colors ${
-                      selectedTags.has(tag.toLowerCase())
-                        ? 'bg-(--accent-cyan) text-(--bg-dark)'
-                        : 'bg-(--bg-dark) border border-(--border) text-(--text-muted) hover:border-(--accent-cyan)/50'
-                    }`}
-                  >
-                    #{tag}
-                  </button>
-                ))}
+              </div>
+              <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-0.5 scrollbar-theme sm:flex-wrap sm:overflow-visible">
+                {allTags.map((tag) => {
+                  const active = selectedTags.has(tag.toLowerCase())
+                  return (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => toggleTag(tag)}
+                      className={`shrink-0 rounded-md border px-2.5 py-1.5 text-sm transition-colors ${
+                        active
+                          ? 'border-(--accent-cyan)/50 bg-(--accent-cyan)/15 text-(--accent-cyan)'
+                          : 'border-(--border) bg-(--bg-dark) text-(--text-muted) hover:border-(--accent-cyan)/30 hover:text-(--text-primary)'
+                      }`}
+                    >
+                      #{tag}
+                    </button>
+                  )
+                })}
               </div>
             </div>
           )}
-          <Tooltip content="Dodaj">
-            <button
-              type="button"
-              onClick={() => setIsAddOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-(--accent-cyan) text-(--bg-dark) font-gaming font-bold hover:opacity-90 transition-opacity"
-            >
-              <Plus className="w-4 h-4" />
-              Dodaj
-            </button>
-          </Tooltip>
         </div>
-      </Card>
+      )}
 
-      <Card title={TYPE_LABELS[type]}>
-        {filtered.length === 0 ? (
-          <EmptyState
-            icon={emptyIcon}
-            title={search || selectedTags.size > 0 ? 'Brak wyników' : 'Brak notatek'}
-            description={
-              search || selectedTags.size > 0
-                ? 'Zmień wyszukiwanie lub odznacz filtry tagów.'
-                : `Dodaj pierwszą pozycję w ${TYPE_LABELS[type]}.`
-            }
-            action={
-              !search && selectedTags.size === 0 ? (
-                <button
-                  onClick={() => setIsAddOpen(true)}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-(--accent-cyan)/20 text-(--accent-cyan) border border-(--accent-cyan)/40 font-gaming hover:bg-(--accent-cyan)/30 transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                  Dodaj
-                </button>
-              ) : undefined
-            }
-          />
-        ) : (
-          <div className="space-y-2">
-            {filtered.map((note) => {
-              const RefIcon = note.type === 'reference' ? REF_ICONS[note.referenceKind] : LinkIcon
-              const ideaAccent =
-                note.type === 'idea' ? IDEA_CARD_ACCENT[note.ideaStatus] : ''
-              return (
-                <div
-                  key={note.id}
-                  className={`rounded-lg border border-(--border) bg-(--bg-dark)/50 px-3.5 py-2.5 hover:border-(--accent-cyan)/30 transition-colors ${
-                    note.type === 'idea' ? `border-l-4 ${ideaAccent}` : ''
-                  }`}
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start gap-2 flex-wrap">
-                        {note.pinned && (
-                          <Pin
-                            className="w-3.5 h-3.5 shrink-0 text-(--accent-amber) mt-1 fill-current opacity-90"
-                            aria-hidden
-                          />
-                        )}
-                        <h3 className="font-semibold text-(--text-primary) font-gaming truncate min-w-0 flex-1">
-                          {getNoteDisplayTitle(note)}
-                        </h3>
-                        {note.type === 'idea' && (
-                          <span
-                            className={`shrink-0 text-sm px-3 py-1 rounded-md font-gaming font-semibold border ${IDEA_STATUS_BADGE[note.ideaStatus]}`}
-                          >
-                            {IDEA_LABELS[note.ideaStatus]}
-                          </span>
-                        )}
-                        {note.type === 'reference' && (
-                          <span
-                            className="shrink-0 inline-flex items-center gap-1 text-sm px-2.5 py-1 rounded-md bg-(--bg-card) border border-(--border) text-(--text-muted) font-gaming"
-                            title={REF_LABELS[note.referenceKind]}
-                          >
-                            <RefIcon className="w-3.5 h-3.5" />
-                            {REF_LABELS[note.referenceKind]}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-base text-(--text-muted) mt-1 line-clamp-2">
-                        {notePlainExcerpt(note.content)}
-                      </p>
-                      {note.type === 'reference' && (
-                        <div className="mt-2 flex flex-col gap-1">
-                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                            {note.referenceUrl ? (
-                              <a
-                                href={note.referenceUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                title={note.referenceUrl}
-                                className="inline-flex items-center gap-1.5 text-sm font-gaming font-semibold text-(--accent-cyan) hover:underline"
-                              >
-                                <ExternalLink className="w-4 h-4 shrink-0" />
-                                Otwórz link
-                              </a>
-                            ) : (
-                              <span className="text-base text-(--text-muted) font-gaming">
-                                Brak adresu URL
-                              </span>
-                            )}
-                          </div>
-                          {note.referenceSource ? (
-                            <p className="text-base text-(--text-muted)">
-                              <span className="font-gaming text-(--text-primary)/90">Źródło:</span>{' '}
-                              {note.referenceSource}
-                            </p>
-                          ) : null}
-                        </div>
+      <div className="flex items-baseline justify-between gap-3">
+        <p className="text-base text-(--text-muted)">
+          <span className="font-gaming text-(--text-primary)">{TYPE_LABELS[type]}</span>
+          {' · '}
+          {filtered.length} {notesWord(filtered.length)}
+        </p>
+      </div>
+
+      {filtered.length === 0 ? (
+        <EmptyState
+          icon={emptyIcon}
+          title={search || selectedTags.size > 0 ? 'Brak wyników' : 'Brak notatek'}
+          description={
+            search || selectedTags.size > 0
+              ? 'Zmień wyszukiwanie lub odznacz filtry tagów.'
+              : `Dodaj pierwszą pozycję w ${TYPE_LABELS[type]}.`
+          }
+          action={
+            !search && selectedTags.size === 0 ? (
+              <button
+                onClick={() => setIsAddOpen(true)}
+                className="inline-flex items-center gap-2 rounded-lg border border-(--accent-cyan)/40 bg-(--accent-cyan)/15 px-4 py-2 font-gaming text-sm text-(--accent-cyan) transition-colors hover:bg-(--accent-cyan)/25"
+              >
+                <Plus className="h-4 w-4" />
+                Dodaj
+              </button>
+            ) : undefined
+          }
+          compact
+        />
+      ) : (
+        <div className="space-y-3">
+          {filtered.map((note) => {
+            const RefIcon = note.type === 'reference' ? REF_ICONS[note.referenceKind] : LinkIcon
+            return (
+              <article
+                key={note.id}
+                className="rounded-lg border border-(--border)/80 bg-(--bg-card)/25 p-4 transition-colors hover:border-(--accent-cyan)/25"
+              >
+                <div className="space-y-2.5">
+                  <div className="flex flex-wrap items-start gap-2">
+                    {note.pinned && (
+                      <Pin
+                        className="mt-0.5 h-4 w-4 shrink-0 fill-current text-(--accent-amber)"
+                        aria-label="Przypięte"
+                      />
+                    )}
+                    <h3 className="min-w-0 flex-1 text-base font-semibold leading-snug text-(--text-primary)">
+                      {getNoteDisplayTitle(note)}
+                    </h3>
+                    {note.type === 'idea' && (
+                      <span
+                        className={`shrink-0 rounded-md border px-2 py-0.5 text-xs ${IDEA_STATUS_BADGE[note.ideaStatus]}`}
+                      >
+                        {IDEA_LABELS[note.ideaStatus]}
+                      </span>
+                    )}
+                    {note.type === 'reference' && (
+                      <span
+                        className="inline-flex shrink-0 items-center gap-1 rounded-md border border-(--border) bg-(--bg-dark)/80 px-2 py-0.5 text-xs text-(--text-muted)"
+                        title={REF_LABELS[note.referenceKind]}
+                      >
+                        <RefIcon className="h-3.5 w-3.5" />
+                        {REF_LABELS[note.referenceKind]}
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="text-sm leading-relaxed text-(--text-muted) line-clamp-3">
+                    {notePlainExcerpt(note.content)}
+                  </p>
+
+                  {note.type === 'reference' && (
+                    <div className="space-y-1 text-sm">
+                      {note.referenceUrl ? (
+                        <a
+                          href={note.referenceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={note.referenceUrl}
+                          className="inline-flex items-center gap-1.5 text-(--accent-cyan) hover:underline"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                          Otwórz link
+                        </a>
+                      ) : (
+                        <span className="text-(--text-muted)">Brak adresu URL</span>
                       )}
-                      <div className="flex flex-wrap gap-2 mt-2 items-center">
-                        {note.tags.map((tag) => (
-                          <span
-                            key={tag}
-                            className="px-2 py-0.5 rounded text-sm bg-(--bg-card) border border-(--border) text-(--text-muted)"
-                          >
-                            #{tag}
-                          </span>
-                        ))}
-                        <span className="text-base text-(--text-muted)">
-                          · edytowano {formatDate(note.updatedAt)}
-                        </span>
-                      </div>
+                      {note.referenceSource ? (
+                        <p className="text-(--text-muted)">
+                          <span className="text-(--text-primary)/90">Źródło:</span> {note.referenceSource}
+                        </p>
+                      ) : null}
                     </div>
-                    <div className="flex items-center gap-1 shrink-0">
+                  )}
+
+                  <div className="flex flex-col gap-2 border-t border-(--border)/50 pt-2.5 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm text-(--text-muted)">
+                      {note.tags.map((tag) => (
+                        <span key={tag} className="rounded border border-(--border)/70 bg-(--bg-dark)/60 px-1.5 py-0.5">
+                          #{tag}
+                        </span>
+                      ))}
+                      <span>{note.tags.length > 0 ? '· ' : ''}edytowano {formatDate(note.updatedAt)}</span>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1 self-end sm:self-auto">
                       <Tooltip content={note.pinned ? 'Odepnij' : 'Przypnij'}>
                         <button
                           type="button"
                           onClick={() => togglePin(note.id)}
-                          className={`p-1.5 rounded-lg transition-colors ${
+                          className={`rounded-lg p-2 transition-colors ${
                             note.pinned
-                              ? 'text-(--accent-amber) bg-(--accent-amber)/10'
-                              : 'text-(--text-muted) hover:text-(--accent-cyan) hover:bg-(--accent-cyan)/10'
+                              ? 'bg-(--accent-amber)/10 text-(--accent-amber)'
+                              : 'text-(--text-muted) hover:bg-(--bg-dark) hover:text-(--text-primary)'
                           }`}
                           aria-label={note.pinned ? 'Odepnij' : 'Przypnij'}
                         >
-                          {note.pinned ? (
-                            <PinOff className="w-4 h-4" />
-                          ) : (
-                            <Pin className="w-4 h-4" />
-                          )}
+                          {note.pinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
                         </button>
                       </Tooltip>
                       <Tooltip content="Edytuj">
                         <button
                           type="button"
                           onClick={() => setEditingNote(note)}
-                          className="p-1.5 rounded-lg text-(--text-muted) hover:text-(--accent-cyan) hover:bg-(--accent-cyan)/10 transition-colors"
+                          className="rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-(--bg-dark) hover:text-(--accent-cyan)"
                           aria-label="Edytuj"
                         >
-                          <Pencil className="w-4 h-4" />
+                          <Pencil className="h-4 w-4" />
                         </button>
                       </Tooltip>
                       <Tooltip content="Archiwizuj">
                         <button
                           type="button"
                           onClick={() => setNotePendingArchive(note)}
-                          className="p-1.5 rounded-lg text-(--text-muted) hover:text-(--accent-magenta) hover:bg-(--accent-magenta)/10 transition-colors"
+                          className="rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-(--bg-dark) hover:text-(--accent-magenta)"
                           aria-label="Archiwizuj"
                         >
-                          <Archive className="w-4 h-4" />
+                          <Archive className="h-4 w-4" />
                         </button>
                       </Tooltip>
                     </div>
                   </div>
                 </div>
-              )
-            })}
-          </div>
-        )}
-      </Card>
+              </article>
+            )
+          })}
+        </div>
+      )}
 
       <ConfirmDialog
         isOpen={!!notePendingArchive}
@@ -412,7 +399,7 @@ export function NotesPage({ type }: NotesPageProps) {
         description="Notatka zniknie z aktywnej listy. Możesz ją przywrócić z zakładki Archiwum."
         emphasis={notePendingArchive ? getNoteDisplayTitle(notePendingArchive) : undefined}
         confirmLabel="Archiwizuj"
-        onCancel={() => setNotePendingArchive(null)}
+        onClose={() => setNotePendingArchive(null)}
         onConfirm={() => {
           if (notePendingArchive) {
             archiveNote(notePendingArchive.id)

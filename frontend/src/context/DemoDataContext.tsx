@@ -14,6 +14,8 @@ export interface DemoIncome {
   amount: number
   date: string
   recurring: boolean
+  /** Jak Expense.category — wspólne kategorie finansów */
+  category: string
 }
 
 export interface DemoScheduledExpense {
@@ -121,7 +123,7 @@ function getDemoData(year: number) {
     { id: '20', source: 'Praca', amount: 4500, date: pad(11, 1), recurring: true },
     { id: '21', source: 'Praca', amount: 4500, date: pad(12, 1), recurring: true },
     { id: '22', source: 'Premia świąteczna', amount: 800, date: pad(12, 15), recurring: false },
-  ]
+  ].map((row) => ({ ...row, category: '' }))
 
   return { expenses, income }
 }
@@ -157,7 +159,7 @@ function isDemoExpenseRow(x: unknown): x is DemoExpense {
   )
 }
 
-function isDemoIncomeRow(x: unknown): x is DemoIncome {
+function isDemoIncomeRow(x: unknown): x is Omit<DemoIncome, 'category'> & { category?: string } {
   if (!x || typeof x !== 'object') return false
   const o = x as Record<string, unknown>
   return (
@@ -165,7 +167,8 @@ function isDemoIncomeRow(x: unknown): x is DemoIncome {
     typeof o.source === 'string' &&
     typeof o.amount === 'number' &&
     typeof o.date === 'string' &&
-    typeof o.recurring === 'boolean'
+    typeof o.recurring === 'boolean' &&
+    (o.category === undefined || typeof o.category === 'string')
   )
 }
 
@@ -202,7 +205,7 @@ function loadDemoIncome(): DemoIncome[] {
     if (!raw) return DEMO_INCOME
     const parsed = JSON.parse(raw) as unknown
     if (!Array.isArray(parsed)) return DEMO_INCOME
-    const rows = parsed.filter(isDemoIncomeRow)
+    const rows = parsed.filter(isDemoIncomeRow).map((r) => ({ ...r, category: r.category ?? '' }))
     if (parsed.length > 0 && rows.length === 0) return DEMO_INCOME
     return rows
   } catch {
@@ -301,7 +304,7 @@ export function DemoDataProvider({ children }: { children: ReactNode }) {
 
   const addIncome = (i: Omit<DemoIncome, 'id'>) => {
     setIncome((prev) => {
-      const next = [...prev, { ...i, id: Date.now().toString() }]
+      const next = [...prev, { ...i, id: Date.now().toString(), category: i.category ?? '' }]
       try {
         localStorage.setItem(DEMO_INCOME_STORAGE_KEY, JSON.stringify(next))
       } catch {

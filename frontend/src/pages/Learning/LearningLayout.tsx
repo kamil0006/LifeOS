@@ -18,29 +18,29 @@ export function LearningLayout() {
   const contentVariants = getSubpageOutletVariants(reduceMotion)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-(--text-primary) font-gaming tracking-wider">NAUKA</h1>
-        <p className="text-base text-(--text-muted) mt-1 font-gaming tracking-wide">
-          Sesje nauki, kursy, projekty i książki
-        </p>
+        <h1 className="text-2xl font-bold text-(--text-primary) font-gaming tracking-wider sm:text-3xl">
+          NAUKA
+        </h1>
+        <p className="mt-1 text-base text-(--text-muted)">Sesje, kursy, projekty i książki</p>
       </div>
 
-      <nav className="-mx-1 flex flex-nowrap gap-2 overflow-x-auto px-1 pb-1 scrollbar-theme md:flex-wrap">
+      <nav className="-mx-1 flex flex-nowrap gap-1.5 overflow-x-auto px-1 pb-1 scrollbar-theme sm:gap-2 md:flex-wrap">
         {subNavItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             end={item.end}
             className={({ isActive }) =>
-              `flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 transition-[background-color,color,border-color,box-shadow] duration-200 ease-out font-gaming tracking-wide text-sm ${
+              `flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg border px-3 py-2.5 text-sm transition-colors sm:px-4 ${
                 isActive
-                  ? 'bg-(--glow-cyan) text-(--accent-cyan) border border-(--accent-cyan)/40 shadow-[0_0_15px_rgba(0,229,255,0.2)]'
-                  : 'text-(--text-muted) hover:bg-(--bg-card-hover) hover:text-(--text-primary) border border-transparent'
+                  ? 'border-(--border) bg-(--bg-dark) font-gaming tracking-wide text-(--text-primary)'
+                  : 'border-transparent text-(--text-muted) hover:bg-(--bg-card-hover)/60 hover:text-(--text-primary)'
               }`
             }
           >
-            <item.icon className="w-4 h-4" />
+            <item.icon className="h-4 w-4 shrink-0" />
             {item.label}
           </NavLink>
         ))}
@@ -53,7 +53,7 @@ export function LearningLayout() {
           initial="hidden"
           animate="visible"
           exit="exit"
-          className="space-y-6"
+          className="space-y-5 sm:space-y-6"
         >
           <Outlet />
         </motion.div>

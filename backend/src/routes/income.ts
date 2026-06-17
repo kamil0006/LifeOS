@@ -8,6 +8,7 @@ const createSchema = z.object({
   amount: z.number().positive(),
   date: z.union([z.string().datetime(), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]),
   recurring: z.boolean().optional(),
+  category: z.string().optional(),
 })
 
 const updateSchema = z.object({
@@ -15,6 +16,7 @@ const updateSchema = z.object({
   amount: z.number().positive().optional(),
   date: z.union([z.string().datetime(), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]).optional(),
   recurring: z.boolean().optional(),
+  category: z.string().optional(),
 })
 
 export const incomeRouter = Router()
@@ -38,6 +40,7 @@ incomeRouter.post('/', async (req, res) => {
       amount: data.amount,
       date: new Date(data.date),
       recurring: data.recurring ?? false,
+      ...(data.category !== undefined ? { category: data.category } : {}),
     },
   })
   res.status(201).json(income)
@@ -56,6 +59,7 @@ incomeRouter.patch('/:id', async (req, res) => {
       ...(data.amount !== undefined ? { amount: data.amount } : {}),
       ...(data.date !== undefined ? { date: new Date(data.date) } : {}),
       ...(data.recurring !== undefined ? { recurring: data.recurring } : {}),
+      ...(data.category !== undefined ? { category: data.category } : {}),
     },
   })
   res.json(updated)

@@ -34,7 +34,7 @@ export function Layout({ children }: LayoutProps) {
   }, [pathname])
 
   return (
-    <div className="flex h-dvh max-h-dvh min-h-0 overflow-hidden bg-(--bg-dark) bg-grid">
+    <div className="app-shell flex min-h-0 overflow-hidden bg-(--bg-dark) bg-grid">
       <GlobalKeyboardShortcuts />
       <GlobalQuickTransaction />
       <GlobalQuickNote />
@@ -45,7 +45,8 @@ export function Layout({ children }: LayoutProps) {
       <MobileDrawer open={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <MobileHeader onMenuClick={() => setMobileNavOpen(true)} />
-        <main className="scrollbar-theme relative flex-1 overflow-auto px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4 sm:px-6 lg:p-10">
+        <div className="mobile-header-spacer lg:hidden" aria-hidden="true" />
+        <main className="scrollbar-hidden relative min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4 sm:px-6 lg:p-10">
           <motion.div
             key={sectionKey}
             initial={{ opacity: 0, y: 8 }}

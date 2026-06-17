@@ -1,10 +1,9 @@
 import { useMemo, useRef, useState, useCallback, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { AnimatePresence } from 'framer-motion'
-import { ArrowDownAZ, ArrowUpAZ, Pencil, Plus, Receipt, Trash2 } from 'lucide-react'
+import { Pencil, Plus, Receipt, Trash2 } from 'lucide-react'
 import { Card } from '../../components/Card'
 import { EmptyState } from '../../components/EmptyState'
-import { Tooltip } from '../../components/Tooltip'
 import { TransactionModal } from '../../components/TransactionModal'
 import { MonthSelector } from '../../components/MonthSelector'
 import { useAuth } from '../../context/AuthContext'
@@ -24,6 +23,12 @@ import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { useUndoDelete } from '../../components/learning/UndoToast'
 
 type SortBy = 'date_desc' | 'date_asc' | 'amount_desc' | 'amount_asc'
+
+function formatTxDate(iso: string) {
+  const [y, m, d] = iso.split('-').map(Number)
+  if (!y || !m || !d) return iso
+  return new Date(y, m - 1, d).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })
+}
 
 export function Transactions() {
   const { user } = useAuth()
@@ -186,9 +191,7 @@ export function Transactions() {
   )
 
   const categoryOptions = useMemo(() => {
-    const fromTx = new Set(
-      filteredTransactions.filter((tx) => tx.type === 'expense').map((tx) => tx.category)
-    )
+    const fromTx = new Set(filteredTransactions.map((tx) => tx.category))
     const activeNames = new Set(finCats.map((c) => c.name))
     const filtered = Array.from(fromTx).filter(
       (c) => c === EXPENSE_CATEGORY_NONE || activeNames.has(c)
@@ -231,79 +234,77 @@ export function Transactions() {
   if (loading) return <TransactionsPageSkeleton />
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap justify-between items-center gap-4">
-        {dateRange ? (
-          <div className="text-base text-(--text-muted) font-gaming">
-            Okres z dashboardu: <span className="text-(--text-primary)">{periodLabel}</span>
-          </div>
-        ) : (
-          <MonthSelector />
-        )}
+    <div className="space-y-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="w-full min-w-0 sm:w-auto">
+          {dateRange ? (
+            <p className="text-base text-(--text-muted)">
+              Okres: <span className="text-(--text-primary)">{periodLabel}</span>
+            </p>
+          ) : (
+            <MonthSelector />
+          )}
+        </div>
         <div className="flex gap-2">
-          <Tooltip content="Dodaj przychód">
-            <button
-              onClick={() => {
-                setEditingTx(null)
-                setFormType('income')
-                setShowForm(true)
-              }}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-(--tx-income)/15 text-(--tx-income) border border-(--tx-income)/35 font-gaming tracking-wider hover:bg-(--tx-income)/22 transition-all"
-            >
-              <Plus className="w-4 h-4" />
-              Przychód
-            </button>
-          </Tooltip>
-          <Tooltip content="Dodaj wydatek">
-            <button
-              onClick={() => {
-                setEditingTx(null)
-                setFormType('expense')
-                setShowForm(true)
-              }}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-(--tx-expense)/15 text-(--tx-expense) border border-(--tx-expense)/35 font-gaming tracking-wider hover:bg-(--tx-expense)/22 transition-all"
-            >
-              <Plus className="w-4 h-4" />
-              Wydatek
-            </button>
-          </Tooltip>
+          <button
+            onClick={() => {
+              setEditingTx(null)
+              setFormType('income')
+              setShowForm(true)
+            }}
+            className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-(--tx-income)/35 bg-(--tx-income)/15 px-3 font-gaming text-sm tracking-wide text-(--tx-income) transition-colors hover:bg-(--tx-income)/22 sm:flex-none sm:px-4"
+          >
+            <Plus className="h-4 w-4 shrink-0" />
+            <span className="truncate">Przychód</span>
+          </button>
+          <button
+            onClick={() => {
+              setEditingTx(null)
+              setFormType('expense')
+              setShowForm(true)
+            }}
+            className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-(--tx-expense)/35 bg-(--tx-expense)/15 px-3 font-gaming text-sm tracking-wide text-(--tx-expense) transition-colors hover:bg-(--tx-expense)/22 sm:flex-none sm:px-4"
+          >
+            <Plus className="h-4 w-4 shrink-0" />
+            <span className="truncate">Wydatek</span>
+          </button>
         </div>
       </div>
 
-      <Card>
-        <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
-          <h3 className="text-base font-semibold text-(--text-primary) font-gaming tracking-wider">Transakcje</h3>
+      <Card className="max-md:p-4">
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+          <h3 className="text-base font-semibold text-(--text-primary) font-gaming tracking-wide">Transakcje</h3>
           {(drillCategory || dateRange) && (
             <div className="flex flex-wrap items-center gap-2">
               {drillCategory && (
-                <span className="text-sm px-3 py-1 rounded-lg border border-(--accent-cyan)/40 bg-(--accent-cyan)/10 text-(--accent-cyan) font-gaming">
-                  Kategoria: {getLabel(drillCategory)}
+                <span className="rounded-lg border border-(--accent-cyan)/40 bg-(--accent-cyan)/10 px-2.5 py-1 text-sm text-(--accent-cyan)">
+                  {getLabel(drillCategory)}
                 </span>
               )}
               <button
                 type="button"
                 onClick={clearDrilldown}
-                className="text-sm px-3 py-1 rounded-lg border border-(--border) text-(--text-muted) hover:text-(--text-primary) font-gaming transition-colors"
+                className="rounded-lg border border-(--border) px-2.5 py-1 text-sm text-(--text-muted) transition-colors hover:text-(--text-primary)"
               >
-                Wyczyść filtr z dashboardu
+                Wyczyść filtr
               </button>
             </div>
           )}
         </div>
 
-        <div className="flex gap-2 mb-4">
+        <div className="-mx-1 mb-4 flex gap-2 overflow-x-auto px-1 pb-1 scrollbar-theme">
           {(['all', 'income', 'expense'] as const).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-4 py-2 rounded-lg font-gaming text-sm transition-all border ${
+              className={`shrink-0 rounded-lg border px-3 py-2 text-sm transition-colors ${
                 tabFilter === f
                   ? f === 'income'
-                    ? 'bg-(--tx-income)/18 text-(--tx-income) border-(--tx-income)/40'
+                    ? 'border-(--tx-income)/40 bg-(--tx-income)/18 text-(--tx-income)'
                     : f === 'expense'
-                      ? 'bg-(--tx-expense)/18 text-(--tx-expense) border-(--tx-expense)/40'
-                      : 'bg-(--accent-cyan)/20 text-(--accent-cyan) border-(--accent-cyan)/40'
-                  : 'bg-(--bg-dark) text-(--text-muted) border-(--border) hover:text-(--text-primary)'
+                      ? 'border-(--tx-expense)/40 bg-(--tx-expense)/18 text-(--tx-expense)'
+                      : 'border-(--accent-cyan)/40 bg-(--accent-cyan)/20 text-(--accent-cyan)'
+                  : 'border-(--border) bg-(--bg-dark) text-(--text-muted) hover:text-(--text-primary)'
               }`}
             >
               {f === 'all' ? 'Wszystkie' : f === 'income' ? 'Przychody' : 'Wydatki'}
@@ -311,18 +312,18 @@ export function Transactions() {
           ))}
         </div>
 
-        <div className="mb-4 grid grid-cols-1 gap-2 md:grid-cols-5">
+        <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-5">
           <input
-            type="text"
+            type="search"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            placeholder="Szukaj po nazwie..."
-            className="px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-sm"
+            placeholder="Szukaj po nazwie…"
+            className="min-h-11 rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) sm:col-span-2 md:col-span-1"
           />
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-sm"
+            className="min-h-11 rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary)"
           >
             {categoryOptions.map((cat) => (
               <option key={cat === EXPENSE_CATEGORY_NONE ? '__none__' : cat} value={cat}>
@@ -336,7 +337,7 @@ export function Transactions() {
             value={amountMin}
             onChange={(e) => setAmountMin(e.target.value)}
             placeholder="Kwota od"
-            className="no-spinners px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-sm"
+            className="no-spinners min-h-11 rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) max-md:hidden"
           />
           <input
             type="number"
@@ -344,35 +345,41 @@ export function Transactions() {
             value={amountMax}
             onChange={(e) => setAmountMax(e.target.value)}
             placeholder="Kwota do"
-            className="no-spinners px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-sm"
+            className="no-spinners min-h-11 rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) max-md:hidden"
           />
-          <button
-            type="button"
-            onClick={() => setSortBy((prev) => (prev === 'date_desc' ? 'amount_desc' : prev === 'amount_desc' ? 'date_asc' : prev === 'date_asc' ? 'amount_asc' : 'date_desc'))}
-            className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-sm"
-            title="Przełącz sortowanie"
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortBy)}
+            className="min-h-11 rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none"
+            aria-label="Sortowanie listy"
           >
-            {sortBy.includes('asc') ? <ArrowUpAZ className="w-4 h-4" /> : <ArrowDownAZ className="w-4 h-4" />}
-            {sortBy.startsWith('date') ? 'Sort: data' : 'Sort: kwota'}
-          </button>
+            <option value="date_desc">Data: najnowsze</option>
+            <option value="date_asc">Data: najstarsze</option>
+            <option value="amount_desc">Kwota: malejąco</option>
+            <option value="amount_asc">Kwota: rosnąco</option>
+          </select>
         </div>
 
-        <div className="overflow-x-auto">
+        <p className="mb-3 text-sm text-(--text-muted) md:hidden">
+          {filteredAndSortedTransactions.length}{' '}
+          {filteredAndSortedTransactions.length === 1 ? 'pozycja' : 'pozycji'}
+        </p>
+
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-(--border)">
-                <th className="pb-3 text-base text-(--text-muted) font-gaming">Data</th>
-                <th className="pb-3 text-base text-(--text-muted) font-gaming">Nazwa</th>
-                <th className="pb-3 text-base text-(--text-muted) font-gaming">Kategoria</th>
-                <th className="pb-3 text-base text-(--text-muted) font-gaming text-right">Kwota</th>
+                <th className="pb-3 text-base text-(--text-muted)">Data</th>
+                <th className="pb-3 text-base text-(--text-muted)">Nazwa</th>
+                <th className="pb-3 text-base text-(--text-muted)">Kategoria</th>
+                <th className="pb-3 text-base text-(--text-muted) text-right">Kwota</th>
                 <th className="pb-3 w-20" />
               </tr>
             </thead>
-            <tbody key={`${selectedMonth}-${selectedYear}`}>
+            <tbody key={`${selectedMonth}-${selectedYear}-desktop`}>
               {filteredAndSortedTransactions.map((tx) => {
-                const isIncome = tx.type === 'income'
-                const catLabel = isIncome ? '' : getLabel(tx.category)
-                const showCategoryPill = !isIncome && catLabel !== EXPENSE_CATEGORY_DISPLAY_NONE
+                const catLabel = getLabel(tx.category)
+                const showCategoryPill = catLabel !== EXPENSE_CATEGORY_DISPLAY_NONE
                 const color = showCategoryPill ? getColor(tx.category) : '#6b6b8a'
                 return (
                   <tr
@@ -380,45 +387,44 @@ export function Transactions() {
                     className="border-b border-(--border)/50 hover:bg-(--bg-dark)/50"
                   >
                     <td className="py-3 text-base font-mono text-(--text-primary)">{tx.date}</td>
-                    <td className="py-3 text-base text-(--text-primary) font-medium">{capitalizeFirstPl(tx.name)}</td>
+                    <td className="py-3 text-base font-medium text-(--text-primary)">{capitalizeFirstPl(tx.name)}</td>
                     <td className="py-3">
-                      {isIncome ? (
-                        <span className="text-base text-(--text-muted)">—</span>
-                      ) : showCategoryPill ? (
+                      {showCategoryPill ? (
                         <span
-                          className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-sm"
+                          className="inline-flex items-center gap-1.5 rounded px-2 py-0.5 text-sm"
                           style={{ backgroundColor: `${color}25`, color }}
                         >
-                          <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                          <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
                           {catLabel}
                         </span>
                       ) : (
-                        <span className="text-(--text-muted) text-sm font-mono">{EXPENSE_CATEGORY_DISPLAY_NONE}</span>
+                        <span className="text-sm text-(--text-muted) font-mono">{EXPENSE_CATEGORY_DISPLAY_NONE}</span>
                       )}
                     </td>
                     <td
-                      className={`py-3 text-base font-mono text-right font-medium ${
+                      className={`py-3 text-right text-base font-medium font-mono ${
                         tx.amount >= 0 ? 'text-(--tx-income)' : 'text-(--tx-expense)'
                       }`}
                     >
-                      {tx.amount >= 0 ? '+' : ''}{tx.amount.toLocaleString('pl-PL')} zł
+                      {tx.amount >= 0 ? '+' : ''}
+                      {tx.amount.toLocaleString('pl-PL')} zł
                     </td>
                     <td className="py-3 whitespace-nowrap">
                       <button
                         type="button"
                         onClick={() => handleEdit(tx)}
-                        className="p-2 text-(--text-muted) hover:text-(--accent-cyan) transition-colors"
+                        className="p-2 text-(--text-muted) transition-colors hover:text-(--accent-cyan)"
                         title={tx.isScheduled ? 'Edytuj stały koszt' : 'Edytuj'}
                       >
-                        <Pencil className="w-4 h-4" />
+                        <Pencil className="h-4 w-4" />
                       </button>
                       <button
                         type="button"
                         onClick={() => handleDeleteRequest(tx)}
-                        className="p-2 text-(--text-muted) hover:text-red-400 transition-colors"
+                        className="p-2 text-(--text-muted) transition-colors hover:text-red-400"
                         title="Usuń"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </td>
                   </tr>
@@ -426,6 +432,68 @@ export function Transactions() {
               })}
             </tbody>
           </table>
+        </div>
+
+        <div className="space-y-3 md:hidden">
+          {filteredAndSortedTransactions.map((tx) => {
+            const catLabel = getLabel(tx.category)
+            const showCategoryPill = catLabel !== EXPENSE_CATEGORY_DISPLAY_NONE
+            const color = showCategoryPill ? getColor(tx.category) : '#6b6b8a'
+            return (
+              <article
+                key={`${tx.type}-${tx.id}-mobile`}
+                className="rounded-lg border border-(--border)/80 bg-(--bg-card)/25 p-3.5"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-base font-semibold leading-snug text-(--text-primary)">
+                      {capitalizeFirstPl(tx.name)}
+                    </p>
+                    <p className="mt-0.5 text-sm text-(--text-muted)">{formatTxDate(tx.date)}</p>
+                  </div>
+                  <p
+                    className={`shrink-0 text-base font-semibold tabular-nums ${
+                      tx.amount >= 0 ? 'text-(--tx-income)' : 'text-(--tx-expense)'
+                    }`}
+                  >
+                    {tx.amount >= 0 ? '+' : ''}
+                    {tx.amount.toLocaleString('pl-PL')} zł
+                  </p>
+                </div>
+                <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-(--border)/50 pt-2.5">
+                  {showCategoryPill ? (
+                    <span
+                      className="inline-flex max-w-[70%] items-center gap-1.5 truncate rounded px-2 py-0.5 text-xs"
+                      style={{ backgroundColor: `${color}25`, color }}
+                    >
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+                      {catLabel}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-(--text-muted)">{EXPENSE_CATEGORY_DISPLAY_NONE}</span>
+                  )}
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => handleEdit(tx)}
+                      className="rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-(--bg-dark) hover:text-(--accent-cyan)"
+                      aria-label={tx.isScheduled ? 'Edytuj stały koszt' : 'Edytuj'}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteRequest(tx)}
+                      className="rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-(--bg-dark) hover:text-red-400"
+                      aria-label="Usuń"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              </article>
+            )
+          })}
         </div>
 
         {filteredAndSortedTransactions.length === 0 && (
@@ -462,7 +530,7 @@ export function Transactions() {
             ? {
                 name: editingTx.name,
                 amount: Math.abs(editingTx.amount),
-                category: editingTx.type === 'expense' ? editingTx.category : undefined,
+                category: editingTx.category,
                 date: editingTx.date,
               }
             : null
@@ -481,7 +549,7 @@ export function Transactions() {
 
       <ConfirmDialog
         isOpen={deleteConfirmTx != null}
-        onCancel={() => setDeleteConfirmTx(null)}
+        onClose={() => setDeleteConfirmTx(null)}
         onConfirm={runConfirmedDelete}
         title="Usunąć?"
         description={
@@ -494,6 +562,7 @@ export function Transactions() {
             : ''
         }
         emphasis={deleteConfirmTx?.name}
+        variant="danger"
         confirmLabel="Usuń"
         cancelLabel="Anuluj"
       />

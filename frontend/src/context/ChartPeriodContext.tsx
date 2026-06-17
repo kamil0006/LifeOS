@@ -56,27 +56,20 @@ function getMonthOptions(recalcToken: number) {
 
 function getQuarterOptions(recalcToken: number) {
   void recalcToken
+  const now = new Date()
+  const y0 = now.getFullYear()
+  const maxQuarter = (Math.floor(now.getMonth() / 3) + 1) as 1 | 2 | 3 | 4
   const options: { quarter: 1 | 2 | 3 | 4; year: number; label: string }[] = []
-  const quarters = [1, 2, 3, 4] as const
-  const y0 = new Date().getFullYear()
-  for (let yOffset = 0; yOffset <= 2; yOffset++) {
-    const y = y0 - yOffset
-    for (const q of quarters) {
-      options.push({ quarter: q, year: y, label: `Q${q} ${y}` })
-    }
+  for (let q = 1; q <= maxQuarter; q++) {
+    options.push({ quarter: q as 1 | 2 | 3 | 4, year: y0, label: `Q${q} ${y0}` })
   }
   return options
 }
 
 function getYearOptions(recalcToken: number) {
   void recalcToken
-  const options: { year: number; label: string }[] = []
   const y0 = new Date().getFullYear()
-  for (let yOffset = 0; yOffset <= 5; yOffset++) {
-    const y = y0 - yOffset
-    options.push({ year: y, label: String(y) })
-  }
-  return options
+  return [{ year: y0, label: String(y0) }]
 }
 
 export function ChartPeriodProvider({ children }: { children: ReactNode }) {
@@ -107,6 +100,22 @@ export function ChartPeriodProvider({ children }: { children: ReactNode }) {
   const monthOptions = useMemo(() => getMonthOptions(calendarTick), [calendarTick])
   const quarterOptions = useMemo(() => getQuarterOptions(calendarTick), [calendarTick])
   const yearOptions = useMemo(() => getYearOptions(calendarTick), [calendarTick])
+
+  useEffect(() => {
+    const ok = yearOptions.some((o) => o.year === selectedYearOnly)
+    if (!ok && yearOptions.length > 0) {
+      setSelectedYearOnly(yearOptions[0].year)
+    }
+  }, [yearOptions, selectedYearOnly])
+
+  useEffect(() => {
+    const ok = quarterOptions.some((o) => o.quarter === selectedQuarter && o.year === selectedQuarterYear)
+    if (!ok && quarterOptions.length > 0) {
+      const last = quarterOptions[quarterOptions.length - 1]
+      setSelectedQuarter(last.quarter)
+      setSelectedQuarterYear(last.year)
+    }
+  }, [quarterOptions, selectedQuarter, selectedQuarterYear])
 
   const period: ChartPeriod = useMemo(() => {
     if (periodType === 'month') {

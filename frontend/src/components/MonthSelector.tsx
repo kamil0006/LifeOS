@@ -10,8 +10,11 @@ export function MonthSelector() {
 
   return (
     <div className="flex w-full max-w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-      <label className="shrink-0 text-base text-(--text-muted) font-gaming tracking-wide">Miesiąc:</label>
+      <label htmlFor="dashboard-month-select" className="shrink-0 text-base text-(--text-muted) font-gaming tracking-wide">
+        Miesiąc:
+      </label>
       <select
+        id="dashboard-month-select"
         value={`${selectedMonth}-${selectedYear}`}
         onChange={(e) => {
           const [m, y] = e.target.value.split('-').map(Number)

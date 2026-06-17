@@ -13,7 +13,6 @@ function formatEventDate(dateStr: string): string {
 export type DashboardQuickStatsProps = {
   upcomingEvents: { id: string; title: string; date: string; time?: string; color?: string }[]
   todoCount: number
-  wishesCount: number
   goals: { id: string; name: string; target: number; current: number; unit?: string }[]
   habitsToday: { done: number; total: number }
   reduceMotion: boolean | null
@@ -24,7 +23,6 @@ const TILE_BASE = 6
 export function DashboardQuickStats({
   upcomingEvents,
   todoCount,
-  wishesCount,
   goals,
   habitsToday,
   reduceMotion,
@@ -32,7 +30,7 @@ export function DashboardQuickStats({
   return (
     <motion.div
       variants={dashboardSectionStaggerVariants}
-      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 items-stretch"
+      className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-6 items-stretch"
     >
       <motion.div variants={getDashboardTileVariants(reduceMotion, TILE_BASE + 0)} className="min-w-0 flex">
         <Card title="Nadchodzące wydarzenia" className="border-(--accent-cyan)/20 p-3 flex flex-col h-full w-full" animateEntrance={false}>
@@ -74,8 +72,8 @@ export function DashboardQuickStats({
       <motion.div variants={getDashboardTileVariants(reduceMotion, TILE_BASE + 1)} className="min-w-0 flex">
         <Card title="Do zrobienia" className="border-(--accent-amber)/20 p-3 flex flex-col h-full w-full" animateEntrance={false}>
           <div className="flex-1 min-h-0">
-            <p className="text-2xl font-bold text-(--accent-amber) font-gaming drop-shadow-[0_0_10px_rgba(255,184,0,0.3)]">{todoCount}</p>
-            <p className="text-sm text-(--text-muted) mt-1">aktywnych zadań</p>
+            <p className="text-xl sm:text-2xl font-bold text-(--accent-amber) font-gaming drop-shadow-[0_0_10px_rgba(255,184,0,0.3)]">{todoCount}</p>
+            <p className="text-xs sm:text-sm text-(--text-muted) mt-1">aktywnych zadań</p>
           </div>
           <Link
             to="/todo"
@@ -86,20 +84,6 @@ export function DashboardQuickStats({
         </Card>
       </motion.div>
       <motion.div variants={getDashboardTileVariants(reduceMotion, TILE_BASE + 2)} className="min-w-0 flex">
-        <Card title="Zachcianki w kolejce" className="border-(--accent-magenta)/20 p-3 flex flex-col h-full w-full" animateEntrance={false}>
-          <div className="flex-1 min-h-0">
-            <p className="text-2xl font-bold text-(--accent-magenta) font-gaming drop-shadow-[0_0_10px_rgba(255,0,212,0.3)]">{wishesCount}</p>
-            <p className="text-sm text-(--text-muted) mt-1">rzeczy na liście</p>
-          </div>
-          <Link
-            to="/finances/wishes"
-            className="mt-auto pt-2 inline-block text-sm text-(--accent-cyan) hover:underline outline-none focus:outline-none"
-          >
-            Zobacz zachcianki →
-          </Link>
-        </Card>
-      </motion.div>
-      <motion.div variants={getDashboardTileVariants(reduceMotion, TILE_BASE + 3)} className="min-w-0 flex">
         <Card title="Aktywne cele" className="border-(--accent-cyan)/20 p-3 flex flex-col h-full w-full" animateEntrance={false}>
           <div className="flex-1 min-h-0">
             {goals.length > 0 ? (
@@ -136,15 +120,15 @@ export function DashboardQuickStats({
           </Link>
         </Card>
       </motion.div>
-      <motion.div variants={getDashboardTileVariants(reduceMotion, TILE_BASE + 4)} className="min-w-0 flex">
+      <motion.div variants={getDashboardTileVariants(reduceMotion, TILE_BASE + 3)} className="min-w-0 flex">
         <Card title="Nawyki dziś" className="border-(--accent-green)/20 p-3 flex flex-col h-full w-full" animateEntrance={false}>
           <div className="flex-1 min-h-0">
             {habitsToday.total > 0 ? (
               <>
-                <p className="text-2xl font-bold text-(--accent-green) font-gaming drop-shadow-[0_0_10px_rgba(0,255,157,0.3)]">
+                <p className="text-xl sm:text-2xl font-bold text-(--accent-green) font-gaming drop-shadow-[0_0_10px_rgba(0,255,157,0.3)]">
                   {habitsToday.done}/{habitsToday.total}
                 </p>
-                <p className="text-sm text-(--text-muted) mt-1">odznaczonych dziś</p>
+                <p className="text-xs sm:text-sm text-(--text-muted) mt-1">odznaczonych dziś</p>
                 <div className="mt-2 h-1.5 rounded-full bg-(--bg-dark) overflow-hidden">
                   <div
                     className="h-full rounded-full bg-(--accent-green) transition-all"

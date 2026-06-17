@@ -7,8 +7,11 @@ export {
   incomeApi,
   netWorthApi,
   todosApi,
-  wishesApi,
   eventsApi,
   habitsApi,
   goalsApi,
+  notesApi,
+  learningApi,
+  aiApi,
 } from './api/index'
+export type { WeeklyReport } from './api/index'

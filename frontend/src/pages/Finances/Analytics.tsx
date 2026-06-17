@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { Card } from '../../components/Card'
+import { useIsMobile } from '../../hooks/useIsMobile'
 import {
   AreaChart,
   Area,
@@ -16,8 +17,8 @@ import {
   Cell,
   ReferenceLine,
 } from 'recharts'
-import { Info } from 'lucide-react'
-import { MonthSelector } from '../../components/MonthSelector'
+import { CalendarDays, Info, PiggyBank, Receipt, UtensilsCrossed } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { ChartPeriodSelector } from '../../components/ChartPeriodSelector'
 import { useChartPeriod, getMonthsInQuarter } from '../../context/ChartPeriodContext'
 import { useDemoData, DEMO_EXPENSES, DEMO_INCOME, DEMO_SCHEDULED_EXPENSES } from '../../context/DemoDataContext'
@@ -30,6 +31,50 @@ import { AnalyticsPageSkeleton } from '../../components/skeletons'
 
 const monthNames = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru']
 const dayNames = ['Nd', 'Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb']
+
+/** Do zdań w narzędniku / bierniku: „w poniedziałek”, „we wtorek” */
+const WEEKDAY_INSIGHT_ACCUSATIVE: Record<string, string> = {
+  Nd: 'niedzielę',
+  Pn: 'poniedziałek',
+  Wt: 'wtorek',
+  Śr: 'środę',
+  Cz: 'czwartek',
+  Pt: 'piątek',
+  Sb: 'sobotę',
+}
+
+function AnalyticsInsightTile({
+  icon: Icon,
+  eyebrow,
+  body,
+  accentBorder,
+  iconClass,
+}: {
+  icon: LucideIcon
+  eyebrow: string
+  body: string
+  accentBorder: string
+  iconClass: string
+}) {
+  return (
+    <div
+      className={`rounded-xl border border-(--border) bg-(--bg-dark)/40 px-3 py-3 sm:px-4 sm:py-3.5 border-l-[3px] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.03)] ${accentBorder}`}
+    >
+      <div className="flex gap-3">
+        <div
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-(--border)/70 bg-(--bg-card)/80"
+          aria-hidden
+        >
+          <Icon className={`h-5 w-5 ${iconClass}`} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-base text-(--text-muted) font-gaming mb-1">{eyebrow}</p>
+          <p className="text-base text-(--text-primary) leading-snug">{body}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function DonutTooltip(props: { active?: boolean; payload?: readonly unknown[]; total: number }) {
   const { active, payload, total } = props
@@ -55,6 +100,8 @@ function DonutTooltip(props: { active?: boolean; payload?: readonly unknown[]; t
 }
 
 export function Analytics() {
+  const isMobile = useIsMobile()
+  const chartHeight = isMobile ? 200 : 240
   const useApiFinance = useFinanceUsesApi()
   const { getColor } = useFinanceCategories()
   const demoData = useDemoData()
@@ -329,11 +376,47 @@ export function Analytics() {
     const fixedCosts = effectiveScheduled.filter((s) => s.active).reduce((s, item) => s + item.amount, 0)
     const fixedShare = totalIncome > 0 ? (fixedCosts / totalIncome) * 100 : 0
 
+    let foodLine: string
+    if (foodNow === 0 && foodPrev === 0) {
+      foodLine = 'W tym i poprzednim miesiącu nie zapisano wydatków w kategorii Jedzenie.'
+    } else if (foodPrev <= 0 && foodNow > 0) {
+      foodLine = `W tym miesiącu: ${foodNow.toLocaleString('pl-PL')} zł. W poprzednim miesiącu brak tej kategorii — brak porównania procentowego.`
+    } else if (foodPrev > 0) {
+      const absPct = Math.abs(foodChangePct)
+      if (absPct < 0.5) {
+        foodLine = 'Wydatki na jedzenie na podobnym poziomie jak w poprzednim miesiącu.'
+      } else if (foodChangePct > 0) {
+        foodLine = `Wzrost o ok. ${absPct.toFixed(0)}% względem poprzedniego miesiąca.`
+      } else {
+        foodLine = `Spadek o ok. ${absPct.toFixed(0)}% względem poprzedniego miesiąca.`
+      }
+    } else {
+      foodLine = 'W poprzednim miesiącu były wydatki na jedzenie, w tym — brak.'
+    }
+
+    const biggestLine = biggestExpense
+      ? `${biggestExpense.name} — ${biggestExpense.amount.toLocaleString('pl-PL')} zł`
+      : 'Brak wydatków w wybranym miesiącu.'
+
+    const weekdayLine =
+      topWeekday && topWeekday.kwota > 0
+        ? (() => {
+            const d = topWeekday.dzień
+            const when = WEEKDAY_INSIGHT_ACCUSATIVE[d] ?? d.toLowerCase()
+            return `Łącznie najwięcej wydajesz w ${when}: ${topWeekday.kwota.toLocaleString('pl-PL')} zł (suma w analizowanym okresie wykresu).`
+          })()
+        : 'Brak wydatków w analizowanym okresie wykresu.'
+
+    const fixedLine =
+      totalIncome <= 0
+        ? 'Brak przychodu w wybranym miesiącu — nie można policzyć udziału stałych kosztów.'
+        : `Aktywne stałe koszty (${fixedCosts.toLocaleString('pl-PL')} zł / mies.) to ok. ${fixedShare.toFixed(0)}% przychodu z tego miesiąca (${totalIncome.toLocaleString('pl-PL')} zł).`
+
     return {
-      foodChangePct,
-      biggestExpense,
-      topWeekday,
-      fixedShare,
+      foodLine,
+      biggestLine,
+      weekdayLine,
+      fixedLine,
     }
   }, [effectiveExpenses, effectiveScheduled, effectiveIncome, chartMonth, chartYear, weekdayData])
 
@@ -342,31 +425,54 @@ export function Analytics() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <MonthSelector />
-        {chartPeriod && <ChartPeriodSelector />}
+    <div className="space-y-5">
+      <div className="flex w-full min-w-0">
+        {chartPeriod && <ChartPeriodSelector leadingLabel="Okres:" />}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card title="Szybkie insighty">
-          <div className="space-y-2 text-sm">
-            <p className="text-(--text-primary)">Jedzenie {insights.foodChangePct >= 0 ? '+' : ''}{insights.foodChangePct.toFixed(0)}% vs poprzedni miesiąc</p>
-            <p className="text-(--text-primary)">
-              Największy wydatek: {insights.biggestExpense ? `${insights.biggestExpense.name} (${insights.biggestExpense.amount.toLocaleString('pl-PL')} zł)` : 'brak danych'}
-            </p>
-            <p className="text-(--text-primary)">
-              Najwięcej wydajesz: {insights.topWeekday ? insights.topWeekday.dzień : '-'}
-            </p>
-            <p className="text-(--text-primary)">
-              Stałe koszty to {insights.fixedShare.toFixed(0)}% przychodów
-            </p>
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 lg:gap-6">
+        <Card title="Szybkie spostrzeżenia" className="border-(--accent-cyan)/20 lg:col-span-2 max-md:p-4">
+          <p className="mb-4 text-base text-(--text-muted)">
+            {isMobile
+              ? 'Skrót analizy dla wybranego miesiąca.'
+              : 'Jedzenie i stałe koszty liczone dla miesiąca z selektora (porównanie z poprzednim miesiącem). Ranking dnia tygodnia — według tego samego okresu co wykres „Wydatki wg dni tygodnia”.'
+            }
+          </p>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <AnalyticsInsightTile
+              icon={UtensilsCrossed}
+              eyebrow="Kategoria: jedzenie"
+              body={insights.foodLine}
+              accentBorder="border-l-(--accent-amber)/65"
+              iconClass="text-(--accent-amber)"
+            />
+            <AnalyticsInsightTile
+              icon={Receipt}
+              eyebrow="Największy pojedynczy wydatek"
+              body={insights.biggestLine}
+              accentBorder="border-l-(--accent-magenta)/60"
+              iconClass="text-(--accent-magenta)"
+            />
+            <AnalyticsInsightTile
+              icon={CalendarDays}
+              eyebrow="Dzień tygodnia"
+              body={insights.weekdayLine}
+              accentBorder="border-l-(--accent-cyan)/60"
+              iconClass="text-(--accent-cyan)"
+            />
+            <AnalyticsInsightTile
+              icon={PiggyBank}
+              eyebrow="Stałe koszty a przychód"
+              body={insights.fixedLine}
+              accentBorder="border-l-(--accent-green)/55"
+              iconClass="text-(--accent-green)"
+            />
           </div>
         </Card>
 
-        <Card title="Trend wydatków i przychodów">
-          <div className="h-60 w-full min-h-[200px]">
-            <ResponsiveContainer width="100%" height={240}>
+        <Card title="Trend wydatków i przychodów" className="max-md:p-4">
+          <div className="chart-shell h-[200px] w-full min-h-[200px] sm:h-60">
+            <ResponsiveContainer width="100%" height={chartHeight}>
               <AreaChart data={chartData}>
                 <defs>
                   <linearGradient id="colorWydatki" x1="0" y1="0" x2="0" y2="1">
@@ -379,8 +485,8 @@ export function Analytics() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis dataKey="label" stroke="var(--text-muted)" />
-                <YAxis stroke="var(--text-muted)" tickFormatter={(v) => `${v} zł`} />
+                <XAxis dataKey="label" stroke="var(--text-muted)" tick={{ fontSize: isMobile ? 11 : 12 }} />
+                {!isMobile && <YAxis stroke="var(--text-muted)" tickFormatter={(v) => `${v} zł`} />}
                 <Tooltip
                   cursor={false}
                   contentStyle={{
@@ -390,9 +496,9 @@ export function Analytics() {
                   }}
                   formatter={(value: number | undefined) => [value != null ? `${value} zł` : '', '']}
                 />
-                <Legend />
-                <Area type="monotone" dataKey="wydatki" stroke="#ff00d4" strokeWidth={2} fillOpacity={1} fill="url(#colorWydatki)" name="Wydatki" />
-                <Area type="monotone" dataKey="przychody" stroke="#00ff9d" strokeWidth={2} fillOpacity={1} fill="url(#colorPrzychody)" name="Przychody" />
+                {!isMobile && <Legend />}
+                <Area type="monotone" dataKey="wydatki" stroke="#ff00d4" strokeWidth={2} fillOpacity={1} fill="url(#colorWydatki)" name="Wydatki" activeDot={false} />
+                <Area type="monotone" dataKey="przychody" stroke="#00ff9d" strokeWidth={2} fillOpacity={1} fill="url(#colorPrzychody)" name="Przychody" activeDot={false} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -404,11 +510,11 @@ export function Analytics() {
             : chartPeriod?.period.type === 'year'
               ? chartPeriod.period.year
               : `${monthNames[chartMonth]} ${chartYear}`
-        })`}>
-          <div className="h-60 w-full min-h-[200px] relative">
+        })`} className="max-md:p-4">
+          <div className="chart-shell relative h-[220px] w-full min-h-[200px] sm:h-60">
             {categoryData.length > 0 ? (
               <>
-                <ResponsiveContainer width="100%" height={240}>
+                <ResponsiveContainer width="100%" height={isMobile ? 220 : chartHeight}>
                   <PieChart>
                     <Pie
                       data={categoryData}
@@ -416,8 +522,8 @@ export function Analytics() {
                       nameKey="kategoria"
                       cx="50%"
                       cy="50%"
-                      innerRadius={72}
-                      outerRadius={95}
+                      innerRadius={isMobile ? 52 : 72}
+                      outerRadius={isMobile ? 78 : 95}
                       paddingAngle={2}
                       stroke="var(--bg-card)"
                       strokeWidth={2}
@@ -434,19 +540,19 @@ export function Analytics() {
                     />
                     <Legend
                       verticalAlign="bottom"
-                      wrapperStyle={{ paddingTop: '8px' }}
+                      wrapperStyle={{ paddingTop: '8px', fontSize: isMobile ? 11 : 12 }}
                       formatter={(value) => (
                         <span className="text-(--text-primary) text-sm font-medium">{value}</span>
                       )}
                     />
                   </PieChart>
                 </ResponsiveContainer>
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="text-center w-24">
-                    <p className="text-lg font-bold text-(--accent-cyan) font-gaming leading-tight">
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                  <div className="w-24 text-center">
+                    <p className="text-base font-bold leading-tight text-(--accent-cyan) font-gaming sm:text-lg">
                       {expensesTotal.toLocaleString('pl-PL')} zł
                     </p>
-                    <p className="text-xs text-(--text-muted) font-gaming mt-0.5">łącznie</p>
+                    <p className="mt-0.5 text-xs text-(--text-muted)">łącznie</p>
                   </div>
                 </div>
               </>
@@ -458,13 +564,13 @@ export function Analytics() {
           </div>
         </Card>
 
-        <Card title="Trend oszczędności">
+        <Card title="Trend oszczędności" className="max-md:p-4">
           <div className="mb-1 inline-flex items-center gap-1 text-sm text-(--text-muted)">
-            <Info className="w-3.5 h-3.5" />
-            <span title="Narastająca suma nadwyżek i deficytów z kolejnych punktów wykresu.">Opis podpowiedzi</span>
+            <Info className="h-3.5 w-3.5" />
+            <span title="Narastająca suma nadwyżek i deficytów z kolejnych punktów wykresu.">Bilans narastający w czasie</span>
           </div>
-          <div className="h-60 w-full min-h-[200px]">
-            <ResponsiveContainer width="100%" height={240}>
+          <div className="chart-shell h-[200px] w-full min-h-[200px] sm:h-60">
+            <ResponsiveContainer width="100%" height={chartHeight}>
               <AreaChart data={chartData}>
                 <defs>
                   <linearGradient id="colorBilans" x1="0" y1="0" x2="0" y2="1">
@@ -473,8 +579,8 @@ export function Analytics() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis dataKey="label" stroke="var(--text-muted)" />
-                <YAxis stroke="var(--text-muted)" tickFormatter={(v) => `${v} zł`} />
+                <XAxis dataKey="label" stroke="var(--text-muted)" tick={{ fontSize: isMobile ? 11 : 12 }} />
+                {!isMobile && <YAxis stroke="var(--text-muted)" tickFormatter={(v) => `${v} zł`} />}
                 <ReferenceLine y={0} stroke="var(--border)" strokeDasharray="3 3" />
                 <Tooltip
                   cursor={false}
@@ -506,22 +612,23 @@ export function Analytics() {
                   fill="url(#colorBilans)"
                   name="Bilans narastający"
                   baseValue={0}
+                  activeDot={false}
                 />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </Card>
 
-        <Card title="Wydatki wg dni tygodnia">
-          <p className="text-sm text-(--text-muted) mb-1">
+        <Card title="Wydatki wg dni tygodnia" className="max-md:p-4">
+          <p className="mb-1 text-sm text-(--text-muted)">
             {chartPeriod?.period.type === 'quarter' ? `Q${chartPeriod.period.quarter} ${chartPeriod.period.year}` : chartPeriod?.period.type === 'year' ? chartPeriod.period.year : `${monthNames[chartMonth]} ${chartYear}`}
           </p>
-          <div className="h-60 w-full min-h-[200px]">
-            <ResponsiveContainer width="100%" height={240}>
+          <div className="chart-shell h-[200px] w-full min-h-[200px] sm:h-60">
+            <ResponsiveContainer width="100%" height={chartHeight}>
               <BarChart data={weekdayData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis dataKey="dzień" stroke="var(--text-muted)" />
-                <YAxis stroke="var(--text-muted)" tickFormatter={(v) => `${v} zł`} />
+                {!isMobile && <YAxis stroke="var(--text-muted)" tickFormatter={(v) => `${v} zł`} />}
                 <Tooltip
                   cursor={false}
                   contentStyle={{
@@ -537,15 +644,29 @@ export function Analytics() {
           </div>
         </Card>
 
-        <Card title="Top 10 wydatków">
-          <p className="text-base text-(--text-muted) mb-1">
+        <Card title="Top 10 wydatków" className="max-md:p-4">
+          <p className="mb-2 text-base text-(--text-muted)">
             {chartPeriod?.period.type === 'quarter' ? `Q${chartPeriod.period.quarter} ${chartPeriod.period.year}` : chartPeriod?.period.type === 'year' ? chartPeriod.period.year : `${monthNames[chartMonth]} ${chartYear}`}
-            {' — '}
-            te same nazwy są zsumowane
+            {!isMobile && ' — te same nazwy są zsumowane'}
           </p>
           {topExpenses.length > 0 ? (
-            <div className="h-60 w-full min-h-[200px]">
-              <ResponsiveContainer width="100%" height={240}>
+            isMobile ? (
+              <ul className="space-y-2">
+                {topExpenses.map((row) => (
+                  <li
+                    key={row.nazwa}
+                    className="flex items-center justify-between gap-3 border-b border-(--border)/40 py-2 last:border-0"
+                  >
+                    <span className="min-w-0 truncate text-sm text-(--text-primary)">{row.fullName ?? row.nazwa}</span>
+                    <span className="shrink-0 text-sm font-semibold tabular-nums text-(--accent-magenta)">
+                      {row.kwota.toLocaleString('pl-PL')} zł
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+            <div className="chart-shell h-60 w-full min-h-[200px]">
+              <ResponsiveContainer width="100%" height={chartHeight}>
                 <BarChart data={topExpenses} layout="vertical" margin={{ left: 0, right: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
                   <XAxis type="number" stroke="var(--text-muted)" tickFormatter={(v) => `${v} zł`} />
@@ -567,6 +688,7 @@ export function Analytics() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
+            )
           ) : (
             <div className="flex justify-center items-center h-48 text-base text-(--text-muted)">
               Brak wydatków w tym miesiącu

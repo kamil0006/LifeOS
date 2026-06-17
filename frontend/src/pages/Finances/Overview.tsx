@@ -158,21 +158,46 @@ export function Overview() {
 
   return (
     <motion.div
-      className="space-y-6"
+      className="space-y-5"
       variants={overviewPageContainerVariants}
       initial="hidden"
       animate="show"
     >
-      <motion.div variants={getOverviewTileVariants(reduceMotion, 0)} className="flex justify-end">
+      <motion.div variants={getOverviewTileVariants(reduceMotion, 0)} className="w-full min-w-0 sm:flex sm:justify-end">
         <MonthSelector />
       </motion.div>
 
+      <motion.div variants={getOverviewTileVariants(reduceMotion, 2)} className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+        <Card className="border-(--accent-green)/20" animateEntrance={false}>
+          <p className="text-base text-(--text-muted)">Przychody</p>
+          <p className="mt-1 text-2xl font-bold font-gaming text-(--accent-green)">
+            {incomeTotal.toLocaleString('pl-PL')} zł
+          </p>
+        </Card>
+        <Card className="border-(--accent-magenta)/20" animateEntrance={false}>
+          <p className="text-base text-(--text-muted)">Wydatki</p>
+          <p className="mt-1 text-2xl font-bold font-gaming text-(--accent-magenta)">
+            {expensesTotal.toLocaleString('pl-PL')} zł
+          </p>
+        </Card>
+        <Card className={currentTotal >= 0 ? 'border-(--accent-cyan)/20' : 'border-[#e74c3c]/30'} animateEntrance={false}>
+          <p className="text-base text-(--text-muted)">Bilans</p>
+          <p
+            className={`mt-1 text-2xl font-bold font-gaming ${
+              currentTotal >= 0 ? 'text-(--accent-cyan)' : 'text-[#e74c3c]'
+            }`}
+          >
+            {currentTotal >= 0 ? '+' : ''}{currentTotal.toLocaleString('pl-PL')} zł
+          </p>
+        </Card>
+      </motion.div>
+
       <motion.div variants={getOverviewTileVariants(reduceMotion, 1)} className="min-w-0">
-        <Card className="border-(--accent-cyan)/20 p-6! md:p-7!" animateEntrance={false}>
-          <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase mb-6">Trend miesięczny</p>
-          <div className="grid grid-cols-1 gap-8 sm:gap-10 md:grid-cols-3">
+        <Card className="border-(--accent-cyan)/20 max-md:p-4 md:p-7!" animateEntrance={false}>
+          <p className="mb-4 text-base text-(--text-muted) md:mb-6">Trend miesięczny</p>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
             <div className="min-w-0 space-y-4 md:border-r md:border-(--border) md:pr-8">
-              <p className="text-sm font-semibold text-(--text-primary) font-gaming tracking-wide">{currMonthName}</p>
+              <p className="text-sm font-semibold text-(--text-primary) font-gaming">{currMonthName}</p>
               <div>
                 <p className="text-base text-(--text-muted)">Bilans</p>
                 <p
@@ -198,9 +223,18 @@ export function Overview() {
                   </dd>
                 </div>
               </dl>
+              <p className="md:hidden rounded-lg border border-(--border)/60 bg-(--bg-dark)/40 px-3 py-2 text-sm text-(--text-muted)">
+                vs {prevMonthName}:{' '}
+                <span className={changePercent >= 0 ? 'text-(--accent-green)' : 'text-[#e74c3c]'}>
+                  {changePercent >= 0 ? '+' : ''}
+                  {changePercent}%
+                </span>{' '}
+                ({balanceDeltaZloty >= 0 ? '+' : ''}
+                {balanceDeltaZloty.toLocaleString('pl-PL')} zł)
+              </p>
             </div>
-            <div className="min-w-0 space-y-4 md:border-r md:border-(--border) md:pr-8">
-              <p className="text-sm font-semibold text-(--text-primary) font-gaming tracking-wide">{prevMonthName}</p>
+            <div className="hidden min-w-0 space-y-4 md:block md:border-r md:border-(--border) md:pr-8">
+              <p className="text-sm font-semibold text-(--text-primary) font-gaming">{prevMonthName}</p>
               <div>
                 <p className="text-base text-(--text-muted)">Bilans</p>
                 <p
@@ -227,8 +261,8 @@ export function Overview() {
                 </div>
               </dl>
             </div>
-            <div className="min-w-0 space-y-4">
-              <p className="text-sm font-semibold text-(--text-primary) font-gaming tracking-wide">Porównanie</p>
+            <div className="hidden min-w-0 space-y-4 md:block">
+              <p className="text-sm font-semibold text-(--text-primary) font-gaming">Porównanie</p>
               <div>
                 <p className="text-base text-(--text-muted)">Zmiana bilansu</p>
                 <p
@@ -280,74 +314,54 @@ export function Overview() {
         </Card>
       </motion.div>
 
-      <motion.div variants={getOverviewTileVariants(reduceMotion, 2)} className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Card className="border-(--accent-green)/20" animateEntrance={false}>
-          <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">Przychody</p>
-          <p className="text-2xl font-bold text-(--accent-green) mt-1 font-gaming">
-            {incomeTotal.toLocaleString('pl-PL')} zł
-          </p>
-        </Card>
-        <Card className="border-(--accent-magenta)/20" animateEntrance={false}>
-          <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">Wydatki</p>
-          <p className="text-2xl font-bold text-(--accent-magenta) mt-1 font-gaming">
-            {expensesTotal.toLocaleString('pl-PL')} zł
-          </p>
-        </Card>
-        <Card className={currentTotal >= 0 ? 'border-(--accent-cyan)/20' : 'border-[#e74c3c]/30'} animateEntrance={false}>
-          <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">Bilans</p>
-          <p
-            className={`text-2xl font-bold mt-1 font-gaming ${
-              currentTotal >= 0 ? 'text-(--accent-cyan)' : 'text-[#e74c3c]'
-            }`}
-          >
-            {currentTotal >= 0 ? '+' : ''}{currentTotal.toLocaleString('pl-PL')} zł
-          </p>
-        </Card>
-      </motion.div>
-
-      <motion.div variants={getOverviewTileVariants(reduceMotion, 3)} className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <motion.div variants={getOverviewTileVariants(reduceMotion, 3)} className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
         <Card className="border-(--accent-cyan)/20" animateEntrance={false}>
-          <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">Dostępne do końca miesiąca</p>
+          <p className="text-base text-(--text-muted)">Dostępne do końca miesiąca</p>
           <p className={`text-2xl font-bold mt-1 font-gaming ${availableUntilMonthEnd >= 0 ? 'text-(--accent-cyan)' : 'text-[#e74c3c]'}`}>
             {availableUntilMonthEnd.toLocaleString('pl-PL')} zł
           </p>
         </Card>
         <Card className="border-(--accent-amber)/20" animateEntrance={false}>
-          <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">Średnio dziennie możesz wydać</p>
+          <p className="text-base text-(--text-muted)">Średnio dziennie możesz wydać</p>
           <p className={`text-2xl font-bold mt-1 font-gaming ${dailyBudget >= 0 ? 'text-(--accent-amber)' : 'text-[#e74c3c]'}`}>
             {dailyBudget.toLocaleString('pl-PL', { maximumFractionDigits: 0 })} zł
           </p>
         </Card>
         <Card className="border-(--accent-magenta)/20" animateEntrance={false}>
-          <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase">Największa kategoria wydatków</p>
+          <p className="text-base text-(--text-muted)">Największa kategoria wydatków</p>
           <p className="text-lg font-bold text-(--accent-magenta) mt-1 font-gaming">{topExpenseCategory.category}</p>
           <p className="text-sm text-(--text-muted) mt-1">{topExpenseCategory.amount.toLocaleString('pl-PL')} zł</p>
         </Card>
       </motion.div>
 
-      <motion.div variants={getOverviewTileVariants(reduceMotion, 4)} className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card className="border-(--accent-amber)/20" animateEntrance={false}>
-          <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase mb-2">Nadchodzące stałe koszty</p>
-          <div className="space-y-1.5">
+      <motion.div variants={getOverviewTileVariants(reduceMotion, 4)} className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
+        <Card className="border-(--accent-amber)/20 max-md:p-4" animateEntrance={false}>
+          <p className="mb-2 text-base text-(--text-muted)">Nadchodzące stałe koszty</p>
+          <div className="space-y-2">
             {upcomingRecurring.length === 0 && <p className="text-base text-(--text-muted)">Brak aktywnych stałych kosztów.</p>}
             {upcomingRecurring.map((item) => (
-              <div key={item.id} className="flex items-center justify-between text-sm">
-                <span className="text-(--text-primary)">{item.name} · dzień {item.dayOfMonth}{item.isNextMonth ? ' (nast. miesiąc)' : ''}</span>
-                <span className="font-mono text-(--accent-amber)">{item.amount.toLocaleString('pl-PL')} zł</span>
+              <div key={item.id} className="flex flex-col gap-0.5 border-b border-(--border)/40 py-2 last:border-0 sm:flex-row sm:items-center sm:justify-between">
+                <span className="text-sm text-(--text-primary)">
+                  {item.name} · dzień {item.dayOfMonth}
+                  {item.isNextMonth ? ' (nast. miesiąc)' : ''}
+                </span>
+                <span className="font-mono text-sm tabular-nums text-(--accent-amber)">
+                  {item.amount.toLocaleString('pl-PL')} zł
+                </span>
               </div>
             ))}
           </div>
         </Card>
-        <Card className="border-(--border) p-6! md:p-7!" animateEntrance={false}>
-          <p className="text-sm text-(--text-muted) font-gaming tracking-widest uppercase mb-5">Szybkie akcje</p>
-          <div className="grid grid-cols-3 gap-2">
+        <Card className="border-(--border) max-md:p-4 md:p-7!" animateEntrance={false}>
+          <p className="mb-4 text-base text-(--text-muted) md:mb-5">Szybkie akcje</p>
+          <div className="flex flex-col gap-2 sm:grid sm:grid-cols-3 sm:gap-2">
             <button
               type="button"
               onClick={() => {
                 setTxType('expense')
                 setShowTxModal(true)
               }}
-              className="inline-flex min-h-10 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-(--accent-magenta)/40 bg-(--accent-magenta)/15 px-2 py-2 text-(--accent-magenta) text-xs font-medium sm:gap-2 sm:px-3 sm:text-sm"
+              className="inline-flex min-h-11 min-w-0 items-center justify-center gap-2 rounded-lg border border-(--accent-magenta)/40 bg-(--accent-magenta)/15 px-3 py-2.5 text-sm font-medium text-(--accent-magenta) sm:gap-1.5 sm:px-2 sm:py-2 sm:text-xs"
             >
               <Plus className="h-4 w-4 shrink-0 sm:h-[18px] sm:w-[18px]" strokeWidth={2.25} />
               <span className="truncate">Wydatek</span>
@@ -358,7 +372,7 @@ export function Overview() {
                 setTxType('income')
                 setShowTxModal(true)
               }}
-              className="inline-flex min-h-10 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-(--accent-green)/40 bg-(--accent-green)/15 px-2 py-2 text-(--accent-green) text-xs font-medium sm:gap-2 sm:px-3 sm:text-sm"
+              className="inline-flex min-h-11 min-w-0 items-center justify-center gap-2 rounded-lg border border-(--accent-green)/40 bg-(--accent-green)/15 px-3 py-2.5 text-sm font-medium text-(--accent-green) sm:gap-1.5 sm:px-2 sm:py-2 sm:text-xs"
             >
               <Plus className="h-4 w-4 shrink-0 sm:h-[18px] sm:w-[18px]" strokeWidth={2.25} />
               <span className="truncate">Przychód</span>
@@ -366,7 +380,7 @@ export function Overview() {
             <button
               type="button"
               onClick={() => setShowRecurringModal(true)}
-              className="inline-flex min-h-10 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-(--accent-amber)/40 bg-(--accent-amber)/15 px-2 py-2 text-(--accent-amber) text-xs font-medium sm:gap-2 sm:px-3 sm:text-sm"
+              className="inline-flex min-h-11 min-w-0 items-center justify-center gap-2 rounded-lg border border-(--accent-amber)/40 bg-(--accent-amber)/15 px-3 py-2.5 text-sm font-medium text-(--accent-amber) sm:gap-1.5 sm:px-2 sm:py-2 sm:text-xs"
             >
               <Plus className="h-4 w-4 shrink-0 sm:h-[18px] sm:w-[18px]" strokeWidth={2.25} />
               <span className="truncate">Stały koszt</span>
