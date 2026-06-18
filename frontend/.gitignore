@@ -30,3 +30,8 @@ dev-dist/
 *.njsproj
 *.sln
 *.sw?
+
+
+*.pem
+*.key
+credentials.json

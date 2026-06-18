@@ -6,9 +6,9 @@ import { queryKeys } from '../lib/queryKeys'
 export type { ExpenseRow, IncomeRow, ScheduledExpenseRow } from '../lib/financeTypes'
 
 export function useFinanceListsQuery() {
-  const { user, token } = useAuth()
+  const { user, isLoggedIn, sessionReady, isDemoMode } = useAuth()
   const userId = user?.id ?? ''
-  const enabled = Boolean(token)
+  const enabled = sessionReady && isLoggedIn && !isDemoMode
 
   /** Soft polling: świeże dane gdy karta otwarta dłużej (inna karta / telefon nie wymaga SSE na start). */
   const listOptions = {

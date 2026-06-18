@@ -1,7 +1,7 @@
 import { useAuth } from '../context/AuthContext'
 
-/** Zapytania do API tylko poza demo i przy aktywnym tokenie. */
+/** Zapytania do API tylko poza demo i przy aktywnej sesji cookie. */
 export function useAuthenticatedQueryEnabled(): boolean {
-  const { isDemoMode, token } = useAuth()
-  return !isDemoMode && !!token
+  const { isDemoMode, isLoggedIn, sessionReady } = useAuth()
+  return sessionReady && !isDemoMode && isLoggedIn
 }

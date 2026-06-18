@@ -1,26 +1,19 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import { queryClient } from '../lib/queryClient'
-
-interface User {
-  id: string
-  email: string
-}
+import { authApi, type AuthUser } from '../lib/api/authApi'
+import { onApiAuthEvent } from '../lib/api/client'
 
 const DEMO_SESSION_KEY = 'lifeos_demo_session'
-
-const TOKEN_KEY = 'lifeos_token'
-const USER_KEY = 'lifeos_user'
-
-function getStorage(rememberMe: boolean) {
-  return rememberMe ? localStorage : sessionStorage
-}
+const LEGACY_TOKEN_KEY = 'lifeos_token'
+const LEGACY_USER_KEY = 'lifeos_user'
 
 interface AuthContextType {
-  user: User | null
-  token: string | null
+  user: AuthUser | null
+  sessionReady: boolean
+  isLoggedIn: boolean
   login: (email: string, password: string, rememberMe?: boolean) => Promise<void>
   register: (email: string, password: string, rememberMe?: boolean) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
   enterDemoMode: () => void
   isDemoMode: boolean
 }
@@ -29,127 +22,116 @@ const AuthContext = createContext<AuthContextType | null>(null)
 
 const ENV_DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true'
 
+function clearLegacyAuthStorage() {
+  localStorage.removeItem(LEGACY_TOKEN_KEY)
+  localStorage.removeItem(LEGACY_USER_KEY)
+  sessionStorage.removeItem(LEGACY_TOKEN_KEY)
+  sessionStorage.removeItem(LEGACY_USER_KEY)
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    const tokenLocal = localStorage.getItem(TOKEN_KEY)
-    const tokenSession = sessionStorage.getItem(TOKEN_KEY)
-    if (tokenLocal || tokenSession) {
-      const fromLocal = localStorage.getItem(USER_KEY)
-      if (fromLocal) return JSON.parse(fromLocal) as User
-      const fromSession = sessionStorage.getItem(USER_KEY)
-      return fromSession ? (JSON.parse(fromSession) as User) : null
-    }
-    if (localStorage.getItem(DEMO_SESSION_KEY) === 'true') {
-      return { id: 'demo', email: 'demo@lifeos.app' }
-    }
-    const fromLocal = localStorage.getItem(USER_KEY)
-    if (fromLocal) return JSON.parse(fromLocal) as User
-    const fromSession = sessionStorage.getItem(USER_KEY)
-    return fromSession ? (JSON.parse(fromSession) as User) : null
-  })
-  const [token, setToken] = useState<string | null>(() => {
-    return localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY)
-  })
-  const [demoSession, setDemoSession] = useState(() => {
-    const hasToken = Boolean(
-      localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY)
-    )
-    if (hasToken) return false
-    return localStorage.getItem(DEMO_SESSION_KEY) === 'true'
-  })
+  const [user, setUser] = useState<AuthUser | null>(null)
+  const [sessionReady, setSessionReady] = useState(false)
+  const [demoSession, setDemoSession] = useState(() => localStorage.getItem(DEMO_SESSION_KEY) === 'true')
 
-  /** Dane demonstracyjne tylko bez JWT. Zalogowany użytkownik zawsze widzi „prawdziwą” aplikację (API + pusty lokalny seed). */
-  const isDemoMode = Boolean((ENV_DEMO_MODE || demoSession) && !token)
-
-  const [storageMode, setStorageMode] = useState<'local' | 'session'>(
-    () => (localStorage.getItem(TOKEN_KEY) ? 'local' : sessionStorage.getItem(TOKEN_KEY) ? 'session' : 'local')
-  )
+  const isLoggedIn = Boolean(user && user.id !== 'demo')
+  const isDemoMode = Boolean((ENV_DEMO_MODE || demoSession) && !isLoggedIn)
 
   useEffect(() => {
-    if (token && user) {
-      const store = storageMode === 'local' ? localStorage : sessionStorage
-      store.setItem(TOKEN_KEY, token)
-      store.setItem(USER_KEY, JSON.stringify(user))
-      if (storageMode === 'local') {
-        sessionStorage.removeItem(TOKEN_KEY)
-        sessionStorage.removeItem(USER_KEY)
-      } else {
-        localStorage.removeItem(TOKEN_KEY)
-        localStorage.removeItem(USER_KEY)
+    clearLegacyAuthStorage()
+
+    if (localStorage.getItem(DEMO_SESSION_KEY) === 'true') {
+      setUser({ id: 'demo', email: 'demo@lifeos.app' })
+      setSessionReady(true)
+      return
+    }
+
+    let cancelled = false
+    authApi
+      .me()
+      .then((u) => {
+        if (!cancelled) setUser(u)
+      })
+      .catch(() => {
+        if (!cancelled) setUser(null)
+      })
+      .finally(() => {
+        if (!cancelled) setSessionReady(true)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    return onApiAuthEvent((event) => {
+      if (event === 'session-expired') {
+        queryClient.clear()
+        setUser(null)
+        setDemoSession(false)
+        localStorage.removeItem(DEMO_SESSION_KEY)
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login'
+        }
       }
-      localStorage.removeItem(DEMO_SESSION_KEY)
-    } else if (demoSession) {
-      localStorage.removeItem(TOKEN_KEY)
-      localStorage.removeItem(USER_KEY)
-      sessionStorage.removeItem(TOKEN_KEY)
-      sessionStorage.removeItem(USER_KEY)
+    })
+  }, [])
+
+  useEffect(() => {
+    if (isDemoMode) {
       localStorage.setItem(DEMO_SESSION_KEY, 'true')
-    } else {
-      localStorage.removeItem(TOKEN_KEY)
-      localStorage.removeItem(USER_KEY)
-      sessionStorage.removeItem(TOKEN_KEY)
-      sessionStorage.removeItem(USER_KEY)
+    } else if (sessionReady && !user) {
       localStorage.removeItem(DEMO_SESSION_KEY)
     }
-  }, [token, user, demoSession, storageMode])
+  }, [isDemoMode, sessionReady, user])
 
   const login = async (email: string, password: string, rememberMe = true) => {
-    localStorage.removeItem(TOKEN_KEY)
-    localStorage.removeItem(USER_KEY)
-    sessionStorage.removeItem(TOKEN_KEY)
-    sessionStorage.removeItem(USER_KEY)
-    const { authApi } = await import('../lib/api')
-    const { token: t, user: u } = await authApi.login(email, password)
+    clearLegacyAuthStorage()
+    localStorage.removeItem(DEMO_SESSION_KEY)
+    const { user: u } = await authApi.login(email, password, rememberMe)
     queryClient.clear()
-    setStorageMode(rememberMe ? 'local' : 'session')
-    const store = getStorage(rememberMe)
-    store.setItem(TOKEN_KEY, t)
-    store.setItem(USER_KEY, JSON.stringify(u))
     setDemoSession(false)
-    setToken(t)
     setUser(u)
+    setSessionReady(true)
   }
 
   const register = async (email: string, password: string, rememberMe = true) => {
-    localStorage.removeItem(TOKEN_KEY)
-    localStorage.removeItem(USER_KEY)
-    sessionStorage.removeItem(TOKEN_KEY)
-    sessionStorage.removeItem(USER_KEY)
-    const { authApi } = await import('../lib/api')
-    const { token: t, user: u } = await authApi.register(email, password)
+    clearLegacyAuthStorage()
+    localStorage.removeItem(DEMO_SESSION_KEY)
+    const { user: u } = await authApi.register(email, password, rememberMe)
     queryClient.clear()
-    setStorageMode(rememberMe ? 'local' : 'session')
-    const store = getStorage(rememberMe)
-    store.setItem(TOKEN_KEY, t)
-    store.setItem(USER_KEY, JSON.stringify(u))
     setDemoSession(false)
-    setToken(t)
     setUser(u)
+    setSessionReady(true)
   }
 
   const enterDemoMode = () => {
     queryClient.clear()
-    localStorage.removeItem(TOKEN_KEY)
-    localStorage.removeItem(USER_KEY)
-    sessionStorage.removeItem(TOKEN_KEY)
-    sessionStorage.removeItem(USER_KEY)
-    setToken(null)
+    clearLegacyAuthStorage()
     setUser({ id: 'demo', email: 'demo@lifeos.app' })
     setDemoSession(true)
+    setSessionReady(true)
   }
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await authApi.logout()
+    } catch {
+      // cookie mogło wygasnąć — i tak czyścimy stan lokalny
+    }
     queryClient.clear()
-    setToken(null)
     setUser(null)
     setDemoSession(false)
+    localStorage.removeItem(DEMO_SESSION_KEY)
   }
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        token,
+        sessionReady,
+        isLoggedIn,
         login,
         register,
         logout,

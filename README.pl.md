@@ -2,43 +2,68 @@
 
 # LifeOS
 
-## Czym jest ten projekt
+Osobisty panel do codziennych spraw: **finanse**, **produktywność** (to-do, kalendarz, nawyki, cele), **nauka** i **notatki**. Interfejs w klimacie **gaming / cyberpunk** — pod realne używanie, nie tylko pod mock-up.
 
-**LifeOS** to **osobisty panel** do codziennych spraw: **finanse**, **produktywność** (to-do, kalendarz, nawyki, cele), **nauka** i **notatki**. Interfejs ma klimat **gaming / cyberpunk**, ale celem jest realne używanie u siebie, a nie tylko „mock”.
-
-Repozytorium jest **aktywnie rozwijane** (około wersji **0.1**). Interfejs jest **najpierw po polsku**; szersze tłumaczenie na angielski jest planowane. Dokumentacja jest dwujęzyczna tam, gdzie ma to sens (patrz niżej).
+**Status:** aktywny rozwój (~v0.1). **UI jest po polsku**; szerszy angielski w aplikacji jest planowany. Dokumentacja jest dwujęzyczna tam, gdzie ma to sens.
 
 ---
 
-## Co naprawdę jest w projekcie (rzetelny zakres)
+## Dla kogo jest ten projekt?
 
-### Gdzie zapisywane są dane
+| Odbiorca | Jak korzystać |
+|----------|----------------|
+| **Gość / portfolio** | Sklonuj repo, uruchom **tryb demo** (sam frontend, przykładowe dane). Bez PostgreSQL. |
+| **Ty (właściciel)** | Pełny stack lokalnie albo **prywatny** deploy z PostgreSQL, szyfrowaniem i własnym `.env`. |
 
-| Obszar | Gdzie leżą dane (tryb bez demo, zalogowany użytkownik) |
-|--------|---------------------------------------------------------|
-| **Logowanie**, **finanse** (wydatki, przychody, kategorie, cykliczne / zaplanowane), **to-do**, **wydarzenia w kalendarzu**, **nawyki**, **cele** | **PostgreSQL** przez API Express |
-| **Notatki** (inbox, pomysły, referencje, archiwum) | Wyłącznie **`localStorage` w przeglądarce** — na razie bez synchronizacji z bazą przez REST |
-| **Nauka** (sesje, kursy, książki, projekty, certyfikaty, timer/Pomodoro itd.) | Też **`localStorage`** — to samo ograniczenie |
+Repozytorium nadaje się na **publiczny GitHub** jako **showcase**. **Produkcyjna** instancja z prawdziwymi finansami = osobne sekrety, opcjonalnie prywatny hosting, checklista w [Bezpieczeństwo (PL)](docs/SECURITY.md).
 
-**Tryb demo** (`VITE_DEMO_MODE=true`): uruchamiasz **tylko frontend**. Przykładowe dane są w providerach „demo” i/lub pod dedykowanymi kluczami localStorage — wygodne do podglądu UI bez Postgresa.
+**Nie commituj** plików `.env`, kluczy API ani `ENCRYPTION_KEY` — w git są tylko szablony `.env.example`.
 
-### Główne widoki (routing)
+---
 
-- **Dashboard** — podsumowanie i skróty  
-- **Finanse** — przegląd, transakcje, cykliczne, wartość netto, analityka (stare ścieżki `/expenses` / `/income` przekierowują do finansów)  
-- **To-do** — zakładki (dziś / nadchodzące / wszystkie / zrobione), priorytety i obszary, termin i godzina, zwijane opcje, skróty języka naturalnego (`jutro`, `#tag`, `!` / `?` itd.), opcjonalne powiązanie z notatką (`noteId`)  
-- **Kalendarz** — wydarzenia  
-- **Nawyki** — nawyki i **cele** (cele są w tym module; przy pełnym backendzie idą na `/api/goals`)  
-- **Nauka** — przegląd, czas, kursy, projekty, książki, certyfikaty  
-- **Notatki** — typy notatek z obsługą markdown w UX  
+## Funkcje (skrót)
 
-Ponadto: **globalne wyszukiwanie**, **szybkie dodawanie** (np. zadanie / notatka), logowanie JWT przy włączonym backendzie.
+- **Dashboard** — podsumowanie, szybkie statystyki, opcjonalny tygodniowy raport AI (opt-in, domyślnie wyłączony)
+- **Finanse** — transakcje, przychody/wydatki, kategorie, koszty cykliczne, wartość netto, analityka, płatność karta/gotówka
+- **To-do** — zakładki, priorytety, termin i godzina, skróty języka naturalnego, powiązania z notatkami/wydarzeniami
+- **Kalendarz** — wydarzenia, opcjonalny link do zadania
+- **Nawyki i cele** — śledzenie, wykresy, nawyki mierzalne
+- **Nauka** — sesje, kursy, projekty, książki, certyfikaty, timer w stylu Pomodoro
+- **Notatki** — inbox, pomysły, referencje, archiwum, UX pod markdown
+- **Globalnie** — wyszukiwanie, szybkie dodawanie, frontend przyjazny PWA
 
-### Dokumentacja w repozytorium
+---
 
-Szczegóły uruchomienia: **[URUCHOMIENIE](docs/URUCHOMIENIE.md)** · [English](docs/URUCHOMIENIE.en.md).
+## Gdzie zapisywane są dane
 
-Pełny pakiet „jak w SaaS” (ARCHITECTURE, OpenAPI, DEPLOYMENT, SECURITY itd.) **nie jest** na razie utrzymywany w `docs/` — za punkt odniesienia dla współtwórców służy to README oraz URUCHOMIENIE.
+| Obszar | Demo (`VITE_DEMO_MODE=true`) | Zalogowany (backend włączony) |
+|--------|------------------------------|-------------------------------|
+| Finanse, to-do, kalendarz, nawyki, cele | Przykładowe dane demo | **PostgreSQL** przez API Express |
+| Notatki, nauka | Seed demo | **PostgreSQL** przez API Express |
+| Sesja auth | — (brak logowania) | **httpOnly cookies** (bez JWT w `localStorage`) |
+
+Po `git pull` ze zmianami schematu uruchom **`npx prisma migrate dev`** (lokalnie) lub **`migrate deploy`** (produkcja).
+
+---
+
+## Bezpieczeństwo (skrót)
+
+W kodzie m.in.: bcrypt, sesja w httpOnly cookies + refresh, Helmet, CORS, rate limit, opcjonalne szyfrowanie pól, walidacja wejścia, bezpieczne linki, nagłówki CSP (Vercel).
+
+**Szczegóły i checklista prod:** [PL](docs/SECURITY.md) · [EN](docs/SECURITY.en.md)
+
+Przy lokalnych prawdziwych danych: **losowy `JWT_SECRET`** i rozważ `ENCRYPTION_ENABLED=true` — patrz `.env.example`.
+
+---
+
+## Dokumentacja
+
+| Temat | Linki |
+|-------|--------|
+| Uruchomienie (demo vs konto) | [PL](docs/URUCHOMIENIE.md) · [EN](docs/URUCHOMIENIE.en.md) |
+| Bezpieczeństwo i deploy | [PL](docs/SECURITY.md) · [EN](docs/SECURITY.en.md) |
+
+ARCHITECTURE, OpenAPI i pełny przewodnik wdrożenia w chmurze **nie są** jeszcze w pełni utrzymywane w `docs/`.
 
 ---
 
@@ -46,66 +71,69 @@ Pełny pakiet „jak w SaaS” (ARCHITECTURE, OpenAPI, DEPLOYMENT, SECURITY itd.
 
 ### Wymagania
 
-- **Node.js** 18 lub nowszy  
-- **PostgreSQL** — tylko jeśli chcesz **własne konto i dane w bazie** (tryb bez demo). W trybie demo wystarczy sam frontend.
+- **Node.js** 18+
+- **PostgreSQL** — tylko przy **własnym koncie** (tryb bez demo). Demo = sam frontend.
 
-### 1. Sklonuj repozytorium i zainstaluj zależności
+### 1. Sklonuj i zainstaluj
 
 ```bash
-git clone <url-repozytorium>
+git clone https://github.com/<twoj-user>/LifeOS.git
 cd LifeOS
 npm install
 cd frontend && npm install && cd ..
 cd backend && npm install && cd ..
 ```
 
-Skrypt `npm run dev` z katalogu głównego uruchamia frontend i backend naraz — potrzebujesz zainstalowanych paczek we **wszystkich trzech** miejscach (root, `frontend`, `backend`).
+`npm run dev` z katalogu głównego uruchamia frontend i backend — paczki w **root**, `frontend` i `backend`.
 
 ### 2. Zmienne środowiskowe
 
-W repozytorium są szablony **bez sekretów**. Skopiuj je i edytuj lokalnie:
+Skopiuj szablony (bez sekretów w git):
 
 ```bash
 cp frontend/.env.example frontend/.env
 cp backend/.env.example backend/.env
 ```
 
-Na Windows (PowerShell):
+Windows (PowerShell):
 
 ```powershell
 Copy-Item frontend/.env.example frontend/.env
 Copy-Item backend/.env.example backend/.env
 ```
 
-- **`backend/.env`**: ustaw `DATABASE_URL` (PostgreSQL), `JWT_SECRET`, opcjonalnie `PORT` (domyślnie w szablonie **3002**), `FRONTEND_URL` (np. `http://localhost:5173`).  
-- **`frontend/.env`**: `VITE_DEMO_MODE` oraz `VITE_API_PORT` — **ten sam numer portu**, co `PORT` w backendzie (proxy Vite kieruje `/api` na `http://localhost:<VITE_API_PORT>`).
+| Plik | Kluczowe zmienne |
+|------|------------------|
+| `frontend/.env` | `VITE_DEMO_MODE`, `VITE_API_PORT` (= `PORT` backendu) |
+| `backend/.env` | `DATABASE_URL`, `JWT_SECRET`, `PORT`, `FRONTEND_URL`, opcjonalnie `ENCRYPTION_*`, `AI_*`, `REGISTRATION_ENABLED` |
 
-Plików `.env` nie commitujemy — są w `.gitignore`.
+Pełna lista w `backend/.env.example`. **Nie commituj** uzupełnionych `.env`.
 
 ### 3. Wybierz tryb
 
-#### A) Szybki podgląd (demo, bez bazy i backendu)
+#### A) Szybki podgląd — **zalecane dla gości z GitHuba**
 
-W `frontend/.env` ustaw:
+`frontend/.env`:
 
 ```env
 VITE_DEMO_MODE=true
 ```
-
-Uruchom **tylko** frontend:
 
 ```bash
 cd frontend
 npm run dev
 ```
 
-Otwórz **http://localhost:5173** — zobaczysz przykładowe dane, bez logowania. Szczegóły: [PL](docs/URUCHOMIENIE.md) · [EN](docs/URUCHOMIENIE.en.md).
+**http://localhost:5173** — przykładowe dane, bez logowania i backendu.
 
-#### B) Pełna aplikacja (własne konto, PostgreSQL)
+Więcej: [PL](docs/URUCHOMIENIE.md) · [EN](docs/URUCHOMIENIE.en.md).
 
-1. Uruchom PostgreSQL i utwórz bazę (np. `lifeos`), wpisz poprawny `DATABASE_URL` w `backend/.env`.  
-2. W `frontend/.env` ustaw `VITE_DEMO_MODE=false` (lub usuń wartość demo) i dopasuj `VITE_API_PORT` do `PORT` backendu.  
-3. Migracje i start:
+#### B) Pełna aplikacja (konto + PostgreSQL)
+
+1. Utwórz bazę PostgreSQL (np. `lifeos`), ustaw `DATABASE_URL` w `backend/.env`.
+2. Wygeneruj silny `JWT_SECRET` (min. 32 znaki) — **nie** publiczny przykład z tutoriali.
+3. `frontend/.env`: `VITE_DEMO_MODE=false`, `VITE_API_PORT` = `PORT` backendu.
+4. Migracje i start:
 
 ```bash
 cd backend
@@ -115,42 +143,38 @@ npm run dev
 ```
 
 - **Frontend:** http://localhost:5173  
-- **API (bezpośrednio):** `http://localhost:<PORT>` — zgodnie z `backend/.env` (w szablonie **3002**). Żądania z przeglądarki idą przez proxy Vite pod `/api`.
+- **API:** http://localhost:3002 (domyślnie; w dev Vite proxy `/api`)
 
-**Rejestracja / logowanie:** pierwsze konto tworzysz przez rejestrację w aplikacji (tryb nie-demo).
+Pierwsze konto przez rejestrację. Przy jednym użytkowniku ustaw potem `REGISTRATION_ENABLED=false`.
 
 ### Port zajęty?
-
-Z katalogu głównego:
 
 ```bash
 npm run kill:ports
 ```
 
-Zatrzymuje typowe porty dev (m.in. 5173, 3002). Jeśli backend nasłuchuje na innym porcie niż w skrypcie, zatrzymaj proces ręcznie lub dostosuj skrypt w `package.json`.
+Typowe porty dev (5173, 3002). Inny port — zatrzymaj proces ręcznie.
 
-### Sprawdzenie jakości (opcjonalnie)
-
-Z katalogu głównego:
+### Sprawdzenie jakości
 
 ```bash
 npm run check
 ```
 
-Uruchamia linter i build produkcyjny frontendu oraz build TypeScript backendu.
+Lint + build frontendu, build TypeScript backendu. CI robi podobnie przy push/PR (`.github/workflows/security-ci.yml`).
 
 ---
 
 ## Stack
 
-| Warstwa   | Technologie |
-|-----------|-------------|
-| Frontend  | React, TypeScript, Vite, Tailwind CSS, Recharts, Framer Motion, TanStack Query |
-| Backend   | Node.js, Express, Prisma |
-| Baza      | PostgreSQL |
-| Auth      | JWT |
+| Warstwa | Technologie |
+|---------|-------------|
+| Frontend | React, TypeScript, Vite, Tailwind CSS, Recharts, Framer Motion, TanStack Query |
+| Backend | Node.js, Express, Prisma, Zod |
+| Baza | PostgreSQL |
+| Auth | JWT w httpOnly cookies, bcrypt |
 
-Wdrożenie docelowe (np. **Vercel** + **Railway** / **Render**) — na razie bez osobnego przewodnika w repozytorium.
+Opcjonalny hosting: frontend **Vercel**, backend **Railway** / **Render** — zmienne prod w [SECURITY](docs/SECURITY.md).
 
 ---
 

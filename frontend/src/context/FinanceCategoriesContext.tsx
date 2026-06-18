@@ -131,11 +131,11 @@ function mergeLoadedWithBuiltIn(loaded: FinanceCategory[], hidden: Set<string>):
 }
 
 export function useFinanceCategories() {
-  const { isDemoMode, user, token } = useAuth()
+  const { isDemoMode, user, isLoggedIn, sessionReady } = useAuth()
   const queryClient = useQueryClient()
   const userId = user?.id ?? ''
-  /** API tylko przy JWT i poza trydem demo (demo zawsze localStorage). */
-  const fetchFromApi = Boolean(token) && !isDemoMode
+  /** API tylko przy sesji cookie i poza trybem demo (demo zawsze localStorage). */
+  const fetchFromApi = sessionReady && isLoggedIn && !isDemoMode
   const key = queryKeys.expenseCategories(userId)
 
   const [hiddenBuiltinLower, setHiddenBuiltinLower] = useState<Set<string>>(() => new Set())

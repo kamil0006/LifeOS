@@ -1,17 +1,33 @@
 import { api } from './client'
+import type { PaymentMethod } from '../paymentMethod'
+
+type ExpenseDto = {
+  id: string
+  name: string
+  amount: number
+  category: string
+  date: string
+  paymentMethod?: PaymentMethod | null
+}
+
+type IncomeDto = {
+  id: string
+  source: string
+  amount: number
+  date: string
+  recurring: boolean
+  category: string
+  paymentMethod?: PaymentMethod | null
+}
 
 export const expensesApi = {
-  getAll: () => api<{ id: string; name: string; amount: number; category: string; date: string }[]>('/expenses'),
-  create: (data: { name: string; amount: number; category: string; date: string }) =>
-    api<{ id: string; name: string; amount: number; category: string; date: string }>(
-      '/expenses',
-      { method: 'POST', body: JSON.stringify(data) }
-    ),
-  update: (id: string, data: { name?: string; amount?: number; category?: string; date?: string }) =>
-    api<{ id: string; name: string; amount: number; category: string; date: string }>(
-      `/expenses/${id}`,
-      { method: 'PATCH', body: JSON.stringify(data) }
-    ),
+  getAll: () => api<ExpenseDto[]>('/expenses'),
+  create: (data: { name: string; amount: number; category: string; date: string; paymentMethod: PaymentMethod }) =>
+    api<ExpenseDto>('/expenses', { method: 'POST', body: JSON.stringify(data) }),
+  update: (
+    id: string,
+    data: { name?: string; amount?: number; category?: string; date?: string; paymentMethod?: PaymentMethod },
+  ) => api<ExpenseDto>(`/expenses/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id: string) => api(`/expenses/${id}`, { method: 'DELETE' }),
 }
 
@@ -33,14 +49,37 @@ export const expenseCategoriesApi = {
 
 export const scheduledExpensesApi = {
   getAll: () =>
-    api<{ id: string; name: string; amount: number; category: string; dayOfMonth: number; active: boolean; pausedUntil?: string | null; reminderDaysBefore?: number | null }[]>(
-      '/scheduled-expenses'
-    ),
-  create: (data: { name: string; amount: number; category: string; dayOfMonth: number }) =>
-    api<{ id: string; name: string; amount: number; category: string; dayOfMonth: number; active: boolean; pausedUntil?: string | null; reminderDaysBefore?: number | null }>(
-      '/scheduled-expenses',
-      { method: 'POST', body: JSON.stringify(data) }
-    ),
+    api<
+      {
+        id: string
+        name: string
+        amount: number
+        category: string
+        dayOfMonth: number
+        active: boolean
+        paymentMethod?: PaymentMethod | null
+        pausedUntil?: string | null
+        reminderDaysBefore?: number | null
+      }[]
+    >('/scheduled-expenses'),
+  create: (data: {
+    name: string
+    amount: number
+    category: string
+    dayOfMonth: number
+    paymentMethod: PaymentMethod
+  }) =>
+    api<{
+      id: string
+      name: string
+      amount: number
+      category: string
+      dayOfMonth: number
+      active: boolean
+      paymentMethod?: PaymentMethod | null
+      pausedUntil?: string | null
+      reminderDaysBefore?: number | null
+    }>('/scheduled-expenses', { method: 'POST', body: JSON.stringify(data) }),
   update: (
     id: string,
     data: {
@@ -49,35 +88,46 @@ export const scheduledExpensesApi = {
       category?: string
       dayOfMonth?: number
       active?: boolean
+      paymentMethod?: PaymentMethod
       pausedUntil?: string | null
       reminderDaysBefore?: number | null
     }
   ) =>
-    api<{ id: string; name: string; amount: number; category: string; dayOfMonth: number; active: boolean; pausedUntil?: string | null; reminderDaysBefore?: number | null }>(
-      `/scheduled-expenses/${id}`,
-      { method: 'PATCH', body: JSON.stringify(data) }
-    ),
+    api<{
+      id: string
+      name: string
+      amount: number
+      category: string
+      dayOfMonth: number
+      active: boolean
+      paymentMethod?: PaymentMethod | null
+      pausedUntil?: string | null
+      reminderDaysBefore?: number | null
+    }>(`/scheduled-expenses/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id: string) => api(`/scheduled-expenses/${id}`, { method: 'DELETE' }),
 }
 
 export const incomeApi = {
-  getAll: () =>
-    api<{ id: string; source: string; amount: number; date: string; recurring: boolean; category: string }[]>(
-      '/income'
-    ),
-  create: (data: { source: string; amount: number; date: string; recurring?: boolean; category?: string }) =>
-    api<{ id: string; source: string; amount: number; date: string; recurring: boolean; category: string }>(
-      '/income',
-      { method: 'POST', body: JSON.stringify(data) }
-    ),
+  getAll: () => api<IncomeDto[]>('/income'),
+  create: (data: {
+    source: string
+    amount: number
+    date: string
+    recurring?: boolean
+    category?: string
+    paymentMethod: PaymentMethod
+  }) => api<IncomeDto>('/income', { method: 'POST', body: JSON.stringify(data) }),
   update: (
     id: string,
-    data: { source?: string; amount?: number; date?: string; recurring?: boolean; category?: string }
-  ) =>
-    api<{ id: string; source: string; amount: number; date: string; recurring: boolean; category: string }>(
-      `/income/${id}`,
-      { method: 'PATCH', body: JSON.stringify(data) }
-    ),
+    data: {
+      source?: string
+      amount?: number
+      date?: string
+      recurring?: boolean
+      category?: string
+      paymentMethod?: PaymentMethod
+    },
+  ) => api<IncomeDto>(`/income/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id: string) => api(`/income/${id}`, { method: 'DELETE' }),
 }
 

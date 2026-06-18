@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Card } from '../../components/Card'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
-import { RecurringModal } from '../../components/RecurringModal'
+import { RecurringModal, type RecurringFormPayload } from '../../components/RecurringModal'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CalendarClock, Pause, Pencil, Play, Plus, Trash2 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
@@ -13,7 +13,9 @@ import { useFinanceListsQuery } from '../../hooks/useFinanceListsQuery'
 import { useFinanceUsesApi } from '../../hooks/useFinanceUsesApi'
 import { FinanceListPageSkeleton } from '../../components/skeletons'
 import { invalidateFinanceQueries } from '../../lib/invalidateFinanceQueries'
+import { PaymentMethodBadge } from '../../components/finance/PaymentMethodPicker'
 import type { ScheduledExpenseRow } from '../../lib/financeTypes'
+import type { PaymentMethod } from '../../lib/paymentMethod'
 
 /** Kolejna data płatności (ta sama logika co dotychczasowy podgląd daty). */
 function getNextPaymentDate(dayOfMonth: number): Date {
@@ -77,7 +79,7 @@ export function Recurring() {
         : 'border-(--border) bg-(--bg-dark) text-(--text-muted) hover:border-(--accent-amber)/25 hover:text-(--text-primary)'
     }`
 
-  const handleAdd = async (data: { name: string; amount: number; category: string; dayOfMonth: number }) => {
+  const handleAdd = async (data: RecurringFormPayload) => {
     if (!useApiFinance && demoData) {
       demoData.addScheduledExpense({ ...data, active: true, pausedUntil: null, reminderDaysBefore: null })
     } else {
@@ -114,6 +116,7 @@ export function Recurring() {
       amount?: number
       category?: string
       dayOfMonth?: number
+      paymentMethod?: PaymentMethod
     }
   ) => {
     if (!useApiFinance && demoData) demoData.updateScheduledExpense(id, updates)
@@ -187,6 +190,11 @@ export function Recurring() {
                       <p className="text-base font-medium text-(--text-primary)">{s.name}</p>
                       <p className="text-sm text-(--text-muted) sm:text-base">
                         {s.category} · dzień {s.dayOfMonth}
+                        {s.paymentMethod ? (
+                          <span className="ml-2">
+                            <PaymentMethodBadge method={s.paymentMethod} />
+                          </span>
+                        ) : null}
                       </p>
                       <p className="mt-1.5 font-mono text-lg tabular-nums leading-none text-(--accent-amber)">
                         −{s.amount.toLocaleString('pl-PL')} zł{' '}
@@ -283,6 +291,7 @@ export function Recurring() {
                   amount: editingRecurring.amount,
                   category: editingRecurring.category,
                   dayOfMonth: editingRecurring.dayOfMonth,
+                  paymentMethod: editingRecurring.paymentMethod,
                 }
               : null
           }

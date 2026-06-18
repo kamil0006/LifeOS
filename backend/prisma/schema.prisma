@@ -50,14 +50,16 @@ model ExpenseCategory {
 }
 
 model Expense {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name      String
-  amount    Float
-  category  String
-  date      DateTime
-  createdAt DateTime @default(now())
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  amount         Float
+  category       String
+  date           DateTime
+  /// card | cash — opcjonalne dla starych wpisów sprzed migracji
+  paymentMethod  String?
+  createdAt      DateTime @default(now())
 
   @@index([userId])
   @@index([userId, date])
@@ -72,6 +74,8 @@ model ScheduledExpense {
   category   String
   dayOfMonth Int      // 1-31, dzień miesiąca
   active     Boolean  @default(true)
+  /// card | cash — opcjonalne dla starych wpisów sprzed migracji
+  paymentMethod String?
   pausedUntil DateTime? @db.Date
   reminderDaysBefore Int?
   createdAt  DateTime @default(now())
@@ -112,16 +116,18 @@ model NetWorthAdjustment {
 }
 
 model Income {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  source    String
-  amount    Float
-  date      DateTime
-  recurring Boolean  @default(false)
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  source         String
+  amount         Float
+  date           DateTime
+  recurring      Boolean  @default(false)
   /// Klucz kategorii jak w Expense (np. nazwa z ExpenseCategory lub pusty string)
-  category  String   @default("")
-  createdAt DateTime @default(now())
+  category       String   @default("")
+  /// card | cash — opcjonalne dla starych wpisów sprzed migracji
+  paymentMethod  String?
+  createdAt      DateTime @default(now())
 
   @@index([userId])
   @@index([userId, date])

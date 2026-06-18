@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { mergeExpensesWithScheduled, type MergedExpense } from '../lib/expensesUtils'
 import { useMonth, inMonth, parseDate } from '../context/MonthContext'
 import { EXPENSE_CATEGORY_NONE } from '../lib/expenseCategoryConstants'
+import type { PaymentMethod } from '../lib/paymentMethod'
 
 export type FilterType = 'all' | 'income' | 'expense'
 
@@ -13,6 +14,7 @@ export interface Transaction {
   category: string
   amount: number
   type: 'income' | 'expense'
+  paymentMethod?: PaymentMethod | null
   isScheduled?: boolean
   scheduledId?: string
 }
@@ -20,7 +22,14 @@ export interface Transaction {
 const FALLBACK_MONTH_NAMES = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru']
 
 export interface UseTransactionsListParams {
-  effectiveExpenses: { id: string; name: string; amount: number; category: string; date: string }[]
+  effectiveExpenses: {
+    id: string
+    name: string
+    amount: number
+    category: string
+    date: string
+    paymentMethod?: PaymentMethod | null
+  }[]
   effectiveScheduled: {
     id: string
     name: string
@@ -28,6 +37,7 @@ export interface UseTransactionsListParams {
     category: string
     dayOfMonth: number
     active: boolean
+    paymentMethod?: PaymentMethod | null
     pausedUntil?: string | null
     reminderDaysBefore?: number | null
   }[]
@@ -38,6 +48,7 @@ export interface UseTransactionsListParams {
     date: string
     recurring: boolean
     category?: string
+    paymentMethod?: PaymentMethod | null
   }[]
   selectedMonth: number
   selectedYear: number
@@ -55,6 +66,7 @@ function buildTransactionsForDateRange(
     date: string
     recurring: boolean
     category?: string
+    paymentMethod?: PaymentMethod | null
   }[],
   from: string,
   to: string
@@ -80,16 +92,20 @@ function buildTransactionsForDateRange(
   const mergedInRange = merged.filter((e) => inRange(e.date))
   const monthInc = effectiveIncome.filter((i) => inRange(i.date))
 
-  const expenseTx: Transaction[] = mergedInRange.map((e) => ({
-    id: e.id,
-    date: e.date,
-    name: e.name,
-    category: e.category,
-    amount: -e.amount,
-    type: 'expense' as const,
-    isScheduled: e.isScheduled,
-    scheduledId: e.scheduledId,
-  }))
+  const expenseTx: Transaction[] = mergedInRange.map((e) => {
+    const raw = effectiveExpenses.find((x) => x.id === e.id)
+    return {
+      id: e.id,
+      date: e.date,
+      name: e.name,
+      category: e.category,
+      amount: -e.amount,
+      type: 'expense' as const,
+      paymentMethod: raw?.paymentMethod ?? e.paymentMethod ?? null,
+      isScheduled: e.isScheduled,
+      scheduledId: e.scheduledId,
+    }
+  })
 
   const incomeTx: Transaction[] = monthInc.map((i) => ({
     id: i.id,
@@ -98,6 +114,7 @@ function buildTransactionsForDateRange(
     category: i.category ?? EXPENSE_CATEGORY_NONE,
     amount: i.amount,
     type: 'income' as const,
+    paymentMethod: i.paymentMethod ?? null,
   }))
 
   return [...expenseTx, ...incomeTx].sort((a, b) => b.date.localeCompare(a.date))
@@ -176,16 +193,20 @@ export function useTransactionsList(params: UseTransactionsListParams) {
     const merged = mergeExpensesWithScheduled(monthExp, effectiveScheduled, selectedMonth, selectedYear)
     const monthInc = effectiveIncome.filter((i) => inMonth(i.date, selectedMonth, selectedYear))
 
-    const expenseTx: Transaction[] = merged.map((e) => ({
-      id: e.id,
-      date: e.date,
-      name: e.name,
-      category: e.category,
-      amount: -e.amount,
-      type: 'expense',
-      isScheduled: e.isScheduled,
-      scheduledId: e.scheduledId,
-    }))
+    const expenseTx: Transaction[] = merged.map((e) => {
+      const raw = effectiveExpenses.find((x) => x.id === e.id)
+      return {
+        id: e.id,
+        date: e.date,
+        name: e.name,
+        category: e.category,
+        amount: -e.amount,
+        type: 'expense' as const,
+        paymentMethod: raw?.paymentMethod ?? e.paymentMethod ?? null,
+        isScheduled: e.isScheduled,
+        scheduledId: e.scheduledId,
+      }
+    })
 
     const incomeTx: Transaction[] = monthInc.map((i) => ({
       id: i.id,
@@ -193,7 +214,8 @@ export function useTransactionsList(params: UseTransactionsListParams) {
       name: i.source,
       category: i.category ?? EXPENSE_CATEGORY_NONE,
       amount: i.amount,
-      type: 'income',
+      type: 'income' as const,
+      paymentMethod: i.paymentMethod ?? null,
     }))
 
     return [...expenseTx, ...incomeTx].sort((a, b) => b.date.localeCompare(a.date))

@@ -56,9 +56,9 @@ export function AppNavPanel({ onNavigate, mobileClose }: AppNavPanelProps) {
   const { open: openOnboarding } = useOnboarding()
   const navigate = useNavigate()
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     onNavigate?.()
-    logout()
+    await logout()
     navigate('/login')
   }
 

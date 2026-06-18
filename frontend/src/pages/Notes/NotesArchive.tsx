@@ -5,6 +5,7 @@ import { RotateCcw, Trash2, Search, Archive, ExternalLink } from 'lucide-react'
 import { useNotes } from '../../context/NotesContext'
 import type { Note, NoteType } from '../../context/NotesContext'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
+import { SafeExternalLink } from '../../components/SafeExternalLink'
 import { getNoteDisplayTitle, notePlainExcerpt } from '../../lib/notesModel'
 
 const ARCHIVE_TYPE_LABEL: Record<NoteType, string> = {
@@ -109,16 +110,14 @@ export function NotesArchive() {
                 {note.type === 'reference' && (
                   <div className="space-y-1 text-sm">
                     {note.referenceUrl ? (
-                      <a
+                      <SafeExternalLink
                         href={note.referenceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
                         title={note.referenceUrl}
                         className="inline-flex items-center gap-1.5 text-(--accent-cyan) hover:underline"
                       >
                         <ExternalLink className="h-3.5 w-3.5 shrink-0" />
                         Otwórz link
-                      </a>
+                      </SafeExternalLink>
                     ) : null}
                     {note.referenceSource ? (
                       <p className="text-(--text-muted)">

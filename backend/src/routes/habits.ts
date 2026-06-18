@@ -4,7 +4,7 @@ import { getAuthUser } from '../middleware/auth.js'
 import { prisma } from '../lib/prisma.js'
 
 const createHabitSchema = z.object({
-  name: z.string().min(1),
+  name: z.string().min(1).max(200),
   category: z.union([z.string().max(48), z.null()]).optional(),
   color: z.union([z.string().max(16), z.null()]).optional(),
   scheduleType: z.enum(['daily', 'weekdays', 'weekly', 'monthly']).optional(),
@@ -17,7 +17,7 @@ const createHabitSchema = z.object({
 })
 
 const patchHabitSchema = z.object({
-  name: z.string().min(1).optional(),
+  name: z.string().min(1).max(200).optional(),
   category: z.union([z.string().max(48), z.null()]).optional(),
   color: z.union([z.string().max(16), z.null()]).optional(),
   scheduleType: z.enum(['daily', 'weekdays', 'weekly', 'monthly']).optional(),

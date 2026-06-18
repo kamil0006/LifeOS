@@ -12,6 +12,7 @@ import {
   learningAddBtnClass,
 } from '../../components/learning/learningFormClasses'
 import { Plus, ExternalLink, ShieldCheck, ShieldAlert, ShieldOff } from 'lucide-react'
+import { SafeExternalLink } from '../../components/SafeExternalLink'
 import { useLearning } from '../../context/LearningContext'
 import type { Certification } from '../../context/LearningContext'
 
@@ -360,27 +361,23 @@ export function LearningCertificates() {
                       quickActions={
                         <div className="flex items-center gap-1">
                           {c.verificationUrl && (
-                            <a
+                            <SafeExternalLink
                               href={c.verificationUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
                               className="flex items-center gap-1 px-2 py-1 rounded text-xs font-gaming text-(--accent-cyan) bg-(--accent-cyan)/10 hover:bg-(--accent-cyan)/20 transition-colors border border-(--accent-cyan)/20"
                               title="Zweryfikuj certyfikat"
                             >
                               <ShieldCheck className="w-3 h-3" />
                               Weryfikuj
-                            </a>
+                            </SafeExternalLink>
                           )}
                           {c.url && (
-                            <a
+                            <SafeExternalLink
                               href={c.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
                               className="p-1.5 rounded-lg text-(--text-muted) hover:text-(--accent-cyan) transition-colors"
-                              aria-label="Otwórz certyfikat"
+                              title="Otwórz certyfikat"
                             >
                               <ExternalLink className="w-4 h-4" />
-                            </a>
+                            </SafeExternalLink>
                           )}
                         </div>
                       }

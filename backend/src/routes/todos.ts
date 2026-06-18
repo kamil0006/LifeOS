@@ -3,9 +3,11 @@ import { Router } from 'express'
 import { z } from 'zod'
 import { getAuthUser } from '../middleware/auth.js'
 import { prisma } from '../lib/prisma.js'
+import { assertTodoLinksOwned } from '../lib/ownership.js'
 
 const priorityEnum = z.enum(['low', 'medium', 'high'])
 const categoryEnum = z.enum(['dom', 'praca', 'finanse', 'nauka', 'zdrowie', 'inne'])
+const cuidLike = z.string().min(1).max(64)
 
 function parseDueDateInput(v: string | null | undefined): Date | null | undefined {
   if (v === undefined) return undefined
@@ -15,26 +17,26 @@ function parseDueDateInput(v: string | null | undefined): Date | null | undefine
 }
 
 const createSchema = z.object({
-  text: z.string().min(1),
+  text: z.string().min(1).max(2000),
   dueDate: z.string().optional().nullable(),
-  dueTime: z.string().optional().nullable(),
+  dueTime: z.string().max(10).optional().nullable(),
   priority: priorityEnum.optional(),
   category: categoryEnum.optional(),
-  noteId: z.string().optional().nullable(),
-  linkedEventId: z.string().optional().nullable(),
+  noteId: cuidLike.optional().nullable(),
+  linkedEventId: cuidLike.optional().nullable(),
 })
 
 const updateSchema = z
   .object({
     done: z.boolean().optional(),
-    text: z.string().min(1).optional(),
+    text: z.string().min(1).max(2000).optional(),
     dueDate: z.string().nullable().optional(),
-    dueTime: z.string().nullable().optional(),
+    dueTime: z.string().max(10).nullable().optional(),
     priority: priorityEnum.optional(),
     category: categoryEnum.optional(),
     archivedAt: z.string().datetime().nullable().optional(),
-    noteId: z.string().nullable().optional(),
-    linkedEventId: z.string().nullable().optional(),
+    noteId: cuidLike.nullable().optional(),
+    linkedEventId: cuidLike.nullable().optional(),
   })
   .refine((o) => Object.keys(o).length > 0, { message: 'Brak pól do aktualizacji' })
 
@@ -52,6 +54,7 @@ todosRouter.get('/', async (req, res) => {
 todosRouter.post('/', async (req, res) => {
   const userId = getAuthUser(req).userId
   const data = createSchema.parse(req.body)
+  await assertTodoLinksOwned(userId, { noteId: data.noteId, linkedEventId: data.linkedEventId })
   const dueDate = parseDueDateInput(data.dueDate ?? undefined)
   const todo = await prisma.todo.create({
     data: {
@@ -74,6 +77,11 @@ todosRouter.patch('/:id', async (req, res) => {
   const data = updateSchema.parse(req.body)
   const existing = await prisma.todo.findFirst({ where: { id, userId } })
   if (!existing) return res.status(404).json({ error: 'Nie znaleziono' })
+
+  await assertTodoLinksOwned(userId, {
+    noteId: data.noteId !== undefined ? data.noteId : undefined,
+    linkedEventId: data.linkedEventId !== undefined ? data.linkedEventId : undefined,
+  })
 
   const patch: Record<string, unknown> = {}
   if (data.done !== undefined) patch.done = data.done

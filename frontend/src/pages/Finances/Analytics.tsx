@@ -17,7 +17,9 @@ import {
   Cell,
   ReferenceLine,
 } from 'recharts'
-import { CalendarDays, Info, PiggyBank, Receipt, UtensilsCrossed } from 'lucide-react'
+import { CalendarDays, CreditCard, Info, PiggyBank, Receipt, UtensilsCrossed, Wallet } from 'lucide-react'
+import type { PaymentMethod } from '../../lib/paymentMethod'
+import { PAYMENT_METHOD_LABELS } from '../../lib/paymentMethod'
 import type { LucideIcon } from 'lucide-react'
 import { ChartPeriodSelector } from '../../components/ChartPeriodSelector'
 import { useChartPeriod, getMonthsInQuarter } from '../../context/ChartPeriodContext'
@@ -346,6 +348,43 @@ export function Analytics() {
     return { categoryData, expensesTotal }
   }, [effectiveExpenses, effectiveScheduled, chartMonth, chartYear, chartPeriod])
 
+  const paymentBreakdown = useMemo(() => {
+    type Row = { amount: number; paymentMethod?: PaymentMethod | null }
+
+    const filterByPeriod = <T extends { date: string }>(rows: T[]): T[] => {
+      if (chartPeriod?.period.type === 'quarter') {
+        const months = getMonthsInQuarter(chartPeriod.period.quarter, chartPeriod.period.year)
+        return rows.filter((row) => {
+          const { year, month } = parseDate(row.date)
+          return months.some((m) => m.month === month && m.year === year)
+        })
+      }
+      if (chartPeriod?.period.type === 'year') {
+        return rows.filter((row) => parseDate(row.date).year === chartPeriod.period.year)
+      }
+      return rows.filter((row) => {
+        const { year, month } = parseDate(row.date)
+        return month === chartMonth && year === chartYear
+      })
+    }
+
+    const sumByMethod = (rows: Row[], method: PaymentMethod) =>
+      rows.filter((r) => r.paymentMethod === method).reduce((s, r) => s + r.amount, 0)
+
+    const periodExpenses = filterByPeriod(effectiveExpenses)
+    const periodIncome = filterByPeriod(effectiveIncome)
+
+    return {
+      expenseCard: sumByMethod(periodExpenses, 'card'),
+      expenseCash: sumByMethod(periodExpenses, 'cash'),
+      incomeCard: sumByMethod(periodIncome, 'card'),
+      incomeCash: sumByMethod(periodIncome, 'cash'),
+      labeledCount:
+        periodExpenses.filter((e) => e.paymentMethod).length +
+        periodIncome.filter((i) => i.paymentMethod).length,
+    }
+  }, [effectiveExpenses, effectiveIncome, chartMonth, chartYear, chartPeriod])
+
   const insights = useMemo(() => {
     const monthExp = effectiveExpenses.filter((e) => {
       const { year, month } = parseDate(e.date)
@@ -468,6 +507,48 @@ export function Analytics() {
               iconClass="text-(--accent-green)"
             />
           </div>
+        </Card>
+
+        <Card title="Karta vs gotówka" className="border-(--accent-cyan)/20 lg:col-span-2 max-md:p-4">
+          <p className="mb-4 text-base text-(--text-muted)">
+            Podsumowanie transakcji z oznaczonym sposobem płatności w wybranym okresie (bez stałych kosztów).
+          </p>
+          {paymentBreakdown.labeledCount === 0 ? (
+            <p className="text-base text-(--text-muted)">
+              Brak transakcji z oznaczoną kartą lub gotówką w tym okresie.
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <AnalyticsInsightTile
+                icon={CreditCard}
+                eyebrow={`Wydatki — ${PAYMENT_METHOD_LABELS.card.toLowerCase()}`}
+                body={`${paymentBreakdown.expenseCard.toLocaleString('pl-PL')} zł`}
+                accentBorder="border-l-(--accent-magenta)/60"
+                iconClass="text-(--accent-magenta)"
+              />
+              <AnalyticsInsightTile
+                icon={Wallet}
+                eyebrow={`Wydatki — ${PAYMENT_METHOD_LABELS.cash.toLowerCase()}`}
+                body={`${paymentBreakdown.expenseCash.toLocaleString('pl-PL')} zł`}
+                accentBorder="border-l-(--accent-magenta)/40"
+                iconClass="text-(--accent-magenta)"
+              />
+              <AnalyticsInsightTile
+                icon={CreditCard}
+                eyebrow={`Przychody — ${PAYMENT_METHOD_LABELS.card.toLowerCase()}`}
+                body={`${paymentBreakdown.incomeCard.toLocaleString('pl-PL')} zł`}
+                accentBorder="border-l-(--accent-green)/55"
+                iconClass="text-(--accent-green)"
+              />
+              <AnalyticsInsightTile
+                icon={Wallet}
+                eyebrow={`Przychody — ${PAYMENT_METHOD_LABELS.cash.toLowerCase()}`}
+                body={`${paymentBreakdown.incomeCash.toLocaleString('pl-PL')} zł`}
+                accentBorder="border-l-(--accent-green)/35"
+                iconClass="text-(--accent-green)"
+              />
+            </div>
+          )}
         </Card>
 
         <Card title="Trend wydatków i przychodów" className="max-md:p-4">

@@ -1,9 +1,12 @@
+import type { PaymentMethod } from './paymentMethod'
+
 export interface ExpenseLike {
   id: string
   name: string
   amount: number
   category: string
   date: string
+  paymentMethod?: PaymentMethod | null
 }
 
 export interface ScheduledExpenseLike {
@@ -13,6 +16,7 @@ export interface ScheduledExpenseLike {
   category: string
   dayOfMonth: number
   active: boolean
+  paymentMethod?: PaymentMethod | null
   pausedUntil?: string | null
 }
 
@@ -58,6 +62,7 @@ export function mergeExpensesWithScheduled<E extends ExpenseLike, S extends Sche
         amount: s.amount,
         category: s.category,
         date,
+        paymentMethod: s.paymentMethod ?? null,
         isScheduled: true,
         scheduledId: s.id,
       })

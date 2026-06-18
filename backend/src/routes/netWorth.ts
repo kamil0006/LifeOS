@@ -2,11 +2,19 @@ import { Router } from 'express'
 import { z } from 'zod'
 import { getAuthUser } from '../middleware/auth.js'
 import { prisma } from '../lib/prisma.js'
+import {
+  decryptNetWorthAccountRow,
+  decryptNetWorthAccountRows,
+  decryptNetWorthAdjustmentWithAccount,
+  decryptNetWorthAdjustmentsWithAccount,
+  encryptNetWorthAccountWrite,
+  encryptNetWorthAdjustmentWrite,
+} from '../lib/financeFields.js'
 
 const nwAccountAccentKeySchema = z.enum(['cyan', 'green', 'magenta', 'amber', 'rose', 'violet'])
 
 const accountCreateSchema = z.object({
-  name: z.string().min(1),
+  name: z.string().min(1).max(200),
   kind: z.enum(['asset', 'liability']),
   balance: z.number().default(0),
   iconKey: z.string().max(48).optional().nullable(),
@@ -14,7 +22,7 @@ const accountCreateSchema = z.object({
 })
 
 const accountUpdateSchema = z.object({
-  name: z.string().min(1).optional(),
+  name: z.string().min(1).max(200).optional(),
   kind: z.enum(['asset', 'liability']).optional(),
   balance: z.number().optional(),
   iconKey: z.string().max(48).optional().nullable(),
@@ -35,23 +43,24 @@ netWorthRouter.get('/accounts', async (req, res) => {
     where: { userId },
     orderBy: [{ kind: 'asc' }, { createdAt: 'asc' }],
   })
-  res.json(accounts)
+  res.json(decryptNetWorthAccountRows(accounts))
 })
 
 netWorthRouter.post('/accounts', async (req, res) => {
   const userId = getAuthUser(req).userId
   const data = accountCreateSchema.parse(req.body)
+  const enc = encryptNetWorthAccountWrite({ name: data.name })
   const account = await prisma.netWorthAccount.create({
     data: {
       userId,
-      name: data.name,
+      name: enc.name!,
       kind: data.kind,
       balance: data.balance,
       iconKey: data.iconKey?.trim() || null,
       accentKey: data.kind === 'asset' && data.accentKey ? data.accentKey : null,
     },
   })
-  res.status(201).json(account)
+  res.status(201).json(decryptNetWorthAccountRow(account))
 })
 
 netWorthRouter.patch('/accounts/:id', async (req, res) => {
@@ -60,6 +69,7 @@ netWorthRouter.patch('/accounts/:id', async (req, res) => {
   const data = accountUpdateSchema.parse(req.body)
   const existing = await prisma.netWorthAccount.findFirst({ where: { id, userId } })
   if (!existing) return res.status(404).json({ error: 'Nie znaleziono' })
+  const enc = encryptNetWorthAccountWrite(data.name !== undefined ? { name: data.name } : {})
   const patch: {
     name?: string
     kind?: string
@@ -67,7 +77,7 @@ netWorthRouter.patch('/accounts/:id', async (req, res) => {
     iconKey?: string | null
     accentKey?: string | null
   } = {}
-  if (data.name !== undefined) patch.name = data.name
+  if (enc.name !== undefined) patch.name = enc.name
   if (data.kind !== undefined) patch.kind = data.kind
   if (data.balance !== undefined) patch.balance = data.balance
   if (data.iconKey !== undefined) patch.iconKey = data.iconKey?.trim() || null
@@ -81,7 +91,7 @@ netWorthRouter.patch('/accounts/:id', async (req, res) => {
     where: { id },
     data: patch,
   })
-  res.json(account)
+  res.json(decryptNetWorthAccountRow(account))
 })
 
 netWorthRouter.delete('/accounts/:id', async (req, res) => {
@@ -105,7 +115,7 @@ netWorthRouter.get('/adjustments', async (req, res) => {
     },
     take: 100,
   })
-  res.json(rows)
+  res.json(decryptNetWorthAdjustmentsWithAccount(rows))
 })
 
 netWorthRouter.post('/adjustments', async (req, res) => {
@@ -116,13 +126,17 @@ netWorthRouter.post('/adjustments', async (req, res) => {
   })
   if (!account) return res.status(404).json({ error: 'Konto nie istnieje' })
 
+  const enc = encryptNetWorthAdjustmentWrite({
+    description: data.description?.trim() || null,
+  })
+
   const result = await prisma.$transaction(async (tx) => {
     const adjustment = await tx.netWorthAdjustment.create({
       data: {
         userId,
         accountId: data.accountId,
         amount: data.amount,
-        description: data.description?.trim() || null,
+        description: enc.description ?? null,
       },
       include: {
         account: { select: { id: true, name: true, kind: true } },
@@ -137,7 +151,10 @@ netWorthRouter.post('/adjustments', async (req, res) => {
     return { adjustment, account: updatedAccount }
   })
 
-  res.status(201).json(result)
+  res.status(201).json({
+    adjustment: decryptNetWorthAdjustmentWithAccount(result.adjustment),
+    account: decryptNetWorthAccountRow(result.account),
+  })
 })
 
 const adjustmentPatchSchema = z
@@ -159,6 +176,10 @@ netWorthRouter.patch('/adjustments/:id', async (req, res) => {
   })
   if (!existing) return res.status(404).json({ error: 'Nie znaleziono' })
 
+  const enc = encryptNetWorthAdjustmentWrite(
+    data.description !== undefined ? { description: data.description.trim() || null } : {}
+  )
+
   const row = await prisma.$transaction(async (tx) => {
     if (data.amount !== undefined) {
       const delta = data.amount - existing.amount
@@ -169,7 +190,7 @@ netWorthRouter.patch('/adjustments/:id', async (req, res) => {
     }
     const patch: { amount?: number; description?: string | null } = {}
     if (data.amount !== undefined) patch.amount = data.amount
-    if (data.description !== undefined) patch.description = data.description.trim() || null
+    if (enc.description !== undefined) patch.description = enc.description
     return tx.netWorthAdjustment.update({
       where: { id },
       data: patch,
@@ -179,7 +200,7 @@ netWorthRouter.patch('/adjustments/:id', async (req, res) => {
     })
   })
 
-  res.json(row)
+  res.json(decryptNetWorthAdjustmentWithAccount(row))
 })
 
 netWorthRouter.delete('/adjustments/:id', async (req, res) => {

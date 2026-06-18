@@ -4,6 +4,7 @@ import { expensesApi, scheduledExpensesApi } from '../lib/api'
 import { queryKeys } from '../lib/queryKeys'
 import { invalidateFinanceQueries } from '../lib/invalidateFinanceQueries'
 import type { ExpenseRow, ScheduledExpenseRow } from '../lib/financeTypes'
+import type { PaymentMethod } from '../lib/paymentMethod'
 
 /** Optimistic updates + invalidate on settle for finance lists (Expenses page). */
 export function useOptimisticExpenseMutations() {
@@ -14,8 +15,13 @@ export function useOptimisticExpenseMutations() {
   const scheduledKey = queryKeys.scheduledExpenses(userId)
 
   const addExpense = useMutation({
-    mutationFn: (vars: { name: string; amount: number; category: string; date: string }) =>
-      expensesApi.create(vars),
+    mutationFn: (vars: {
+      name: string
+      amount: number
+      category: string
+      date: string
+      paymentMethod: PaymentMethod
+    }) => expensesApi.create(vars),
     onMutate: async (vars) => {
       await queryClient.cancelQueries({ queryKey: expensesKey })
       const previous = queryClient.getQueryData<ExpenseRow[]>(expensesKey)
@@ -54,8 +60,13 @@ export function useOptimisticExpenseMutations() {
   })
 
   const addScheduled = useMutation({
-    mutationFn: (vars: { name: string; amount: number; category: string; dayOfMonth: number }) =>
-      scheduledExpensesApi.create(vars),
+    mutationFn: (vars: {
+      name: string
+      amount: number
+      category: string
+      dayOfMonth: number
+      paymentMethod: PaymentMethod
+    }) => scheduledExpensesApi.create(vars),
     onMutate: async (vars) => {
       await queryClient.cancelQueries({ queryKey: scheduledKey })
       const previous = queryClient.getQueryData<ScheduledExpenseRow[]>(scheduledKey)

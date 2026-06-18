@@ -1,7 +1,7 @@
 import { TransactionModal } from './TransactionModal'
 import { useQuickAdd } from '../context/QuickAddContext'
 import { useFinanceCategories } from '../context/FinanceCategoriesContext'
-import { useFinanceTransactionSubmit } from '../hooks/useFinanceTransactionSubmit'
+import { useFinanceTransactionSubmit, type TransactionFormData } from '../hooks/useFinanceTransactionSubmit'
 
 /** Modal dodawania transakcji wywoływany skrótami globalnymi (np. Ctrl+E). */
 export function GlobalQuickTransaction() {
@@ -16,7 +16,7 @@ export function GlobalQuickTransaction() {
     color: c.color,
   }))
 
-  const handleSubmit = async (data: { name: string; amount: number; category?: string; date: string }) => {
+  const handleSubmit = async (data: TransactionFormData) => {
     if (!transactionType) return
     await submit(transactionType, data)
   }

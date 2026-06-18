@@ -5,6 +5,9 @@ import { authApi } from '../lib/api'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 
+const PASSWORD_HINT = 'Minimum 8 znaków, co najmniej jedna litera i jedna cyfra'
+const isDev = import.meta.env.DEV
+
 export function Login() {
   const [isRegister, setIsRegister] = useState(false)
   const [showReset, setShowReset] = useState(false)
@@ -211,7 +214,7 @@ export function Login() {
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       required
-                      minLength={6}
+                      minLength={8}
                       className="w-full px-4 py-2.5 pr-11 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base focus:border-(--accent-cyan) focus:outline-none"
                     />
                     <button
@@ -224,7 +227,7 @@ export function Login() {
                       {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
-                  <p className="text-sm text-(--text-muted) mt-1">Minimum 6 znaków</p>
+                  <p className="text-sm text-(--text-muted) mt-1">{PASSWORD_HINT}</p>
                 </div>
               ) : (
                 <>
@@ -239,7 +242,7 @@ export function Login() {
                           setError('')
                         }}
                         required
-                        minLength={isRegister ? 6 : 1}
+                        minLength={isRegister ? 8 : 1}
                         className="w-full px-4 py-2.5 pr-11 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base focus:border-(--accent-cyan) focus:outline-none"
                       />
                       <button
@@ -253,7 +256,7 @@ export function Login() {
                       </button>
                     </div>
                     {isRegister && (
-                      <p className="text-sm text-(--text-muted) mt-1">Minimum 6 znaków</p>
+                      <p className="text-sm text-(--text-muted) mt-1">{PASSWORD_HINT}</p>
                     )}
                   </div>
                   {isRegister && (
@@ -268,7 +271,7 @@ export function Login() {
                             setError('')
                           }}
                           required
-                          minLength={6}
+                          minLength={8}
                           className="w-full px-4 py-2.5 pr-11 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base focus:border-(--accent-cyan) focus:outline-none"
                         />
                         <button
@@ -344,17 +347,19 @@ export function Login() {
                 >
                   {isRegister ? 'Mam konto – zaloguj się' : 'Nie mam konta – zarejestruj się'}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowReset(true)
-                    setError('')
-                    setSuccess('')
-                  }}
-                  className="w-full mt-2 text-sm text-(--text-muted) hover:text-(--accent-cyan) transition-colors"
-                >
-                  Nie mogę się zalogować – zresetuj hasło
-                </button>
+                {isDev && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowReset(true)
+                      setError('')
+                      setSuccess('')
+                    }}
+                    className="w-full mt-2 text-sm text-(--text-muted) hover:text-(--accent-cyan) transition-colors"
+                  >
+                    Nie mogę się zalogować – zresetuj hasło (dev)
+                  </button>
+                )}
               </>
             )}
           </motion.div>

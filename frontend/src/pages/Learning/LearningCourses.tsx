@@ -17,6 +17,7 @@ import {
   learningChipClass,
 } from '../../components/learning/learningFormClasses'
 import { useUndoDelete } from '../../components/learning/UndoToast'
+import { SafeExternalLink } from '../../components/SafeExternalLink'
 import type { Course } from '../../context/LearningContext'
 
 const STATUS_OPTIONS: { value: Course['status']; label: string }[] = [
@@ -373,16 +374,13 @@ function CourseCard({
             </button>
           )}
           {c.platformUrl && (
-            <a
+            <SafeExternalLink
               href={c.platformUrl}
-              target="_blank"
-              rel="noopener noreferrer"
               className="p-1.5 rounded-lg text-(--text-muted) hover:text-(--accent-cyan) transition-colors"
-              aria-label="Otwórz kurs"
               title={c.platform || 'Otwórz kurs'}
             >
               <ExternalLink className="w-4 h-4" />
-            </a>
+            </SafeExternalLink>
           )}
         </div>
       }

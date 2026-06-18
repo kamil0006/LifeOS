@@ -2,17 +2,34 @@ import { useState, useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
 import { ModalShell } from './ModalShell'
 import { ExpenseCategoryPicker, DEFAULT_NEW_EXPENSE_CATEGORY_COLOR } from './finance/ExpenseCategoryPicker'
+import { PaymentMethodPicker } from './finance/PaymentMethodPicker'
 import { EXPENSE_CATEGORY_NONE } from '../lib/expenseCategoryConstants'
+import type { PaymentMethod } from '../lib/paymentMethod'
+import { isPaymentMethod } from '../lib/paymentMethod'
+
+export type TransactionFormPayload = {
+  name: string
+  amount: number
+  category?: string
+  date: string
+  paymentMethod: PaymentMethod
+}
 
 interface TransactionModalProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (data: { name: string; amount: number; category?: string; date: string }) => void | Promise<void>
+  onSubmit: (data: TransactionFormPayload) => void | Promise<void>
   type: 'income' | 'expense'
   categories: { id: string; name: string; label: string; color: string }[]
   onAddCategory?: (name: string, color: string) => Promise<void>
   onDeleteCategory?: (id: string) => Promise<void>
-  initialData?: { name: string; amount: number; category?: string; date: string } | null
+  initialData?: {
+    name: string
+    amount: number
+    category?: string
+    date: string
+    paymentMethod?: PaymentMethod | null
+  } | null
   submitLabel?: string
   title?: string
 }
@@ -32,7 +49,7 @@ export function TransactionModal({
   const initialDataKey =
     initialData == null
       ? 'new'
-      : `${initialData.name}\t${initialData.amount}\t${initialData.date}\t${initialData.category ?? ''}`
+      : `${initialData.name}\t${initialData.amount}\t${initialData.date}\t${initialData.category ?? ''}\t${initialData.paymentMethod ?? ''}`
 
   const formDefaults = (
     cats: typeof categories,
@@ -42,6 +59,7 @@ export function TransactionModal({
     amount: string
     category: string
     date: string
+    paymentMethod: PaymentMethod | ''
     showAddCategory: boolean
     newCategoryName: string
     newCategoryColor: string
@@ -49,11 +67,14 @@ export function TransactionModal({
     const raw = init?.category ?? EXPENSE_CATEGORY_NONE
     const category =
       raw === EXPENSE_CATEGORY_NONE || cats.some((c) => c.name === raw) ? raw : EXPENSE_CATEGORY_NONE
+    const paymentMethod =
+      init?.paymentMethod && isPaymentMethod(init.paymentMethod) ? init.paymentMethod : ''
     return {
       name: init?.name ?? '',
       amount: init?.amount != null ? String(init.amount) : '',
       category,
       date: init?.date ?? new Date().toISOString().split('T')[0],
+      paymentMethod,
       showAddCategory: false,
       newCategoryName: '',
       newCategoryColor: DEFAULT_NEW_EXPENSE_CATEGORY_COLOR,
@@ -72,10 +93,6 @@ export function TransactionModal({
   const prevTypeRef = useRef(type)
   const prevInitialKeyRef = useRef(initialDataKey)
 
-  /**
-   * Reset tylko przy otwarciu modala lub zmianie typu / edytowanego wpisu — nie przy każdej zmianie referencji `categories`
-   * (rodzic często robi .map() bez useMemo, co wcześniej kasowało wybraną kategorię przed zapisem).
-   */
   useEffect(() => {
     if (!isOpen) {
       wasOpenRef.current = false
@@ -94,11 +111,10 @@ export function TransactionModal({
     if (justOpened || typeChanged || initialChanged) {
       setForm(formDefaults(categories, initialData))
     }
-    // Nie dodawaj `categories` do zależności — nowa tablica z rodzica (np. .map()) resetowałaby formularz i kasowała wybór kategorii.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, type, initialDataKey])
 
-  const { name, amount, category, date, showAddCategory, newCategoryName, newCategoryColor } = form
+  const { name, amount, category, date, paymentMethod, showAddCategory, newCategoryName, newCategoryColor } = form
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -106,6 +122,10 @@ export function TransactionModal({
     const normalized = String(f.amount).replace(/\s/g, '').replace(',', '.')
     const amt = parseFloat(normalized)
     if (!f.name.trim() || isNaN(amt)) return
+    if (!isPaymentMethod(f.paymentMethod)) {
+      alert('Wybierz sposób płatności: karta lub gotówka.')
+      return
+    }
     try {
       await Promise.resolve(
         onSubmit({
@@ -113,6 +133,7 @@ export function TransactionModal({
           amount: amt,
           category: f.category || EXPENSE_CATEGORY_NONE,
           date: f.date,
+          paymentMethod: f.paymentMethod,
         })
       )
       onClose()
@@ -177,6 +198,10 @@ export function TransactionModal({
             className="no-spinners w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
           />
         </div>
+        <PaymentMethodPicker
+          value={paymentMethod}
+          onChange={(method) => updateField('paymentMethod', method)}
+        />
         <ExpenseCategoryPicker
           categories={categories}
           category={category}
@@ -201,7 +226,8 @@ export function TransactionModal({
           </button>
           <button
             type="submit"
-            className="px-4 py-2 rounded-lg bg-(--accent-cyan) text-(--bg-dark) font-gaming hover:opacity-90"
+            disabled={!isPaymentMethod(paymentMethod)}
+            className="px-4 py-2 rounded-lg bg-(--accent-cyan) text-(--bg-dark) font-gaming hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitLabel ?? 'Zapisz'}
           </button>

@@ -13,6 +13,7 @@ import {
   learningChipClass,
 } from '../../components/learning/learningFormClasses'
 import { Plus, ExternalLink, Github } from 'lucide-react'
+import { SafeExternalLink } from '../../components/SafeExternalLink'
 import { useLearning } from '../../context/LearningContext'
 import type { Project, ProjectStatus } from '../../context/LearningContext'
 
@@ -387,15 +388,13 @@ export function LearningProjects() {
                       quickActions={
                         <div className="flex items-center gap-1">
                           {p.githubUrl && (
-                            <a
+                            <SafeExternalLink
                               href={p.githubUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
                               className="p-1.5 rounded-lg text-(--text-muted) hover:text-(--accent-cyan) transition-colors"
-                              aria-label="GitHub"
+                              title="GitHub"
                             >
                               <Github className="w-4 h-4" />
-                            </a>
+                            </SafeExternalLink>
                           )}
                           {p.url && (
                             <a

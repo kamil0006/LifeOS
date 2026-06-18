@@ -2,15 +2,18 @@ import { Router } from 'express'
 import { z } from 'zod'
 import { getAuthUser } from '../middleware/auth.js'
 import { prisma } from '../lib/prisma.js'
+import { assertTodoOwned } from '../lib/ownership.js'
+
+const cuidLike = z.string().min(1).max(64)
 
 const createSchema = z.object({
-  title: z.string().min(1),
-  date: z.string(), // ISO date "YYYY-MM-DD"
-  time: z.string().optional(),
-  category: z.string().optional(),
-  color: z.string().optional(),
-  notes: z.string().optional(),
-  linkedTodoId: z.string().nullable().optional(),
+  title: z.string().min(1).max(300),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  time: z.string().max(10).optional(),
+  category: z.string().max(100).optional(),
+  color: z.string().max(20).optional(),
+  notes: z.string().max(5000).optional(),
+  linkedTodoId: cuidLike.nullable().optional(),
 })
 
 const updateSchema = createSchema.partial()
@@ -29,16 +32,17 @@ eventsRouter.get('/', async (req, res) => {
 eventsRouter.post('/', async (req, res) => {
   const userId = getAuthUser(req).userId
   const data = createSchema.parse(req.body)
+  await assertTodoOwned(userId, data.linkedTodoId)
   const event = await prisma.event.create({
     data: {
       userId,
-      title: data.title,
+      title: data.title.trim(),
       date: new Date(data.date),
-      time: data.time ?? null,
-      category: data.category ?? null,
-      color: data.color ?? null,
-      notes: data.notes ?? null,
-      linkedTodoId: data.linkedTodoId ?? null,
+      time: data.time?.trim() ?? null,
+      category: data.category?.trim() ?? null,
+      color: data.color?.trim() ?? null,
+      notes: data.notes?.trim() ?? null,
+      linkedTodoId: data.linkedTodoId?.trim() ?? null,
     },
   })
   res.status(201).json(event)
@@ -50,16 +54,19 @@ eventsRouter.patch('/:id', async (req, res) => {
   const data = updateSchema.parse(req.body)
   const existing = await prisma.event.findFirst({ where: { id, userId } })
   if (!existing) return res.status(404).json({ error: 'Nie znaleziono' })
+  if (data.linkedTodoId !== undefined) {
+    await assertTodoOwned(userId, data.linkedTodoId)
+  }
   const updated = await prisma.event.update({
     where: { id },
     data: {
-      ...(data.title != null && { title: data.title }),
+      ...(data.title != null && { title: data.title.trim() }),
       ...(data.date != null && { date: new Date(data.date) }),
-      ...(data.time !== undefined && { time: data.time ?? null }),
-      ...(data.category !== undefined && { category: data.category ?? null }),
-      ...(data.color !== undefined && { color: data.color ?? null }),
-      ...(data.notes !== undefined && { notes: data.notes ?? null }),
-      ...(data.linkedTodoId !== undefined && { linkedTodoId: data.linkedTodoId ?? null }),
+      ...(data.time !== undefined && { time: data.time?.trim() ?? null }),
+      ...(data.category !== undefined && { category: data.category?.trim() ?? null }),
+      ...(data.color !== undefined && { color: data.color?.trim() ?? null }),
+      ...(data.notes !== undefined && { notes: data.notes?.trim() ?? null }),
+      ...(data.linkedTodoId !== undefined && { linkedTodoId: data.linkedTodoId?.trim() ?? null }),
     },
   })
   res.json(updated)

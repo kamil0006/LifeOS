@@ -10,6 +10,8 @@ import { useFinanceListsQuery } from '../hooks/useFinanceListsQuery'
 import { useOptimisticExpenseMutations } from '../hooks/useOptimisticExpenseMutations'
 import { mergeExpensesWithScheduled } from '../lib/expensesUtils'
 import { FinanceListPageSkeleton } from '../components/skeletons'
+import { PaymentMethodPicker, PaymentMethodBadge } from '../components/finance/PaymentMethodPicker'
+import type { PaymentMethod } from '../lib/paymentMethod'
 
 const categories = ['Jedzenie', 'Mieszkanie', 'Transport', 'Rozrywka', 'Inne']
 
@@ -25,6 +27,8 @@ export function Expenses() {
   } = useFinanceListsQuery()
   const [showForm, setShowForm] = useState(false)
   const [showScheduledForm, setShowScheduledForm] = useState(false)
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | ''>('')
+  const [scheduledPaymentMethod, setScheduledPaymentMethod] = useState<PaymentMethod | ''>('')
   const loading = isDemoMode ? false : financeLoading
 
   const selectedMonth = monthCtx?.selectedMonth ?? new Date().getMonth()
@@ -36,13 +40,20 @@ export function Expenses() {
   const displayExpenses = mergeExpensesWithScheduled(realInMonth, allScheduled, selectedMonth, selectedYear)
   const total = displayExpenses.reduce((sum, e) => sum + e.amount, 0)
 
-  const handleAdd = async (name: string, amount: number, category: string, date?: string) => {
+  const handleAdd = async (
+    name: string,
+    amount: number,
+    category: string,
+    date?: string,
+    method?: PaymentMethod,
+  ) => {
+    if (!method) return
     const expenseDate = date ?? new Date().toISOString().split('T')[0]
     if (isDemoMode && demoData) {
-      demoData.addExpense({ name, amount, category, date: expenseDate })
+      demoData.addExpense({ name, amount, category, date: expenseDate, paymentMethod: method })
       return
     }
-    addExpense.mutate({ name, amount, category, date: expenseDate })
+    addExpense.mutate({ name, amount, category, date: expenseDate, paymentMethod: method })
   }
 
   const handleDelete = async (id: string) => {
@@ -57,13 +68,22 @@ export function Expenses() {
     name: string,
     amount: number,
     category: string,
-    dayOfMonth: number
+    dayOfMonth: number,
+    method?: PaymentMethod,
   ) => {
+    if (!method) return
     if (isDemoMode && demoData) {
-      demoData.addScheduledExpense({ name, amount, category, dayOfMonth, active: true })
+      demoData.addScheduledExpense({
+        name,
+        amount,
+        category,
+        dayOfMonth,
+        active: true,
+        paymentMethod: method,
+      })
       return
     }
-    addScheduled.mutate({ name, amount, category, dayOfMonth })
+    addScheduled.mutate({ name, amount, category, dayOfMonth, paymentMethod: method })
   }
 
   const handleDeleteScheduled = async (id: string) => {
@@ -127,6 +147,11 @@ export function Expenses() {
                   <p className="font-medium text-base">{s.name}</p>
                   <p className="text-base text-(--text-muted)">
                     {s.category} • dzień {s.dayOfMonth} każdego miesiąca
+                    {s.paymentMethod ? (
+                      <span className="ml-2">
+                        <PaymentMethodBadge method={s.paymentMethod} />
+                      </span>
+                    ) : null}
                   </p>
                 </div>
                 <div className="flex items-center gap-4">
@@ -149,13 +174,15 @@ export function Expenses() {
           <form
             onSubmit={(e) => {
               e.preventDefault()
+              if (!scheduledPaymentMethod) return
               const form = e.target as HTMLFormElement
               const name = (form.elements.namedItem('schedName') as HTMLInputElement).value
               const amount = parseFloat((form.elements.namedItem('schedAmount') as HTMLInputElement).value)
               const category = (form.elements.namedItem('schedCategory') as HTMLSelectElement).value
               const dayOfMonth = parseInt((form.elements.namedItem('schedDay') as HTMLInputElement).value, 10)
-              handleAddScheduled(name, amount, category, dayOfMonth)
+              handleAddScheduled(name, amount, category, dayOfMonth, scheduledPaymentMethod)
               setShowScheduledForm(false)
+              setScheduledPaymentMethod('')
               form.reset()
             }}
             className="space-y-3 p-3 rounded-lg bg-(--bg-dark) border border-(--border)"
@@ -203,10 +230,16 @@ export function Expenses() {
                 </select>
               </div>
             </div>
+            <PaymentMethodPicker
+              value={scheduledPaymentMethod}
+              onChange={setScheduledPaymentMethod}
+              id="scheduled-expense-payment"
+            />
             <div className="flex gap-2">
               <button
                 type="submit"
-                className="px-4 py-2 rounded-lg bg-(--accent-amber)/15 text-(--accent-amber) border border-(--accent-amber)/40 font-gaming"
+                disabled={!scheduledPaymentMethod}
+                className="px-4 py-2 rounded-lg bg-(--accent-amber)/15 text-(--accent-amber) border border-(--accent-amber)/40 font-gaming disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Zapisz
               </button>
@@ -253,6 +286,11 @@ export function Expenses() {
                   </div>
                   <p className="text-base text-(--text-muted)">
                     {expense.category} • {expense.date}
+                    {!expense.isScheduled && expense.paymentMethod && (
+                      <span className="ml-2">
+                        <PaymentMethodBadge method={expense.paymentMethod} />
+                      </span>
+                    )}
                   </p>
                 </div>
                 <div className="flex items-center gap-4">
@@ -287,13 +325,15 @@ export function Expenses() {
           <form
             onSubmit={(e) => {
               e.preventDefault()
+              if (!paymentMethod) return
               const form = e.target as HTMLFormElement
               const name = (form.elements.namedItem('name') as HTMLInputElement).value
               const amount = parseFloat((form.elements.namedItem('amount') as HTMLInputElement).value)
               const category = (form.elements.namedItem('category') as HTMLSelectElement).value
               const date = (form.elements.namedItem('date') as HTMLInputElement)?.value
-              handleAdd(name, amount, category, date)
+              handleAdd(name, amount, category, date, paymentMethod)
               setShowForm(false)
+              setPaymentMethod('')
               form.reset()
             }}
             className="space-y-4"
@@ -338,9 +378,11 @@ export function Expenses() {
                 </select>
               </div>
             </div>
+            <PaymentMethodPicker value={paymentMethod} onChange={setPaymentMethod} id="expense-payment" />
             <button
               type="submit"
-              className="px-4 py-2 rounded-lg bg-(--accent-cyan)/15 text-(--accent-cyan) border border-(--accent-cyan)/40 font-gaming tracking-wider hover:shadow-[0_0_12px_rgba(0,229,255,0.2)] transition-all"
+              disabled={!paymentMethod}
+              className="px-4 py-2 rounded-lg bg-(--accent-cyan)/15 text-(--accent-cyan) border border-(--accent-cyan)/40 font-gaming tracking-wider hover:shadow-[0_0_12px_rgba(0,229,255,0.2)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Zapisz
             </button>

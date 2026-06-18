@@ -4,17 +4,17 @@ import { getAuthUser } from '../middleware/auth.js'
 import { prisma } from '../lib/prisma.js'
 
 const createSchema = z.object({
-  name: z.string().min(1),
+  name: z.string().min(1).max(200),
   target: z.number().positive(),
   current: z.number().min(0).optional(),
-  unit: z.string().optional(),
+  unit: z.string().max(50).optional(),
 })
 
 const updateSchema = z.object({
   current: z.number().min(0).optional(),
   target: z.number().positive().optional(),
-  name: z.string().min(1).optional(),
-  unit: z.string().optional(),
+  name: z.string().min(1).max(200).optional(),
+  unit: z.string().max(50).optional(),
 })
 
 export const goalsRouter = Router()

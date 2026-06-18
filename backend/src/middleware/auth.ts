@@ -1,11 +1,13 @@
 import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
-
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production'
+import { getJwtSecret } from '../lib/config.js'
+import { getTokenFromRequest } from '../lib/authCookie.js'
 
 export interface AuthPayload {
   userId: string
   email: string
+  /** access — API; refresh — tylko odświeżanie sesji */
+  typ?: 'access' | 'refresh'
 }
 
 export function authMiddleware(
@@ -13,15 +15,17 @@ export function authMiddleware(
   res: Response,
   next: NextFunction
 ) {
-  const authHeader = req.headers.authorization
-  const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
+  const token = getTokenFromRequest(req)
 
   if (!token) {
     return res.status(401).json({ error: 'Brak tokenu autoryzacji' })
   }
 
   try {
-    const payload = jwt.verify(token, JWT_SECRET) as AuthPayload
+    const payload = jwt.verify(token, getJwtSecret(), { algorithms: ['HS256'] }) as AuthPayload
+    if (payload.typ === 'refresh') {
+      return res.status(401).json({ error: 'Nieprawidłowy token autoryzacji' })
+    }
     req.user = payload
     next()
   } catch {

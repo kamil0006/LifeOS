@@ -5,7 +5,7 @@ import { MonthSelector } from '../../components/MonthSelector'
 import { Plus } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { TransactionModal } from '../../components/TransactionModal'
-import { RecurringModal } from '../../components/RecurringModal'
+import { RecurringModal, type RecurringFormPayload } from '../../components/RecurringModal'
 import { useAuth } from '../../context/AuthContext'
 import { useDemoData, DEMO_EXPENSES, DEMO_INCOME, DEMO_SCHEDULED_EXPENSES } from '../../context/DemoDataContext'
 import { mergeExpensesWithScheduled } from '../../lib/expensesUtils'
@@ -13,7 +13,7 @@ import { useMonth, inMonth } from '../../context/MonthContext'
 import { useFinanceListsQuery } from '../../hooks/useFinanceListsQuery'
 import { useFinanceUsesApi } from '../../hooks/useFinanceUsesApi'
 import { useFinanceCategories } from '../../context/FinanceCategoriesContext'
-import { useFinanceTransactionSubmit } from '../../hooks/useFinanceTransactionSubmit'
+import { useFinanceTransactionSubmit, type TransactionFormData } from '../../hooks/useFinanceTransactionSubmit'
 import { invalidateFinanceQueries } from '../../lib/invalidateFinanceQueries'
 import { scheduledExpensesApi } from '../../lib/api'
 import { OverviewSkeleton } from '../../components/skeletons'
@@ -134,14 +134,15 @@ export function Overview() {
 
   const categoriesForModal = finCats.map((c) => ({ id: c.id, name: c.name, label: c.label, color: c.color }))
 
-  const handleTxSubmit = async (data: { name: string; amount: number; category?: string; date: string }) => {
+  const handleTxSubmit = async (data: TransactionFormData) => {
     await submitTransaction(txType, data)
     setShowTxModal(false)
   }
 
-  const handleRecurringSubmit = async (data: { name: string; amount: number; category: string; dayOfMonth: number }) => {
-    if (!useApiFinance && demoData) demoData.addScheduledExpense({ ...data, active: true, pausedUntil: null, reminderDaysBefore: null })
-    else {
+  const handleRecurringSubmit = async (data: RecurringFormPayload) => {
+    if (!useApiFinance && demoData) {
+      demoData.addScheduledExpense({ ...data, active: true, pausedUntil: null, reminderDaysBefore: null })
+    } else {
       await scheduledExpensesApi.create(data)
       await invalidateFinanceQueries(queryClient, userId)
     }

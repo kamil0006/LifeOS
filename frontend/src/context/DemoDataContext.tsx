@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, type ReactNode } from 'react'
+import type { PaymentMethod } from '../lib/paymentMethod'
+import { isPaymentMethod } from '../lib/paymentMethod'
 
 export interface DemoExpense {
   id: string
@@ -6,6 +8,7 @@ export interface DemoExpense {
   amount: number
   category: string
   date: string
+  paymentMethod?: PaymentMethod
 }
 
 export interface DemoIncome {
@@ -16,6 +19,7 @@ export interface DemoIncome {
   recurring: boolean
   /** Jak Expense.category — wspólne kategorie finansów */
   category: string
+  paymentMethod?: PaymentMethod
 }
 
 export interface DemoScheduledExpense {
@@ -25,6 +29,7 @@ export interface DemoScheduledExpense {
   category: string
   dayOfMonth: number
   active: boolean
+  paymentMethod?: PaymentMethod
   pausedUntil?: string | null
   reminderDaysBefore?: number | null
 }
@@ -125,14 +130,23 @@ function getDemoData(year: number) {
     { id: '22', source: 'Premia świąteczna', amount: 800, date: pad(12, 15), recurring: false },
   ].map((row) => ({ ...row, category: '' }))
 
-  return { expenses, income }
+  return {
+    expenses: expenses.map((e, i) => ({
+      ...e,
+      paymentMethod: (i % 2 === 0 ? 'card' : 'cash') as PaymentMethod,
+    })),
+    income: income.map((e, i) => ({
+      ...e,
+      paymentMethod: (i % 3 === 0 ? 'cash' : 'card') as PaymentMethod,
+    })),
+  }
 }
 
 const DEMO_SCHEDULED_EXPENSES: DemoScheduledExpense[] = [
-  { id: 's1', name: 'Czynsz', amount: 1200, category: 'Mieszkanie', dayOfMonth: 1, active: true, pausedUntil: null, reminderDaysBefore: 3 },
-  { id: 's2', name: 'Netflix', amount: 55, category: 'Rozrywka', dayOfMonth: 2, active: true, pausedUntil: null, reminderDaysBefore: 1 },
-  { id: 's3', name: 'Spotify', amount: 23, category: 'Rozrywka', dayOfMonth: 5, active: true, pausedUntil: null, reminderDaysBefore: 1 },
-  { id: 's4', name: 'Prąd', amount: 185, category: 'Mieszkanie', dayOfMonth: 20, active: true, pausedUntil: null, reminderDaysBefore: 5 },
+  { id: 's1', name: 'Czynsz', amount: 1200, category: 'Mieszkanie', dayOfMonth: 1, active: true, paymentMethod: 'card', pausedUntil: null, reminderDaysBefore: 3 },
+  { id: 's2', name: 'Netflix', amount: 55, category: 'Rozrywka', dayOfMonth: 2, active: true, paymentMethod: 'card', pausedUntil: null, reminderDaysBefore: 1 },
+  { id: 's3', name: 'Spotify', amount: 23, category: 'Rozrywka', dayOfMonth: 5, active: true, paymentMethod: 'card', pausedUntil: null, reminderDaysBefore: 1 },
+  { id: 's4', name: 'Prąd', amount: 185, category: 'Mieszkanie', dayOfMonth: 20, active: true, paymentMethod: 'cash', pausedUntil: null, reminderDaysBefore: 5 },
 ]
 
 const currentYear = new Date().getFullYear()
@@ -155,7 +169,8 @@ function isDemoExpenseRow(x: unknown): x is DemoExpense {
     typeof o.name === 'string' &&
     typeof o.amount === 'number' &&
     typeof o.category === 'string' &&
-    typeof o.date === 'string'
+    typeof o.date === 'string' &&
+    (o.paymentMethod === undefined || isPaymentMethod(o.paymentMethod))
   )
 }
 
@@ -168,7 +183,8 @@ function isDemoIncomeRow(x: unknown): x is Omit<DemoIncome, 'category'> & { cate
     typeof o.amount === 'number' &&
     typeof o.date === 'string' &&
     typeof o.recurring === 'boolean' &&
-    (o.category === undefined || typeof o.category === 'string')
+    (o.category === undefined || typeof o.category === 'string') &&
+    (o.paymentMethod === undefined || isPaymentMethod(o.paymentMethod))
   )
 }
 
@@ -181,7 +197,8 @@ function isDemoScheduledRow(x: unknown): x is DemoScheduledExpense {
     typeof o.amount === 'number' &&
     typeof o.category === 'string' &&
     typeof o.dayOfMonth === 'number' &&
-    typeof o.active === 'boolean'
+    typeof o.active === 'boolean' &&
+    (o.paymentMethod === undefined || isPaymentMethod(o.paymentMethod))
   )
 }
 

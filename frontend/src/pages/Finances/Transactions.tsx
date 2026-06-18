@@ -17,10 +17,12 @@ import { useTransactionsList, type Transaction } from '../../hooks/useTransactio
 import { capitalizeFirstPl } from '../../lib/capitalizeFirst'
 import { EXPENSE_CATEGORY_NONE, EXPENSE_CATEGORY_DISPLAY_NONE } from '../../lib/expenseCategoryConstants'
 import { invalidateFinanceQueries } from '../../lib/invalidateFinanceQueries'
-import { useFinanceTransactionSubmit } from '../../hooks/useFinanceTransactionSubmit'
+import { useFinanceTransactionSubmit, type TransactionFormData } from '../../hooks/useFinanceTransactionSubmit'
 import { TransactionsPageSkeleton } from '../../components/skeletons'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
+import { PaymentMethodBadge } from '../../components/finance/PaymentMethodPicker'
 import { useUndoDelete } from '../../components/learning/UndoToast'
+import type { PaymentMethod } from '../../lib/paymentMethod'
 
 type SortBy = 'date_desc' | 'date_asc' | 'amount_desc' | 'amount_asc'
 
@@ -50,6 +52,7 @@ export function Transactions() {
   const [editingTx, setEditingTx] = useState<Transaction | null>(null)
   const [searchText, setSearchText] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState<'all' | PaymentMethod | 'unset'>('all')
   const [amountMin, setAmountMin] = useState('')
   const [amountMax, setAmountMax] = useState('')
   const [sortBy, setSortBy] = useState<SortBy>('date_desc')
@@ -117,12 +120,12 @@ export function Transactions() {
     void commitDelete(key)
   })
 
-  const handleCreate = async (data: { name: string; amount: number; category?: string; date: string }) => {
+  const handleCreate = async (data: TransactionFormData) => {
     await submitTransaction(formType, data)
     setShowForm(false)
   }
 
-  const handleModalSubmit = async (data: { name: string; amount: number; category?: string; date: string }) => {
+  const handleModalSubmit = async (data: TransactionFormData) => {
     if (!editingTx) {
       await handleCreate(data)
       return
@@ -141,6 +144,7 @@ export function Transactions() {
             amount: data.amount,
             category: data.category ?? EXPENSE_CATEGORY_NONE,
             dayOfMonth,
+            paymentMethod: data.paymentMethod,
           })
         } else {
           await scheduledExpensesApi.update(editingTx.scheduledId, {
@@ -148,6 +152,7 @@ export function Transactions() {
             amount: data.amount,
             category: data.category ?? EXPENSE_CATEGORY_NONE,
             dayOfMonth,
+            paymentMethod: data.paymentMethod,
           })
           await invalidateFinanceQueries(queryClient, userId)
         }
@@ -218,6 +223,11 @@ export function Transactions() {
       .filter((tx) => (searchText.trim() ? tx.name.toLowerCase().includes(searchText.toLowerCase().trim()) : true))
       .filter((tx) => (categoryFilter === 'all' ? true : tx.category === categoryFilter))
       .filter((tx) => {
+        if (paymentMethodFilter === 'all') return true
+        if (paymentMethodFilter === 'unset') return !tx.paymentMethod
+        return tx.paymentMethod === paymentMethodFilter
+      })
+      .filter((tx) => {
         const abs = Math.abs(tx.amount)
         if (minVal != null && !Number.isNaN(minVal) && abs < minVal) return false
         if (maxVal != null && !Number.isNaN(maxVal) && abs > maxVal) return false
@@ -229,7 +239,7 @@ export function Transactions() {
         if (sortBy === 'amount_asc') return Math.abs(a.amount) - Math.abs(b.amount)
         return Math.abs(b.amount) - Math.abs(a.amount)
       })
-  }, [filteredTransactions, pendingId, searchText, categoryFilter, amountMin, amountMax, sortBy])
+  }, [filteredTransactions, pendingId, searchText, categoryFilter, paymentMethodFilter, amountMin, amountMax, sortBy])
 
   if (loading) return <TransactionsPageSkeleton />
 
@@ -312,52 +322,68 @@ export function Transactions() {
           ))}
         </div>
 
-        <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-5">
-          <input
-            type="search"
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            placeholder="Szukaj po nazwie…"
-            className="min-h-11 rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) sm:col-span-2 md:col-span-1"
-          />
-          <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="min-h-11 rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary)"
-          >
-            {categoryOptions.map((cat) => (
-              <option key={cat === EXPENSE_CATEGORY_NONE ? '__none__' : cat} value={cat}>
-                {categoryFilterLabel(cat)}
-              </option>
-            ))}
-          </select>
-          <input
-            type="number"
-            min="0"
-            value={amountMin}
-            onChange={(e) => setAmountMin(e.target.value)}
-            placeholder="Kwota od"
-            className="no-spinners min-h-11 rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) max-md:hidden"
-          />
-          <input
-            type="number"
-            min="0"
-            value={amountMax}
-            onChange={(e) => setAmountMax(e.target.value)}
-            placeholder="Kwota do"
-            className="no-spinners min-h-11 rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) max-md:hidden"
-          />
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SortBy)}
-            className="min-h-11 rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none"
-            aria-label="Sortowanie listy"
-          >
-            <option value="date_desc">Data: najnowsze</option>
-            <option value="date_asc">Data: najstarsze</option>
-            <option value="amount_desc">Kwota: malejąco</option>
-            <option value="amount_asc">Kwota: rosnąco</option>
-          </select>
+        <div className="mb-4 space-y-2">
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+            <input
+              type="search"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              placeholder="Szukaj…"
+              className="col-span-2 min-h-11 min-w-0 w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) md:col-span-1"
+            />
+            <input
+              type="number"
+              min="0"
+              value={amountMin}
+              onChange={(e) => setAmountMin(e.target.value)}
+              placeholder="Kwota od"
+              className="no-spinners min-h-11 min-w-0 w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary)"
+            />
+            <input
+              type="number"
+              min="0"
+              value={amountMax}
+              onChange={(e) => setAmountMax(e.target.value)}
+              placeholder="Kwota do"
+              className="no-spinners min-h-11 min-w-0 w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary)"
+            />
+          </div>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="min-h-11 min-w-0 w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary)"
+              aria-label="Filtr kategorii"
+            >
+              {categoryOptions.map((cat) => (
+                <option key={cat === EXPENSE_CATEGORY_NONE ? '__none__' : cat} value={cat}>
+                  {categoryFilterLabel(cat)}
+                </option>
+              ))}
+            </select>
+            <select
+              value={paymentMethodFilter}
+              onChange={(e) => setPaymentMethodFilter(e.target.value as typeof paymentMethodFilter)}
+              className="min-h-11 min-w-0 w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary)"
+              aria-label="Filtr sposobu płatności"
+            >
+              <option value="all">Wszystkie płatności</option>
+              <option value="card">Karta</option>
+              <option value="cash">Gotówka</option>
+              <option value="unset">Bez oznaczenia</option>
+            </select>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortBy)}
+              className="min-h-11 min-w-0 w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none"
+              aria-label="Sortowanie po dacie lub kwocie"
+            >
+              <option value="date_desc">Data: najnowsze</option>
+              <option value="date_asc">Data: najstarsze</option>
+              <option value="amount_desc">Kwota: malejąco</option>
+              <option value="amount_asc">Kwota: rosnąco</option>
+            </select>
+          </div>
         </div>
 
         <p className="mb-3 text-sm text-(--text-muted) md:hidden">
@@ -372,6 +398,7 @@ export function Transactions() {
                 <th className="pb-3 text-base text-(--text-muted)">Data</th>
                 <th className="pb-3 text-base text-(--text-muted)">Nazwa</th>
                 <th className="pb-3 text-base text-(--text-muted)">Kategoria</th>
+                <th className="pb-3 text-base text-(--text-muted)">Płatność</th>
                 <th className="pb-3 text-base text-(--text-muted) text-right">Kwota</th>
                 <th className="pb-3 w-20" />
               </tr>
@@ -400,6 +427,9 @@ export function Transactions() {
                       ) : (
                         <span className="text-sm text-(--text-muted) font-mono">{EXPENSE_CATEGORY_DISPLAY_NONE}</span>
                       )}
+                    </td>
+                    <td className="py-3">
+                      <PaymentMethodBadge method={tx.paymentMethod} />
                     </td>
                     <td
                       className={`py-3 text-right text-base font-medium font-mono ${
@@ -460,10 +490,11 @@ export function Transactions() {
                     {tx.amount.toLocaleString('pl-PL')} zł
                   </p>
                 </div>
-                <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-(--border)/50 pt-2.5">
+                <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-(--border)/50 pt-2.5">
+                  <div className="flex min-w-0 flex-wrap items-center gap-2">
                   {showCategoryPill ? (
                     <span
-                      className="inline-flex max-w-[70%] items-center gap-1.5 truncate rounded px-2 py-0.5 text-xs"
+                      className="inline-flex max-w-full items-center gap-1.5 truncate rounded px-2 py-0.5 text-xs"
                       style={{ backgroundColor: `${color}25`, color }}
                     >
                       <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />
@@ -472,6 +503,8 @@ export function Transactions() {
                   ) : (
                     <span className="text-xs text-(--text-muted)">{EXPENSE_CATEGORY_DISPLAY_NONE}</span>
                   )}
+                  <PaymentMethodBadge method={tx.paymentMethod} />
+                  </div>
                   <div className="flex shrink-0 items-center gap-1">
                     <button
                       type="button"
@@ -532,6 +565,7 @@ export function Transactions() {
                 amount: Math.abs(editingTx.amount),
                 category: editingTx.category,
                 date: editingTx.date,
+                paymentMethod: editingTx.paymentMethod,
               }
             : null
         }

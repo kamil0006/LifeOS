@@ -44,10 +44,14 @@ function RouteFallback() {
 }
 
 function App() {
-  const { token, isDemoMode, user } = useAuth()
+  const { sessionReady, isDemoMode, user, isLoggedIn } = useAuth()
   const dataScopeKey = isDemoMode ? 'demo' : `u-${user?.id ?? 'x'}`
 
-  const isAuthenticated = isDemoMode || !!token
+  if (!sessionReady) {
+    return <RouteFallback />
+  }
+
+  const isAuthenticated = isDemoMode || isLoggedIn
 
   if (!isAuthenticated) {
     return (

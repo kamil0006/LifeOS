@@ -1,5 +1,6 @@
 import OpenAI from 'openai'
 import { prisma } from './prisma.js'
+import { isOpenAiReportEnabled } from './config.js'
 
 export interface WeeklyReportResult {
   summary: string
@@ -33,6 +34,43 @@ interface Aggregated {
     goalPct: number
   }
   goals: { name: string; current: number; target: number; unit: string | null }[]
+}
+
+/** Minimalny zestaw danych wysyłany do OpenAI — bez treści notatek ani pojedynczych transakcji. */
+type AiSafePayload = {
+  range: Aggregated['range']
+  finance: {
+    expenses30: number
+    income30: number
+    balance30: number
+    topCategories: { category: string; amount: number }[]
+    netWorthRounded: number
+  }
+  productivity: Aggregated['productivity']
+  habits: Aggregated['habits']
+  learning: Aggregated['learning']
+  goalsCount: number
+  goalsProgressPct: number[]
+}
+
+function toAiSafePayload(data: Aggregated): AiSafePayload {
+  return {
+    range: data.range,
+    finance: {
+      expenses30: data.finance.expenses30,
+      income30: data.finance.income30,
+      balance30: data.finance.balance30,
+      topCategories: data.finance.topCategories.slice(0, 5),
+      netWorthRounded: Math.round(data.finance.netWorth / 100) * 100,
+    },
+    productivity: data.productivity,
+    habits: data.habits,
+    learning: data.learning,
+    goalsCount: data.goals.length,
+    goalsProgressPct: data.goals.map((g) =>
+      g.target > 0 ? Math.round((g.current / g.target) * 100) : 0
+    ),
+  }
 }
 
 function daysAgo(n: number): Date {
@@ -186,22 +224,27 @@ function getSystemPrompt(): string {
 
 export async function generateWeeklyReport(userId: string): Promise<WeeklyReportResult> {
   const data = await aggregateUserData(userId)
-  const apiKey = process.env.OPENAI_API_KEY
   const model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
   const generatedAt = new Date().toISOString()
 
-  if (!apiKey) {
+  if (!isOpenAiReportEnabled()) {
     return { summary: buildFallbackReport(data), generatedAt, model: 'fallback', source: 'fallback' }
   }
 
+  const apiKey = process.env.OPENAI_API_KEY!.trim()
+
   try {
     const client = new OpenAI({ apiKey })
+    const safePayload = toAiSafePayload(data)
     const completion = await client.chat.completions.create({
       model,
       temperature: 0.4,
       messages: [
         { role: 'system', content: getSystemPrompt() },
-        { role: 'user', content: `Dane użytkownika (JSON):\n${JSON.stringify(data, null, 2)}` },
+        {
+          role: 'user',
+          content: `Zagregowane dane tygodniowe (JSON, bez treści notatek i pojedynczych transakcji):\n${JSON.stringify(safePayload, null, 2)}`,
+        },
       ],
     })
     const summary = completion.choices[0]?.message?.content?.trim()

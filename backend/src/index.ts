@@ -2,8 +2,10 @@ import 'dotenv/config'
 import express from 'express'
 import 'express-async-errors'
 import cors from 'cors'
-import { Prisma } from '@prisma/client'
+import helmet from 'helmet'
+import cookieParser from 'cookie-parser'
 import { prisma } from './lib/prisma.js'
+import { validateSecurityConfig, getCorsOrigins, isProduction } from './lib/config.js'
 import { authRouter } from './routes/auth.js'
 import { expensesRouter } from './routes/expenses.js'
 import { incomeRouter } from './routes/income.js'
@@ -18,26 +20,38 @@ import { notesRouter } from './routes/notes.js'
 import { learningRouter } from './routes/learning.js'
 import { aiRouter } from './routes/ai.js'
 import { authMiddleware } from './middleware/auth.js'
+import { errorHandler } from './middleware/errorHandler.js'
+import { apiRateLimiter, authRateLimiter } from './middleware/rateLimit.js'
+
+validateSecurityConfig()
 
 const app = express()
 const PORT = process.env.PORT || 3002
 
-const corsOrigins = [
-  'http://localhost:5173',
-  'http://localhost:5174',
-  'http://localhost:5175',
-  process.env.FRONTEND_URL,
-].filter(Boolean) as string[]
-app.use(cors({ origin: corsOrigins.length ? corsOrigins : true }))
-app.use(express.json())
+app.set('trust proxy', 1)
 
-// Health check
-app.get('/api/health', (_, res) => {
-  res.json({ status: 'ok', version: '0.1.0' })
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  })
+)
+
+app.use(
+  cors({
+    origin: getCorsOrigins(),
+    credentials: true,
+  })
+)
+app.use(express.json({ limit: '512kb' }))
+app.use(cookieParser())
+
+app.get('/api/health', (_req, res) => {
+  res.json({ status: 'ok' })
 })
 
-// Routes
-app.use('/api/auth', authRouter)
+app.use('/api/auth', authRateLimiter, authRouter)
+app.use('/api', apiRateLimiter)
 app.use('/api/expenses', authMiddleware, expensesRouter)
 app.use('/api/income', authMiddleware, incomeRouter)
 app.use('/api/todos', authMiddleware, todosRouter)
@@ -51,21 +65,10 @@ app.use('/api/notes', authMiddleware, notesRouter)
 app.use('/api/learning', authMiddleware, learningRouter)
 app.use('/api/ai', authMiddleware, aiRouter)
 
-app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error('[API]', err)
-  if (res.headersSent) return
-  if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2022') {
-    return res.status(503).json({
-      error:
-        'Schemat bazy nie jest zsynchronizowany z aplikacją. W katalogu backend uruchom: npx prisma migrate deploy',
-    })
-  }
-  const message = err instanceof Error ? err.message : 'Błąd serwera'
-  res.status(500).json({ error: message })
-})
+app.use(errorHandler)
 
 const server = app.listen(PORT, async () => {
-  console.log(`LifeOS API running on http://localhost:${PORT}`)
+  console.log(`LifeOS API running on http://localhost:${PORT} (${isProduction ? 'production' : 'development'})`)
   try {
     await prisma.$connect()
     console.log('Połączenie z bazą danych OK')

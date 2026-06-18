@@ -24,6 +24,7 @@ import { useNotes } from '../../context/NotesContext'
 import type { Note, NoteType, IdeaStatus } from '../../context/NotesContext'
 import { NoteModal } from '../../components/NoteModal'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
+import { SafeExternalLink } from '../../components/SafeExternalLink'
 import type { ReferenceKind } from '../../lib/notesModel'
 import {
   IDEA_STATUS_WORKFLOW_ORDER,
@@ -319,16 +320,14 @@ export function NotesPage({ type }: NotesPageProps) {
                   {note.type === 'reference' && (
                     <div className="space-y-1 text-sm">
                       {note.referenceUrl ? (
-                        <a
+                        <SafeExternalLink
                           href={note.referenceUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
                           title={note.referenceUrl}
                           className="inline-flex items-center gap-1.5 text-(--accent-cyan) hover:underline"
                         >
                           <ExternalLink className="h-3.5 w-3.5 shrink-0" />
                           Otwórz link
-                        </a>
+                        </SafeExternalLink>
                       ) : (
                         <span className="text-(--text-muted)">Brak adresu URL</span>
                       )}

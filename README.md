@@ -2,68 +2,93 @@
 
 # LifeOS
 
-## What this project is
+Personal dashboard for everyday life: **finances**, **productivity** (to-do, calendar, habits, goals), **learning**, and **notes**. Gaming / cyberpunk UI — built for real daily use, not a static mock-up.
 
-**LifeOS** is a **personal dashboard** for day-to-day life: **money**, **productivity** (to-do, calendar, habits, goals), **learning**, and **notes**. The UI follows a **gaming / cyberpunk** style; the intent is serious daily use, not only a mock-up.
-
-The codebase is **actively developed** (≈ v0.1). The interface is **Polish-first**; broader English UI is planned over time. Repository docs are bilingual where it matters (see below).
+**Status:** actively developed (~v0.1). **UI is Polish-first**; broader English UI is planned. Docs are bilingual where it matters.
 
 ---
 
-## What actually ships today (honest scope)
+## Who is this for?
 
-### Persistence
+| Audience | How to use it |
+|----------|----------------|
+| **Visitors / portfolio** | Clone the repo, run **demo mode** (frontend only, sample data). No PostgreSQL required. |
+| **You (owner)** | Full stack locally or on a **private** deploy with PostgreSQL, encryption, and your own `.env`. |
 
-| Area | Where data lives (non-demo, logged-in) |
-|------|----------------------------------------|
-| **Auth**, **finances** (expenses, income, categories, recurring / scheduled expenses), **to-dos**, **calendar events**, **habits**, **goals** | **PostgreSQL** via the Express API |
-| **Notes** (inbox, ideas, references, archive) | **Browser `localStorage` only** — no REST sync to the database yet |
-| **Learning** (sessions, courses, books, projects, certificates, Pomodoro-style flows, etc.) | **Browser `localStorage` only** — same limitation |
+This repo is suitable for **public GitHub** as a **showcase**. A **private production** instance with real financial data should use separate secrets, optional private hosting, and the checklist in [Security (EN)](docs/SECURITY.en.md).
 
-**Demo mode** (`VITE_DEMO_MODE=true`): run **frontend only**. Sample data lives in memory/session-style providers and/or localStorage keys scoped for demo — useful for UI review without Postgres.
-
-### App routes (high level)
-
-- **Dashboard** — overview and shortcuts  
-- **Finances** — overview, transactions, recurring, net worth, analytics (legacy `/expenses` / `/income` redirect into finances)  
-- **To-do** — tabs (today / upcoming / all / done), priorities & areas, due date/time, compact options panel, natural-language shortcuts (`jutro`, `#tag`, `!` / `?`, etc.), optional link to a note (`noteId`)  
-- **Calendar** — events  
-- **Habits** — habits and **goals** (goals are edited here; backed by `/api/goals` when not in demo)  
-- **Learning** — overview, time tracking, courses, projects, books, certificates  
-- **Notes** — typed notes with markdown-oriented UX  
-
-Cross-cutting: **global search**, **quick add** hooks (e.g. todo / note), JWT auth when backend is enabled.
-
-### Documentation in this repo
-
-Detailed runbooks: **[Getting started — demo vs own account](docs/URUCHOMIENIE.en.md)** · [Polski](docs/URUCHOMIENIE.md).
-
-Full SaaS-style packs (architecture, OpenAPI, deployment, security user guide, etc.) are **not** maintained in `docs/` yet — treat this README + URUCHOMIENIE as the source of truth for contributors.
+**Do not commit** `.env` files, API keys, or `ENCRYPTION_KEY` — only `.env.example` templates are in git.
 
 ---
 
-## Run it locally
+## Features (high level)
+
+- **Dashboard** — overview, quick stats, optional AI weekly report (opt-in, off by default)
+- **Finances** — transactions, income/expense, categories, recurring costs, net worth, analytics, card/cash payment method
+- **To-do** — tabs, priorities, due date/time, natural-language shortcuts, links to notes/events
+- **Calendar** — events, optional link to a to-do
+- **Habits & goals** — tracking, charts, measurable habits
+- **Learning** — sessions, courses, projects, books, certificates, Pomodoro-style timer
+- **Notes** — inbox, ideas, references, archive, markdown-oriented UX
+- **Cross-cutting** — global search, quick add, PWA-friendly frontend
+
+---
+
+## Where data lives
+
+| Area | Demo (`VITE_DEMO_MODE=true`) | Logged-in (backend enabled) |
+|------|------------------------------|-----------------------------|
+| Finances, to-do, calendar, habits, goals | Sample / in-memory demo providers | **PostgreSQL** via Express API |
+| Notes, learning | Demo seed data | **PostgreSQL** via Express API |
+| Auth session | N/A (no login) | **httpOnly cookies** (not JWT in `localStorage`) |
+
+Run **`npx prisma migrate dev`** (or `migrate deploy` in production) after pulling schema changes.
+
+---
+
+## Security (summary)
+
+Implemented in code: bcrypt passwords, httpOnly session cookies + refresh, Helmet, CORS allowlist, rate limits, field encryption (optional), input validation, safe external links, CSP headers on Vercel.
+
+**Details & production checklist:** [Security (EN)](docs/SECURITY.en.md) · [Polski](docs/SECURITY.md)
+
+For local development with real data, use a **random `JWT_SECRET`** and consider `ENCRYPTION_ENABLED=true` — see `.env.example`.
+
+---
+
+## Documentation
+
+| Topic | Links |
+|-------|--------|
+| Getting started (demo vs account) | [EN](docs/URUCHOMIENIE.en.md) · [PL](docs/URUCHOMIENIE.md) |
+| Security & deploy checklist | [EN](docs/SECURITY.en.md) · [PL](docs/SECURITY.md) |
+
+Architecture, OpenAPI, and step-by-step cloud deployment guides are **not** fully maintained in `docs/` yet.
+
+---
+
+## Run locally
 
 ### Requirements
 
 - **Node.js** 18+
-- **PostgreSQL** — only if you use **your own account and database** (non-demo mode). Demo mode needs the frontend only.
+- **PostgreSQL** — only for **your own account** (non-demo). Demo needs the frontend only.
 
 ### 1. Clone and install
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/<your-username>/LifeOS.git
 cd LifeOS
 npm install
 cd frontend && npm install && cd ..
 cd backend && npm install && cd ..
 ```
 
-`npm run dev` from the repo root runs frontend and backend together — dependencies must be installed in **root**, `frontend`, and `backend`.
+From the repo root, `npm run dev` runs frontend + backend — install dependencies in **root**, `frontend`, and `backend`.
 
-### 2. Environment variables
+### 2. Environment
 
-Only **templates** (no secrets) are in git. Copy and edit locally:
+Copy templates (no secrets in git):
 
 ```bash
 cp frontend/.env.example frontend/.env
@@ -77,35 +102,38 @@ Copy-Item frontend/.env.example frontend/.env
 Copy-Item backend/.env.example backend/.env
 ```
 
-- **`backend/.env`**: set `DATABASE_URL`, `JWT_SECRET`, optional `PORT` (example default **3002**), `FRONTEND_URL` (e.g. `http://localhost:5173`).
-- **`frontend/.env`**: `VITE_DEMO_MODE` and `VITE_API_PORT` — **same port number** as backend `PORT` (Vite proxies `/api` to `http://localhost:<VITE_API_PORT>`).
+| File | Key variables |
+|------|----------------|
+| `frontend/.env` | `VITE_DEMO_MODE`, `VITE_API_PORT` (must match backend `PORT`) |
+| `backend/.env` | `DATABASE_URL`, `JWT_SECRET`, `PORT`, `FRONTEND_URL`, optional `ENCRYPTION_*`, `AI_*`, `REGISTRATION_ENABLED` |
 
-Do not commit `.env` files — they are listed in `.gitignore`.
+See `backend/.env.example` for the full list. **Never commit** filled-in `.env` files.
 
-### 3. Choose a mode
+### 3. Pick a mode
 
-#### A) Quick preview (demo — no database or backend)
+#### A) Quick preview — **recommended for GitHub visitors**
 
-In `frontend/.env`:
+`frontend/.env`:
 
 ```env
 VITE_DEMO_MODE=true
 ```
-
-Run **frontend only**:
 
 ```bash
 cd frontend
 npm run dev
 ```
 
-Open **http://localhost:5173** — sample data, no login. Details: [Getting started (EN)](docs/URUCHOMIENIE.en.md) · [Uruchomienie (PL)](docs/URUCHOMIENIE.md).
+Open **http://localhost:5173** — sample data, no login, no backend.
 
-#### B) Full app (your account, PostgreSQL)
+More detail: [Getting started (EN)](docs/URUCHOMIENIE.en.md) · [Uruchomienie (PL)](docs/URUCHOMIENIE.md).
 
-1. Start PostgreSQL and create a database (e.g. `lifeos`), set `DATABASE_URL` in `backend/.env`.
-2. In `frontend/.env`, set `VITE_DEMO_MODE=false` (or unset demo) and match `VITE_API_PORT` to the backend `PORT`.
-3. Migrate and start:
+#### B) Full app (your account + PostgreSQL)
+
+1. Create a PostgreSQL database (e.g. `lifeos`), set `DATABASE_URL` in `backend/.env`.
+2. Generate a strong `JWT_SECRET` (min. 32 characters) — not a public example from tutorials.
+3. `frontend/.env`: `VITE_DEMO_MODE=false`, `VITE_API_PORT` = backend `PORT`.
+4. Migrate and start:
 
 ```bash
 cd backend
@@ -115,42 +143,38 @@ npm run dev
 ```
 
 - **Frontend:** http://localhost:5173  
-- **API (direct):** `http://localhost:<PORT>` per `backend/.env` (example **3002**). The browser talks to `/api` via the Vite dev proxy.
+- **API:** http://localhost:3002 (default; Vite proxies `/api` in dev)
 
-**Sign-up / login:** create the first account in the app (non-demo mode).
+Register the first account in the app. For a single-user private setup, set `REGISTRATION_ENABLED=false` after that.
 
 ### Busy ports?
-
-From the repo root:
 
 ```bash
 npm run kill:ports
 ```
 
-Stops common dev ports (e.g. 5173, 3002). If your backend uses a different port than the script, stop the process manually or adjust `package.json`.
+Stops common dev ports (5173, 3002). Adjust manually if you use other ports.
 
-### Quality check (optional)
-
-From the repo root:
+### Quality check
 
 ```bash
 npm run check
 ```
 
-Runs frontend lint + production build and backend TypeScript build.
+Frontend lint + build, backend TypeScript build. CI runs a similar check on push/PR (see `.github/workflows/security-ci.yml`).
 
 ---
 
 ## Stack
 
-| Layer    | Tech |
-|----------|------|
+| Layer | Tech |
+|-------|------|
 | Frontend | React, TypeScript, Vite, Tailwind CSS, Recharts, Framer Motion, TanStack Query |
-| Backend  | Node.js, Express, Prisma |
+| Backend | Node.js, Express, Prisma, Zod |
 | Database | PostgreSQL |
-| Auth     | JWT |
+| Auth | JWT in httpOnly cookies, bcrypt |
 
-Optional hosting: frontend on **Vercel**, backend on **Railway** / **Render** — not documented step-by-step here yet.
+Optional hosting: frontend **Vercel**, backend **Railway** / **Render** — see [Security](docs/SECURITY.en.md) for production env vars.
 
 ---
 

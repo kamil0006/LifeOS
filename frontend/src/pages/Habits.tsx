@@ -624,6 +624,50 @@ function buildHabitChartSeries(
   return out
 }
 
+/** Krótsze etykiety osi X na mobile — sam dzień lub skrócony miesiąc. */
+function formatHabitChartAxisTick(
+  label: string,
+  index: number,
+  series: HabitChartPoint[],
+  period: HabitChartPeriod
+): string {
+  const point = series[index]
+  if (period === 'year') {
+    const month = point?.fullDate
+      ? parseLocalYmd(point.fullDate).toLocaleDateString('pl-PL', { month: 'short' })
+      : label.split(/\s+/)[0]
+    return month.replace('.', '')
+  }
+  if (label.includes('–')) {
+    const start = label.split('–')[0]?.trim() ?? label
+    const day = start.split('.')[0]
+    return day || start
+  }
+  if (point?.fullDate) {
+    return String(parseLocalYmd(point.fullDate).getDate())
+  }
+  const dayPrefix = label.match(/^\d+/)
+  return dayPrefix ? dayPrefix[0] : label
+}
+
+function habitChartXAxisInterval(
+  seriesLength: number,
+  period: HabitChartPeriod,
+  mobile: boolean
+): number | 'preserveStartEnd' {
+  if (!mobile) {
+    if (period === 'year') return 0
+    if (seriesLength > 48) return Math.max(2, Math.floor(seriesLength / 14))
+    if (seriesLength > 28) return Math.max(1, Math.floor(seriesLength / 12))
+    return 'preserveStartEnd'
+  }
+  if (seriesLength <= 1) return 0
+  if (period === 'year') return 1
+  if (seriesLength <= 7) return 0
+  if (seriesLength <= 14) return 1
+  return Math.max(2, Math.floor(seriesLength / 5))
+}
+
 function computeHabitWindowStats(habit: HabitItem, days: number) {
   const today = new Date()
   today.setHours(12, 0, 0, 0)
@@ -2061,6 +2105,10 @@ export function Habits() {
                     : ('preserveStartEnd' as const)
             const xAxisMinTickGap =
               chartPeriod === 'year' ? 8 : chartSeries.length > 36 ? 4 : 24
+            const chartXInterval = habitChartXAxisInterval(chartSeries.length, chartPeriod, isMobile)
+            const chartMargin = isMobile
+              ? { top: 6, right: 6, left: 0, bottom: 22 }
+              : { top: 4, right: 8, left: 4, bottom: 8 }
             const chartWeeklyAggregated =
               chartPeriod === 'all' &&
               chartSeries.length > 0 &&
@@ -2179,12 +2227,12 @@ export function Habits() {
                   e.currentTarget.style.removeProperty('box-shadow')
                 }}
               >
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start justify-between gap-3 max-md:gap-2">
                   <div
                     className={`flex min-w-0 flex-1 ${
                       isEditing && !isMobile
                         ? 'flex-col'
-                        : 'flex-row flex-wrap items-center gap-3'
+                        : 'flex-row flex-wrap items-center gap-3 max-md:flex-col max-md:items-start max-md:gap-2'
                     }`}
                   >
                     {isEditing && !isMobile ? (
@@ -2218,7 +2266,7 @@ export function Habits() {
                         </button>
                         <div className="min-w-0">
                           <p className="font-medium text-base">{habit.name}</p>
-                          <p className="text-base text-(--text-muted) mt-0.5">
+                          <p className="text-base text-(--text-muted) mt-0.5 max-md:truncate max-md:text-sm">
                             {[
                               habit.category,
                               formatHabitSchedule(habit),
@@ -2238,7 +2286,7 @@ export function Habits() {
                       </div>
                     )}
                     {!isEditing && streak > 0 && (
-                      <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-(--accent-amber)/40 bg-(--accent-amber)/10 px-2.5 py-1 text-sm font-medium text-(--accent-amber)">
+                      <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-(--accent-amber)/40 bg-(--accent-amber)/10 px-2.5 py-1 text-sm font-medium text-(--accent-amber) max-md:ml-7">
                         <Flame className="h-3.5 w-3.5 shrink-0" aria-hidden />
                         Seria: {pluralDays(streak)}
                       </span>
@@ -2319,7 +2367,7 @@ export function Habits() {
                 <div className="border-t border-(--border)/35 pt-3 sm:pt-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
                     <div className="min-w-0 w-full flex-1">
-                      {measurable && (
+                      {measurable && !isExpanded && (
                         <p className="mb-1.5 text-base text-(--text-muted)">
                           Ostatnie {SUM_LAST_DAYS} dni
                           {sumLastPeriod > 0
@@ -2328,7 +2376,7 @@ export function Habits() {
                         </p>
                       )}
                       <p className="mb-1.5 text-xs text-(--text-muted)">
-                        Kliknij dzień, aby oznaczyć wykonanie
+                        {isExpanded && isMobile ? 'Dotknij dzień' : 'Kliknij dzień, aby oznaczyć wykonanie'}
                       </p>
                       <div className={HABIT_GRID_WRAP_CLASS}>
                         <HabitGridMobileStrip
@@ -2405,7 +2453,7 @@ export function Habits() {
                         )}
                       </div>
                     </div>
-                    {stats30 && !isEditing && (
+                    {stats30 && !isEditing && !(isMobile && isExpanded) && (
                       <div className="flex shrink-0 items-center gap-4 rounded-lg border border-(--border)/35 bg-(--bg-dark)/10 px-3 py-2 sm:block sm:space-y-1 sm:border-0 sm:bg-transparent sm:p-0 sm:text-right sm:pt-0.5">
                         <p className="text-xs text-(--text-muted) sm:mb-0">30 dni</p>
                         <p
@@ -2450,17 +2498,17 @@ export function Habits() {
                       initial="hidden"
                       animate="show"
                       exit="leave"
-                      className="space-y-6 rounded-lg border border-(--border)/50 bg-(--bg-card)/15 p-4 sm:p-5"
+                      className="space-y-6 rounded-lg border border-(--border)/50 bg-(--bg-card)/15 p-4 max-md:space-y-3 max-md:p-3 sm:p-5"
                     >
-                      <div className="flex flex-wrap items-center gap-2 text-base text-(--text-primary)">
-                        <Award className="h-5 w-5 shrink-0 text-(--accent-amber)" aria-hidden />
+                      <div className="flex flex-wrap items-center gap-2 text-base text-(--text-primary) max-md:text-sm">
+                        <Award className="h-5 w-5 shrink-0 text-(--accent-amber) max-md:h-4 max-md:w-4" aria-hidden />
                         <span>
-                          Najdłuższa seria:{' '}
+                          Rekord serii:{' '}
                           <span className="font-semibold tabular-nums">{pluralDays(longestStreak)}</span>
                         </span>
                       </div>
                       {stats7 && stats30 && stats90 && (
-                      <div className="flex flex-wrap gap-2">
+                      <div className={isMobile ? 'grid grid-cols-3 gap-2' : 'flex flex-wrap gap-2'}>
                         {[
                           ['7 dni', stats7],
                           ['30 dni', stats30],
@@ -2470,16 +2518,26 @@ export function Habits() {
                           return (
                             <div
                               key={label as string}
-                              className="flex items-baseline gap-2 rounded-lg border border-(--border)/35 bg-(--bg-dark)/10 px-3 py-2"
+                              className={
+                                isMobile
+                                  ? 'rounded-lg border border-(--border)/35 bg-(--bg-dark)/10 px-2 py-2 text-center'
+                                  : 'flex items-baseline gap-2 rounded-lg border border-(--border)/35 bg-(--bg-dark)/10 px-3 py-2'
+                              }
                             >
-                              <span className="text-base text-(--text-muted)">{label as string}</span>
-                              <span className="text-base font-semibold tabular-nums text-(--text-primary)">
+                              <span className={`text-(--text-muted) ${isMobile ? 'block text-xs' : 'text-base'}`}>
+                                {label as string}
+                              </span>
+                              <span
+                                className={`font-semibold tabular-nums text-(--text-primary) ${
+                                  isMobile ? 'text-lg leading-tight' : 'text-base'
+                                }`}
+                              >
                                 {s.pct}%
                               </span>
-                              <span className="text-sm text-(--text-muted)">
+                              <span className={`text-(--text-muted) ${isMobile ? 'block text-xs' : 'text-sm'}`}>
                                 {s.done}/{Math.max(1, s.planned - s.skipped)}
                               </span>
-                              {measurable && s.avgValue != null && (
+                              {measurable && s.avgValue != null && !isMobile && (
                                 <span className="text-sm text-(--text-muted)">
                                   śr.&nbsp;{s.avgValue.toFixed(1)}&nbsp;{habit.unit ?? ''}
                                 </span>
@@ -2490,7 +2548,7 @@ export function Habits() {
                       </div>
                       )}
                       {trend30 != null && (
-                      <p className="text-base text-(--text-muted)">
+                      <p className="text-base text-(--text-muted) max-md:hidden">
                         Trend 30 dni względem poprzednich 30 dni:{' '}
                         <span
                           className={
@@ -2502,9 +2560,11 @@ export function Habits() {
                         </span>
                       </p>
                       )}
-                      <div className="space-y-5">
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="text-base font-medium text-(--text-primary)">Analiza</span>
+                      <div className="space-y-5 max-md:space-y-3">
+                        <div className="flex items-center justify-between gap-3 max-md:flex-col max-md:items-stretch">
+                          <span className="text-base font-medium text-(--text-primary) max-md:text-sm">
+                            Wykres
+                          </span>
                           <select
                             id={`habit-chart-period-${habit.id}`}
                             value={chartPeriod}
@@ -2514,7 +2574,7 @@ export function Habits() {
                                 [habit.id]: e.target.value as HabitChartPeriod,
                               }))
                             }
-                            className="w-auto rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
+                            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25 max-md:min-h-11 sm:w-auto"
                           >
                             <option value="30d">Ostatnie 30 dni</option>
                             <option value="90d">Ostatnie 90 dni</option>
@@ -2524,16 +2584,16 @@ export function Habits() {
                           </select>
                         </div>
                         {chartWeeklyAggregated && (
-                          <p className="text-base text-(--text-muted)">
+                          <p className="text-base text-(--text-muted) max-md:text-sm max-md:hidden">
                             Długa historia: wykres po tygodniach (średnia), powyżej{' '}
                             {CHART_ALL_MAX_DAILY_POINTS} dni.
                           </p>
                         )}
                         <div
-                          className={`w-full min-w-0 min-h-[160px] ${chartScrollWide ? 'overflow-x-auto pb-1' : ''}`}
+                          className={`chart-shell w-full min-w-0 min-h-[160px] ${chartScrollWide ? 'overflow-x-auto pb-1' : ''}`}
                         >
                           <div
-                            className="h-[180px] min-h-[160px]"
+                            className="h-[180px] min-h-[160px] max-md:h-[152px] max-md:min-h-[152px]"
                             style={
                               chartScrollWide
                                 ? { minWidth: chartInnerMinWidthPx }
@@ -2541,25 +2601,51 @@ export function Habits() {
                             }
                           >
                           <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={chartSeries} margin={{ top: 4, right: 8, left: 4, bottom: 0 }}>
+                            <AreaChart data={chartSeries} margin={chartMargin}>
                               <defs>
                                 <linearGradient id={chartGradId} x1="0" y1="0" x2="0" y2="1">
                                   <stop offset="5%" stopColor={accentHex} stopOpacity={0.35} />
                                   <stop offset="95%" stopColor={accentHex} stopOpacity={0} />
                                 </linearGradient>
                               </defs>
-                              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                              <CartesianGrid
+                                strokeDasharray="3 3"
+                                stroke="var(--border)"
+                                vertical={!isMobile}
+                              />
                               <XAxis
                                 dataKey="label"
-                                tick={{ fill: 'var(--text-muted)', fontSize: 10 }}
-                                interval={xAxisInterval}
-                                minTickGap={xAxisMinTickGap}
+                                tick={{
+                                  fill: isMobile ? 'var(--text-primary)' : 'var(--text-muted)',
+                                  fontSize: isMobile ? 11 : 10,
+                                }}
+                                interval={isMobile ? chartXInterval : xAxisInterval}
+                                minTickGap={isMobile ? 36 : xAxisMinTickGap}
+                                tickMargin={isMobile ? 10 : 6}
+                                axisLine={!isMobile}
+                                tickLine={!isMobile}
+                                tickFormatter={
+                                  isMobile
+                                    ? (label, index) =>
+                                        formatHabitChartAxisTick(
+                                          String(label),
+                                          index,
+                                          chartSeries,
+                                          chartPeriod
+                                        )
+                                    : undefined
+                                }
                               />
                               <YAxis
-                                tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
-                                width={40}
+                                tick={{
+                                  fill: isMobile ? 'var(--text-muted)' : 'var(--text-muted)',
+                                  fontSize: isMobile ? 10 : 11,
+                                }}
+                                width={isMobile ? 34 : 40}
                                 domain={[0, 100]}
                                 tickFormatter={(v: number) => `${v}%`}
+                                axisLine={!isMobile}
+                                tickLine={!isMobile}
                               />
                               <Tooltip
                                 cursor={{ stroke: 'var(--border)' }}
@@ -2646,10 +2732,10 @@ export function Habits() {
                           </div>
                         </div>
                         <details className="rounded-lg border border-(--border)/40 bg-(--bg-dark)/10 [&_summary::-webkit-details-marker]:hidden">
-                          <summary className="cursor-pointer list-none px-4 py-3.5 text-base text-(--text-muted) hover:text-(--text-primary)">
+                          <summary className="cursor-pointer list-none px-4 py-3 text-base text-(--text-muted) hover:text-(--text-primary) max-md:px-3 max-md:py-2.5 max-md:text-sm">
                             Kalendarz miesiąca
                           </summary>
-                          <div className="border-t border-(--border)/30 p-4">
+                          <div className="border-t border-(--border)/30 p-4 max-md:p-3">
                             <div className="mb-3">
                               <label
                                 htmlFor={`habit-calendar-month-${habit.id}`}
@@ -2683,28 +2769,28 @@ export function Habits() {
                             </div>
                             {monthSummary && (
                               <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                                <div className="rounded-lg border border-(--border)/40 bg-(--bg-card)/20 p-3">
-                                  <p className="text-base text-(--text-muted)">Realizacja</p>
-                                  <p className="text-xl font-semibold tabular-nums text-(--text-primary)">
+                                <div className="rounded-lg border border-(--border)/40 bg-(--bg-card)/20 p-3 max-md:p-2.5">
+                                  <p className="text-base text-(--text-muted) max-md:text-sm">Realizacja</p>
+                                  <p className="text-xl font-semibold tabular-nums text-(--text-primary) max-md:text-lg">
                                     {monthSummary.pct}%
                                   </p>
-                                  <p className="text-base text-(--text-muted)">
+                                  <p className="text-base text-(--text-muted) max-md:text-xs">
                                     {monthSummary.done}/{Math.max(1, monthSummary.expected - monthSummary.skipped)}
                                   </p>
                                 </div>
-                                <div className="rounded-lg border border-(--border)/40 bg-(--bg-card)/20 p-3">
-                                  <p className="text-base text-(--text-muted)">Pominięte</p>
-                                  <p className="text-xl font-semibold tabular-nums text-red-400">
+                                <div className="rounded-lg border border-(--border)/40 bg-(--bg-card)/20 p-3 max-md:p-2.5">
+                                  <p className="text-base text-(--text-muted) max-md:text-sm">Pominięte</p>
+                                  <p className="text-xl font-semibold tabular-nums text-red-400 max-md:text-lg">
                                     {monthSummary.missed}
                                   </p>
                                 </div>
-                                <div className="rounded-lg border border-(--border)/40 bg-(--bg-card)/20 p-3">
+                                <div className="hidden rounded-lg border border-(--border)/40 bg-(--bg-card)/20 p-3 sm:block">
                                   <p className="text-base text-(--text-muted)">Uspraw.</p>
                                   <p className="text-xl font-semibold tabular-nums text-slate-300">
                                     {monthSummary.skipped}
                                   </p>
                                 </div>
-                                <div className="rounded-lg border border-(--border)/40 bg-(--bg-card)/20 p-3">
+                                <div className="hidden rounded-lg border border-(--border)/40 bg-(--bg-card)/20 p-3 sm:block">
                                   <p className="text-base text-(--text-muted)">Plan</p>
                                   <p className="text-xl font-semibold tabular-nums text-(--text-primary)">
                                     {monthSummary.expected}
@@ -2712,7 +2798,7 @@ export function Habits() {
                                 </div>
                               </div>
                             )}
-                            <div className="mb-3 flex flex-wrap gap-x-4 gap-y-2 text-base text-(--text-muted)">
+                            <div className="mb-3 hidden flex-wrap gap-x-4 gap-y-2 text-base text-(--text-muted) sm:flex">
                               <span className="inline-flex items-center gap-2">
                                 <span
                                   className="h-3 w-3 rounded-sm"
@@ -2733,11 +2819,11 @@ export function Habits() {
                                 Brak wpisu
                               </span>
                             </div>
-                            <div className="grid grid-cols-7 gap-2">
+                            <div className="grid grid-cols-7 gap-1.5 max-md:gap-1">
                               {WEEKDAY_SHORT_PL_MONDAY_FIRST.map((day) => (
                                 <span
                                   key={day}
-                                  className="flex h-7 items-center justify-center text-xs font-medium text-(--text-muted)"
+                                  className="flex h-6 items-center justify-center text-xs font-medium text-(--text-muted) sm:h-7"
                                 >
                                   {day}
                                 </span>
@@ -2758,7 +2844,7 @@ export function Habits() {
                                         ? 'brak wpisu'
                                         : CHECK_IN_STATUS_LABEL[day.status]
                                     }`}
-                                    className={`flex h-9 items-center justify-center rounded-md border text-xs tabular-nums text-(--text-primary) transition-transform hover:scale-105 disabled:cursor-default disabled:hover:scale-100 ${
+                                    className={`flex h-8 items-center justify-center rounded-md border text-xs tabular-nums text-(--text-primary) transition-transform hover:scale-105 disabled:cursor-default disabled:hover:scale-100 sm:h-9 ${
                                       measurableEditor?.habitId === habit.id &&
                                       measurableEditor.date === day.date
                                         ? 'border-(--accent-cyan) ring-2 ring-(--accent-cyan)/50'
@@ -2784,16 +2870,16 @@ export function Habits() {
                         </details>
                         {weekdayStats && weekdayStats.bestIdx != null && (
                           <details className="rounded-lg border border-(--border)/40 bg-(--bg-dark)/10 [&_summary::-webkit-details-marker]:hidden">
-                            <summary className="cursor-pointer list-none px-4 py-3.5 text-base text-(--text-muted) hover:text-(--text-primary)">
-                              <span className="text-(--text-primary)">Dzień tygodnia</span>
+                            <summary className="cursor-pointer list-none px-4 py-3 text-base text-(--text-muted) hover:text-(--text-primary) max-md:px-3 max-md:py-2.5 max-md:text-sm">
+                              <span className="text-(--text-primary)">Dni tygodnia</span>
                               {' · '}
                               najlepiej we {WEEKDAY_ACCUSATIVE_PL[weekdayStats.bestIdx]}
                               {weekdayStats.maxAvg > 0 && (
-                                <> (śr. {Math.round(weekdayStats.maxAvg)}%)</>
+                                <> ({Math.round(weekdayStats.maxAvg)}%)</>
                               )}
                             </summary>
                             <div
-                              className="border-t border-(--border)/30 px-5 pb-5 pt-4 sm:px-7"
+                              className="border-t border-(--border)/30 px-5 pb-5 pt-4 max-md:px-3 max-md:pb-3 max-md:pt-3 sm:px-7"
                               role="img"
                               aria-label="Średnia realizacja wg dnia tygodnia"
                             >
@@ -2832,7 +2918,7 @@ export function Habits() {
                             </div>
                           </details>
                         )}
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-(--text-muted)">
+                        <div className="hidden flex-wrap items-center gap-x-3 gap-y-1 text-xs text-(--text-muted) sm:flex">
                           <span className="inline-flex items-center gap-1.5">
                             <span
                               className="h-2.5 w-2.5 rounded-sm"

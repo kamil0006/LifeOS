@@ -2,7 +2,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { X } from 'lucide-react'
 import { ModalShell } from './ModalShell'
 import { ExpenseCategoryPicker, DEFAULT_NEW_EXPENSE_CATEGORY_COLOR } from './finance/ExpenseCategoryPicker'
+import { PaymentMethodPicker } from './finance/PaymentMethodPicker'
 import { EXPENSE_CATEGORY_NONE } from '../lib/expenseCategoryConstants'
+import type { PaymentMethod } from '../lib/paymentMethod'
+import { isPaymentMethod } from '../lib/paymentMethod'
 
 function leadingUpperPl(s: string) {
   const t = s.trim()
@@ -15,6 +18,7 @@ export type RecurringFormPayload = {
   amount: number
   category: string
   dayOfMonth: number
+  paymentMethod: PaymentMethod
 }
 
 export type RecurringModalEditing = {
@@ -23,6 +27,7 @@ export type RecurringModalEditing = {
   amount: number
   category: string
   dayOfMonth: number
+  paymentMethod?: PaymentMethod | null
 }
 
 interface Category {
@@ -59,6 +64,7 @@ export function RecurringModal({
       amount: '',
       category: categories[0]?.name ?? EXPENSE_CATEGORY_NONE,
       dayOfMonthStr: '',
+      paymentMethod: '' as PaymentMethod | '',
       showAddCategory: false,
       newCategoryName: '',
       newCategoryColor: DEFAULT_NEW_EXPENSE_CATEGORY_COLOR,
@@ -77,6 +83,8 @@ export function RecurringModal({
         amount: String(editing.amount),
         category: editing.category,
         dayOfMonthStr: String(editing.dayOfMonth),
+        paymentMethod:
+          editing.paymentMethod && isPaymentMethod(editing.paymentMethod) ? editing.paymentMethod : '',
         showAddCategory: false,
         newCategoryName: '',
         newCategoryColor: DEFAULT_NEW_EXPENSE_CATEGORY_COLOR,
@@ -86,7 +94,7 @@ export function RecurringModal({
     }
   }, [isOpen, editing, buildInitialForm])
 
-  const { name, amount, category, dayOfMonthStr, showAddCategory, newCategoryName, newCategoryColor } = form
+  const { name, amount, category, dayOfMonthStr, paymentMethod, showAddCategory, newCategoryName, newCategoryColor } = form
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -94,11 +102,16 @@ export function RecurringModal({
     const day = parseInt(dayOfMonthStr.trim(), 10)
     const displayName = leadingUpperPl(name)
     if (!displayName || isNaN(amt) || amt <= 0 || isNaN(day) || day < 1 || day > 31) return
+    if (!isPaymentMethod(paymentMethod)) {
+      alert('Wybierz sposób płatności: karta lub gotówka.')
+      return
+    }
     const payload: RecurringFormPayload = {
       name: displayName,
       amount: amt,
       category: category || EXPENSE_CATEGORY_NONE,
       dayOfMonth: day,
+      paymentMethod,
     }
     if (editing && onUpdate) {
       await onUpdate(editing.id, payload)
@@ -191,6 +204,11 @@ export function RecurringModal({
           setNewCategoryColor={(v) => updateField('newCategoryColor', v)}
           onAddedCategory={(normalized) => updateField('category', normalized)}
         />
+        <PaymentMethodPicker
+          value={paymentMethod}
+          onChange={(method) => updateField('paymentMethod', method)}
+          id="recurring-payment"
+        />
         <div className="flex gap-2 pt-2">
           <button
             type="button"
@@ -201,7 +219,8 @@ export function RecurringModal({
           </button>
           <button
             type="submit"
-            className="px-4 py-2 rounded-lg bg-(--accent-amber)/15 text-(--accent-amber) border border-(--accent-amber)/40 font-gaming hover:bg-(--accent-amber)/25"
+            disabled={!isPaymentMethod(paymentMethod)}
+            className="px-4 py-2 rounded-lg bg-(--accent-amber)/15 text-(--accent-amber) border border-(--accent-amber)/40 font-gaming hover:bg-(--accent-amber)/25 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isEdit ? 'Zapisz zmiany' : 'Zapisz'}
           </button>

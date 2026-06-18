@@ -11,6 +11,8 @@ import { incomeApi } from '../lib/api'
 import { useFinanceListsQuery } from '../hooks/useFinanceListsQuery'
 import { FinanceListPageSkeleton } from '../components/skeletons'
 import { invalidateFinanceQueries } from '../lib/invalidateFinanceQueries'
+import { PaymentMethodPicker, PaymentMethodBadge } from '../components/finance/PaymentMethodPicker'
+import type { PaymentMethod } from '../lib/paymentMethod'
 
 export function Income() {
   const { isDemoMode, user } = useAuth()
@@ -20,6 +22,7 @@ export function Income() {
   const monthCtx = useMonth()
   const { income: qIncome, isLoading: financeLoading } = useFinanceListsQuery()
   const [showForm, setShowForm] = useState(false)
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | ''>('')
   const loading = isDemoMode ? false : financeLoading
 
   const selectedMonth = monthCtx?.selectedMonth ?? new Date().getMonth()
@@ -29,14 +32,21 @@ export function Income() {
   const displayIncome = allIncome.filter((i) => inMonth(i.date, selectedMonth, selectedYear))
   const total = displayIncome.reduce((sum, i) => sum + i.amount, 0)
 
-  const handleAdd = async (source: string, amount: number, recurring: boolean, date?: string) => {
+  const handleAdd = async (
+    source: string,
+    amount: number,
+    recurring: boolean,
+    date?: string,
+    method?: PaymentMethod,
+  ) => {
+    if (!method) return
     const incomeDate = date ?? new Date().toISOString().split('T')[0]
     if (isDemoMode && demoData) {
-      demoData.addIncome({ source, amount, date: incomeDate, recurring, category: '' })
+      demoData.addIncome({ source, amount, date: incomeDate, recurring, category: '', paymentMethod: method })
       return
     }
     try {
-      await incomeApi.create({ source, amount, date: incomeDate, recurring, category: '' })
+      await incomeApi.create({ source, amount, date: incomeDate, recurring, category: '', paymentMethod: method })
       await invalidateFinanceQueries(queryClient, userId)
     } catch {
       // ignore
@@ -105,6 +115,11 @@ export function Income() {
                     {item.recurring && (
                       <span className="ml-2 text-(--accent-cyan)">• Stały</span>
                     )}
+                    {item.paymentMethod && (
+                      <span className="ml-2">
+                        <PaymentMethodBadge method={item.paymentMethod} />
+                      </span>
+                    )}
                   </p>
                 </div>
                 <div className="flex items-center gap-4">
@@ -129,13 +144,15 @@ export function Income() {
           <form
             onSubmit={(e) => {
               e.preventDefault()
+              if (!paymentMethod) return
               const form = e.target as HTMLFormElement
               const source = (form.elements.namedItem('source') as HTMLInputElement).value
               const amount = parseFloat((form.elements.namedItem('amount') as HTMLInputElement).value)
               const recurring = (form.elements.namedItem('recurring') as HTMLInputElement).checked
               const date = (form.elements.namedItem('date') as HTMLInputElement)?.value
-              handleAdd(source, amount, recurring, date)
+              handleAdd(source, amount, recurring, date, paymentMethod)
               setShowForm(false)
+              setPaymentMethod('')
               form.reset()
             }}
             className="space-y-4"
@@ -171,9 +188,11 @@ export function Income() {
               <input name="recurring" type="checkbox" className="rounded" />
               <span className="text-base text-(--text-muted)">Stały przychód (co miesiąc)</span>
             </label>
+            <PaymentMethodPicker value={paymentMethod} onChange={setPaymentMethod} id="income-payment" />
             <button
               type="submit"
-              className="px-4 py-2 rounded-lg bg-(--accent-green)/15 text-(--accent-green) border border-(--accent-green)/40 font-gaming tracking-wider hover:shadow-[0_0_12px_rgba(0,255,157,0.2)] transition-all"
+              disabled={!paymentMethod}
+              className="px-4 py-2 rounded-lg bg-(--accent-green)/15 text-(--accent-green) border border-(--accent-green)/40 font-gaming tracking-wider hover:shadow-[0_0_12px_rgba(0,255,157,0.2)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Zapisz
             </button>

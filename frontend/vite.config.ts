@@ -13,7 +13,14 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['icons/icon.svg'],
+        includeAssets: [
+          'icons/icon.svg',
+          'icons/icon-maskable.svg',
+          'icons/icon-192.png',
+          'icons/icon-512.png',
+          'icons/icon-maskable-512.png',
+          'icons/apple-touch-icon.png',
+        ],
         manifest: {
           name: 'LifeOS',
           short_name: 'LifeOS',
@@ -33,9 +40,27 @@ export default defineConfig(({ mode }) => {
               purpose: 'any',
             },
             {
-              src: '/icons/icon.svg',
+              src: '/icons/icon-192.png',
+              sizes: '192x192',
+              type: 'image/png',
+              purpose: 'any',
+            },
+            {
+              src: '/icons/icon-512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'any',
+            },
+            {
+              src: '/icons/icon-maskable.svg',
               sizes: 'any',
               type: 'image/svg+xml',
+              purpose: 'maskable',
+            },
+            {
+              src: '/icons/icon-maskable-512.png',
+              sizes: '512x512',
+              type: 'image/png',
               purpose: 'maskable',
             },
           ],
