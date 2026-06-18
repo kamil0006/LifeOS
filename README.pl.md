@@ -4,7 +4,7 @@
 
 Osobisty panel do codziennych spraw: **finanse**, **produktywność** (to-do, kalendarz, nawyki, cele), **nauka** i **notatki**. Interfejs w klimacie **gaming / cyberpunk** — pod realne używanie, nie tylko pod mock-up.
 
-**Status:** aktywny rozwój (~v0.1). **UI jest po polsku**; szerszy angielski w aplikacji jest planowany. Dokumentacja jest dwujęzyczna tam, gdzie ma to sens.
+**Status:** **v1.0.0 — gotowy MVP.** Kompletna, gotowa do codziennego użytku wersja — finanse, produktywność, nauka i notatki działają od początku do końca. **UI jest po polsku**; szerszy angielski w aplikacji jest planowany. Dokumentacja jest dwujęzyczna tam, gdzie ma to sens.
 
 ---
 

@@ -4,7 +4,7 @@
 
 Personal dashboard for everyday life: **finances**, **productivity** (to-do, calendar, habits, goals), **learning**, and **notes**. Gaming / cyberpunk UI — built for real daily use, not a static mock-up.
 
-**Status:** actively developed (~v0.1). **UI is Polish-first**; broader English UI is planned. Docs are bilingual where it matters.
+**Status:** **v1.0.0 — ready MVP.** A complete, daily-usable build with finances, productivity, learning, and notes working end-to-end. **UI is Polish-first**; broader English UI is planned. Docs are bilingual where it matters.
 
 ---
 

@@ -76,7 +76,7 @@ export function AppNavPanel({ onNavigate, mobileClose }: AppNavPanelProps) {
               <span className="text-(--accent-cyan) drop-shadow-[0_0_8px_rgba(0,229,255,0.5)]">Life</span>
               <span className="text-(--text-primary)">OS</span>
             </Link>
-            <p className="text-sm text-(--text-muted) mt-1 font-mono tracking-wider">v0.1.0</p>
+            <p className="text-sm text-(--text-muted) mt-1 font-mono tracking-wider">v1.0.0</p>
             <div className="mt-2 grid grid-cols-[2.75rem_minmax(0,1fr)] gap-2">
               <Tooltip content="Samouczek – co jest w aplikacji" align="start">
                 <button
