@@ -1,4 +1,5 @@
 import type { PaymentMethod } from './paymentMethod'
+import type { Currency } from './currency'
 
 export type ExpenseRow = {
   id: string
@@ -20,11 +21,16 @@ export type IncomeRow = {
 export type ScheduledExpenseRow = {
   id: string
   name: string
+  /** Zawsze w PLN — przeliczone wg bieżącego kursu, gdy currency != PLN. */
   amount: number
+  currency?: Currency
+  /** Kwota w walucie `currency`, gdy currency != PLN. */
+  originalAmount?: number | null
   category: string
   dayOfMonth: number
   active: boolean
   paymentMethod?: PaymentMethod | null
   pausedUntil?: string | null
   reminderDaysBefore?: number | null
+  createdAt?: string
 }

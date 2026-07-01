@@ -73,6 +73,7 @@ export function useOptimisticExpenseMutations() {
       const optimistic: ScheduledExpenseRow = {
         ...vars,
         id: `optimistic-${Date.now()}`,
+        currency: 'PLN',
         active: true,
       }
       queryClient.setQueryData<ScheduledExpenseRow[]>(scheduledKey, (old) => [

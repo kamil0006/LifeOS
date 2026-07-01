@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { X } from 'lucide-react'
 import { ModalShell } from './ModalShell'
@@ -7,6 +7,7 @@ import { PaymentMethodPicker } from './finance/PaymentMethodPicker'
 import { EXPENSE_CATEGORY_NONE } from '../lib/expenseCategoryConstants'
 import type { PaymentMethod } from '../lib/paymentMethod'
 import { isPaymentMethod } from '../lib/paymentMethod'
+import { CURRENCIES, convertToPln, fetchExchangeRates, formatCurrencyAmount, type Currency, type ForeignCurrency } from '../lib/currency'
 
 function leadingUpperPl(s: string) {
   const t = s.trim()
@@ -16,7 +17,11 @@ function leadingUpperPl(s: string) {
 
 export type RecurringFormPayload = {
   name: string
+  /** Kwota w walucie `currency` — tak jak wpisał użytkownik. */
   amount: number
+  currency: Currency
+  /** Podgląd przeliczenia na PLN (do zapisu w trybie demo, gdzie nie ma backendu liczącego kurs). */
+  convertedAmount: number | null
   category: string
   dayOfMonth: number
   paymentMethod: PaymentMethod
@@ -25,7 +30,10 @@ export type RecurringFormPayload = {
 export type RecurringModalEditing = {
   id: string
   name: string
+  /** Zawsze w PLN. */
   amount: number
+  currency?: Currency
+  originalAmount?: number | null
   category: string
   dayOfMonth: number
   paymentMethod?: PaymentMethod | null
@@ -64,6 +72,7 @@ export function RecurringModal({
     () => ({
       name: '',
       amount: '',
+      currency: 'PLN' as Currency,
       category: categories[0]?.name ?? EXPENSE_CATEGORY_NONE,
       dayOfMonthStr: '',
       paymentMethod: '' as PaymentMethod | '',
@@ -77,12 +86,27 @@ export function RecurringModal({
   const updateField = <K extends keyof ReturnType<typeof buildInitialForm>>(key: K, value: ReturnType<typeof buildInitialForm>[K]) =>
     setForm((f) => ({ ...f, [key]: value }))
 
+  const [rates, setRates] = useState<Record<ForeignCurrency, number> | null>(null)
+  const ratesFetchedRef = useRef(false)
+
+  useEffect(() => {
+    if (!isOpen || ratesFetchedRef.current) return
+    ratesFetchedRef.current = true
+    fetchExchangeRates()
+      .then((res) => setRates(res.rates))
+      .catch(() => setRates(null))
+  }, [isOpen])
+
   useEffect(() => {
     if (!isOpen) return
     if (editing) {
+      const currency = editing.currency ?? 'PLN'
+      const displayAmount =
+        currency !== 'PLN' && editing.originalAmount != null ? editing.originalAmount : editing.amount
       setForm({
         name: leadingUpperPl(editing.name),
-        amount: String(editing.amount),
+        amount: String(displayAmount),
+        currency,
         category: editing.category,
         dayOfMonthStr: String(editing.dayOfMonth),
         paymentMethod:
@@ -96,7 +120,14 @@ export function RecurringModal({
     }
   }, [isOpen, editing, buildInitialForm])
 
-  const { name, amount, category, dayOfMonthStr, paymentMethod, showAddCategory, newCategoryName, newCategoryColor } = form
+  const { name, amount, currency, category, dayOfMonthStr, paymentMethod, showAddCategory, newCategoryName, newCategoryColor } = form
+
+  const convertedPreview = useMemo(() => {
+    if (currency === 'PLN') return null
+    const amt = parseFloat(amount)
+    if (isNaN(amt) || amt <= 0) return null
+    return convertToPln(amt, currency, rates)
+  }, [amount, currency, rates])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -111,6 +142,8 @@ export function RecurringModal({
     const payload: RecurringFormPayload = {
       name: displayName,
       amount: amt,
+      currency,
+      convertedAmount: currency === 'PLN' ? amt : convertToPln(amt, currency, rates),
       category: category || EXPENSE_CATEGORY_NONE,
       dayOfMonth: day,
       paymentMethod,
@@ -164,15 +197,36 @@ export function RecurringModal({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('transactionModal.amountLabel')}</label>
-            <input
-              type="number"
-              step="0.01"
-              min="0.01"
-              value={amount}
-              onChange={(e) => updateField('amount', e.target.value)}
-              required
-              className="no-spinners w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
-            />
+            <div className="flex gap-2">
+              <input
+                type="number"
+                step="0.01"
+                min="0.01"
+                value={amount}
+                onChange={(e) => updateField('amount', e.target.value)}
+                required
+                className="no-spinners w-full min-w-0 flex-1 px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
+              />
+              <select
+                value={currency}
+                onChange={(e) => updateField('currency', e.target.value as Currency)}
+                aria-label={t('recurringModal.currencyLabel')}
+                className="shrink-0 rounded-lg bg-(--bg-dark) border border-(--border) px-2.5 py-2.5 text-base font-gaming text-(--text-primary) focus:border-(--accent-cyan) focus:outline-none"
+              >
+                {CURRENCIES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {currency !== 'PLN' && (
+              <p className="mt-1.5 text-sm text-(--text-muted)">
+                {convertedPreview != null
+                  ? t('recurringModal.convertedPreview', { amount: formatCurrencyAmount(convertedPreview, 'PLN') })
+                  : t('recurringModal.ratesUnavailable')}
+              </p>
+            )}
           </div>
           <div>
             <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('recurringModal.dayOfMonthLabel')}</label>

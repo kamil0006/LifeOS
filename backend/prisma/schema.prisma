@@ -72,7 +72,9 @@ model ScheduledExpense {
   userId     String
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name       String
-  amount     Float
+  amount     Float    // zawsze w PLN — przeliczone wg bieżącego kursu, gdy currency != PLN
+  currency   String   @default("PLN") // PLN | USD | EUR
+  originalAmount Float? // kwota w walucie `currency`, gdy currency != PLN
   category   String
   dayOfMonth Int      // 1-31, dzień miesiąca
   active     Boolean  @default(true)

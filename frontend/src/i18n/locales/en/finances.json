@@ -86,6 +86,7 @@
     "sortAmount": "By amount",
     "sortCategory": "By category",
     "perMonth": "/ mo.",
+    "convertedBadge": "(≈{{amount}} zł)",
     "next": "Next: {{date}}",
     "pauseTitle": "Pause recurring cost",
     "resumeTitle": "Resume recurring cost",
@@ -216,7 +217,10 @@
   },
   "recurringModal": {
     "newTitle": "New recurring cost",
-    "dayOfMonthLabel": "Day of month (1-31)"
+    "dayOfMonthLabel": "Day of month (1-31)",
+    "currencyLabel": "Currency",
+    "convertedPreview": "≈ {{amount}} / mo. at the current NBP rate",
+    "ratesUnavailable": "Couldn't fetch the exchange rate"
   },
   "netWorthAccountCreateModal": {
     "newAssetTitle": "New asset",

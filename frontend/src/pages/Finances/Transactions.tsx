@@ -24,6 +24,7 @@ import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { PaymentMethodBadge } from '../../components/finance/PaymentMethodPicker'
 import { useUndoDelete } from '../../components/learning/UndoToast'
 import type { PaymentMethod } from '../../lib/paymentMethod'
+import { formatCurrencyAmount, type Currency } from '../../lib/currency'
 
 type SortBy = 'date_desc' | 'date_asc' | 'amount_desc' | 'amount_asc'
 
@@ -140,10 +141,15 @@ export function Transactions() {
       ) {
         const rawDay = parseInt(data.date.split('-')[2] ?? '1', 10)
         const dayOfMonth = Number.isFinite(rawDay) ? Math.min(31, Math.max(1, rawDay)) : 1
+        // Ten formularz pokazuje kwotę już przeliczoną na PLN i nie zna waluty oryginalnej —
+        // edycja tutaj ustawia kwotę wprost w PLN (traci powiązanie z kursem waluty obcej).
+        // Pełna edycja waluty jest dostępna w module Stałe wydatki.
         if (!useApiFinance && demoData) {
           demoData.updateScheduledExpense(editingTx.scheduledId, {
             name: data.name,
             amount: data.amount,
+            currency: 'PLN',
+            originalAmount: null,
             category: data.category ?? EXPENSE_CATEGORY_NONE,
             dayOfMonth,
             paymentMethod: data.paymentMethod,
@@ -152,6 +158,7 @@ export function Transactions() {
           await scheduledExpensesApi.update(editingTx.scheduledId, {
             name: data.name,
             amount: data.amount,
+            currency: 'PLN',
             category: data.category ?? EXPENSE_CATEGORY_NONE,
             dayOfMonth,
             paymentMethod: data.paymentMethod,
@@ -439,6 +446,11 @@ export function Transactions() {
                     >
                       {tx.amount >= 0 ? '+' : ''}
                       {tx.amount.toLocaleString('pl-PL')} zł
+                      {tx.currency && tx.currency !== 'PLN' && tx.originalAmount != null && (
+                        <span className="ml-1.5 text-sm font-sans font-normal text-(--text-muted)">
+                          ({formatCurrencyAmount(tx.originalAmount, tx.currency as Currency)})
+                        </span>
+                      )}
                     </td>
                     <td className="py-3 whitespace-nowrap">
                       <button
@@ -482,14 +494,21 @@ export function Transactions() {
                     </p>
                     <p className="mt-0.5 text-sm text-(--text-muted)">{formatTxDate(tx.date, i18n.language === 'pl' ? 'pl-PL' : 'en-US')}</p>
                   </div>
-                  <p
-                    className={`shrink-0 text-base font-semibold tabular-nums ${
-                      tx.amount >= 0 ? 'text-(--tx-income)' : 'text-(--tx-expense)'
-                    }`}
-                  >
-                    {tx.amount >= 0 ? '+' : ''}
-                    {tx.amount.toLocaleString('pl-PL')} zł
-                  </p>
+                  <div className="shrink-0 text-right">
+                    <p
+                      className={`text-base font-semibold tabular-nums ${
+                        tx.amount >= 0 ? 'text-(--tx-income)' : 'text-(--tx-expense)'
+                      }`}
+                    >
+                      {tx.amount >= 0 ? '+' : ''}
+                      {tx.amount.toLocaleString('pl-PL')} zł
+                    </p>
+                    {tx.currency && tx.currency !== 'PLN' && tx.originalAmount != null && (
+                      <p className="text-sm text-(--text-muted)">
+                        {formatCurrencyAmount(tx.originalAmount, tx.currency as Currency)}
+                      </p>
+                    )}
+                  </div>
                 </div>
                 <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-(--border)/50 pt-2.5">
                   <div className="flex min-w-0 flex-wrap items-center gap-2">

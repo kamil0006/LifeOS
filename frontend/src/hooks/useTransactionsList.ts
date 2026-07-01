@@ -17,9 +17,23 @@ export interface Transaction {
   paymentMethod?: PaymentMethod | null
   isScheduled?: boolean
   scheduledId?: string
+  currency?: string
+  originalAmount?: number | null
 }
 
 const FALLBACK_MONTH_NAMES = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru']
+
+/** Dzisiejsza data lokalna w formacie YYYY-MM-DD (do porównań stringowych z datami transakcji). */
+function todayDateStr(): string {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+/** Wirtualna transakcja ze stałego wydatku ma pojawić się dopiero w dniu płatności, nie wcześniej. */
+function excludeFutureScheduled(tx: Transaction[]): Transaction[] {
+  const today = todayDateStr()
+  return tx.filter((t) => !(t.isScheduled && t.date > today))
+}
 
 export interface UseTransactionsListParams {
   effectiveExpenses: {
@@ -34,12 +48,15 @@ export interface UseTransactionsListParams {
     id: string
     name: string
     amount: number
+    currency?: string
+    originalAmount?: number | null
     category: string
     dayOfMonth: number
     active: boolean
     paymentMethod?: PaymentMethod | null
     pausedUntil?: string | null
     reminderDaysBefore?: number | null
+    createdAt?: string
   }[]
   effectiveIncome: {
     id: string
@@ -104,6 +121,8 @@ function buildTransactionsForDateRange(
       paymentMethod: raw?.paymentMethod ?? e.paymentMethod ?? null,
       isScheduled: e.isScheduled,
       scheduledId: e.scheduledId,
+      currency: e.currency,
+      originalAmount: e.originalAmount,
     }
   })
 
@@ -117,7 +136,7 @@ function buildTransactionsForDateRange(
     paymentMethod: i.paymentMethod ?? null,
   }))
 
-  return [...expenseTx, ...incomeTx].sort((a, b) => b.date.localeCompare(a.date))
+  return [...excludeFutureScheduled(expenseTx), ...incomeTx].sort((a, b) => b.date.localeCompare(a.date))
 }
 
 /** Parsed query: date range and/or drill category come from URL, not duplicated in React state. */
@@ -205,6 +224,8 @@ export function useTransactionsList(params: UseTransactionsListParams) {
         paymentMethod: raw?.paymentMethod ?? e.paymentMethod ?? null,
         isScheduled: e.isScheduled,
         scheduledId: e.scheduledId,
+        currency: e.currency,
+        originalAmount: e.originalAmount,
       }
     })
 
@@ -218,7 +239,7 @@ export function useTransactionsList(params: UseTransactionsListParams) {
       paymentMethod: i.paymentMethod ?? null,
     }))
 
-    return [...expenseTx, ...incomeTx].sort((a, b) => b.date.localeCompare(a.date))
+    return [...excludeFutureScheduled(expenseTx), ...incomeTx].sort((a, b) => b.date.localeCompare(a.date))
   }, [effectiveExpenses, effectiveScheduled, effectiveIncome, selectedMonth, selectedYear, dateRange])
 
   const typeFilter: FilterType = drillCategory ? 'expense' : filter

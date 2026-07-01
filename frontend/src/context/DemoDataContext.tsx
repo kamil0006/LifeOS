@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, type ReactNode } from 'react'
 import type { PaymentMethod } from '../lib/paymentMethod'
 import { isPaymentMethod } from '../lib/paymentMethod'
+import type { Currency } from '../lib/currency'
 
 export interface DemoExpense {
   id: string
@@ -25,13 +26,18 @@ export interface DemoIncome {
 export interface DemoScheduledExpense {
   id: string
   name: string
+  /** Zawsze w PLN — przeliczone wg kursu z chwili zapisu (tryb demo nie odświeża kursu automatycznie). */
   amount: number
+  currency?: Currency
+  originalAmount?: number | null
   category: string
   dayOfMonth: number
   active: boolean
   paymentMethod?: PaymentMethod
   pausedUntil?: string | null
   reminderDaysBefore?: number | null
+  /** Kiedy dodano stały wydatek — nie pokazujemy go w miesiącach sprzed tej daty. */
+  createdAt?: string
 }
 
 export interface DemoNetWorth {
@@ -238,6 +244,8 @@ function loadDemoScheduled(): DemoScheduledExpense[] {
     if (!Array.isArray(parsed)) return DEMO_SCHEDULED_EXPENSES
     const rows = parsed.filter(isDemoScheduledRow).map((x) => ({
       ...x,
+      currency: x.currency ?? 'PLN',
+      originalAmount: x.originalAmount ?? null,
       pausedUntil: x.pausedUntil ?? null,
       reminderDaysBefore: x.reminderDaysBefore ?? null,
     }))
@@ -375,6 +383,7 @@ export function DemoDataProvider({ children }: { children: ReactNode }) {
           ...e,
           pausedUntil: e.pausedUntil ?? null,
           reminderDaysBefore: e.reminderDaysBefore ?? null,
+          createdAt: e.createdAt ?? new Date().toISOString(),
           id: `s${Date.now()}`,
         },
       ]

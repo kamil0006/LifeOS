@@ -17,6 +17,7 @@ import { invalidateFinanceQueries } from '../../lib/invalidateFinanceQueries'
 import { PaymentMethodBadge } from '../../components/finance/PaymentMethodPicker'
 import type { ScheduledExpenseRow } from '../../lib/financeTypes'
 import type { PaymentMethod } from '../../lib/paymentMethod'
+import { formatCurrencyAmount, type Currency } from '../../lib/currency'
 
 /** Kolejna data płatności (ta sama logika co dotychczasowy podgląd daty). */
 function getNextPaymentDate(dayOfMonth: number): Date {
@@ -83,10 +84,18 @@ export function Recurring() {
     }`
 
   const handleAdd = async (data: RecurringFormPayload) => {
+    const { convertedAmount, ...rest } = data
     if (!useApiFinance && demoData) {
-      demoData.addScheduledExpense({ ...data, active: true, pausedUntil: null, reminderDaysBefore: null })
+      demoData.addScheduledExpense({
+        ...rest,
+        amount: convertedAmount ?? data.amount,
+        originalAmount: data.currency === 'PLN' ? null : data.amount,
+        active: true,
+        pausedUntil: null,
+        reminderDaysBefore: null,
+      })
     } else {
-      await scheduledExpensesApi.create(data)
+      await scheduledExpensesApi.create(rest)
       await invalidateFinanceQueries(queryClient, userId)
     }
     closeRecurringModal()
@@ -117,6 +126,8 @@ export function Recurring() {
       reminderDaysBefore?: number | null
       name?: string
       amount?: number
+      currency?: Currency
+      originalAmount?: number | null
       category?: string
       dayOfMonth?: number
       paymentMethod?: PaymentMethod
@@ -124,7 +135,8 @@ export function Recurring() {
   ) => {
     if (!useApiFinance && demoData) demoData.updateScheduledExpense(id, updates)
     else {
-      await scheduledExpensesApi.update(id, updates)
+      const { originalAmount: _originalAmount, ...apiUpdates } = updates
+      await scheduledExpensesApi.update(id, apiUpdates)
       await invalidateFinanceQueries(queryClient, userId)
     }
   }
@@ -200,7 +212,16 @@ export function Recurring() {
                         ) : null}
                       </p>
                       <p className="mt-1.5 font-mono text-lg tabular-nums leading-none text-(--accent-amber)">
-                        −{s.amount.toLocaleString('pl-PL')} zł{' '}
+                        {s.currency && s.currency !== 'PLN' && s.originalAmount != null ? (
+                          <>
+                            −{formatCurrencyAmount(s.originalAmount, s.currency)}{' '}
+                            <span className="text-sm font-sans font-normal text-(--text-muted)">
+                              {t('recurring.convertedBadge', { amount: s.amount.toLocaleString('pl-PL') })}
+                            </span>
+                          </>
+                        ) : (
+                          <>−{s.amount.toLocaleString('pl-PL')} zł</>
+                        )}{' '}
                         <span className="text-sm font-sans font-normal text-(--text-muted)">{t('recurring.perMonth')}</span>
                       </p>
                       <p className="mt-1 inline-flex items-center gap-1 text-sm text-(--text-muted)">
@@ -284,7 +305,12 @@ export function Recurring() {
           onClose={closeRecurringModal}
           onSubmit={handleAdd}
           onUpdate={async (id, data) => {
-            await handleUpdate(id, data)
+            const { convertedAmount, ...rest } = data
+            await handleUpdate(id, {
+              ...rest,
+              amount: convertedAmount ?? data.amount,
+              originalAmount: data.currency === 'PLN' ? null : data.amount,
+            })
           }}
           editing={
             editingRecurring
@@ -292,6 +318,8 @@ export function Recurring() {
                   id: editingRecurring.id,
                   name: editingRecurring.name,
                   amount: editingRecurring.amount,
+                  currency: editingRecurring.currency,
+                  originalAmount: editingRecurring.originalAmount,
                   category: editingRecurring.category,
                   dayOfMonth: editingRecurring.dayOfMonth,
                   paymentMethod: editingRecurring.paymentMethod,

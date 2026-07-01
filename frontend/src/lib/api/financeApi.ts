@@ -1,5 +1,6 @@
 import { api } from './client'
 import type { PaymentMethod } from '../paymentMethod'
+import type { Currency } from '../currency'
 
 type ExpenseDto = {
   id: string
@@ -47,44 +48,37 @@ export const expenseCategoriesApi = {
   delete: (id: string) => api(`/expense-categories/${id}`, { method: 'DELETE' }),
 }
 
+type ScheduledExpenseDto = {
+  id: string
+  name: string
+  amount: number
+  currency: Currency
+  originalAmount?: number | null
+  category: string
+  dayOfMonth: number
+  active: boolean
+  paymentMethod?: PaymentMethod | null
+  pausedUntil?: string | null
+  reminderDaysBefore?: number | null
+  createdAt?: string
+}
+
 export const scheduledExpensesApi = {
-  getAll: () =>
-    api<
-      {
-        id: string
-        name: string
-        amount: number
-        category: string
-        dayOfMonth: number
-        active: boolean
-        paymentMethod?: PaymentMethod | null
-        pausedUntil?: string | null
-        reminderDaysBefore?: number | null
-      }[]
-    >('/scheduled-expenses'),
+  getAll: () => api<ScheduledExpenseDto[]>('/scheduled-expenses'),
   create: (data: {
     name: string
     amount: number
+    currency?: Currency
     category: string
     dayOfMonth: number
     paymentMethod: PaymentMethod
-  }) =>
-    api<{
-      id: string
-      name: string
-      amount: number
-      category: string
-      dayOfMonth: number
-      active: boolean
-      paymentMethod?: PaymentMethod | null
-      pausedUntil?: string | null
-      reminderDaysBefore?: number | null
-    }>('/scheduled-expenses', { method: 'POST', body: JSON.stringify(data) }),
+  }) => api<ScheduledExpenseDto>('/scheduled-expenses', { method: 'POST', body: JSON.stringify(data) }),
   update: (
     id: string,
     data: {
       name?: string
       amount?: number
+      currency?: Currency
       category?: string
       dayOfMonth?: number
       active?: boolean
@@ -92,18 +86,7 @@ export const scheduledExpensesApi = {
       pausedUntil?: string | null
       reminderDaysBefore?: number | null
     }
-  ) =>
-    api<{
-      id: string
-      name: string
-      amount: number
-      category: string
-      dayOfMonth: number
-      active: boolean
-      paymentMethod?: PaymentMethod | null
-      pausedUntil?: string | null
-      reminderDaysBefore?: number | null
-    }>(`/scheduled-expenses/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  ) => api<ScheduledExpenseDto>(`/scheduled-expenses/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id: string) => api(`/scheduled-expenses/${id}`, { method: 'DELETE' }),
 }
 

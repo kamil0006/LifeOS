@@ -13,16 +13,22 @@ export interface ScheduledExpenseLike {
   id: string
   name: string
   amount: number
+  currency?: string
+  originalAmount?: number | null
   category: string
   dayOfMonth: number
   active: boolean
   paymentMethod?: PaymentMethod | null
   pausedUntil?: string | null
+  /** Kiedy dodano stały wydatek — nie pokazujemy go w miesiącach sprzed tej daty. */
+  createdAt?: string | Date
 }
 
 export interface MergedExpense extends ExpenseLike {
   isScheduled?: boolean
   scheduledId?: string
+  currency?: string
+  originalAmount?: number | null
 }
 
 /** Łączy wydatki z zaplanowanymi – generuje wirtualne wydatki na dany miesiąc.
@@ -50,8 +56,15 @@ export function mergeExpensesWithScheduled<E extends ExpenseLike, S extends Sche
       isScheduled: false,
     }))
 
+  const monthEnd = new Date(year, month + 1, 0, 23, 59, 59, 999)
+
   const virtual: MergedExpense[] = scheduled
-    .filter((s) => s.active)
+    .filter((s) => {
+      if (!s.active) return false
+      if (!s.createdAt) return true
+      const created = new Date(s.createdAt)
+      return isNaN(created.getTime()) || created <= monthEnd
+    })
     .reduce<MergedExpense[]>((acc, s) => {
       const day = Math.min(s.dayOfMonth, lastDay)
       const date = `${year}-${pad(month + 1)}-${pad(day)}`
@@ -60,6 +73,8 @@ export function mergeExpensesWithScheduled<E extends ExpenseLike, S extends Sche
         id: `scheduled-${s.id}-${date}`,
         name: s.name,
         amount: s.amount,
+        currency: s.currency,
+        originalAmount: s.originalAmount ?? null,
         category: s.category,
         date,
         paymentMethod: s.paymentMethod ?? null,

@@ -88,6 +88,7 @@
     "sortAmount": "Wg kwoty",
     "sortCategory": "Wg kategorii",
     "perMonth": "/ mies.",
+    "convertedBadge": "(≈{{amount}} zł)",
     "next": "Następna: {{date}}",
     "pauseTitle": "Wstrzymaj stały koszt",
     "resumeTitle": "Wznów stały koszt",
@@ -218,7 +219,10 @@
   },
   "recurringModal": {
     "newTitle": "Nowy stały koszt",
-    "dayOfMonthLabel": "Dzień miesiąca (1-31)"
+    "dayOfMonthLabel": "Dzień miesiąca (1-31)",
+    "currencyLabel": "Waluta",
+    "convertedPreview": "≈ {{amount}} / mies. wg bieżącego kursu NBP",
+    "ratesUnavailable": "Nie udało się pobrać kursu waluty"
   },
   "netWorthAccountCreateModal": {
     "newAssetTitle": "Nowe aktywo",

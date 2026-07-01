@@ -29,6 +29,8 @@ export const scheduledExpenseBackupSchema = z.object({
   id,
   name: z.string().min(1).max(500),
   amount: z.number(),
+  currency: z.enum(['PLN', 'USD', 'EUR']).default('PLN'),
+  originalAmount: z.number().nullable().optional(),
   category: z.string().max(100),
   dayOfMonth: z.number().int().min(1).max(31),
   active: z.boolean(),

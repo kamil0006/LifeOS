@@ -20,6 +20,7 @@ import { notesRouter } from './routes/notes.js'
 import { learningRouter } from './routes/learning.js'
 import { aiRouter } from './routes/ai.js'
 import { backupRouter } from './routes/backup.js'
+import { exchangeRatesRouter } from './routes/exchangeRates.js'
 import { authMiddleware } from './middleware/auth.js'
 import { errorHandler } from './middleware/errorHandler.js'
 import { apiRateLimiter, authRateLimiter } from './middleware/rateLimit.js'
@@ -53,6 +54,7 @@ app.get('/api/health', (_req, res) => {
 
 app.use('/api/auth', authRateLimiter, authRouter)
 app.use('/api', apiRateLimiter)
+app.use('/api/exchange-rates', exchangeRatesRouter)
 app.use('/api/expenses', authMiddleware, expensesRouter)
 app.use('/api/income', authMiddleware, incomeRouter)
 app.use('/api/todos', authMiddleware, todosRouter)
