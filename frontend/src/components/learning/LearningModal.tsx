@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { ModalShell } from '../ModalShell'
 
 type LearningModalProps = {
@@ -18,6 +19,7 @@ export function LearningModal({
   children,
   maxWidth = 'max-w-md',
 }: LearningModalProps) {
+  const { t } = useTranslation('learning')
   if (!isOpen) return null
 
   return (
@@ -28,7 +30,7 @@ export function LearningModal({
           type="button"
           onClick={onClose}
           className="shrink-0 rounded-lg p-2 text-(--text-muted) hover:bg-(--bg-card) hover:text-(--text-primary)"
-          aria-label="Zamknij"
+          aria-label={t('common.close')}
         >
           <X className="h-5 w-5" />
         </button>

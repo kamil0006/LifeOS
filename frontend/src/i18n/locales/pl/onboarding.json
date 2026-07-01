@@ -1,0 +1,32 @@
+{
+  "closeAria": "Zamknij",
+  "back": "Wstecz",
+  "next": "Dalej",
+  "finish": "Zakończ",
+  "steps": [
+    {
+      "title": "Witaj w LifeOS",
+      "desc": "Twoja centrala do zarządzania życiem – finanse, organizacja i rozwój w jednym miejscu."
+    },
+    {
+      "title": "Dashboard",
+      "desc": "Przegląd finansów, wydatków, przychodów i aktywności. Wszystkie kluczowe dane na jednym ekranie."
+    },
+    {
+      "title": "Finanse",
+      "desc": "Wydatki, przychody, stałe koszty i wartość netto. Pełna kontrola nad budżetem."
+    },
+    {
+      "title": "Organizacja",
+      "desc": "Kalendarz z wydarzeniami, listy To-do oraz notatki – szybkie notatki, pomysły i referencje."
+    },
+    {
+      "title": "Rozwój",
+      "desc": "Nawyki, cele, nauka (kursy, książki, projekty) – śledź swój postęp."
+    },
+    {
+      "title": "Gotowy?",
+      "desc": "Zacznij od Dashboard lub użyj wyszukiwania (Ctrl+K), aby szybko znaleźć dowolną sekcję."
+    }
+  ]
+}

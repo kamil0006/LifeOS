@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Card } from '../../components/Card'
 import {
@@ -35,14 +36,6 @@ import { NetWorthPageSkeleton } from '../../components/skeletons'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { safeRandomId } from '../../lib/safeId'
 
-const monthNames = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru']
-
-const DEMO_POSITION_LABEL: Record<NetWorthPositionKey, string> = {
-  cash: 'Gotówka',
-  bankAccount: 'Konto bankowe',
-  assets: 'Aktywa',
-}
-
 const DEMO_NW_LIAB_KEY = 'lifeos_demo_nw_liabilities_v1'
 const DEMO_NW_LOG_KEY = 'lifeos_demo_nw_adjustment_log_v1'
 const DEMO_NW_CUSTOM_ASSETS_KEY = 'lifeos_demo_nw_custom_assets_v1'
@@ -69,7 +62,8 @@ type DemoAdjLog = {
 function inferDemoUndo(
   row: DemoAdjLog,
   demoLiabilities: DemoLiability[],
-  demoCustomAssets: DemoLiability[]
+  demoCustomAssets: DemoLiability[],
+  positionLabels: Record<NetWorthPositionKey, string>
 ): DemoAdjUndo | null {
   const m = row.headline.match(/^(.+?)\s*\(zobowiązanie\)\s*$/i)
   if (m) {
@@ -78,8 +72,8 @@ function inferDemoUndo(
     if (li) return { type: 'liability', id: li.id }
     return null
   }
-  const key = (Object.keys(DEMO_POSITION_LABEL) as NetWorthPositionKey[]).find(
-    (k) => DEMO_POSITION_LABEL[k] === row.headline.trim()
+  const key = (Object.keys(positionLabels) as NetWorthPositionKey[]).find(
+    (k) => positionLabels[k] === row.headline.trim()
   )
   if (key) return { type: 'position', key }
   const da = demoCustomAssets.find((a) => a.name === row.headline.trim())
@@ -148,9 +142,7 @@ function loadDemoAdjLog(): DemoAdjLog[] {
 
 const POSITION_CONFIG: {
   key: NetWorthPositionKey
-  label: string
   icon: typeof Banknote
-  desc: string
   borderClass: string
   iconClass: string
   balanceClass: string
@@ -158,9 +150,7 @@ const POSITION_CONFIG: {
 }[] = [
   {
     key: 'cash',
-    label: 'Gotówka',
     icon: Banknote,
-    desc: 'W portfelu',
     borderClass: 'border-(--accent-green)/20',
     iconClass: 'text-(--accent-green)',
     balanceClass: 'text-(--accent-green)',
@@ -168,9 +158,7 @@ const POSITION_CONFIG: {
   },
   {
     key: 'bankAccount',
-    label: 'Konto bankowe',
     icon: CreditCard,
-    desc: 'Karta, konto',
     borderClass: 'border-(--accent-cyan)/20',
     iconClass: 'text-(--accent-cyan)',
     balanceClass: 'text-(--accent-cyan)',
@@ -178,9 +166,7 @@ const POSITION_CONFIG: {
   },
   {
     key: 'assets',
-    label: 'Aktywa',
     icon: BarChart3,
-    desc: 'Inwestycje, nieruchomości',
     borderClass: 'border-(--accent-magenta)/20',
     iconClass: 'text-(--accent-magenta)',
     balanceClass: 'text-(--accent-magenta)',
@@ -189,6 +175,14 @@ const POSITION_CONFIG: {
 ]
 
 export function FinancesNetWorth() {
+  const { t, i18n } = useTranslation('finances')
+  const dateLocale = i18n.language === 'pl' ? 'pl-PL' : 'en-US'
+  const monthNames = t('netWorth.monthShort', { returnObjects: true }) as string[]
+  const positionLabels = useMemo<Record<NetWorthPositionKey, string>>(() => ({
+    cash: t('netWorth.position.cash'),
+    bankAccount: t('netWorth.position.bankAccount'),
+    assets: t('netWorth.position.assets'),
+  }), [t])
   const isMobile = useIsMobile()
   const chartHeight = isMobile ? 200 : 240
   const { user } = useAuth()
@@ -481,7 +475,7 @@ export function FinancesNetWorth() {
       periodExpenseTotal,
       periodSavingsRate,
     }
-  }, [effectiveExpenses, effectiveScheduled, effectiveIncome, selectedMonth, selectedYear, chartPeriod])
+  }, [effectiveExpenses, effectiveScheduled, effectiveIncome, selectedMonth, selectedYear, chartPeriod, monthNames])
 
   const assetsTotal = useMemo(() => {
     if (useApiFinance) return assetAccounts.reduce((s, a) => s + a.balance, 0)
@@ -516,10 +510,10 @@ export function FinancesNetWorth() {
 
   const cumulativePeriodLabel = useMemo(() => {
     if (!chartPeriod) return `${monthNames[selectedMonth]} ${selectedYear}`
-    if (chartPeriod.period.type === 'year') return `rok ${chartPeriod.period.year}`
-    if (chartPeriod.period.type === 'quarter') return `Q${chartPeriod.period.quarter} ${chartPeriod.period.year}`
+    if (chartPeriod.period.type === 'year') return t('netWorth.yearPeriod', { year: chartPeriod.period.year })
+    if (chartPeriod.period.type === 'quarter') return t('netWorth.quarterPeriod', { quarter: chartPeriod.period.quarter, year: chartPeriod.period.year })
     return `${monthNames[chartPeriod.period.month]} ${chartPeriod.period.year}`
-  }, [chartPeriod, selectedMonth, selectedYear])
+  }, [chartPeriod, selectedMonth, selectedYear, monthNames, t])
 
   const pulseDemoDelta = (undo: DemoAdjUndo, delta: number) => {
     if (undo.type === 'position') {
@@ -535,7 +529,7 @@ export function FinancesNetWorth() {
     }
   }
 
-  const resolveDemoUndo = (row: DemoAdjLog) => row.undo ?? inferDemoUndo(row, demoLiabilities, demoCustomAssets)
+  const resolveDemoUndo = (row: DemoAdjLog) => row.undo ?? inferDemoUndo(row, demoLiabilities, demoCustomAssets, positionLabels)
 
   const deleteDemoAdjustmentRow = (row: DemoAdjLog): boolean => {
     const undo = resolveDemoUndo(row)
@@ -547,11 +541,10 @@ export function FinancesNetWorth() {
 
   const quickDeleteApiAdjustment = (row: NetWorthAdjustmentDto) => {
     setConfirmDialog({
-      title: 'Usunąć wpis z historii?',
-      description:
-        'Cofniemy wpływ tej korekty na saldo powiązanego konta. Operacji nie da się cofnąć.',
+      title: t('netWorth.deleteAdjustmentConfirmTitle'),
+      description: t('netWorth.deleteAdjustmentConfirmDescriptionApi'),
       variant: 'danger',
-      confirmLabel: 'Usuń',
+      confirmLabel: t('common:delete'),
       onConfirm: async () => {
         await deleteAdjustmentMutation.mutateAsync(row.id)
         setAdjustmentEdit((e) => (e?.mode === 'api' && e.row.id === row.id ? null : e))
@@ -561,16 +554,15 @@ export function FinancesNetWorth() {
 
   const quickDeleteDemoAdjustment = (row: DemoAdjLog) => {
     setConfirmDialog({
-      title: 'Usunąć wpis z historii?',
-      description: 'Cofniemy wpływ tej korekty na saldo pozycji w trybie demo.',
+      title: t('netWorth.deleteAdjustmentConfirmTitle'),
+      description: t('netWorth.deleteAdjustmentConfirmDescriptionDemo'),
       variant: 'danger',
-      confirmLabel: 'Usuń',
+      confirmLabel: t('common:delete'),
       onConfirm: async () => {
         if (!deleteDemoAdjustmentRow(row)) {
           setAlertDialog({
-            title: 'Nie można usunąć',
-            description:
-              'Ten wpis nie jest powiązany z żadną pozycją demo (np. stary zapis). Usuń go tylko z listy albo popraw dane ręcznie.',
+            title: t('netWorth.cannotDeleteTitle'),
+            description: t('netWorth.cannotDeleteDescription'),
           })
           return
         }
@@ -581,10 +573,10 @@ export function FinancesNetWorth() {
 
   const quickDeleteApiAccount = (id: string) => {
     setConfirmDialog({
-      title: 'Usunąć pozycję?',
-      description: 'Konto zniknie z majątku, a powiązane korekty w historii zostaną trwale usunięte.',
+      title: t('netWorth.deletePositionConfirmTitle'),
+      description: t('netWorth.deletePositionConfirmDescription'),
       variant: 'danger',
-      confirmLabel: 'Usuń',
+      confirmLabel: t('common:delete'),
       onConfirm: async () => {
         await deleteAccountMutation.mutateAsync(id)
       },
@@ -593,10 +585,10 @@ export function FinancesNetWorth() {
 
   const quickDeleteDemoLiability = (id: string) => {
     setConfirmDialog({
-      title: 'Usunąć zobowiązanie?',
-      description: 'Pozycja zostanie usunięta z listy. Powiązane wpisy historii (o tym koncie) też znikną.',
+      title: t('netWorth.deleteLiabilityConfirmTitle'),
+      description: t('netWorth.deleteLiabilityConfirmDescription'),
       variant: 'danger',
-      confirmLabel: 'Usuń',
+      confirmLabel: t('common:delete'),
       onConfirm: async () => {
         setDemoLiabilities((p) => p.filter((l) => l.id !== id))
         setDemoAdjLog((p) => p.filter((r) => !(r.undo?.type === 'liability' && r.undo.id === id)))
@@ -606,10 +598,10 @@ export function FinancesNetWorth() {
 
   const quickDeleteDemoCustomAsset = (id: string) => {
     setConfirmDialog({
-      title: 'Usunąć aktywo?',
-      description: 'Pozycja zostanie usunięta z listy. Powiązane wpisy historii (o tym aktywie) też znikną.',
+      title: t('netWorth.deleteAssetConfirmTitle'),
+      description: t('netWorth.deleteAssetConfirmDescription'),
       variant: 'danger',
-      confirmLabel: 'Usuń',
+      confirmLabel: t('common:delete'),
       onConfirm: async () => {
         setDemoCustomAssets((p) => p.filter((a) => a.id !== id))
         setDemoAdjLog((p) => p.filter((r) => !(r.undo?.type === 'demoAsset' && r.undo.id === id)))
@@ -690,7 +682,7 @@ export function FinancesNetWorth() {
           {
             id: logId,
             at: new Date().toISOString(),
-            headline: `${correctionRef.name} (zobowiązanie)`,
+            headline: `${correctionRef.name} (${t('netWorth.kindLiability')})`,
             detail,
             amount,
             undo: { type: 'liability', id: correctionRef.id },
@@ -744,7 +736,7 @@ export function FinancesNetWorth() {
       {
         id: logId,
         at: new Date().toISOString(),
-        headline: DEMO_POSITION_LABEL[position],
+        headline: positionLabels[position],
         detail: description.trim() || DEMO_DETAIL_PLACEHOLDER,
         amount: delta,
         undo: { type: 'position', key: position },
@@ -811,20 +803,20 @@ export function FinancesNetWorth() {
       ) : (
     <div className="space-y-5">
       <div className="w-full min-w-0">
-        {chartPeriod ? <ChartPeriodSelector leadingLabel="Okres:" /> : null}
+        {chartPeriod ? <ChartPeriodSelector leadingLabel={t('netWorth.periodLabel')} /> : null}
       </div>
 
       <div>
-        <h3 className="text-base font-semibold text-(--text-primary) font-gaming tracking-wide">Wartość netto</h3>
+        <h3 className="text-base font-semibold text-(--text-primary) font-gaming tracking-wide">{t('netWorth.title')}</h3>
         <p className="mt-1 text-base text-(--text-muted)">
-          Majątek, zobowiązania i trend dla wybranego okresu.
+          {t('netWorth.subtitle')}
         </p>
       </div>
 
-      <Card title="Podsumowanie" className="border-(--accent-cyan)/20 max-md:p-4">
+      <Card title={t('netWorth.summaryTitle')} className="border-(--accent-cyan)/20 max-md:p-4">
         <div className="space-y-4">
           <div>
-            <p className="text-base text-(--text-muted)">Wartość netto</p>
+            <p className="text-base text-(--text-muted)">{t('netWorth.netWorthLabel')}</p>
             <p
               className={`mt-1 font-gaming text-2xl font-bold tabular-nums sm:text-3xl ${
                 accountsNetWorth >= 0 ? 'text-(--accent-cyan)' : 'text-[#e74c3c]'
@@ -832,23 +824,23 @@ export function FinancesNetWorth() {
             >
               {accountsNetWorth.toLocaleString('pl-PL')} zł
             </p>
-            <p className="mt-1 text-base text-(--text-muted)">Aktywa łącznie minus zobowiązania łącznie</p>
+            <p className="mt-1 text-base text-(--text-muted)">{t('netWorth.netWorthFormula')}</p>
           </div>
           <dl className="grid gap-3 sm:grid-cols-2">
             <div className="flex justify-between gap-4 border-b border-(--border)/50 pb-2">
-              <dt className="text-base text-(--text-muted)">Aktywa</dt>
+              <dt className="text-base text-(--text-muted)">{t('netWorth.assetsLabel')}</dt>
               <dd className="text-base font-gaming text-(--text-primary) tabular-nums">
                 {assetsTotal.toLocaleString('pl-PL')} zł
               </dd>
             </div>
             <div className="flex justify-between gap-4 border-b border-(--border)/50 pb-2">
-              <dt className="text-base text-(--text-muted)">Zobowiązania</dt>
+              <dt className="text-base text-(--text-muted)">{t('netWorth.liabilitiesLabel')}</dt>
               <dd className="text-base font-gaming tabular-nums text-[#e74c3c]">
                 −{liabilitiesTotal.toLocaleString('pl-PL')} zł
               </dd>
             </div>
             <div className="flex justify-between gap-4 border-b border-(--border)/50 pb-2 sm:col-span-2">
-              <dt className="text-base text-(--text-muted)">Bilans okresu ({cumulativePeriodLabel})</dt>
+              <dt className="text-base text-(--text-muted)">{t('netWorth.periodBalance', { period: cumulativePeriodLabel })}</dt>
               <dd
                 className={`text-base font-gaming tabular-nums ${
                   cumulativeSavings >= 0 ? 'text-(--accent-green)' : 'text-[#e74c3c]'
@@ -863,18 +855,20 @@ export function FinancesNetWorth() {
             <div className="inline-flex w-fit max-w-full items-center gap-2 rounded-full border border-(--accent-green)/30 bg-(--accent-green)/10 px-3 py-1.5">
               <TrendingUp className="h-4 w-4 shrink-0 text-(--accent-green)" />
               <span className="text-sm font-gaming text-(--accent-green)">
-                Oszczędności: {periodSavingsRate >= 0 ? periodSavingsRate.toFixed(0) : '0'}%
+                {t('netWorth.savingsRate', { pct: periodSavingsRate >= 0 ? periodSavingsRate.toFixed(0) : '0' })}
               </span>
             </div>
             <p className="text-sm text-(--text-muted) sm:text-base">
-              {(periodIncomeTotal - periodExpenseTotal).toLocaleString('pl-PL')} zł z{' '}
-              {periodIncomeTotal.toLocaleString('pl-PL')} zł przychodów
+              {t('netWorth.ofIncome', {
+                amount: (periodIncomeTotal - periodExpenseTotal).toLocaleString('pl-PL'),
+                income: periodIncomeTotal.toLocaleString('pl-PL'),
+              })}
             </p>
           </div>
         </div>
       </Card>
 
-      <Card title="Składniki majątku" className="border-(--border) max-md:p-4">
+      <Card title={t('netWorth.componentsTitle')} className="border-(--border) max-md:p-4">
         <div className="mb-4 grid grid-cols-2 gap-2">
           <button
             type="button"
@@ -882,7 +876,7 @@ export function FinancesNetWorth() {
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-(--accent-cyan)/40 bg-(--accent-cyan)/15 px-3 py-2.5 text-sm font-gaming text-(--accent-cyan) transition-colors hover:bg-(--accent-cyan)/25"
           >
             <Plus className="h-4 w-4 shrink-0" />
-            Dodaj aktywo
+            {t('netWorth.addAsset')}
           </button>
           <button
             type="button"
@@ -890,15 +884,15 @@ export function FinancesNetWorth() {
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#e74c3c]/40 bg-[#e74c3c]/15 px-3 py-2.5 text-sm font-gaming text-[#e74c3c] transition-colors hover:bg-[#e74c3c]/25"
           >
             <Plus className="h-4 w-4 shrink-0" />
-            Dodaj zobowiązanie
+            {t('netWorth.addLiability')}
           </button>
         </div>
         <div className="grid gap-6 md:grid-cols-2">
           <div>
-            <h4 className="mb-2 text-base font-semibold text-(--text-primary) font-gaming tracking-wide">Aktywa</h4>
+            <h4 className="mb-2 text-base font-semibold text-(--text-primary) font-gaming tracking-wide">{t('netWorth.assetsLabel')}</h4>
             {useApiFinance ? (
               assetAccounts.length === 0 ? (
-                <p className="text-base text-(--text-muted)">Brak aktywów — dodaj pierwszą pozycję.</p>
+                <p className="text-base text-(--text-muted)">{t('netWorth.noAssets')}</p>
               ) : (
                 <ul className="divide-y divide-(--border)/60 rounded-lg border border-(--border)/60">
                   {assetAccounts.map((account) => {
@@ -929,14 +923,14 @@ export function FinancesNetWorth() {
                           }
                           className={`rounded-lg border border-(--border) bg-(--bg-dark) px-2.5 py-1.5 text-sm font-gaming text-(--text-muted) transition-colors ${accAccent.editHover}`}
                         >
-                          Edytuj
+                          {t('netWorth.edit')}
                         </button>
                         <button
                           type="button"
                           onClick={() => quickDeleteApiAccount(account.id)}
                           className="flex h-9 w-9 items-center justify-center rounded-lg border border-(--border) bg-(--bg-dark) text-(--text-muted) transition-colors hover:border-[#e74c3c]/45 hover:bg-[#e74c3c]/10 hover:text-[#e74c3c]"
-                          title="Usuń aktywo"
-                          aria-label="Usuń aktywo"
+                          title={t('netWorth.deleteAssetAria')}
+                          aria-label={t('netWorth.deleteAssetAria')}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
@@ -949,14 +943,14 @@ export function FinancesNetWorth() {
               )
             ) : (
               <ul className="divide-y divide-(--border)/60 rounded-lg border border-(--border)/60">
-                {POSITION_CONFIG.map(({ key, label, icon: Icon, iconClass, balanceClass, rowAccentClass }) => (
+                {POSITION_CONFIG.map(({ key, icon: Icon, iconClass, balanceClass, rowAccentClass }) => (
                   <li
                     key={key}
                     className={`flex flex-col gap-2 border-b border-(--border)/50 px-3 py-3 last:border-b-0 sm:flex-row sm:items-center sm:gap-3 sm:py-2.5 ${rowAccentClass}`}
                   >
                     <div className="flex min-w-0 flex-1 items-center gap-3">
                       <Icon className={`h-4 w-4 shrink-0 ${iconClass}`} aria-hidden />
-                      <span className="min-w-0 flex-1 truncate text-base text-(--text-primary)">{label}</span>
+                      <span className="min-w-0 flex-1 truncate text-base text-(--text-primary)">{positionLabels[key]}</span>
                     </div>
                     <div className="flex items-center justify-between gap-2 sm:shrink-0">
                       <span className={`font-mono text-base tabular-nums ${balanceClass}`}>
@@ -967,7 +961,7 @@ export function FinancesNetWorth() {
                         onClick={() => handleAdjust(key)}
                         className="shrink-0 rounded-lg border border-(--border) bg-(--bg-dark) px-2.5 py-1.5 text-sm font-gaming text-(--text-muted) transition-colors hover:border-(--accent-cyan)/40 hover:text-(--accent-cyan)"
                       >
-                        Edytuj
+                        {t('netWorth.edit')}
                       </button>
                     </div>
                   </li>
@@ -1000,14 +994,14 @@ export function FinancesNetWorth() {
                         }
                         className={`rounded-lg border border-(--border) bg-(--bg-dark) px-2.5 py-1.5 text-sm font-gaming text-(--text-muted) transition-colors ${aAccent.editHover}`}
                       >
-                        Edytuj
+                        {t('netWorth.edit')}
                       </button>
                       <button
                         type="button"
                         onClick={() => quickDeleteDemoCustomAsset(a.id)}
                         className="flex h-9 w-9 items-center justify-center rounded-lg border border-(--border) bg-(--bg-dark) text-(--text-muted) transition-colors hover:border-[#e74c3c]/45 hover:bg-[#e74c3c]/10 hover:text-[#e74c3c]"
-                        title="Usuń aktywo"
-                        aria-label="Usuń aktywo"
+                        title={t('netWorth.deleteAssetAria')}
+                        aria-label={t('netWorth.deleteAssetAria')}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -1020,10 +1014,10 @@ export function FinancesNetWorth() {
             )}
           </div>
           <div>
-            <h4 className="mb-2 text-base font-semibold text-(--text-primary) font-gaming tracking-wide">Zobowiązania</h4>
+            <h4 className="mb-2 text-base font-semibold text-(--text-primary) font-gaming tracking-wide">{t('netWorth.liabilitiesLabel')}</h4>
             {useApiFinance ? (
               liabilityAccounts.length === 0 ? (
-                <p className="text-base text-(--text-muted)">Brak zobowiązań.</p>
+                <p className="text-base text-(--text-muted)">{t('netWorth.noLiabilitiesApi')}</p>
               ) : (
                 <ul className="divide-y divide-(--border)/60 rounded-lg border border-(--border)/60">
                   {liabilityAccounts.map((account) => {
@@ -1052,14 +1046,14 @@ export function FinancesNetWorth() {
                           }
                           className="rounded-lg border border-(--border) bg-(--bg-dark) px-2.5 py-1.5 text-sm font-gaming text-(--text-muted) transition-colors hover:border-rose-400/40 hover:text-[#e74c3c]"
                         >
-                          Edytuj
+                          {t('netWorth.edit')}
                         </button>
                         <button
                           type="button"
                           onClick={() => quickDeleteApiAccount(account.id)}
                           className="flex h-9 w-9 items-center justify-center rounded-lg border border-(--border) bg-(--bg-dark) text-(--text-muted) transition-colors hover:border-[#e74c3c]/45 hover:bg-[#e74c3c]/10 hover:text-[#e74c3c]"
-                          title="Usuń zobowiązanie"
-                          aria-label="Usuń zobowiązanie"
+                          title={t('netWorth.deleteLiabilityAria')}
+                          aria-label={t('netWorth.deleteLiabilityAria')}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
@@ -1071,7 +1065,7 @@ export function FinancesNetWorth() {
                 </ul>
               )
             ) : demoLiabilities.length === 0 ? (
-              <p className="text-base text-(--text-muted)">Brak zobowiązań — dodaj przykładowy kredyt lub pożyczkę.</p>
+              <p className="text-base text-(--text-muted)">{t('netWorth.noLiabilitiesDemo')}</p>
             ) : (
               <ul className="divide-y divide-(--border)/60 rounded-lg border border-(--border)/60">
                 {demoLiabilities.map((l) => {
@@ -1100,14 +1094,14 @@ export function FinancesNetWorth() {
                         }
                         className="rounded-lg border border-(--border) bg-(--bg-dark) px-2.5 py-1.5 text-sm font-gaming text-(--text-muted) transition-colors hover:border-rose-400/40 hover:text-[#e74c3c]"
                       >
-                        Edytuj
+                        {t('netWorth.edit')}
                       </button>
                       <button
                         type="button"
                         onClick={() => quickDeleteDemoLiability(l.id)}
                         className="flex h-9 w-9 items-center justify-center rounded-lg border border-(--border) bg-(--bg-dark) text-(--text-muted) transition-colors hover:border-[#e74c3c]/45 hover:bg-[#e74c3c]/10 hover:text-[#e74c3c]"
-                        title="Usuń zobowiązanie"
-                        aria-label="Usuń zobowiązanie"
+                        title={t('netWorth.deleteLiabilityAria')}
+                        aria-label={t('netWorth.deleteLiabilityAria')}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -1123,22 +1117,22 @@ export function FinancesNetWorth() {
       </Card>
 
       <Card
-        title={`Trend wartości netto (${
-          chartPeriod?.period.type === 'quarter'
-            ? `Q${chartPeriod.period.quarter} ${chartPeriod.period.year}`
+        title={t('netWorth.trendTitle', {
+          period: chartPeriod?.period.type === 'quarter'
+            ? t('netWorth.quarterPeriod', { quarter: chartPeriod.period.quarter, year: chartPeriod.period.year })
             : chartPeriod?.period.type === 'year'
               ? String(chartPeriod.period.year)
               : chartPeriod?.period.type === 'month'
                 ? `${monthNames[chartPeriod.period.month]} ${chartPeriod.period.year}`
                 : selectedYear
-        })`}
+        })}
       >
         <p className="mb-2 text-base text-(--text-muted)">
           {chartPeriod?.period.type === 'month'
-            ? 'Skumulowany bilans dzienny'
+            ? t('netWorth.trendDescMonth')
             : chartPeriod?.period.type === 'year'
-              ? 'Skumulowany bilans miesięczny (cały rok)'
-              : 'Skumulowany bilans miesięczny'}
+              ? t('netWorth.trendDescYear')
+              : t('netWorth.trendDescDefault')}
         </p>
         <div className="chart-shell h-[200px] w-full min-h-[200px] sm:h-60">
           <ResponsiveContainer width="100%" height={chartHeight}>
@@ -1165,9 +1159,9 @@ export function FinancesNetWorth() {
                   const bilans = payload?.bilans
                   const suffix =
                     bilans != null
-                      ? ` (w tym okresie: ${bilans >= 0 ? '+' : ''}${bilans.toLocaleString('pl-PL')} zł)`
+                      ? t('netWorth.inPeriod', { amount: `${bilans >= 0 ? '+' : ''}${bilans.toLocaleString('pl-PL')}` })
                       : ''
-                  return [value != null ? `${value.toLocaleString('pl-PL')} zł${suffix}` : '', 'Skumulowany bilans']
+                  return [value != null ? `${value.toLocaleString('pl-PL')} zł${suffix}` : '', t('netWorth.cumulativeBalance')]
                 }}
               />
               <Area
@@ -1177,7 +1171,7 @@ export function FinancesNetWorth() {
                 strokeWidth={2}
                 fillOpacity={1}
                 fill="url(#colorWartosc)"
-                name="Skumulowany bilans"
+                name={t('netWorth.cumulativeBalance')}
                 baseValue={0}
                 activeDot={false}
               />
@@ -1187,7 +1181,7 @@ export function FinancesNetWorth() {
       </Card>
 
       <Card
-        title="Historia zmian (korekty sald)"
+        title={t('netWorth.historyTitle')}
         action={
           <button
             type="button"
@@ -1195,25 +1189,23 @@ export function FinancesNetWorth() {
             className="inline-flex items-center gap-1.5 rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-sm font-gaming text-(--text-muted) hover:border-(--accent-cyan)/30 hover:text-(--text-primary) transition-colors"
           >
             {historyCollapsed ? <ChevronDown className="h-4 w-4 shrink-0" /> : <ChevronUp className="h-4 w-4 shrink-0" />}
-            {historyCollapsed ? 'Rozwiń' : 'Zwiń'}
+            {historyCollapsed ? t('netWorth.expand') : t('netWorth.collapse')}
           </button>
         }
       >
         {historyCollapsed ? (
           <p className="text-base text-(--text-muted)">
-            Karta jest zwinięta — kliknij „Rozwiń”, aby zobaczyć pełną historię korekt, zmienić kwotę lub opis albo
-            usunąć wpisy.
+            {t('netWorth.collapsedMessage')}
           </p>
         ) : (
           <>
             <p className="text-base text-(--text-muted) mb-3">
-              Każda korekta zapisuje kwotę i opis. Możesz zmienić kwotę (przeliczy się saldo konta), poprawić opis albo
-              usunąć wpis — wtedy korekta zostanie cofnięta z salda.
+              {t('netWorth.expandedDescription')}
             </p>
             {useApiFinance ? (
               <div className="space-y-1.5">
                 {(netWorthAdjustmentsQuery.data ?? []).length === 0 && (
-                  <p className="text-base text-(--text-muted)">Brak korekt.</p>
+                  <p className="text-base text-(--text-muted)">{t('netWorth.noAdjustments')}</p>
                 )}
                 {(netWorthAdjustmentsQuery.data ?? []).map((row) => (
                   <div
@@ -1224,11 +1216,11 @@ export function FinancesNetWorth() {
                       <p className="text-base text-(--text-primary)">
                         {row.account.name}{' '}
                         <span className="text-(--text-muted)">
-                          ({row.account.kind === 'liability' ? 'zobowiązanie' : 'aktywo'})
+                          ({row.account.kind === 'liability' ? t('netWorth.kindLiability') : t('netWorth.kindAsset')})
                         </span>
                       </p>
                       <p className="text-base text-(--text-muted) mt-0.5">
-                        {row.description?.trim() ? row.description.trim() : 'Brak opisu'}
+                        {row.description?.trim() ? row.description.trim() : t('netWorth.noDescription')}
                       </p>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
@@ -1238,15 +1230,15 @@ export function FinancesNetWorth() {
                           {row.amount.toLocaleString('pl-PL')} zł
                         </p>
                         <p className="text-base text-(--text-muted)">
-                          {new Date(row.createdAt).toLocaleString('pl-PL')}
+                          {new Date(row.createdAt).toLocaleString(dateLocale)}
                         </p>
                       </div>
                       <button
                         type="button"
                         onClick={() => setAdjustmentEdit({ mode: 'api', row })}
                         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg p-1.5 text-(--text-muted) transition-colors hover:bg-(--bg-card-hover) hover:text-(--accent-cyan)"
-                        title="Edytuj korektę"
-                        aria-label="Edytuj korektę"
+                        title={t('netWorth.editAdjustmentAria')}
+                        aria-label={t('netWorth.editAdjustmentAria')}
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
@@ -1254,8 +1246,8 @@ export function FinancesNetWorth() {
                         type="button"
                         onClick={() => quickDeleteApiAdjustment(row)}
                         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg p-1.5 text-(--text-muted) transition-colors hover:bg-[#e74c3c]/15 hover:text-[#e74c3c]"
-                        title="Usuń wpis z historii"
-                        aria-label="Usuń wpis z historii"
+                        title={t('netWorth.deleteAdjustmentAria')}
+                        aria-label={t('netWorth.deleteAdjustmentAria')}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -1264,7 +1256,7 @@ export function FinancesNetWorth() {
                 ))}
               </div>
             ) : demoAdjLog.length === 0 ? (
-              <p className="text-base text-(--text-muted)">Brak wpisów — zrób korektę aktywów lub zobowiązania.</p>
+              <p className="text-base text-(--text-muted)">{t('netWorth.noAdjustmentsDemo')}</p>
             ) : (
               <div className="space-y-1.5">
                 {demoAdjLog.map((row) => (
@@ -1282,14 +1274,14 @@ export function FinancesNetWorth() {
                           {row.amount >= 0 ? '+' : ''}
                           {row.amount.toLocaleString('pl-PL')} zł
                         </p>
-                        <p className="text-base text-(--text-muted)">{new Date(row.at).toLocaleString('pl-PL')}</p>
+                        <p className="text-base text-(--text-muted)">{new Date(row.at).toLocaleString(dateLocale)}</p>
                       </div>
                       <button
                         type="button"
                         onClick={() => setAdjustmentEdit({ mode: 'demo', row })}
                         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg p-1.5 text-(--text-muted) transition-colors hover:bg-(--bg-card-hover) hover:text-(--accent-cyan)"
-                        title="Edytuj korektę"
-                        aria-label="Edytuj korektę"
+                        title={t('netWorth.editAdjustmentAria')}
+                        aria-label={t('netWorth.editAdjustmentAria')}
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
@@ -1297,8 +1289,8 @@ export function FinancesNetWorth() {
                         type="button"
                         onClick={() => quickDeleteDemoAdjustment(row)}
                         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg p-1.5 text-(--text-muted) transition-colors hover:bg-[#e74c3c]/15 hover:text-[#e74c3c]"
-                        title="Usuń wpis z historii"
-                        aria-label="Usuń wpis z historii"
+                        title={t('netWorth.deleteAdjustmentAria')}
+                        aria-label={t('netWorth.deleteAdjustmentAria')}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -1318,7 +1310,7 @@ export function FinancesNetWorth() {
         onClose={() => setAdjustmentEdit(null)}
         title={
           adjustmentEdit?.mode === 'api'
-            ? `${adjustmentEdit.row.account.name} · ${new Date(adjustmentEdit.row.createdAt).toLocaleString('pl-PL')}`
+            ? `${adjustmentEdit.row.account.name} · ${new Date(adjustmentEdit.row.createdAt).toLocaleString(dateLocale)}`
             : adjustmentEdit?.mode === 'demo'
               ? adjustmentEdit.row.headline
               : ''
@@ -1349,7 +1341,7 @@ export function FinancesNetWorth() {
             const undo = resolveDemoUndo(row)
             const diff = amount - row.amount
             if (diff !== 0 && !undo) {
-              throw new Error('Nie da się przeliczyć salda — wpis nie jest powiązany z żadną pozycją demo.')
+              throw new Error(t('netWorth.cannotRecalculateError'))
             }
             if (diff !== 0 && undo) pulseDemoDelta(undo, diff)
             const detailNext = description.trim() || DEMO_DETAIL_PLACEHOLDER
@@ -1367,7 +1359,7 @@ export function FinancesNetWorth() {
           } else {
             const row = adjustmentEdit.row
             if (!deleteDemoAdjustmentRow(row)) {
-              throw new Error('Nie da się cofnąć kwoty — wpis nie jest powiązany z żadną pozycją demo.')
+              throw new Error(t('netWorth.cannotUndoAmountError'))
             }
           }
         }}
@@ -1424,7 +1416,7 @@ export function FinancesNetWorth() {
         description={alertDialog?.description ?? ''}
         alertOnly
         variant="neutral"
-        confirmLabel="Rozumiem"
+        confirmLabel={t('netWorth.confirmUnderstand')}
         onConfirm={async () => {}}
       />
 
@@ -1436,14 +1428,14 @@ export function FinancesNetWorth() {
             exit={{ opacity: 0, y: 10 }}
             className="fixed bottom-4 left-1/2 -translate-x-1/2 z-9999 flex items-center gap-3 px-4 py-2 rounded-lg border border-(--border) bg-(--bg-card) shadow-xl"
           >
-            <span className="text-sm text-(--text-primary)">Zastosowano</span>
+            <span className="text-sm text-(--text-primary)">{t('netWorth.appliedToast')}</span>
             <button
               type="button"
               onClick={handleUndo}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-(--accent-cyan)/20 text-(--accent-cyan) font-gaming text-sm hover:bg-(--accent-cyan)/30 transition-colors"
             >
               <Undo2 className="w-4 h-4" />
-              Cofnij
+              {t('netWorth.undo')}
             </button>
           </motion.div>
         )}

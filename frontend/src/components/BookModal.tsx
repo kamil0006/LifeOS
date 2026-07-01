@@ -1,9 +1,24 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { X } from 'lucide-react'
 import { ModalShell } from './ModalShell'
 import type { Book, ReadingStatus } from '../context/LearningContext'
 
 const DEFAULT_CATEGORIES = ['Programowanie', 'Biznes', 'Psychologia', 'Rozwój osobisty', 'Inne']
+
+const CATEGORY_LABEL_KEYS: Record<string, string> = {
+  Programowanie: 'categoryProgramming',
+  Biznes: 'categoryBusiness',
+  Psychologia: 'categoryPsychology',
+  'Rozwój osobisty': 'categoryPersonalGrowth',
+  Inne: 'categoryOther',
+}
+
+function bookCategoryLabel(cat: string, t: TFunction<'learning'>): string {
+  const key = CATEGORY_LABEL_KEYS[cat]
+  return key ? t(`books.${key}`) : cat
+}
 
 interface BookModalProps {
   book: Book
@@ -12,10 +27,10 @@ interface BookModalProps {
   onClose: () => void
 }
 
-const READING_STATUS_OPTIONS: { value: ReadingStatus; label: string }[] = [
-  { value: 'chce_przeczytac', label: 'Chcę przeczytać' },
-  { value: 'czytam', label: 'Czytam' },
-  { value: 'przeczytane', label: 'Przeczytane' },
+const READING_STATUS_OPTIONS: { value: ReadingStatus; labelKey: string }[] = [
+  { value: 'chce_przeczytac', labelKey: 'statusWantToRead' },
+  { value: 'czytam', labelKey: 'statusReading' },
+  { value: 'przeczytane', labelKey: 'statusRead' },
 ]
 
 type BookFormState = {
@@ -45,6 +60,7 @@ function buildInitialForm(book: Book): BookFormState {
 }
 
 export function BookModal({ book, bookCategories, onSave, onClose }: BookModalProps) {
+  const { t } = useTranslation('learning')
   /** Mała lista — koszt budowy Set przy każdym renderze jest znikomy; useMemo i tak często się przelicza przy nowej referencji `bookCategories`. */
   const allCategories = [...new Set([...DEFAULT_CATEGORIES, ...bookCategories])]
 
@@ -86,11 +102,11 @@ export function BookModal({ book, bookCategories, onSave, onClose }: BookModalPr
       panelKey="book-panel"
     >
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-(--text-primary) font-gaming">Edytuj książkę</h3>
+            <h3 className="text-lg font-bold text-(--text-primary) font-gaming">{t('books.editTitle')}</h3>
             <button
               onClick={onClose}
               className="p-2 rounded-lg hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-(--text-primary) transition-colors"
-              aria-label="Zamknij"
+              aria-label={t('common.close')}
             >
               <X className="w-5 h-5" />
             </button>
@@ -98,7 +114,7 @@ export function BookModal({ book, bookCategories, onSave, onClose }: BookModalPr
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">Tytuł *</label>
+              <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('books.title')}</label>
               <input
                 type="text"
                 value={title}
@@ -109,7 +125,7 @@ export function BookModal({ book, bookCategories, onSave, onClose }: BookModalPr
               />
             </div>
             <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">Autor</label>
+              <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('books.author')}</label>
               <input
                 type="text"
                 value={author}
@@ -120,7 +136,7 @@ export function BookModal({ book, bookCategories, onSave, onClose }: BookModalPr
 
             {/* Reading status */}
             <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">Status</label>
+              <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('books.status')}</label>
               <div className="flex flex-wrap gap-2">
                 {READING_STATUS_OPTIONS.map((opt) => (
                   <button
@@ -133,14 +149,14 @@ export function BookModal({ book, bookCategories, onSave, onClose }: BookModalPr
                         : 'bg-(--bg-dark) text-(--text-muted) border border-(--border)'
                     }`}
                   >
-                    {opt.label}
+                    {t(`books.${opt.labelKey}`)}
                   </button>
                 ))}
               </div>
             </div>
 
             <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">Kategoria</label>
+              <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('books.category')}</label>
               <div className="flex flex-wrap gap-2">
                 {allCategories.map((cat) => (
                   <button
@@ -153,7 +169,7 @@ export function BookModal({ book, bookCategories, onSave, onClose }: BookModalPr
                         : 'bg-(--bg-dark) text-(--text-muted) border border-(--border)'
                     }`}
                   >
-                    {cat}
+                    {bookCategoryLabel(cat, t)}
                   </button>
                 ))}
               </div>
@@ -162,7 +178,7 @@ export function BookModal({ book, bookCategories, onSave, onClose }: BookModalPr
             {/* Dates & rating depending on status */}
             {(status === 'czytam' || status === 'przeczytane') && (
               <div>
-                <label className="block text-base text-(--text-muted) font-gaming mb-1">Data rozpoczęcia</label>
+                <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('books.startDate')}</label>
                 <input
                   type="date"
                   value={startedAt}
@@ -175,7 +191,7 @@ export function BookModal({ book, bookCategories, onSave, onClose }: BookModalPr
             {status === 'przeczytane' && (
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-base text-(--text-muted) font-gaming mb-1">Data ukończenia</label>
+                  <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('books.finishDate')}</label>
                   <input
                     type="date"
                     value={finishedAt}
@@ -185,7 +201,7 @@ export function BookModal({ book, bookCategories, onSave, onClose }: BookModalPr
                   />
                 </div>
                 <div>
-                  <label className="block text-base text-(--text-muted) font-gaming mb-1">Ocena (1–5)</label>
+                  <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('books.rating')}</label>
                   <input
                     type="text"
                     inputMode="numeric"
@@ -198,23 +214,23 @@ export function BookModal({ book, bookCategories, onSave, onClose }: BookModalPr
             )}
 
             <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">Kluczowy wniosek</label>
+              <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('books.keyTakeaway')}</label>
               <input
                 type="text"
                 value={keyTakeaway}
                 onChange={(e) => updateField('keyTakeaway', e.target.value)}
-                placeholder="Najważniejsza myśl z tej książki"
+                placeholder={t('books.keyTakeawayPlaceholder')}
                 className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">Notatki</label>
+              <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('books.notes')}</label>
               <textarea
                 value={notes}
                 onChange={(e) => updateField('notes', e.target.value)}
                 rows={3}
-                placeholder="Twoje notatki, cytaty, przemyślenia..."
+                placeholder={t('books.notesPlaceholder')}
                 className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none resize-none"
               />
             </div>
@@ -225,13 +241,13 @@ export function BookModal({ book, bookCategories, onSave, onClose }: BookModalPr
                 onClick={onClose}
                 className="flex-1 px-4 py-2 rounded-lg border border-(--border) text-(--text-muted) hover:text-(--text-primary) font-gaming transition-colors"
               >
-                Anuluj
+                {t('common.cancel')}
               </button>
               <button
                 type="submit"
                 className="flex-1 px-4 py-2 rounded-lg bg-(--accent-cyan) text-(--bg-dark) font-gaming font-bold hover:opacity-90 transition-opacity"
               >
-                Zapisz
+                {t('common.save')}
               </button>
             </div>
           </form>

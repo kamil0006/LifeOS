@@ -1,4 +1,6 @@
 import { useState, useCallback, memo } from 'react'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { Card } from '../../components/Card'
 import { LearningCard } from '../../components/learning/LearningCard'
 import { LearningFormShell } from '../../components/learning/LearningFormShell'
@@ -20,32 +22,46 @@ import type { Book, ReadingStatus } from '../../context/LearningContext'
 
 const DEFAULT_CATEGORIES = ['Programowanie', 'Biznes', 'Psychologia', 'Rozwój osobisty', 'Inne']
 
-const READING_STATUS_OPTIONS: { value: ReadingStatus; label: string }[] = [
-  { value: 'chce_przeczytac', label: 'Chcę przeczytać' },
-  { value: 'czytam', label: 'Czytam' },
-  { value: 'przeczytane', label: 'Przeczytane' },
+const CATEGORY_LABEL_KEYS: Record<string, string> = {
+  Programowanie: 'categoryProgramming',
+  Biznes: 'categoryBusiness',
+  Psychologia: 'categoryPsychology',
+  'Rozwój osobisty': 'categoryPersonalGrowth',
+  Inne: 'categoryOther',
+}
+
+function bookCategoryLabel(cat: string, t: TFunction<'learning'>): string {
+  const key = CATEGORY_LABEL_KEYS[cat]
+  return key ? t(`books.${key}`) : cat
+}
+
+const READING_STATUS_OPTIONS: { value: ReadingStatus; labelKey: string }[] = [
+  { value: 'chce_przeczytac', labelKey: 'statusWantToRead' },
+  { value: 'czytam', labelKey: 'statusReading' },
+  { value: 'przeczytane', labelKey: 'statusRead' },
 ]
 
-const STATUS_GROUPS: { status: ReadingStatus; label: string }[] = [
-  { status: 'czytam', label: 'Czytam' },
-  { status: 'przeczytane', label: 'Przeczytane' },
-  { status: 'chce_przeczytac', label: 'Chcę przeczytać' },
+const STATUS_GROUPS: { status: ReadingStatus; labelKey: string }[] = [
+  { status: 'czytam', labelKey: 'statusReading' },
+  { status: 'przeczytane', labelKey: 'statusRead' },
+  { status: 'chce_przeczytac', labelKey: 'statusWantToRead' },
 ]
 
 function StatusBadge({ status }: { status: ReadingStatus }) {
+  const { t } = useTranslation('learning')
   const bgMap: Record<ReadingStatus, string> = {
     chce_przeczytac: 'bg-(--bg-dark) text-(--text-muted) border border-(--border)',
     czytam: 'bg-(--accent-cyan)/10 text-(--accent-cyan) border border-(--accent-cyan)/30',
     przeczytane: 'bg-(--accent-green)/10 text-(--accent-green) border border-(--accent-green)/30',
   }
-  const labels: Record<ReadingStatus, string> = {
-    chce_przeczytac: 'Chcę przeczytać',
-    czytam: 'Czytam',
-    przeczytane: 'Przeczytane',
+  const labelKeys: Record<ReadingStatus, string> = {
+    chce_przeczytac: 'statusWantToRead',
+    czytam: 'statusReading',
+    przeczytane: 'statusRead',
   }
   return (
     <span className={`px-2 py-0.5 rounded text-xs font-gaming ${bgMap[status]}`}>
-      {labels[status]}
+      {t(`books.${labelKeys[status]}`)}
     </span>
   )
 }
@@ -76,6 +92,7 @@ const BookAddForm = memo(function BookAddForm({
   onRemoveCategory,
   onCancel,
 }: BookAddFormProps) {
+  const { t } = useTranslation('learning')
   const [title, setTitle] = useState('')
   const [author, setAuthor] = useState('')
   const [category, setCategory] = useState('')
@@ -124,7 +141,7 @@ const BookAddForm = memo(function BookAddForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-4">
         <div>
-          <label className={learningLabelClass}>Tytuł *</label>
+          <label className={learningLabelClass}>{t('books.title')}</label>
           <input
             type="text"
             value={title}
@@ -133,7 +150,7 @@ const BookAddForm = memo(function BookAddForm({
           />
         </div>
         <div>
-          <label className={learningLabelClass}>Autor</label>
+          <label className={learningLabelClass}>{t('books.author')}</label>
           <input
             type="text"
             value={author}
@@ -145,13 +162,13 @@ const BookAddForm = memo(function BookAddForm({
 
       <div>
         <div className="mb-2 flex items-center justify-between gap-2">
-          <label className={learningLabelClass + ' mb-0'}>Kategoria</label>
+          <label className={learningLabelClass + ' mb-0'}>{t('books.category')}</label>
           <button
             type="button"
             onClick={() => setShowCatManager((v) => !v)}
             className="text-sm text-(--text-muted) transition-colors hover:text-(--accent-cyan)"
           >
-            {showCatManager ? 'Zamknij' : 'Zarządzaj'}
+            {showCatManager ? t('common.closeCategories') : t('common.manageCategories')}
           </button>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -162,7 +179,7 @@ const BookAddForm = memo(function BookAddForm({
               onClick={() => setCategory(cat)}
               className={learningChipClass(category === cat)}
             >
-              {cat}
+              {bookCategoryLabel(cat, t)}
             </button>
           ))}
         </div>
@@ -179,7 +196,7 @@ const BookAddForm = memo(function BookAddForm({
                     handleAddCategory()
                   }
                 }}
-                placeholder="Nowa kategoria"
+                placeholder={t('common.newCategory')}
                 className={learningFieldClass}
               />
               <button
@@ -189,7 +206,7 @@ const BookAddForm = memo(function BookAddForm({
                 className={learningSecondaryBtnClass + ' shrink-0'}
               >
                 <Plus className="h-4 w-4" />
-                Dodaj
+                {t('common.add')}
               </button>
             </div>
             {bookCategories.length > 0 && (
@@ -207,7 +224,7 @@ const BookAddForm = memo(function BookAddForm({
                         if (category === cat) setCategory('')
                       }}
                       className="transition-colors hover:text-[#e74c3c]"
-                      aria-label={`Usuń kategorię ${cat}`}
+                      aria-label={t('common.removeCategoryAria', { name: cat })}
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>
@@ -220,7 +237,7 @@ const BookAddForm = memo(function BookAddForm({
       </div>
 
       <div>
-        <label className={learningLabelClass}>Status</label>
+        <label className={learningLabelClass}>{t('books.status')}</label>
         <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:gap-2">
           {READING_STATUS_OPTIONS.map((opt) => (
             <button
@@ -229,7 +246,7 @@ const BookAddForm = memo(function BookAddForm({
               onClick={() => setStatus(opt.value)}
               className={`w-full sm:w-auto ${learningChipClass(status === opt.value)}`}
             >
-              {opt.label}
+              {t(`books.${opt.labelKey}`)}
             </button>
           ))}
         </div>
@@ -238,7 +255,7 @@ const BookAddForm = memo(function BookAddForm({
       {(status === 'czytam' || status === 'przeczytane') && (
         <div className="space-y-4 sm:flex sm:flex-wrap sm:gap-4 sm:space-y-0">
           <div className="sm:flex-1 sm:min-w-[160px]">
-            <label className={learningLabelClass}>Data rozpoczęcia</label>
+            <label className={learningLabelClass}>{t('books.startDate')}</label>
             <input
               type="date"
               value={startedAt}
@@ -250,7 +267,7 @@ const BookAddForm = memo(function BookAddForm({
           {status === 'przeczytane' && (
             <>
               <div className="sm:flex-1 sm:min-w-[160px]">
-                <label className={learningLabelClass}>Data ukończenia</label>
+                <label className={learningLabelClass}>{t('books.finishDate')}</label>
                 <input
                   type="date"
                   value={finishedAt}
@@ -260,7 +277,7 @@ const BookAddForm = memo(function BookAddForm({
                 />
               </div>
               <div className="sm:w-28">
-                <label className={learningLabelClass}>Ocena (1–5)</label>
+                <label className={learningLabelClass}>{t('books.rating')}</label>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -278,7 +295,7 @@ const BookAddForm = memo(function BookAddForm({
       )}
 
       <div>
-        <label className={learningLabelClass}>Notatka (opcjonalnie)</label>
+        <label className={learningLabelClass}>{t('books.note')}</label>
         <input
           type="text"
           value={notes}
@@ -290,11 +307,11 @@ const BookAddForm = memo(function BookAddForm({
       <div className={learningFormActionsClass}>
         <button type="submit" className={learningPrimaryBtnClass} disabled={!title.trim()}>
           <Plus className="h-4 w-4" />
-          Dodaj książkę
+          {t('books.addBook')}
         </button>
         {onCancel && (
           <button type="button" onClick={onCancel} className={learningSecondaryBtnClass}>
-            Anuluj
+            {t('common.cancel')}
           </button>
         )}
       </div>
@@ -305,6 +322,7 @@ const BookAddForm = memo(function BookAddForm({
 // ─── MAIN PAGE ─────────────────────────────────────────────────────────────────
 
 export function LearningBooks() {
+  const { t } = useTranslation('learning')
   const learning = useLearning()
   const [editingBook, setEditingBook] = useState<Book | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
@@ -327,7 +345,7 @@ export function LearningBooks() {
             const items = visibleBooks.filter((b) => b.status === group.status)
             if (items.length === 0) return null
             return (
-              <Card key={group.status} title={group.label}>
+              <Card key={group.status} title={t(`books.${group.labelKey}`)}>
                 <div className="space-y-2">
                   {items.map((b) => (
                     <LearningCard
@@ -336,9 +354,9 @@ export function LearningBooks() {
                       subtitle={b.author}
                       badge={<StatusBadge status={b.status} />}
                       meta={[
-                        b.category,
-                        b.startedAt ? `Rozpoczęto: ${b.startedAt}` : undefined,
-                        b.finishedAt ? `Ukończono: ${b.finishedAt}` : undefined,
+                        b.category ? bookCategoryLabel(b.category, t) : undefined,
+                        b.startedAt ? t('books.startedLabel', { date: b.startedAt }) : undefined,
+                        b.finishedAt ? t('books.finishedLabel', { date: b.finishedAt }) : undefined,
                         b.notes ? `📝 ${b.notes}` : undefined,
                         b.keyTakeaway ? `💡 ${b.keyTakeaway}` : undefined,
                       ]}
@@ -353,15 +371,15 @@ export function LearningBooks() {
           })}
         </div>
       ) : (
-        <Card title="Lista książek">
-          <p className="text-base text-(--text-muted)">Brak książek. Dodaj pierwszą.</p>
+        <Card title={t('books.emptyList')}>
+          <p className="text-base text-(--text-muted)">{t('books.emptyMessage')}</p>
         </Card>
       )}
 
       <LearningFormShell
         isOpen={showAddForm}
         onClose={() => setShowAddForm(false)}
-        title="Dodaj książkę"
+        title={t('books.addBook')}
         maxWidth="max-w-2xl"
       >
         <BookAddForm
@@ -380,7 +398,7 @@ export function LearningBooks() {
         <div className={visibleBooks.length > 0 ? 'border-t border-(--border)/60 pt-4' : undefined}>
           <button type="button" onClick={() => setShowAddForm(true)} className={learningAddBtnClass}>
             <Plus className="h-4 w-4" />
-            Dodaj książkę
+            {t('books.addBook')}
           </button>
         </div>
       )}

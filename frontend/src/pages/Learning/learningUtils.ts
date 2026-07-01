@@ -1,13 +1,13 @@
 import { Clock, Tag, BookOpen, FolderKanban, GraduationCap, RotateCcw, Zap } from 'lucide-react'
 import type { SessionType } from '../../context/LearningContext'
 
-export const SESSION_TYPE_OPTIONS: { value: SessionType; label: string; icon: typeof Clock }[] = [
-  { value: 'kurs', label: 'Kurs', icon: GraduationCap },
-  { value: 'ksiazka', label: 'Książka', icon: BookOpen },
-  { value: 'projekt', label: 'Projekt', icon: FolderKanban },
-  { value: 'praktyka', label: 'Praktyka', icon: Zap },
-  { value: 'powtorka', label: 'Powtórka', icon: RotateCcw },
-  { value: 'inne', label: 'Inne', icon: Tag },
+export const SESSION_TYPE_OPTIONS: { value: SessionType; icon: typeof Clock }[] = [
+  { value: 'kurs', icon: GraduationCap },
+  { value: 'ksiazka', icon: BookOpen },
+  { value: 'projekt', icon: FolderKanban },
+  { value: 'praktyka', icon: Zap },
+  { value: 'powtorka', icon: RotateCcw },
+  { value: 'inne', icon: Tag },
 ]
 
 export function formatMinutes(minutes: number): string {

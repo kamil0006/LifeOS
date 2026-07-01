@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState, useCallback, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { AnimatePresence } from 'framer-motion'
 import { Pencil, Plus, Receipt, Trash2 } from 'lucide-react'
 import { Card } from '../../components/Card'
@@ -26,13 +27,14 @@ import type { PaymentMethod } from '../../lib/paymentMethod'
 
 type SortBy = 'date_desc' | 'date_asc' | 'amount_desc' | 'amount_asc'
 
-function formatTxDate(iso: string) {
+function formatTxDate(iso: string, locale: string) {
   const [y, m, d] = iso.split('-').map(Number)
   if (!y || !m || !d) return iso
-  return new Date(y, m - 1, d).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })
+  return new Date(y, m - 1, d).toLocaleDateString(locale, { day: 'numeric', month: 'short' })
 }
 
 export function Transactions() {
+  const { t, i18n } = useTranslation('finances')
   const { user } = useAuth()
   const useApiFinance = useFinanceUsesApi()
   const queryClient = useQueryClient()
@@ -161,7 +163,7 @@ export function Transactions() {
       }
     } catch (err) {
       console.error(err)
-      throw err instanceof Error ? err : new Error('Nie udało się zaktualizować transakcji')
+      throw err instanceof Error ? err : new Error(t('transactions.updateError'))
     }
     setShowForm(false)
     setEditingTx(null)
@@ -188,11 +190,11 @@ export function Transactions() {
 
   const categoryFilterLabel = useCallback(
     (cat: string) => {
-      if (cat === 'all') return 'Wszystkie kategorie'
-      if (cat === EXPENSE_CATEGORY_NONE) return 'Brak kategorii'
+      if (cat === 'all') return t('transactions.allCategories')
+      if (cat === EXPENSE_CATEGORY_NONE) return t('transactions.noCategory')
       return getLabel(cat)
     },
-    [getLabel]
+    [getLabel, t]
   )
 
   const categoryOptions = useMemo(() => {
@@ -249,7 +251,7 @@ export function Transactions() {
         <div className="w-full min-w-0 sm:w-auto">
           {dateRange ? (
             <p className="text-base text-(--text-muted)">
-              Okres: <span className="text-(--text-primary)">{periodLabel}</span>
+              {t('transactions.period')} <span className="text-(--text-primary)">{periodLabel}</span>
             </p>
           ) : (
             <MonthSelector />
@@ -265,7 +267,7 @@ export function Transactions() {
             className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-(--tx-income)/35 bg-(--tx-income)/15 px-3 font-gaming text-sm tracking-wide text-(--tx-income) transition-colors hover:bg-(--tx-income)/22 sm:flex-none sm:px-4"
           >
             <Plus className="h-4 w-4 shrink-0" />
-            <span className="truncate">Przychód</span>
+            <span className="truncate">{t('transactions.addIncome')}</span>
           </button>
           <button
             onClick={() => {
@@ -276,14 +278,14 @@ export function Transactions() {
             className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-(--tx-expense)/35 bg-(--tx-expense)/15 px-3 font-gaming text-sm tracking-wide text-(--tx-expense) transition-colors hover:bg-(--tx-expense)/22 sm:flex-none sm:px-4"
           >
             <Plus className="h-4 w-4 shrink-0" />
-            <span className="truncate">Wydatek</span>
+            <span className="truncate">{t('transactions.addExpense')}</span>
           </button>
         </div>
       </div>
 
       <Card className="max-md:p-4">
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
-          <h3 className="text-base font-semibold text-(--text-primary) font-gaming tracking-wide">Transakcje</h3>
+          <h3 className="text-base font-semibold text-(--text-primary) font-gaming tracking-wide">{t('transactions.title')}</h3>
           {(drillCategory || dateRange) && (
             <div className="flex flex-wrap items-center gap-2">
               {drillCategory && (
@@ -296,7 +298,7 @@ export function Transactions() {
                 onClick={clearDrilldown}
                 className="rounded-lg border border-(--border) px-2.5 py-1 text-sm text-(--text-muted) transition-colors hover:text-(--text-primary)"
               >
-                Wyczyść filtr
+                {t('transactions.clearFilter')}
               </button>
             </div>
           )}
@@ -317,7 +319,7 @@ export function Transactions() {
                   : 'border-(--border) bg-(--bg-dark) text-(--text-muted) hover:text-(--text-primary)'
               }`}
             >
-              {f === 'all' ? 'Wszystkie' : f === 'income' ? 'Przychody' : 'Wydatki'}
+              {f === 'all' ? t('transactions.filterAll') : f === 'income' ? t('overview.income') : t('overview.expenses')}
             </button>
           ))}
         </div>
@@ -328,7 +330,7 @@ export function Transactions() {
               type="search"
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              placeholder="Szukaj…"
+              placeholder={t('transactions.searchPlaceholder')}
               className="col-span-2 min-h-11 min-w-0 w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) md:col-span-1"
             />
             <input
@@ -336,7 +338,7 @@ export function Transactions() {
               min="0"
               value={amountMin}
               onChange={(e) => setAmountMin(e.target.value)}
-              placeholder="Kwota od"
+              placeholder={t('transactions.amountFrom')}
               className="no-spinners min-h-11 min-w-0 w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary)"
             />
             <input
@@ -344,7 +346,7 @@ export function Transactions() {
               min="0"
               value={amountMax}
               onChange={(e) => setAmountMax(e.target.value)}
-              placeholder="Kwota do"
+              placeholder={t('transactions.amountTo')}
               className="no-spinners min-h-11 min-w-0 w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary)"
             />
           </div>
@@ -353,7 +355,7 @@ export function Transactions() {
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
               className="min-h-11 min-w-0 w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary)"
-              aria-label="Filtr kategorii"
+              aria-label={t('transactions.categoryFilterAria')}
             >
               {categoryOptions.map((cat) => (
                 <option key={cat === EXPENSE_CATEGORY_NONE ? '__none__' : cat} value={cat}>
@@ -365,41 +367,40 @@ export function Transactions() {
               value={paymentMethodFilter}
               onChange={(e) => setPaymentMethodFilter(e.target.value as typeof paymentMethodFilter)}
               className="min-h-11 min-w-0 w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary)"
-              aria-label="Filtr sposobu płatności"
+              aria-label={t('transactions.paymentFilterAria')}
             >
-              <option value="all">Wszystkie płatności</option>
-              <option value="card">Karta</option>
-              <option value="cash">Gotówka</option>
-              <option value="unset">Bez oznaczenia</option>
+              <option value="all">{t('transactions.allPayments')}</option>
+              <option value="card">{t('transactions.card')}</option>
+              <option value="cash">{t('transactions.cash')}</option>
+              <option value="unset">{t('transactions.unmarked')}</option>
             </select>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortBy)}
               className="min-h-11 min-w-0 w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none"
-              aria-label="Sortowanie po dacie lub kwocie"
+              aria-label={t('transactions.sortAria')}
             >
-              <option value="date_desc">Data: najnowsze</option>
-              <option value="date_asc">Data: najstarsze</option>
-              <option value="amount_desc">Kwota: malejąco</option>
-              <option value="amount_asc">Kwota: rosnąco</option>
+              <option value="date_desc">{t('transactions.sortDateDesc')}</option>
+              <option value="date_asc">{t('transactions.sortDateAsc')}</option>
+              <option value="amount_desc">{t('transactions.sortAmountDesc')}</option>
+              <option value="amount_asc">{t('transactions.sortAmountAsc')}</option>
             </select>
           </div>
         </div>
 
         <p className="mb-3 text-sm text-(--text-muted) md:hidden">
-          {filteredAndSortedTransactions.length}{' '}
-          {filteredAndSortedTransactions.length === 1 ? 'pozycja' : 'pozycji'}
+          {t('transactions.itemsCount', { count: filteredAndSortedTransactions.length })}
         </p>
 
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-(--border)">
-                <th className="pb-3 text-base text-(--text-muted)">Data</th>
-                <th className="pb-3 text-base text-(--text-muted)">Nazwa</th>
-                <th className="pb-3 text-base text-(--text-muted)">Kategoria</th>
-                <th className="pb-3 text-base text-(--text-muted)">Płatność</th>
-                <th className="pb-3 text-base text-(--text-muted) text-right">Kwota</th>
+                <th className="pb-3 text-base text-(--text-muted)">{t('transactions.colDate')}</th>
+                <th className="pb-3 text-base text-(--text-muted)">{t('transactions.colName')}</th>
+                <th className="pb-3 text-base text-(--text-muted)">{t('transactions.colCategory')}</th>
+                <th className="pb-3 text-base text-(--text-muted)">{t('transactions.colPayment')}</th>
+                <th className="pb-3 text-base text-(--text-muted) text-right">{t('transactions.colAmount')}</th>
                 <th className="pb-3 w-20" />
               </tr>
             </thead>
@@ -444,7 +445,7 @@ export function Transactions() {
                         type="button"
                         onClick={() => handleEdit(tx)}
                         className="p-2 text-(--text-muted) transition-colors hover:text-(--accent-cyan)"
-                        title={tx.isScheduled ? 'Edytuj stały koszt' : 'Edytuj'}
+                        title={tx.isScheduled ? t('transactions.editRecurring') : t('common:edit')}
                       >
                         <Pencil className="h-4 w-4" />
                       </button>
@@ -452,7 +453,7 @@ export function Transactions() {
                         type="button"
                         onClick={() => handleDeleteRequest(tx)}
                         className="p-2 text-(--text-muted) transition-colors hover:text-red-400"
-                        title="Usuń"
+                        title={t('common:delete')}
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -479,7 +480,7 @@ export function Transactions() {
                     <p className="text-base font-semibold leading-snug text-(--text-primary)">
                       {capitalizeFirstPl(tx.name)}
                     </p>
-                    <p className="mt-0.5 text-sm text-(--text-muted)">{formatTxDate(tx.date)}</p>
+                    <p className="mt-0.5 text-sm text-(--text-muted)">{formatTxDate(tx.date, i18n.language === 'pl' ? 'pl-PL' : 'en-US')}</p>
                   </div>
                   <p
                     className={`shrink-0 text-base font-semibold tabular-nums ${
@@ -510,7 +511,7 @@ export function Transactions() {
                       type="button"
                       onClick={() => handleEdit(tx)}
                       className="rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-(--bg-dark) hover:text-(--accent-cyan)"
-                      aria-label={tx.isScheduled ? 'Edytuj stały koszt' : 'Edytuj'}
+                      aria-label={tx.isScheduled ? t('transactions.editRecurring') : t('common:edit')}
                     >
                       <Pencil className="h-4 w-4" />
                     </button>
@@ -518,7 +519,7 @@ export function Transactions() {
                       type="button"
                       onClick={() => handleDeleteRequest(tx)}
                       className="rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-(--bg-dark) hover:text-red-400"
-                      aria-label="Usuń"
+                      aria-label={t('common:delete')}
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -532,15 +533,24 @@ export function Transactions() {
         {filteredAndSortedTransactions.length === 0 && (
           <EmptyState
             icon={Receipt}
-            title="Brak transakcji"
-            description={`W wybranym okresie (${periodLabel}) nie ma ${drillCategory ? `transakcji w kategorii „${getLabel(drillCategory)}”` : typeFilter === 'income' ? 'przychodów' : typeFilter === 'expense' ? 'wydatków' : 'transakcji'}.`}
+            title={t('transactions.emptyTitle')}
+            description={t('transactions.emptyDescription', {
+              period: periodLabel,
+              kind: drillCategory
+                ? t('transactions.emptyKindCategory', { category: getLabel(drillCategory) })
+                : typeFilter === 'income'
+                  ? t('overview.income').toLowerCase()
+                  : typeFilter === 'expense'
+                    ? t('overview.expenses').toLowerCase()
+                    : t('transactions.title').toLowerCase(),
+            })}
             action={
               <button
                 onClick={() => setShowForm(true)}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-(--accent-cyan)/20 text-(--accent-cyan) border border-(--accent-cyan)/40 font-gaming hover:bg-(--accent-cyan)/30 transition-colors"
               >
                 <Plus className="w-4 h-4" />
-                Dodaj transakcję
+                {t('transactions.addTransaction')}
               </button>
             }
           />
@@ -569,14 +579,14 @@ export function Transactions() {
               }
             : null
         }
-        submitLabel={editingTx ? 'Zapisz zmiany' : 'Zapisz'}
+        submitLabel={editingTx ? t('transactions.saveChanges') : t('common:save')}
         title={
           editingTx
             ? editingTx.type === 'income'
-              ? 'Edytuj przychód'
+              ? t('transactions.editIncome')
               : editingTx.isScheduled
-                ? 'Edytuj stały koszt'
-                : 'Edytuj wydatek'
+                ? t('transactions.editRecurring')
+                : t('transactions.editExpense')
             : undefined
         }
       />
@@ -585,20 +595,19 @@ export function Transactions() {
         isOpen={deleteConfirmTx != null}
         onClose={() => setDeleteConfirmTx(null)}
         onConfirm={runConfirmedDelete}
-        title="Usunąć?"
+        title={t('transactions.deleteConfirmTitle')}
         description={
           deleteConfirmTx
             ? deleteConfirmTx.type === 'income'
-              ? 'Przychód zostanie usunięty. Możesz cofnąć usunięcie z toastu na dole ekranu.'
+              ? t('transactions.deleteIncomeDescription')
               : deleteConfirmTx.isScheduled && deleteConfirmTx.scheduledId
-                ? 'To pozycja ze stałego kosztu — zniknie cała subskrypcja (wszystkie miesiące), nie tylko ten wpis.'
-                : 'Wydatek zostanie usunięty. Możesz cofnąć usunięcie z toastu na dole ekranu.'
+                ? t('transactions.deleteRecurringDescription')
+                : t('transactions.deleteExpenseDescription')
             : ''
         }
         emphasis={deleteConfirmTx?.name}
         variant="danger"
-        confirmLabel="Usuń"
-        cancelLabel="Anuluj"
+        confirmLabel={t('common:delete')}
       />
 
       <AnimatePresence>{toast}</AnimatePresence>

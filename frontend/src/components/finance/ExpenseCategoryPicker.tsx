@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Check, Plus, Trash2 } from 'lucide-react'
 import { capitalizeFirstPl } from '../../lib/capitalizeFirst'
 import { EXPENSE_CATEGORY_NONE } from '../../lib/expenseCategoryConstants'
@@ -48,6 +49,7 @@ export function ExpenseCategoryPicker({
   setNewCategoryColor,
   onAddedCategory,
 }: ExpenseCategoryPickerProps) {
+  const { t } = useTranslation('finances')
   const canManage = Boolean(onDeleteCategory || onAddCategory)
   const selectValue = resolveSelectValue(category, categories)
   const [deleteTarget, setDeleteTarget] = useState<CategoryOption | null>(null)
@@ -56,13 +58,13 @@ export function ExpenseCategoryPicker({
     <>
       <div className="space-y-2">
       <div>
-        <label className="block text-base text-(--text-muted) font-gaming mb-1">Kategoria</label>
+        <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('expenseCategoryPicker.categoryLabel')}</label>
         <select
           value={selectValue}
           onChange={(e) => onCategoryChange(e.target.value)}
           className="w-full px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-sm font-gaming focus:border-(--accent-cyan) focus:outline-none"
         >
-          <option value={EXPENSE_CATEGORY_NONE}>Brak</option>
+          <option value={EXPENSE_CATEGORY_NONE}>{t('expenseCategoryPicker.noneOption')}</option>
           {categories.map((c) => (
             <option key={c.id} value={c.name}>
               {capitalizeFirstPl(c.label)}
@@ -73,7 +75,7 @@ export function ExpenseCategoryPicker({
 
       {canManage && (
         <div className="rounded-md border border-(--accent-cyan)/12 bg-(--bg-dark)/40 p-2.5 space-y-2">
-          <p className="text-sm text-(--text-muted) font-gaming leading-tight">Lista kategorii</p>
+          <p className="text-sm text-(--text-muted) font-gaming leading-tight">{t('expenseCategoryPicker.categoryListLabel')}</p>
 
           {categories.length > 0 && onDeleteCategory && (
             <div className="flex flex-wrap gap-1">
@@ -89,8 +91,8 @@ export function ExpenseCategoryPicker({
                     type="button"
                     onClick={() => setDeleteTarget(c)}
                     className="shrink-0 rounded p-1 text-(--text-muted) hover:bg-red-500/15 hover:text-red-400 transition-colors"
-                    title="Usuń"
-                    aria-label={`Usuń ${c.label}`}
+                    title={t('common:delete')}
+                    aria-label={t('expenseCategoryPicker.deleteCategoryAria', { label: c.label })}
                   >
                     <Trash2 className="h-3 w-3" />
                   </button>
@@ -110,7 +112,7 @@ export function ExpenseCategoryPicker({
                   className="flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed border-(--border) py-1.5 text-sm text-(--text-muted) font-gaming transition-colors hover:border-(--accent-cyan)/35 hover:text-(--accent-cyan)"
                 >
                   <Plus className="h-3.5 w-3.5 shrink-0" />
-                  Nowa
+                  {t('expenseCategoryPicker.newCategory')}
                 </button>
               ) : (
                 <div className="space-y-2 rounded-md border border-(--border) bg-(--bg-card) p-2">
@@ -118,7 +120,7 @@ export function ExpenseCategoryPicker({
                     type="text"
                     value={newCategoryName}
                     onChange={(e) => setNewCategoryName(e.target.value)}
-                    placeholder="Nazwa…"
+                    placeholder={t('expenseCategoryPicker.namePlaceholder')}
                     className="w-full px-2 py-1.5 rounded-md bg-(--bg-dark) border border-(--border) text-(--text-primary) text-sm focus:border-(--accent-cyan) focus:outline-none"
                   />
                   <div className="flex flex-wrap gap-2">
@@ -132,7 +134,7 @@ export function ExpenseCategoryPicker({
                         }`}
                         style={{ backgroundColor: col }}
                         title={col}
-                        aria-label={`Kolor ${col}`}
+                        aria-label={t('expenseCategoryPicker.colorAria', { color: col })}
                       >
                         {newCategoryColor === col && (
                           <Check className="h-3.5 w-3.5 text-[#000000] drop-shadow-[0_0_2px_rgba(0,0,0,0.55)]" />
@@ -149,7 +151,7 @@ export function ExpenseCategoryPicker({
                       }}
                       className="rounded-md border border-(--border) px-2.5 py-1 text-sm text-(--text-muted) hover:bg-(--bg-dark)"
                     >
-                      Anuluj
+                      {t('common:cancel')}
                     </button>
                     <button
                       type="button"
@@ -163,7 +165,7 @@ export function ExpenseCategoryPicker({
                       }}
                       className="rounded-md bg-(--accent-cyan)/20 px-2.5 py-1 text-sm text-(--accent-cyan) font-gaming border border-(--accent-cyan)/30 hover:bg-(--accent-cyan)/28"
                     >
-                      Dodaj
+                      {t('expenseCategoryPicker.add')}
                     </button>
                   </div>
                 </div>
@@ -187,12 +189,12 @@ export function ExpenseCategoryPicker({
           if (category === t.name) onCategoryChange(remaining[0]?.name ?? EXPENSE_CATEGORY_NONE)
           setDeleteTarget(null)
         }}
-        title="Usunąć kategorię?"
-        description="Tej operacji nie można cofnąć. W istniejących wydatkach może pozostać stara nazwa kategorii."
+        title={t('expenseCategoryPicker.deleteCategoryConfirmTitle')}
+        description={t('expenseCategoryPicker.deleteCategoryConfirmDescription')}
         emphasis={deleteTarget ? capitalizeFirstPl(deleteTarget.label) : undefined}
         variant="danger"
-        confirmLabel="Usuń"
-        cancelLabel="Anuluj"
+        confirmLabel={t('common:delete')}
+        cancelLabel={t('common:cancel')}
       />
     </>
   )

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useChartPeriod, type ChartPeriodType } from '../context/ChartPeriodContext'
 import { useMonth } from '../context/MonthContext'
 
@@ -12,6 +13,7 @@ interface ChartPeriodSelectorProps {
 }
 
 export function ChartPeriodSelector({ leadingLabel }: ChartPeriodSelectorProps = {}) {
+  const { t } = useTranslation('common')
   const ctx = useChartPeriod()
   const monthCtx = useMonth()
   if (!ctx) return null
@@ -32,7 +34,7 @@ export function ChartPeriodSelector({ leadingLabel }: ChartPeriodSelectorProps =
       ) : null}
 
       <label htmlFor="chart-period-type" className="sr-only">
-        Zakres okresu
+        {t('periodRangeAria')}
       </label>
       <select
         id="chart-period-type"
@@ -40,15 +42,15 @@ export function ChartPeriodSelector({ leadingLabel }: ChartPeriodSelectorProps =
         onChange={(e) => handleTypeChange(e.target.value as ChartPeriodType)}
         className={selectClass}
       >
-        <option value="month">Miesiąc</option>
-        <option value="quarter">Kwartał</option>
-        <option value="year">Rok</option>
+        <option value="month">{t('periodMonth')}</option>
+        <option value="quarter">{t('periodQuarter')}</option>
+        <option value="year">{t('periodYear')}</option>
       </select>
 
       {periodType === 'month' ? (
         <>
           <label htmlFor="chart-period-month" className="sr-only">
-            Wybierz miesiąc
+            {t('choosePeriodMonth')}
           </label>
           <select
             id="chart-period-month"
@@ -71,7 +73,7 @@ export function ChartPeriodSelector({ leadingLabel }: ChartPeriodSelectorProps =
       ) : periodType === 'quarter' ? (
         <>
           <label htmlFor="chart-period-quarter" className="sr-only">
-            Wybierz kwartał
+            {t('choosePeriodQuarter')}
           </label>
           <select
             id="chart-period-quarter"
@@ -95,7 +97,7 @@ export function ChartPeriodSelector({ leadingLabel }: ChartPeriodSelectorProps =
       ) : (
         <>
           <label htmlFor="chart-period-year" className="sr-only">
-            Wybierz rok
+            {t('choosePeriodYear')}
           </label>
           <select
             id="chart-period-year"

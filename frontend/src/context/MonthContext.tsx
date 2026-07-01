@@ -6,9 +6,8 @@ import {
   useEffect,
   type ReactNode,
 } from 'react'
-import { ROLLING_MONTH_NAMES, buildCurrentYearMonthOptions } from '../lib/monthSelectLabels'
-
-const monthNames = [...ROLLING_MONTH_NAMES]
+import { useTranslation } from 'react-i18next'
+import { buildCurrentYearMonthOptions } from '../lib/monthSelectLabels'
 
 interface MonthContextType {
   selectedMonth: number
@@ -22,6 +21,8 @@ interface MonthContextType {
 const MonthContext = createContext<MonthContextType | null>(null)
 
 export function MonthProvider({ children }: { children: ReactNode }) {
+  const { t } = useTranslation('common')
+  const monthNames = t('months', { returnObjects: true }) as string[]
   const [selectedMonth, setSelectedMonth] = useState(() => new Date().getMonth())
   const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear())
   const [calendarTick, setCalendarTick] = useState(0)
@@ -39,7 +40,10 @@ export function MonthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const monthOptions = useMemo(() => buildCurrentYearMonthOptions(calendarTick), [calendarTick])
+  const monthOptions = useMemo(
+    () => buildCurrentYearMonthOptions(calendarTick, monthNames),
+    [calendarTick, monthNames]
+  )
 
   useEffect(() => {
     const key = `${selectedMonth}-${selectedYear}`
@@ -60,7 +64,7 @@ export function MonthProvider({ children }: { children: ReactNode }) {
       monthOptions,
       monthNames,
     }),
-    [selectedMonth, selectedYear, monthOptions]
+    [selectedMonth, selectedYear, monthOptions, monthNames]
   )
 
   return <MonthContext.Provider value={value}>{children}</MonthContext.Provider>

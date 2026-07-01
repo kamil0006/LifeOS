@@ -3,9 +3,13 @@ import { mergeExpensesWithScheduled, type ExpenseLike, type ScheduledExpenseLike
 import { parseDate, inMonth } from '../context/MonthContext'
 import { getMonthsInQuarter, type ChartPeriod } from '../context/ChartPeriodContext'
 
-const monthNames = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru']
-
 type IncomeLike = { date: string; amount: number }
+
+export type EmptyCategoryPeriod =
+  | { type: 'default' }
+  | { type: 'year'; year: number }
+  | { type: 'quarter'; quarter: number; year: number }
+  | { type: 'month'; month: string; year: number }
 
 export function useDashboardFinance(
   effectiveExpenses: ExpenseLike[],
@@ -13,8 +17,13 @@ export function useDashboardFinance(
   effectiveIncome: IncomeLike[],
   selectedMonth: number,
   selectedYear: number,
-  chartPeriod: { period: ChartPeriod } | null
+  chartPeriod: { period: ChartPeriod } | null,
+  language: string
 ) {
+  const monthNames = useMemo(() => {
+    const locale = language === 'pl' ? 'pl-PL' : 'en-US'
+    return Array.from({ length: 12 }, (_, m) => new Date(2000, m, 1).toLocaleDateString(locale, { month: 'short' }))
+  }, [language])
   const filteredData = useMemo(() => {
     const monthExpenses = effectiveExpenses.filter((e) => inMonth(e.date, selectedMonth, selectedYear))
     const mergedExpenses = mergeExpensesWithScheduled(monthExpenses, effectiveScheduled, selectedMonth, selectedYear)
@@ -107,16 +116,16 @@ export function useDashboardFinance(
     if (chartPeriod.period.type === 'year') return String(chartPeriod.period.year)
     if (chartPeriod.period.type === 'quarter') return `Q${chartPeriod.period.quarter} ${chartPeriod.period.year}`
     return `${monthNames[chartPeriod.period.month]} ${chartPeriod.period.year}`
-  }, [chartPeriod, selectedMonth, selectedYear])
+  }, [chartPeriod, selectedMonth, selectedYear, monthNames])
 
-  const emptyCategoryMessage = useMemo(() => {
-    if (!chartPeriod) return 'Brak wydatków w tym miesiącu'
-    if (chartPeriod.period.type === 'year') return `Brak wydatków w roku ${chartPeriod.period.year}`
+  const emptyCategoryPeriod: EmptyCategoryPeriod = useMemo(() => {
+    if (!chartPeriod) return { type: 'default' }
+    if (chartPeriod.period.type === 'year') return { type: 'year', year: chartPeriod.period.year }
     if (chartPeriod.period.type === 'quarter') {
-      return `Brak wydatków w Q${chartPeriod.period.quarter} ${chartPeriod.period.year}`
+      return { type: 'quarter', quarter: chartPeriod.period.quarter, year: chartPeriod.period.year }
     }
-    return `Brak wydatków w ${monthNames[chartPeriod.period.month]} ${chartPeriod.period.year}`
-  }, [chartPeriod])
+    return { type: 'month', month: monthNames[chartPeriod.period.month], year: chartPeriod.period.year }
+  }, [chartPeriod, monthNames])
 
   const chartData = useMemo(() => {
     const chart: { label: string; wydatki: number; przychody: number }[] = []
@@ -197,13 +206,13 @@ export function useDashboardFinance(
       }
     }
     return chart
-  }, [effectiveExpenses, effectiveScheduled, effectiveIncome, selectedMonth, selectedYear, chartPeriod])
+  }, [effectiveExpenses, effectiveScheduled, effectiveIncome, selectedMonth, selectedYear, chartPeriod, monthNames])
 
   return {
     filteredData,
     chartFilteredData,
     kpiPeriodLabel,
-    emptyCategoryMessage,
+    emptyCategoryPeriod,
     chartData,
   }
 }

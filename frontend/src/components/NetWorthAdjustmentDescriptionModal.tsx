@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { X } from 'lucide-react'
 import { ModalShell } from './ModalShell'
 
@@ -18,6 +19,7 @@ export function NetWorthAdjustmentDescriptionModal({
   initialDescription,
   onSave,
 }: NetWorthAdjustmentDescriptionModalProps) {
+  const { t } = useTranslation('finances')
   const [text, setText] = useState('')
 
   useEffect(() => {
@@ -41,23 +43,23 @@ export function NetWorthAdjustmentDescriptionModal({
       panelKey="nw-desc-panel"
     >
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-bold text-(--text-primary) font-gaming">Edytuj opis korekty</h3>
+        <h3 className="text-lg font-bold text-(--text-primary) font-gaming">{t('netWorthAdjustmentDescriptionModal.title')}</h3>
         <button
           type="button"
           onClick={onClose}
           className="p-2 rounded-lg hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-(--text-primary) transition-colors"
-          aria-label="Zamknij"
+          aria-label={t('common:close')}
         >
           <X className="w-5 h-5" />
         </button>
       </div>
       <p className="text-base text-(--text-muted) mb-3">{title}</p>
       <p className="text-base text-(--text-muted) mb-3">
-        Kwota i data wpisu pozostają bez zmian — poprawiasz tylko opis widoczny w historii.
+        {t('netWorthAdjustmentDescriptionModal.infoText')}
       </p>
       <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
         <div>
-          <label className="block text-base text-(--text-muted) font-gaming mb-1">Opis</label>
+          <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('netWorthAdjustmentEditModal.descriptionLabel')}</label>
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -73,13 +75,13 @@ export function NetWorthAdjustmentDescriptionModal({
             onClick={onClose}
             className="flex-1 py-2.5 rounded-lg border border-(--border) text-(--text-muted) font-gaming hover:bg-(--bg-card-hover) transition-colors"
           >
-            Anuluj
+            {t('common:cancel')}
           </button>
           <button
             type="submit"
             className="flex-1 py-2.5 rounded-lg bg-(--accent-cyan)/20 text-(--accent-cyan) border border-(--accent-cyan)/45 font-gaming hover:bg-(--accent-cyan)/30 transition-colors"
           >
-            Zapisz
+            {t('common:save')}
           </button>
         </div>
       </form>

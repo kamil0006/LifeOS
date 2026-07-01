@@ -1,4 +1,5 @@
 import { useState, useCallback, memo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Card } from '../../components/Card'
 import { LearningCard } from '../../components/learning/LearningCard'
 import { AnimatePresence } from 'framer-motion'
@@ -20,19 +21,20 @@ import { useUndoDelete } from '../../components/learning/UndoToast'
 import { SafeExternalLink } from '../../components/SafeExternalLink'
 import type { Course } from '../../context/LearningContext'
 
-const STATUS_OPTIONS: { value: Course['status']; label: string }[] = [
-  { value: 'zaplanowany', label: 'Zaplanowany' },
-  { value: 'w_trakcie', label: 'W trakcie' },
-  { value: 'ukonczony', label: 'Ukończony' },
+const STATUS_OPTIONS: { value: Course['status']; labelKey: string }[] = [
+  { value: 'zaplanowany', labelKey: 'statusPlanned' },
+  { value: 'w_trakcie', labelKey: 'statusInProgress' },
+  { value: 'ukonczony', labelKey: 'statusCompleted' },
 ]
 
-const STATUS_GROUPS: { status: Course['status']; label: string }[] = [
-  { status: 'w_trakcie', label: 'W trakcie' },
-  { status: 'zaplanowany', label: 'Zaplanowane' },
-  { status: 'ukonczony', label: 'Ukończone' },
+const STATUS_GROUPS: { status: Course['status']; labelKey: string }[] = [
+  { status: 'w_trakcie', labelKey: 'groupInProgress' },
+  { status: 'zaplanowany', labelKey: 'groupPlanned' },
+  { status: 'ukonczony', labelKey: 'groupCompleted' },
 ]
 
 function StatusBadge({ status }: { status: Course['status'] }) {
+  const { t } = useTranslation('learning')
   const opt = STATUS_OPTIONS.find((o) => o.value === status)
   const bgMap: Record<Course['status'], string> = {
     zaplanowany: 'bg-(--bg-dark) text-(--text-muted) border border-(--border)',
@@ -41,7 +43,7 @@ function StatusBadge({ status }: { status: Course['status'] }) {
   }
   return (
     <span className={`px-2 py-0.5 rounded text-xs font-gaming ${bgMap[status]}`}>
-      {opt?.label ?? status}
+      {opt ? t(`courses.${opt.labelKey}`) : status}
     </span>
   )
 }
@@ -54,6 +56,7 @@ interface CourseAddFormProps {
 }
 
 const CourseAddForm = memo(function CourseAddForm({ onAdd, onCancel }: CourseAddFormProps) {
+  const { t } = useTranslation('learning')
   const [name, setName] = useState('')
   const [platform, setPlatform] = useState('')
   const [platformUrl, setPlatformUrl] = useState('')
@@ -88,7 +91,7 @@ const CourseAddForm = memo(function CourseAddForm({ onAdd, onCancel }: CourseAdd
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
-          <label className={learningLabelClass}>Nazwa *</label>
+          <label className={learningLabelClass}>{t('courses.name')}</label>
           <input
             type="text"
             value={name}
@@ -97,7 +100,7 @@ const CourseAddForm = memo(function CourseAddForm({ onAdd, onCancel }: CourseAdd
           />
         </div>
         <div>
-          <label className={learningLabelClass}>Platforma</label>
+          <label className={learningLabelClass}>{t('courses.platform')}</label>
           <input
             type="text"
             value={platform}
@@ -106,7 +109,7 @@ const CourseAddForm = memo(function CourseAddForm({ onAdd, onCancel }: CourseAdd
           />
         </div>
         <div>
-          <label className={learningLabelClass}>URL platformy</label>
+          <label className={learningLabelClass}>{t('courses.platformUrl')}</label>
           <input
             type="url"
             value={platformUrl}
@@ -117,17 +120,17 @@ const CourseAddForm = memo(function CourseAddForm({ onAdd, onCancel }: CourseAdd
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label className={learningLabelClass}>Następna lekcja</label>
+          <label className={learningLabelClass}>{t('courses.nextLesson')}</label>
           <input
             type="text"
             value={nextLesson}
             onChange={(e) => setNextLesson(e.target.value)}
-            placeholder="np. Middleware i autoryzacja"
+            placeholder={t('courses.nextLessonPlaceholder')}
             className={learningFieldClass}
           />
         </div>
         <div>
-          <label className={learningLabelClass}>Data rozpoczęcia</label>
+          <label className={learningLabelClass}>{t('courses.startDate')}</label>
           <input
             type="date"
             value={startedAt}
@@ -138,7 +141,7 @@ const CourseAddForm = memo(function CourseAddForm({ onAdd, onCancel }: CourseAdd
         </div>
       </div>
       <div>
-        <label className={learningLabelClass}>Status</label>
+        <label className={learningLabelClass}>{t('courses.status')}</label>
         <div className="flex flex-wrap gap-2">
           {STATUS_OPTIONS.map((opt) => (
             <button
@@ -147,7 +150,7 @@ const CourseAddForm = memo(function CourseAddForm({ onAdd, onCancel }: CourseAdd
               onClick={() => setStatus(opt.value)}
               className={learningChipClass(status === opt.value)}
             >
-              {opt.label}
+              {t(`courses.${opt.labelKey}`)}
             </button>
           ))}
         </div>
@@ -155,7 +158,7 @@ const CourseAddForm = memo(function CourseAddForm({ onAdd, onCancel }: CourseAdd
       {(status === 'w_trakcie' || status === 'ukonczony') && (
         <div>
           <label className={learningLabelClass}>
-            Postęp % {status === 'ukonczony' && '(automatycznie 100)'}
+            {status === 'ukonczony' ? t('courses.progressAuto') : t('courses.progressPercent')}
           </label>
           <input
             type="text"
@@ -170,10 +173,10 @@ const CourseAddForm = memo(function CourseAddForm({ onAdd, onCancel }: CourseAdd
       <div className={learningFormActionsClass}>
         <button type="submit" className={learningPrimaryBtnClass} disabled={!name.trim()}>
           <Plus className="h-4 w-4" />
-          Dodaj
+          {t('common.add')}
         </button>
         <button type="button" onClick={onCancel} className={learningSecondaryBtnClass}>
-          Anuluj
+          {t('common.cancel')}
         </button>
       </div>
     </form>
@@ -189,6 +192,7 @@ interface EditCourseModalProps {
 }
 
 function EditCourseModal({ course, onSave, onClose }: EditCourseModalProps) {
+  const { t } = useTranslation('learning')
   const [editName, setEditName] = useState(course.name)
   const [editPlatform, setEditPlatform] = useState(course.platform ?? '')
   const [editPlatformUrl, setEditPlatformUrl] = useState(course.platformUrl ?? '')
@@ -219,10 +223,10 @@ function EditCourseModal({ course, onSave, onClose }: EditCourseModalProps) {
   }
 
   return (
-    <LearningModal isOpen onClose={onClose} title="Edytuj kurs">
+    <LearningModal isOpen onClose={onClose} title={t('courses.editTitle')}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className={learningLabelClass}>Nazwa</label>
+          <label className={learningLabelClass}>{t('courses.nameEdit')}</label>
           <input
             type="text"
             value={editName}
@@ -232,7 +236,7 @@ function EditCourseModal({ course, onSave, onClose }: EditCourseModalProps) {
           />
         </div>
         <div>
-          <label className={learningLabelClass}>Platforma</label>
+          <label className={learningLabelClass}>{t('courses.platform')}</label>
           <input
             type="text"
             value={editPlatform}
@@ -241,7 +245,7 @@ function EditCourseModal({ course, onSave, onClose }: EditCourseModalProps) {
           />
         </div>
         <div>
-          <label className={learningLabelClass}>URL platformy</label>
+          <label className={learningLabelClass}>{t('courses.platformUrl')}</label>
           <input
             type="url"
             value={editPlatformUrl}
@@ -250,7 +254,7 @@ function EditCourseModal({ course, onSave, onClose }: EditCourseModalProps) {
           />
         </div>
         <div>
-          <label className={learningLabelClass}>Następna lekcja</label>
+          <label className={learningLabelClass}>{t('courses.nextLesson')}</label>
           <input
             type="text"
             value={editNextLesson}
@@ -259,7 +263,7 @@ function EditCourseModal({ course, onSave, onClose }: EditCourseModalProps) {
           />
         </div>
         <div>
-          <label className={learningLabelClass}>Status</label>
+          <label className={learningLabelClass}>{t('courses.status')}</label>
           <div className="flex flex-wrap gap-2">
             {STATUS_OPTIONS.map((opt) => (
               <button
@@ -268,14 +272,14 @@ function EditCourseModal({ course, onSave, onClose }: EditCourseModalProps) {
                 onClick={() => setEditStatus(opt.value)}
                 className={learningChipClass(editStatus === opt.value)}
               >
-                {opt.label}
+                {t(`courses.${opt.labelKey}`)}
               </button>
             ))}
           </div>
         </div>
         {(editStatus === 'w_trakcie' || editStatus === 'ukonczony') && (
           <div>
-            <label className={learningLabelClass}>Postęp %</label>
+            <label className={learningLabelClass}>{t('courses.progressPercent')}</label>
             <input
               type="text"
               inputMode="numeric"
@@ -290,7 +294,7 @@ function EditCourseModal({ course, onSave, onClose }: EditCourseModalProps) {
         )}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className={learningLabelClass}>Data rozpoczęcia</label>
+            <label className={learningLabelClass}>{t('courses.startDate')}</label>
             <input
               type="date"
               value={editStartedAt}
@@ -300,7 +304,7 @@ function EditCourseModal({ course, onSave, onClose }: EditCourseModalProps) {
             />
           </div>
           <div>
-            <label className={learningLabelClass}>Data ukończenia</label>
+            <label className={learningLabelClass}>{t('courses.completedDate')}</label>
             <input
               type="date"
               value={editCompletedAt}
@@ -312,10 +316,10 @@ function EditCourseModal({ course, onSave, onClose }: EditCourseModalProps) {
         </div>
         <div className={learningFormActionsClass}>
           <button type="submit" className={learningPrimaryBtnClass}>
-            Zapisz
+            {t('common.save')}
           </button>
           <button type="button" onClick={onClose} className={learningSecondaryBtnClass}>
-            Anuluj
+            {t('common.cancel')}
           </button>
         </div>
       </form>
@@ -338,6 +342,7 @@ function CourseCard({
   onIncrement: () => void
   onResume?: () => void
 }) {
+  const { t } = useTranslation('learning')
   return (
     <LearningCard
       title={c.name}
@@ -346,8 +351,8 @@ function CourseCard({
       progress={c.status !== 'zaplanowany' ? c.progress : undefined}
       meta={[
         c.platform && !c.platformUrl ? c.platform : undefined,
-        c.startedAt ? `Rozpoczęto: ${c.startedAt}` : undefined,
-        c.completedAt ? `Ukończono: ${c.completedAt}` : undefined,
+        c.startedAt ? t('courses.startedLabel', { date: c.startedAt }) : undefined,
+        c.completedAt ? t('courses.completedLabel', { date: c.completedAt }) : undefined,
       ]}
       quickActions={
         <div className="flex items-center gap-1">
@@ -356,7 +361,7 @@ function CourseCard({
               type="button"
               onClick={onIncrement}
               className="flex items-center gap-1 px-2 py-1 rounded text-xs font-gaming text-(--accent-cyan) bg-(--accent-cyan)/10 hover:bg-(--accent-cyan)/20 transition-colors border border-(--accent-cyan)/20"
-              title="Dodaj 10%"
+              title={t('courses.increment')}
             >
               <TrendingUp className="w-3 h-3" />
               +10%
@@ -367,17 +372,17 @@ function CourseCard({
               type="button"
               onClick={onResume}
               className="flex items-center gap-1 px-2 py-1 rounded text-xs font-gaming text-(--accent-amber) bg-(--accent-amber)/10 hover:bg-(--accent-amber)/20 transition-colors border border-(--accent-amber)/20"
-              title="Wznów kurs"
+              title={t('courses.resume')}
             >
               <RotateCcw className="w-3 h-3" />
-              Wznów
+              {t('courses.resumeShort')}
             </button>
           )}
           {c.platformUrl && (
             <SafeExternalLink
               href={c.platformUrl}
               className="p-1.5 rounded-lg text-(--text-muted) hover:text-(--accent-cyan) transition-colors"
-              title={c.platform || 'Otwórz kurs'}
+              title={c.platform || t('courses.openCourse')}
             >
               <ExternalLink className="w-4 h-4" />
             </SafeExternalLink>
@@ -391,6 +396,7 @@ function CourseCard({
 }
 
 export function LearningCourses() {
+  const { t } = useTranslation('learning')
   const learning = useLearning()
   const [editingCourse, setEditingCourse] = useState<Course | null>(null)
   const [archiveOpen, setArchiveOpen] = useState(false)
@@ -432,7 +438,7 @@ export function LearningCourses() {
             const items = activeCourses.filter((c) => c.status === group.status)
             if (items.length === 0) return null
             return (
-              <Card key={group.status} title={group.label}>
+              <Card key={group.status} title={t(`courses.${group.labelKey}`)}>
                 <div className="space-y-2">
                   {items.map((c) => (
                     <CourseCard
@@ -450,8 +456,8 @@ export function LearningCourses() {
         </div>
       ) : (
         visibleCount === 0 && (
-          <Card title="Lista kursów">
-            <p className="text-base text-(--text-muted)">Brak kursów. Dodaj pierwszy.</p>
+          <Card title={t('courses.emptyList')}>
+            <p className="text-base text-(--text-muted)">{t('courses.emptyMessage')}</p>
           </Card>
         )
       )}
@@ -466,7 +472,7 @@ export function LearningCourses() {
             <div className="flex items-center gap-2">
               <Archive className="w-4 h-4 text-(--accent-green)" />
               <span className="font-gaming text-(--text-primary) tracking-wide">
-                Archiwum ukończonych
+                {t('courses.archiveTitle')}
               </span>
               <span className="px-2 py-0.5 rounded-full text-xs font-gaming bg-(--accent-green)/10 text-(--accent-green) border border-(--accent-green)/20">
                 {completedCourses.length}
@@ -510,7 +516,7 @@ export function LearningCourses() {
           <LearningFormShell
             isOpen={showAddForm}
             onClose={() => setShowAddForm(false)}
-            title="Dodaj kurs"
+            title={t('courses.addCourse')}
           >
             <CourseAddForm
               onAdd={(c) => {
@@ -523,7 +529,7 @@ export function LearningCourses() {
         ) : (
           <button type="button" onClick={() => setShowAddForm(true)} className={learningAddBtnClass}>
             <Plus className="h-4 w-4" />
-            Dodaj kurs
+            {t('courses.addCourseButton')}
           </button>
         )}
       </div>

@@ -6,12 +6,8 @@ import {
   useEffect,
   type ReactNode,
 } from 'react'
-import {
-  ROLLING_MONTH_NAMES,
-  buildCurrentYearMonthOptions,
-} from '../lib/monthSelectLabels'
-
-const monthNames = [...ROLLING_MONTH_NAMES]
+import { useTranslation } from 'react-i18next'
+import { buildCurrentYearMonthOptions } from '../lib/monthSelectLabels'
 
 export type ChartPeriodType = 'month' | 'quarter' | 'year'
 
@@ -50,8 +46,8 @@ interface ChartPeriodContextType {
 const ChartPeriodContext = createContext<ChartPeriodContextType | null>(null)
 
 /** `recalcToken` bumps when wall-clock advances so labels stay in sync (see `calendarTick`). */
-function getMonthOptions(recalcToken: number) {
-  return buildCurrentYearMonthOptions(recalcToken)
+function getMonthOptions(recalcToken: number, monthNames: readonly string[]) {
+  return buildCurrentYearMonthOptions(recalcToken, monthNames)
 }
 
 function getQuarterOptions(recalcToken: number) {
@@ -73,6 +69,8 @@ function getYearOptions(recalcToken: number) {
 }
 
 export function ChartPeriodProvider({ children }: { children: ReactNode }) {
+  const { t } = useTranslation('common')
+  const monthNames = t('months', { returnObjects: true }) as string[]
   const [periodType, setPeriodType] = useState<ChartPeriodType>('month')
   const [selectedMonth, setSelectedMonth] = useState(() => new Date().getMonth())
   const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear())
@@ -97,7 +95,7 @@ export function ChartPeriodProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const monthOptions = useMemo(() => getMonthOptions(calendarTick), [calendarTick])
+  const monthOptions = useMemo(() => getMonthOptions(calendarTick, monthNames), [calendarTick, monthNames])
   const quarterOptions = useMemo(() => getQuarterOptions(calendarTick), [calendarTick])
   const yearOptions = useMemo(() => getYearOptions(calendarTick), [calendarTick])
 
@@ -148,7 +146,7 @@ export function ChartPeriodProvider({ children }: { children: ReactNode }) {
       yearOptions,
       monthNames,
     }),
-    [periodType, period, monthOptions, quarterOptions, yearOptions]
+    [periodType, period, monthOptions, quarterOptions, yearOptions, monthNames]
   )
 
   return <ChartPeriodContext.Provider value={value}>{children}</ChartPeriodContext.Provider>

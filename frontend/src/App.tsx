@@ -9,6 +9,7 @@ import { NotesProvider } from './context/NotesContext'
 import { GlobalSearchProvider } from './context/GlobalSearchContext'
 import { QuickAddProvider } from './context/QuickAddContext'
 import { OnboardingProvider } from './context/OnboardingContext'
+import { SettingsProvider } from './context/SettingsContext'
 import { Login } from './pages/Login'
 import { useAuth } from './context/AuthContext'
 
@@ -71,6 +72,7 @@ function App() {
         <GlobalSearchProvider>
         <QuickAddProvider>
         <OnboardingProvider>
+        <SettingsProvider>
         <Layout>
         <Suspense fallback={<RouteFallback />}>
         <Routes>
@@ -111,6 +113,7 @@ function App() {
       </Routes>
       </Suspense>
     </Layout>
+        </SettingsProvider>
         </OnboardingProvider>
         </QuickAddProvider>
         </GlobalSearchProvider>

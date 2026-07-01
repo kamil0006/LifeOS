@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { CalendarDays, CalendarRange, CheckSquare2, ChevronDown, ChevronLeft, ChevronRight, Plus, Square } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Card } from '../components/Card'
@@ -12,14 +13,18 @@ import { useTodos } from '../context/TodosContext'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { TODO_CATEGORY_LABEL, TODO_PRIORITY_LABEL, formatTodoDueSummary, localISODate, type TodoItem } from '../lib/todoDomain'
 
-const monthNames = ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień']
-const dayNames = ['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb', 'Nd']
-
 type ViewMode = 'month' | 'week'
 type FeedFilter = 'all' | 'events' | 'todos'
 
 export function Calendar() {
   const navigate = useNavigate()
+  const { t, i18n } = useTranslation('calendar')
+  const locale = i18n.language === 'pl' ? 'pl-PL' : 'en-US'
+  const dayNames = useMemo(() => t('weekDayShort', { returnObjects: true }) as string[], [t])
+  const monthNames = useMemo(
+    () => Array.from({ length: 12 }, (_, m) => new Date(2000, m, 1).toLocaleDateString(locale, { month: 'long' })),
+    [locale]
+  )
   const {
     events,
     categories,
@@ -161,7 +166,7 @@ export function Calendar() {
     return map
   }, [todosWithDates])
 
-  const holidays = useMemo(() => getPolishHolidays(year), [year])
+  const holidays = useMemo(() => getPolishHolidays(year, t), [year, t])
 
   const isToday = (d: Date) => {
     const today = new Date()
@@ -177,14 +182,14 @@ export function Calendar() {
     setViewMode('week')
     setViewDate(new Date())
   }
-  const todayLabel = useMemo(
+  const todayDateFormatted = useMemo(
     () =>
-      new Intl.DateTimeFormat('pl-PL', {
+      new Intl.DateTimeFormat(locale, {
         day: 'numeric',
         month: 'long',
         year: 'numeric',
       }).format(new Date()),
-    []
+    [locale]
   )
 
 
@@ -253,20 +258,21 @@ export function Calendar() {
   const selectedDayTodos = selectedDayKey ? (todosByDate[selectedDayKey] ?? []) : []
 
   const formatHumanDate = (raw: string) => {
-    const [, monthRaw, dayRaw] = raw.split('-').map(Number)
-    const monthShort = ['sty', 'lut', 'mar', 'kwi', 'maj', 'cze', 'lip', 'sie', 'wrz', 'paź', 'lis', 'gru'][(monthRaw ?? 1) - 1]
-    return `${dayRaw} ${monthShort}`
+    const [year, month, day] = raw.split('-').map(Number)
+    const date = new Date(year ?? 2000, (month ?? 1) - 1, day ?? 1)
+    const monthShort = new Intl.DateTimeFormat(locale, { month: 'short' }).format(date)
+    return `${day} ${monthShort}`
   }
 
   const formatPanelDayHeader = (raw: string) => {
     const [year, month, day] = raw.split('-').map(Number)
     const date = new Date(year, (month ?? 1) - 1, day ?? 1)
-    const fullDate = new Intl.DateTimeFormat('pl-PL', {
+    const fullDate = new Intl.DateTimeFormat(locale, {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
     }).format(date)
-    const weekday = new Intl.DateTimeFormat('pl-PL', { weekday: 'long' }).format(date)
+    const weekday = new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(date)
     return { fullDate, weekday }
   }
 
@@ -284,8 +290,8 @@ export function Calendar() {
   }
 
   const getEventCategoryLabel = (event: DemoEvent) => {
-    if (!event.category) return 'Bez kategorii'
-    return categoryById.get(event.category)?.name ?? 'Bez kategorii'
+    if (!event.category) return t('noCategory')
+    return categoryById.get(event.category)?.name ?? t('noCategory')
   }
 
   const getTodoPriorityBadgeClass = (priority: TodoItem['priority']) => {
@@ -339,10 +345,10 @@ export function Calendar() {
       >
         <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-bold text-(--text-primary) font-gaming tracking-wider">
-            KALENDARZ
+            {t('title')}
           </h1>
           <p className="text-sm sm:text-base text-(--text-muted) mt-1 font-gaming tracking-wide">
-            Twoje wydarzenia — lista aktualizuje się od razu po zapisie.
+            {t('subtitle')}
           </p>
         </div>
         <button
@@ -350,8 +356,8 @@ export function Calendar() {
           className="flex shrink-0 items-center gap-2 px-3 sm:px-4 py-2 rounded-lg bg-(--accent-cyan) text-(--bg-dark) font-gaming hover:opacity-90 transition-opacity"
         >
           <Plus className="w-4 h-4" />
-          <span className="hidden sm:inline">Dodaj wydarzenie</span>
-          <span className="sm:hidden">Dodaj</span>
+          <span className="hidden sm:inline">{t('addEvent')}</span>
+          <span className="sm:hidden">{t('add')}</span>
         </button>
       </motion.div>
 
@@ -381,7 +387,7 @@ export function Calendar() {
             <button
               onClick={viewMode === 'month' ? prevMonth : prevWeek}
               className="p-2 rounded-lg hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-(--accent-cyan) transition-colors"
-              aria-label={viewMode === 'month' ? 'Poprzedni miesiąc' : 'Poprzedni tydzień'}
+              aria-label={viewMode === 'month' ? t('prevMonth') : t('prevWeek')}
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
@@ -395,12 +401,12 @@ export function Calendar() {
             <button
               onClick={viewMode === 'month' ? nextMonth : nextWeek}
               className="p-2 rounded-lg hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-(--accent-cyan) transition-colors"
-              aria-label={viewMode === 'month' ? 'Następny miesiąc' : 'Następny tydzień'}
+              aria-label={viewMode === 'month' ? t('nextMonth') : t('nextWeek')}
             >
               <ChevronRight className="w-5 h-5" />
             </button>
             <span className="hidden md:inline-flex px-3 py-1.5 rounded-lg border border-(--border) text-sm text-(--text-muted)">
-              Dziś: {todayLabel}
+              {t('todayLabel', { date: todayDateFormatted })}
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -412,7 +418,7 @@ export function Calendar() {
                 }`}
               >
                 <CalendarDays className="w-4 h-4" />
-                Miesiąc
+                {t('monthView')}
               </button>
               <button
                 onClick={switchToWeekView}
@@ -421,7 +427,7 @@ export function Calendar() {
                 }`}
               >
                 <CalendarRange className="w-4 h-4" />
-                Tydzień
+                {t('weekView')}
               </button>
             </div>
           </div>
@@ -438,16 +444,16 @@ export function Calendar() {
                 <button
                   onClick={() => setIsDayPanelCollapsed((prev) => !prev)}
                   className="inline-flex items-center gap-1 text-sm px-2.5 py-1.5 rounded-lg border border-(--border) text-(--text-muted) hover:text-(--text-primary) hover:bg-(--bg-card-hover)"
-                  title={isDayPanelCollapsed ? 'Rozwiń plan dnia' : 'Zwiń plan dnia'}
+                  title={isDayPanelCollapsed ? t('expandDay') : t('collapseDay')}
                 >
                   <ChevronDown className={`w-4 h-4 transition-transform ${isDayPanelCollapsed ? '-rotate-90' : 'rotate-0'}`} />
-                  {isDayPanelCollapsed ? 'Rozwiń' : 'Zwiń'}
+                  {isDayPanelCollapsed ? t('expand') : t('collapse')}
                 </button>
                 <button
                   onClick={() => openAddModal(selectedDayKey)}
                   className="text-sm px-3 py-1.5 rounded-lg bg-(--accent-cyan) text-(--bg-dark) font-gaming"
                 >
-                  + Dodaj w tym dniu
+                  {t('addOnThisDay')}
                 </button>
               </div>
             </div>
@@ -455,7 +461,7 @@ export function Calendar() {
             <div className="space-y-1">
               {selectedDayTodos.length > 0 && (
                 <div className="mb-2">
-                  <h4 className="text-sm font-gaming text-(--text-muted) uppercase mb-1">Zadania</h4>
+                  <h4 className="text-sm font-gaming text-(--text-muted) uppercase mb-1">{t('tasksHeading')}</h4>
                   <div className="space-y-1.5">
                     {selectedDayTodos.map((todo) => (
                       <div
@@ -468,7 +474,7 @@ export function Calendar() {
                           <div className="flex items-center gap-1.5">
                             <span className="inline-flex items-center gap-1 rounded-full border border-[#6b7280]/50 bg-(--bg-card-hover) px-2 py-0.5 text-xs text-(--text-primary)">
                               {todo.done ? <CheckSquare2 className="w-3 h-3" /> : <Square className="w-3 h-3" />}
-                              Zadanie
+                              {t('taskBadge')}
                             </span>
                             <span className="text-sm text-(--text-muted)">
                               {todo.dueTime ? `${todo.dueTime} · ` : ''}{TODO_CATEGORY_LABEL[todo.category]}
@@ -478,7 +484,7 @@ export function Calendar() {
                             <button
                               onClick={() => toggleTodo(todo.id, !todo.done)}
                               className="p-1 rounded hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-(--accent-cyan)"
-                              title={todo.done ? 'Oznacz jako niezrobione' : 'Oznacz jako zrobione'}
+                              title={todo.done ? t('markUndone') : t('markDone')}
                             >
                               {todo.done ? <CheckSquare2 className="w-4 h-4" /> : <Square className="w-4 h-4" />}
                             </button>
@@ -493,16 +499,16 @@ export function Calendar() {
                             <button
                               onClick={() => rescheduleTodoToDate(todo)}
                               className="px-2 py-0.5 rounded text-xs border border-(--border) text-(--text-muted) hover:text-(--text-primary)"
-                              title="Przełóż na wybraną datę"
+                              title={t('rescheduleTitle')}
                             >
-                              Przełóż
+                              {t('reschedule')}
                             </button>
                             <button
                               onClick={() => navigate('/todo')}
                               className="px-2 py-0.5 rounded text-xs border border-(--border) text-(--text-muted) hover:text-(--text-primary)"
-                              title="Przejdź do To-do"
+                              title={t('goToTodoTitle')}
                             >
-                              To-do
+                              {t('goToTodo')}
                             </button>
                           </div>
                         </div>
@@ -525,7 +531,7 @@ export function Calendar() {
                     <div>
                       <span className="mb-1 inline-flex items-center gap-1 rounded-full border border-(--accent-cyan)/40 bg-(--bg-card-hover) px-2 py-0.5 text-xs text-(--text-primary)">
                         <CalendarDays className="w-3 h-3" />
-                        Wydarzenie
+                        {t('eventBadge')}
                       </span>
                       <br />
                       <span className="text-sm text-(--text-muted)">
@@ -551,7 +557,7 @@ export function Calendar() {
               const dayTodos = showTodos ? (todosByDate[key] ?? []) : []
               const holiday = holidays[key]
               const today = isToday(date)
-              const weekdayLabel = new Intl.DateTimeFormat('pl-PL', { weekday: 'long' }).format(date)
+              const weekdayLabel = new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(date)
               const items = [
                 ...dayEvents.map((ev) => ({ kind: 'event' as const, ev })),
                 ...dayTodos.map((todo) => ({ kind: 'todo' as const, todo })),
@@ -574,7 +580,7 @@ export function Calendar() {
                     <button
                       onClick={() => openAddModal(key)}
                       className="shrink-0 p-1.5 rounded-lg border border-(--border) text-(--text-muted) hover:text-(--accent-cyan) active:bg-(--bg-card-hover)"
-                      aria-label="Dodaj w tym dniu"
+                      aria-label={t('addOnThisDayAria')}
                     >
                       <Plus className="w-4 h-4" />
                     </button>
@@ -583,7 +589,7 @@ export function Calendar() {
                     <p className="text-xs font-mono mb-2" style={{ color: '#e57373' }}>{holiday}</p>
                   )}
                   {items.length === 0 ? (
-                    <p className="text-sm text-(--text-muted)">Brak wpisów</p>
+                    <p className="text-sm text-(--text-muted)">{t('noEntries')}</p>
                   ) : (
                     <div className="space-y-1.5">
                       {items.map((item) =>
@@ -684,7 +690,7 @@ export function Calendar() {
                             borderLeftColor: getTodoPriorityAccent(item.todo.priority),
                             backgroundColor: '#6b728014',
                           }}
-                          title={`${item.todo.text} – ${formatTodoDueSummary(item.todo.dueDate, item.todo.dueTime)} – priorytet: ${TODO_PRIORITY_LABEL[item.todo.priority]}`}
+                          title={`${item.todo.text} – ${formatTodoDueSummary(item.todo.dueDate, item.todo.dueTime)} – ${t('priorityTooltip', { label: TODO_PRIORITY_LABEL[item.todo.priority] })}`}
                         >
                           <span className="inline-flex items-center gap-1">
                             {item.todo.done ? <CheckSquare2 className="w-3.5 h-3.5 shrink-0" /> : <Square className="w-3.5 h-3.5 shrink-0" />}
@@ -799,7 +805,7 @@ export function Calendar() {
                           borderLeftColor: getEventCardColor(item.ev),
                           backgroundColor: `${getEventCardColor(item.ev)}20`,
                         }}
-                        title={`${item.ev.title}${item.ev.time ? ` ${item.ev.time}` : ''} – kliknij aby edytować`}
+                        title={`${item.ev.title}${item.ev.time ? ` ${item.ev.time}` : ''} – ${t('editTooltip')}`}
                       >
                         <span className="inline-flex items-center gap-1 truncate max-w-full">
                           <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: getEventCardColor(item.ev) }} />
@@ -814,7 +820,7 @@ export function Calendar() {
                           borderLeftColor: getTodoPriorityAccent(item.todo.priority),
                           backgroundColor: '#6b728014',
                         }}
-                        title={`${item.todo.text} – priorytet: ${TODO_PRIORITY_LABEL[item.todo.priority]}`}
+                        title={`${item.todo.text} – ${t('priorityTooltip', { label: TODO_PRIORITY_LABEL[item.todo.priority] })}`}
                       >
                         <span className="inline-flex items-center gap-1 truncate max-w-full">
                           {item.todo.done ? <CheckSquare2 className="w-3.5 h-3.5 shrink-0" /> : <Square className="w-3.5 h-3.5 shrink-0" />}
@@ -839,7 +845,7 @@ export function Calendar() {
         {/* Legenda + filtry */}
         <div className="mt-8 pt-6 border-t border-(--border) space-y-5">
           <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-3">
-            <span className="text-sm sm:text-base text-(--text-muted) font-gaming uppercase shrink-0">Widoczność:</span>
+            <span className="text-sm sm:text-base text-(--text-muted) font-gaming uppercase shrink-0">{t('visibilityLabel')}</span>
             <div className="flex flex-wrap gap-2 sm:gap-2.5">
             <button
               onClick={() => setShowEvents((v) => !v)}
@@ -849,7 +855,7 @@ export function Calendar() {
                   : 'border-(--border) text-(--text-muted) hover:text-(--accent-cyan) hover:border-(--accent-cyan)/50 hover:bg-(--bg-card-hover)'
               }`}
             >
-              {showEvents ? 'Ukryj wydarzenia' : 'Pokaż wydarzenia'}
+              {showEvents ? t('hideEvents') : t('showEvents')}
             </button>
             <button
               onClick={() => setShowTodos((v) => !v)}
@@ -859,18 +865,18 @@ export function Calendar() {
                   : 'border-(--border) text-(--text-muted) hover:text-(--accent-cyan) hover:border-(--accent-cyan)/50 hover:bg-(--bg-card-hover)'
               }`}
             >
-              {showTodos ? 'Ukryj zadania' : 'Pokaż zadania'}
+              {showTodos ? t('hideTasks') : t('showTasks')}
             </button>
             </div>
           </div>
           <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-3">
-            <span className="text-sm sm:text-base text-(--text-muted) font-gaming uppercase shrink-0">Kategorie:</span>
+            <span className="text-sm sm:text-base text-(--text-muted) font-gaming uppercase shrink-0">{t('categoriesLabel')}</span>
             <div className="flex flex-wrap gap-2 sm:gap-2.5">
             <button
               onClick={openCategoryManagerModal}
               className="inline-flex items-center px-3 py-2 sm:px-2.5 sm:py-1 rounded-md border border-(--border) text-sm text-(--text-muted) hover:text-(--accent-cyan) hover:border-(--accent-cyan)/50 hover:bg-(--bg-card-hover) transition-colors"
             >
-              Zarządzaj
+              {t('manage')}
             </button>
             {categories.map(({ id, name, color, isVisible }) => (
               <span key={id} className="flex items-center gap-1 text-sm">
@@ -879,7 +885,7 @@ export function Calendar() {
                   className={`flex items-center gap-1.5 px-3 py-2 sm:px-2 sm:py-1 rounded border ${
                     isVisible ? 'border-(--accent-cyan)' : 'border-(--border) opacity-50'
                   } hover:bg-(--bg-card-hover) transition-colors`}
-                  title={isVisible ? 'Ukryj kategorię' : 'Pokaż kategorię'}
+                  title={isVisible ? t('hideCategory') : t('showCategory')}
                 >
                   <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
                   {name}
@@ -888,19 +894,19 @@ export function Calendar() {
             ))}
             <span className="flex items-center gap-1.5 px-3 py-2 sm:px-2 sm:py-1 rounded border border-(--border) text-(--text-muted) text-sm">
               <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: '#6b7280' }} />
-              Bez kategorii
+              {t('noCategory')}
             </span>
             </div>
           </div>
           <div className="flex items-center gap-2 pt-1">
             <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: '#e57373' }} />
-            <span className="text-sm">Święto państwowe</span>
+            <span className="text-sm">{t('publicHoliday')}</span>
           </div>
         </div>
 
         <div className="mt-8 pt-6 border-t border-(--border)">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-5">
-            <h3 className="text-lg font-gaming text-(--text-primary)">Nadchodzące</h3>
+            <h3 className="text-lg font-gaming text-(--text-primary)">{t('upcoming')}</h3>
             <div className="-mx-1 flex w-full items-center gap-1.5 overflow-x-auto px-1 pb-1 scrollbar-theme sm:w-auto">
               <button
                 type="button"
@@ -911,7 +917,7 @@ export function Calendar() {
                     : 'border-transparent text-(--text-muted) hover:bg-(--bg-card-hover)/60 hover:text-(--text-primary)'
                 }`}
               >
-                Wszystko
+                {t('filterAll')}
               </button>
               <button
                 type="button"
@@ -922,7 +928,7 @@ export function Calendar() {
                     : 'border-transparent text-(--text-muted) hover:bg-(--bg-card-hover)/60 hover:text-(--text-primary)'
                 }`}
               >
-                Wydarzenia
+                {t('filterEvents')}
               </button>
               <button
                 type="button"
@@ -933,13 +939,13 @@ export function Calendar() {
                     : 'border-transparent text-(--text-muted) hover:bg-(--bg-card-hover)/60 hover:text-(--text-primary)'
                 }`}
               >
-                Zadania
+                {t('filterTasks')}
               </button>
             </div>
           </div>
           <div className="space-y-3">
             {upcomingFeed.length === 0 && (
-              <p className="text-base text-(--text-muted) py-2">Brak nadchodzących wydarzeń.</p>
+              <p className="text-base text-(--text-muted) py-2">{t('noUpcoming')}</p>
             )}
             {upcomingFeed.map((item) =>
               item.kind === 'event' ? (
@@ -950,7 +956,7 @@ export function Calendar() {
                 >
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-(--accent-cyan)/40 bg-(--bg-card-hover) px-2.5 py-1 text-xs text-(--text-primary)">
                     <CalendarDays className="w-3.5 h-3.5" />
-                    Wydarzenie
+                    {t('eventBadge')}
                   </span>
                   <p className="mt-2.5 text-sm text-(--text-muted)">
                     {formatHumanDate(item.event.date)}
@@ -974,7 +980,7 @@ export function Calendar() {
                     <div className="flex items-center gap-2 flex-wrap min-w-0">
                       <span className="inline-flex items-center gap-1 rounded-full border border-[#6b7280]/50 bg-(--bg-card-hover) px-2 py-0.5 text-xs text-(--text-primary)">
                         {item.todo.done ? <CheckSquare2 className="w-3 h-3" /> : <Square className="w-3 h-3" />}
-                        Zadanie
+                        {t('taskBadge')}
                       </span>
                       <span className="text-base text-(--text-muted)">
                         {formatHumanDate(item.todo.dueDate ?? localISODate())}
@@ -982,7 +988,7 @@ export function Calendar() {
                       </span>
                       <span
                         className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${getTodoPriorityBadgeClass(item.todo.priority)}`}
-                        title={`Priorytet: ${TODO_PRIORITY_LABEL[item.todo.priority]}`}
+                        title={t('priorityLabel', { label: TODO_PRIORITY_LABEL[item.todo.priority] })}
                       >
                         {TODO_PRIORITY_LABEL[item.todo.priority]}
                       </span>
@@ -991,7 +997,7 @@ export function Calendar() {
                       <button
                         onClick={() => toggleTodo(item.todo.id, !item.todo.done)}
                         className="p-1 rounded hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-(--accent-cyan)"
-                        title={item.todo.done ? 'Oznacz jako niezrobione' : 'Oznacz jako zrobione'}
+                        title={item.todo.done ? t('markUndone') : t('markDone')}
                       >
                         {item.todo.done ? <CheckSquare2 className="w-4 h-4" /> : <Square className="w-4 h-4" />}
                       </button>
@@ -1006,16 +1012,16 @@ export function Calendar() {
                       <button
                         onClick={() => rescheduleTodoToDate(item.todo)}
                         className="px-2 py-0.5 rounded text-xs border border-(--border) text-(--text-muted) hover:text-(--text-primary)"
-                        title="Przełóż na wybraną datę"
+                        title={t('rescheduleTitle')}
                       >
-                        Przełóż
+                        {t('reschedule')}
                       </button>
                       <button
                         onClick={() => navigate('/todo')}
                         className="px-2 py-0.5 rounded text-xs border border-(--border) text-(--text-muted) hover:text-(--text-primary)"
-                        title="Przejdź do To-do"
+                        title={t('goToTodoTitle')}
                       >
-                        To-do
+                        {t('goToTodo')}
                       </button>
                     </div>
                   </div>
@@ -1024,7 +1030,7 @@ export function Calendar() {
                   <div className="sm:hidden flex flex-wrap items-center gap-2">
                     <span className="inline-flex items-center gap-1 rounded-full border border-[#6b7280]/50 bg-(--bg-card-hover) px-2.5 py-1 text-xs text-(--text-primary)">
                       {item.todo.done ? <CheckSquare2 className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
-                      Zadanie
+                      {t('taskBadge')}
                     </span>
                     <span className="text-sm text-(--text-muted)">
                       {formatHumanDate(item.todo.dueDate ?? localISODate())}
@@ -1032,7 +1038,7 @@ export function Calendar() {
                     </span>
                     <span
                       className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${getTodoPriorityBadgeClass(item.todo.priority)}`}
-                      title={`Priorytet: ${TODO_PRIORITY_LABEL[item.todo.priority]}`}
+                      title={t('priorityLabel', { label: TODO_PRIORITY_LABEL[item.todo.priority] })}
                     >
                       {TODO_PRIORITY_LABEL[item.todo.priority]}
                     </span>
@@ -1047,7 +1053,7 @@ export function Calendar() {
                       <button
                         onClick={() => toggleTodo(item.todo.id, !item.todo.done)}
                         className="p-2 rounded-lg border border-(--border) hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-(--accent-cyan) shrink-0"
-                        aria-label={item.todo.done ? 'Oznacz jako niezrobione' : 'Oznacz jako zrobione'}
+                        aria-label={item.todo.done ? t('markUndone') : t('markDone')}
                       >
                         {item.todo.done ? <CheckSquare2 className="w-4 h-4" /> : <Square className="w-4 h-4" />}
                       </button>
@@ -1064,15 +1070,15 @@ export function Calendar() {
                       <button
                         onClick={() => rescheduleTodoToDate(item.todo)}
                         className="flex-1 px-3 py-1.5 rounded-lg text-sm border border-(--border) text-(--text-muted) hover:text-(--text-primary) hover:bg-(--bg-card-hover)"
-                        title="Przełóż na wybraną datę"
+                        title={t('rescheduleTitle')}
                       >
-                        Przełóż
+                        {t('reschedule')}
                       </button>
                       <button
                         onClick={() => navigate('/todo')}
                         className="flex-1 px-3 py-1.5 rounded-lg text-sm border border-(--border) text-(--text-muted) hover:text-(--text-primary) hover:bg-(--bg-card-hover)"
                       >
-                        To-do
+                        {t('goToTodo')}
                       </button>
                     </div>
                   </div>

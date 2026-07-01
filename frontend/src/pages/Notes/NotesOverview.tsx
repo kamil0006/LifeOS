@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { Card } from '../../components/Card'
 import { EmptyState } from '../../components/EmptyState'
 import {
@@ -23,6 +24,7 @@ const TOP_TAGS = 10
 const RECENT_N = 8
 
 export function NotesOverview() {
+  const { t, i18n } = useTranslation('notes')
   const notes = useNotes()
   const reduceMotion = useReducedMotion()
   const [modalType, setModalType] = useState<NoteType | null>(null)
@@ -67,9 +69,8 @@ export function NotesOverview() {
   const { addNote, updateNote } = notes
 
   const noteRow = (n: Note, opts?: { showPin?: boolean }) => {
-    const typeLabel =
-      n.type === 'inbox' ? 'Inbox' : n.type === 'idea' ? 'Pomysł' : 'Referencja'
-    const edited = new Date(n.updatedAt).toLocaleDateString('pl-PL', {
+    const typeLabel = t(`typeLabel.${n.type}`)
+    const edited = new Date(n.updatedAt).toLocaleDateString(i18n.language === 'pl' ? 'pl-PL' : 'en-US', {
       day: 'numeric',
       month: 'short',
     })
@@ -125,8 +126,8 @@ export function NotesOverview() {
       <>
         <EmptyState
           icon={StickyNote}
-          title="Brak notatek"
-          description="Zacznij od Inbox – szybkie wrzutki do późniejszego porządkowania."
+          title={t('overview.emptyTitle')}
+          description={t('overview.emptyDescription')}
           action={
             <div className="flex flex-wrap gap-2 justify-center">
               <Link
@@ -134,7 +135,7 @@ export function NotesOverview() {
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-(--accent-cyan)/20 text-(--accent-cyan) border border-(--accent-cyan)/40 font-gaming hover:bg-(--accent-cyan)/30 transition-colors"
               >
                 <Inbox className="w-4 h-4" />
-                Otwórz Inbox
+                {t('overview.openInbox')}
               </Link>
               <button
                 type="button"
@@ -142,7 +143,7 @@ export function NotesOverview() {
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming hover:border-(--accent-cyan)/40 transition-colors"
               >
                 <Plus className="w-4 h-4" />
-                Dodaj notatkę
+                {t('overview.addNote')}
               </button>
               <button
                 type="button"
@@ -150,7 +151,7 @@ export function NotesOverview() {
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming hover:border-(--accent-amber)/40 transition-colors"
               >
                 <Plus className="w-4 h-4" />
-                Dodaj pomysł
+                {t('overview.addIdea')}
               </button>
               <button
                 type="button"
@@ -158,7 +159,7 @@ export function NotesOverview() {
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming hover:border-(--accent-magenta)/40 transition-colors"
               >
                 <Plus className="w-4 h-4" />
-                Dodaj referencję
+                {t('overview.addReference')}
               </button>
             </div>
           }
@@ -169,11 +170,11 @@ export function NotesOverview() {
   }
 
   const stats = [
-    { icon: Inbox, label: 'Inbox', value: byType.inbox.length, color: 'text-(--accent-cyan)', to: '/notes/inbox' },
-    { icon: Lightbulb, label: 'Pomysły', value: byType.ideas.length, color: 'text-(--accent-amber)', to: '/notes/ideas' },
+    { icon: Inbox, label: t('typeLabelPlural.inbox'), value: byType.inbox.length, color: 'text-(--accent-cyan)', to: '/notes/inbox' },
+    { icon: Lightbulb, label: t('typeLabelPlural.idea'), value: byType.ideas.length, color: 'text-(--accent-amber)', to: '/notes/ideas' },
     {
       icon: BookMarked,
-      label: 'Referencje',
+      label: t('typeLabelPlural.reference'),
       value: byType.refs.length,
       color: 'text-(--accent-magenta)',
       to: '/notes/references',
@@ -189,8 +190,8 @@ export function NotesOverview() {
         animate="show"
       >
         <motion.div variants={getOverviewTileVariants(reduceMotion, 0)} className="min-w-0">
-          <Card title="Dodaj" animateEntrance={false} className="max-md:p-4">
-            <p className="mb-3 text-base text-(--text-muted)">Nowa notatka, pomysł lub referencja.</p>
+          <Card title={t('overview.addCardTitle')} animateEntrance={false} className="max-md:p-4">
+            <p className="mb-3 text-base text-(--text-muted)">{t('overview.addCardDescription')}</p>
             <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               <button
                 type="button"
@@ -198,7 +199,7 @@ export function NotesOverview() {
                 className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-(--accent-cyan)/45 bg-(--accent-cyan)/18 px-4 font-gaming text-sm tracking-wide text-(--accent-cyan) transition-colors hover:bg-(--accent-cyan)/26"
               >
                 <Plus className="h-4 w-4" />
-                Notatka
+                {t('overview.addButtonNote')}
               </button>
               <button
                 type="button"
@@ -206,7 +207,7 @@ export function NotesOverview() {
                 className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-(--border) bg-(--bg-dark) px-4 font-gaming text-sm tracking-wide text-(--text-primary) transition-colors hover:border-(--accent-amber)/40 hover:text-(--accent-amber)"
               >
                 <Plus className="h-4 w-4" />
-                Pomysł
+                {t('overview.addButtonIdea')}
               </button>
               <button
                 type="button"
@@ -214,7 +215,7 @@ export function NotesOverview() {
                 className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-(--border) bg-(--bg-dark) px-4 font-gaming text-sm tracking-wide text-(--text-primary) transition-colors hover:border-(--accent-magenta)/40 hover:text-(--accent-magenta)"
               >
                 <Plus className="h-4 w-4" />
-                Referencja
+                {t('overview.addButtonReference')}
               </button>
             </div>
           </Card>
@@ -230,7 +231,7 @@ export function NotesOverview() {
                     <p className="text-base text-(--text-muted)">{label}</p>
                   </div>
                   <p className={`mt-2 text-2xl font-bold font-gaming ${color}`}>{value}</p>
-                  <p className="mt-0.5 text-sm text-(--text-muted)">aktywnych</p>
+                  <p className="mt-0.5 text-sm text-(--text-muted)">{t('overview.activeCount')}</p>
                 </Card>
               </Link>
             </motion.div>
@@ -239,21 +240,21 @@ export function NotesOverview() {
 
         {pinned.length > 0 && (
           <motion.div variants={getOverviewTileVariants(reduceMotion, 4)} className="min-w-0">
-            <Card title="Przypięte" animateEntrance={false} className="max-md:p-4">
+            <Card title={t('overview.pinnedTitle')} animateEntrance={false} className="max-md:p-4">
               <ul className="space-y-2">{pinned.map((n) => noteRow(n, { showPin: true }))}</ul>
             </Card>
           </motion.div>
         )}
 
         <motion.div variants={getOverviewTileVariants(reduceMotion, 5)} className="min-w-0">
-          <Card title="Ostatnio edytowane" animateEntrance={false} className="max-md:p-4">
+          <Card title={t('overview.recentTitle')} animateEntrance={false} className="max-md:p-4">
             <ul className="space-y-2">{recent.map((n) => noteRow(n))}</ul>
           </Card>
         </motion.div>
 
         {tagCounts.length > 0 && (
           <motion.div variants={getOverviewTileVariants(reduceMotion, 6)} className="min-w-0">
-            <Card title="Najczęstsze tagi" animateEntrance={false} className="max-md:p-4">
+            <Card title={t('overview.tagsTitle')} animateEntrance={false} className="max-md:p-4">
               <div className="flex flex-wrap items-center gap-2">
                 <TagIcon className="h-4 w-4 shrink-0 text-(--text-muted)" aria-hidden />
                 {tagCounts.map(([tag, count]) => (

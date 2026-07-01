@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { Card } from '../../components/Card'
 import { MonthSelector } from '../../components/MonthSelector'
 import { Plus } from 'lucide-react'
@@ -22,9 +23,12 @@ import {
   overviewPageContainerVariants,
 } from '../../lib/layoutSectionMotion'
 
-const monthNames = ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień']
-
 export function Overview() {
+  const { t, i18n } = useTranslation('finances')
+  const monthNames = useMemo(() => {
+    const locale = i18n.language === 'pl' ? 'pl-PL' : 'en-US'
+    return Array.from({ length: 12 }, (_, m) => new Date(2000, m, 1).toLocaleDateString(locale, { month: 'long' }))
+  }, [i18n.language])
   const { user } = useAuth()
   const useApiFinance = useFinanceUsesApi()
   const queryClient = useQueryClient()
@@ -114,9 +118,9 @@ export function Overview() {
     const byCategory = new Map<string, number>()
     merged.forEach((row) => byCategory.set(row.category, (byCategory.get(row.category) ?? 0) + row.amount))
     const top = [...byCategory.entries()].sort((a, b) => b[1] - a[1])[0]
-    if (!top) return { category: 'Brak danych', amount: 0 }
+    if (!top) return { category: t('overview.noData'), amount: 0 }
     return { category: getLabel(top[0]), amount: top[1] }
-  }, [effectiveExpenses, effectiveScheduled, selectedMonth, selectedYear, getLabel])
+  }, [effectiveExpenses, effectiveScheduled, selectedMonth, selectedYear, getLabel, t])
 
   const upcomingRecurring = useMemo(() => {
     const now = new Date()
@@ -170,19 +174,19 @@ export function Overview() {
 
       <motion.div variants={getOverviewTileVariants(reduceMotion, 2)} className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
         <Card className="border-(--accent-green)/20" animateEntrance={false}>
-          <p className="text-base text-(--text-muted)">Przychody</p>
+          <p className="text-base text-(--text-muted)">{t('overview.income')}</p>
           <p className="mt-1 text-2xl font-bold font-gaming text-(--accent-green)">
             {incomeTotal.toLocaleString('pl-PL')} zł
           </p>
         </Card>
         <Card className="border-(--accent-magenta)/20" animateEntrance={false}>
-          <p className="text-base text-(--text-muted)">Wydatki</p>
+          <p className="text-base text-(--text-muted)">{t('overview.expenses')}</p>
           <p className="mt-1 text-2xl font-bold font-gaming text-(--accent-magenta)">
             {expensesTotal.toLocaleString('pl-PL')} zł
           </p>
         </Card>
         <Card className={currentTotal >= 0 ? 'border-(--accent-cyan)/20' : 'border-[#e74c3c]/30'} animateEntrance={false}>
-          <p className="text-base text-(--text-muted)">Bilans</p>
+          <p className="text-base text-(--text-muted)">{t('overview.balance')}</p>
           <p
             className={`mt-1 text-2xl font-bold font-gaming ${
               currentTotal >= 0 ? 'text-(--accent-cyan)' : 'text-[#e74c3c]'
@@ -195,12 +199,12 @@ export function Overview() {
 
       <motion.div variants={getOverviewTileVariants(reduceMotion, 1)} className="min-w-0">
         <Card className="border-(--accent-cyan)/20 max-md:p-4 md:p-7!" animateEntrance={false}>
-          <p className="mb-4 text-base text-(--text-muted) md:mb-6">Trend miesięczny</p>
+          <p className="mb-4 text-base text-(--text-muted) md:mb-6">{t('overview.monthlyTrend')}</p>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
             <div className="min-w-0 space-y-4 md:border-r md:border-(--border) md:pr-8">
               <p className="text-sm font-semibold text-(--text-primary) font-gaming">{currMonthName}</p>
               <div>
-                <p className="text-base text-(--text-muted)">Bilans</p>
+                <p className="text-base text-(--text-muted)">{t('overview.balance')}</p>
                 <p
                   className={`mt-1 text-2xl font-bold font-gaming sm:text-3xl ${
                     currentTotal >= 0 ? 'text-(--accent-cyan) drop-shadow-[0_0_8px_rgba(0,229,255,0.25)]' : 'text-[#e74c3c]'
@@ -212,20 +216,20 @@ export function Overview() {
               </div>
               <dl className="space-y-3 border-t border-(--border) pt-4">
                 <div className="flex items-baseline justify-between gap-4">
-                  <dt className="text-base text-(--text-muted)">Przychody</dt>
+                  <dt className="text-base text-(--text-muted)">{t('overview.income')}</dt>
                   <dd className="text-right text-lg font-semibold tabular-nums text-(--accent-green)">
                     {currentIncomeForTrend.toLocaleString('pl-PL')} zł
                   </dd>
                 </div>
                 <div className="flex items-baseline justify-between gap-4">
-                  <dt className="text-base text-(--text-muted)">Wydatki</dt>
+                  <dt className="text-base text-(--text-muted)">{t('overview.expenses')}</dt>
                   <dd className="text-right text-lg font-semibold tabular-nums text-(--accent-magenta)">
                     {currentExpensesForTrend.toLocaleString('pl-PL')} zł
                   </dd>
                 </div>
               </dl>
               <p className="md:hidden rounded-lg border border-(--border)/60 bg-(--bg-dark)/40 px-3 py-2 text-sm text-(--text-muted)">
-                vs {prevMonthName}:{' '}
+                {t('overview.vsPrevMonth', { month: prevMonthName })}{' '}
                 <span className={changePercent >= 0 ? 'text-(--accent-green)' : 'text-[#e74c3c]'}>
                   {changePercent >= 0 ? '+' : ''}
                   {changePercent}%
@@ -237,7 +241,7 @@ export function Overview() {
             <div className="hidden min-w-0 space-y-4 md:block md:border-r md:border-(--border) md:pr-8">
               <p className="text-sm font-semibold text-(--text-primary) font-gaming">{prevMonthName}</p>
               <div>
-                <p className="text-base text-(--text-muted)">Bilans</p>
+                <p className="text-base text-(--text-muted)">{t('overview.balance')}</p>
                 <p
                   className={`mt-1 text-2xl font-bold font-gaming sm:text-3xl ${
                     previousTotal >= 0 ? 'text-(--text-primary)' : 'text-[#e74c3c]'
@@ -249,13 +253,13 @@ export function Overview() {
               </div>
               <dl className="space-y-3 border-t border-(--border) pt-4">
                 <div className="flex items-baseline justify-between gap-4">
-                  <dt className="text-base text-(--text-muted)">Przychody</dt>
+                  <dt className="text-base text-(--text-muted)">{t('overview.income')}</dt>
                   <dd className="text-right text-lg font-semibold tabular-nums text-(--accent-green)">
                     {previousIncomeForTrend.toLocaleString('pl-PL')} zł
                   </dd>
                 </div>
                 <div className="flex items-baseline justify-between gap-4">
-                  <dt className="text-base text-(--text-muted)">Wydatki</dt>
+                  <dt className="text-base text-(--text-muted)">{t('overview.expenses')}</dt>
                   <dd className="text-right text-lg font-semibold tabular-nums text-(--accent-magenta)">
                     {previousExpensesForTrend.toLocaleString('pl-PL')} zł
                   </dd>
@@ -263,9 +267,9 @@ export function Overview() {
               </dl>
             </div>
             <div className="hidden min-w-0 space-y-4 md:block">
-              <p className="text-sm font-semibold text-(--text-primary) font-gaming">Porównanie</p>
+              <p className="text-sm font-semibold text-(--text-primary) font-gaming">{t('overview.comparison')}</p>
               <div>
-                <p className="text-base text-(--text-muted)">Zmiana bilansu</p>
+                <p className="text-base text-(--text-muted)">{t('overview.balanceChange')}</p>
                 <p
                   className={`mt-1 text-2xl font-bold font-gaming sm:text-3xl ${
                     changePercent >= 0 ? 'text-(--accent-green)' : 'text-[#e74c3c]'
@@ -277,7 +281,7 @@ export function Overview() {
               </div>
               <dl className="space-y-3 border-t border-(--border) pt-4">
                 <div className="flex items-baseline justify-between gap-4">
-                  <dt className="text-base text-(--text-muted)">Różnica w zł</dt>
+                  <dt className="text-base text-(--text-muted)">{t('overview.differenceAmount')}</dt>
                   <dd
                     className={`text-right text-lg font-semibold tabular-nums font-gaming ${
                       balanceDeltaZloty >= 0 ? 'text-(--accent-green)' : 'text-[#e74c3c]'
@@ -288,7 +292,7 @@ export function Overview() {
                   </dd>
                 </div>
                 <div className="flex items-baseline justify-between gap-4">
-                  <dt className="text-base text-(--text-muted)">Zmiana przychodów</dt>
+                  <dt className="text-base text-(--text-muted)">{t('overview.incomeChange')}</dt>
                   <dd
                     className={`text-right text-base font-medium tabular-nums ${
                       currentIncomeForTrend - previousIncomeForTrend >= 0 ? 'text-(--accent-green)' : 'text-[#e74c3c]'
@@ -299,7 +303,7 @@ export function Overview() {
                   </dd>
                 </div>
                 <div className="flex items-baseline justify-between gap-4">
-                  <dt className="text-base text-(--text-muted)">Zmiana wydatków</dt>
+                  <dt className="text-base text-(--text-muted)">{t('overview.expensesChange')}</dt>
                   <dd
                     className={`text-right text-base font-medium tabular-nums ${
                       currentExpensesForTrend - previousExpensesForTrend <= 0 ? 'text-(--accent-green)' : 'text-[#e74c3c]'
@@ -317,19 +321,19 @@ export function Overview() {
 
       <motion.div variants={getOverviewTileVariants(reduceMotion, 3)} className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
         <Card className="border-(--accent-cyan)/20" animateEntrance={false}>
-          <p className="text-base text-(--text-muted)">Dostępne do końca miesiąca</p>
+          <p className="text-base text-(--text-muted)">{t('overview.availableUntilMonthEnd')}</p>
           <p className={`text-2xl font-bold mt-1 font-gaming ${availableUntilMonthEnd >= 0 ? 'text-(--accent-cyan)' : 'text-[#e74c3c]'}`}>
             {availableUntilMonthEnd.toLocaleString('pl-PL')} zł
           </p>
         </Card>
         <Card className="border-(--accent-amber)/20" animateEntrance={false}>
-          <p className="text-base text-(--text-muted)">Średnio dziennie możesz wydać</p>
+          <p className="text-base text-(--text-muted)">{t('overview.dailyBudget')}</p>
           <p className={`text-2xl font-bold mt-1 font-gaming ${dailyBudget >= 0 ? 'text-(--accent-amber)' : 'text-[#e74c3c]'}`}>
             {dailyBudget.toLocaleString('pl-PL', { maximumFractionDigits: 0 })} zł
           </p>
         </Card>
         <Card className="border-(--accent-magenta)/20" animateEntrance={false}>
-          <p className="text-base text-(--text-muted)">Największa kategoria wydatków</p>
+          <p className="text-base text-(--text-muted)">{t('overview.topCategory')}</p>
           <p className="text-lg font-bold text-(--accent-magenta) mt-1 font-gaming">{topExpenseCategory.category}</p>
           <p className="text-sm text-(--text-muted) mt-1">{topExpenseCategory.amount.toLocaleString('pl-PL')} zł</p>
         </Card>
@@ -337,14 +341,14 @@ export function Overview() {
 
       <motion.div variants={getOverviewTileVariants(reduceMotion, 4)} className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
         <Card className="border-(--accent-amber)/20 max-md:p-4" animateEntrance={false}>
-          <p className="mb-2 text-base text-(--text-muted)">Nadchodzące stałe koszty</p>
+          <p className="mb-2 text-base text-(--text-muted)">{t('overview.upcomingRecurring')}</p>
           <div className="space-y-2">
-            {upcomingRecurring.length === 0 && <p className="text-base text-(--text-muted)">Brak aktywnych stałych kosztów.</p>}
+            {upcomingRecurring.length === 0 && <p className="text-base text-(--text-muted)">{t('overview.noActiveRecurring')}</p>}
             {upcomingRecurring.map((item) => (
               <div key={item.id} className="flex flex-col gap-0.5 border-b border-(--border)/40 py-2 last:border-0 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-sm text-(--text-primary)">
-                  {item.name} · dzień {item.dayOfMonth}
-                  {item.isNextMonth ? ' (nast. miesiąc)' : ''}
+                  {item.name} · {t('overview.dayOfMonth', { day: item.dayOfMonth })}
+                  {item.isNextMonth ? ` ${t('overview.nextMonthSuffix')}` : ''}
                 </span>
                 <span className="font-mono text-sm tabular-nums text-(--accent-amber)">
                   {item.amount.toLocaleString('pl-PL')} zł
@@ -354,7 +358,7 @@ export function Overview() {
           </div>
         </Card>
         <Card className="border-(--border) max-md:p-4 md:p-7!" animateEntrance={false}>
-          <p className="mb-4 text-base text-(--text-muted) md:mb-5">Szybkie akcje</p>
+          <p className="mb-4 text-base text-(--text-muted) md:mb-5">{t('overview.quickActions')}</p>
           <div className="flex flex-col gap-2 sm:grid sm:grid-cols-3 sm:gap-2">
             <button
               type="button"
@@ -365,7 +369,7 @@ export function Overview() {
               className="inline-flex min-h-11 min-w-0 items-center justify-center gap-2 rounded-lg border border-(--accent-magenta)/40 bg-(--accent-magenta)/15 px-3 py-2.5 text-sm font-medium text-(--accent-magenta) sm:gap-1.5 sm:px-2 sm:py-2 sm:text-xs"
             >
               <Plus className="h-4 w-4 shrink-0 sm:h-[18px] sm:w-[18px]" strokeWidth={2.25} />
-              <span className="truncate">Wydatek</span>
+              <span className="truncate">{t('overview.quickActionExpense')}</span>
             </button>
             <button
               type="button"
@@ -376,7 +380,7 @@ export function Overview() {
               className="inline-flex min-h-11 min-w-0 items-center justify-center gap-2 rounded-lg border border-(--accent-green)/40 bg-(--accent-green)/15 px-3 py-2.5 text-sm font-medium text-(--accent-green) sm:gap-1.5 sm:px-2 sm:py-2 sm:text-xs"
             >
               <Plus className="h-4 w-4 shrink-0 sm:h-[18px] sm:w-[18px]" strokeWidth={2.25} />
-              <span className="truncate">Przychód</span>
+              <span className="truncate">{t('overview.quickActionIncome')}</span>
             </button>
             <button
               type="button"
@@ -384,7 +388,7 @@ export function Overview() {
               className="inline-flex min-h-11 min-w-0 items-center justify-center gap-2 rounded-lg border border-(--accent-amber)/40 bg-(--accent-amber)/15 px-3 py-2.5 text-sm font-medium text-(--accent-amber) sm:gap-1.5 sm:px-2 sm:py-2 sm:text-xs"
             >
               <Plus className="h-4 w-4 shrink-0 sm:h-[18px] sm:w-[18px]" strokeWidth={2.25} />
-              <span className="truncate">Stały koszt</span>
+              <span className="truncate">{t('overview.quickActionRecurring')}</span>
             </button>
           </div>
         </Card>

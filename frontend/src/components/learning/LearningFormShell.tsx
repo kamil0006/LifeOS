@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { ModalShell } from '../ModalShell'
 import { useIsMobile } from '../../hooks/useIsMobile'
 
@@ -21,6 +22,7 @@ export function LearningFormShell({
   children,
   maxWidth = 'max-w-lg',
 }: LearningFormShellProps) {
+  const { t } = useTranslation('learning')
   const isMobile = useIsMobile()
 
   if (!isOpen) return null
@@ -37,7 +39,7 @@ export function LearningFormShell({
             type="button"
             onClick={onClose}
             className="shrink-0 rounded-lg p-2 text-(--text-muted) hover:bg-(--bg-card) hover:text-(--text-primary)"
-            aria-label="Zamknij"
+            aria-label={t('common.close')}
           >
             <X className="h-5 w-5" />
           </button>

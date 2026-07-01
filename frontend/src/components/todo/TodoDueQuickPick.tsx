@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { localISODate } from '../../lib/todoDomain'
 
 export type TodoDuePickMode = 'inherit' | 'explicit'
@@ -34,6 +35,7 @@ export function TodoDueQuickPick({
   hideInheritHint,
   embedded,
 }: TodoDueQuickPickProps) {
+  const { t } = useTranslation('todo')
   const preset = (fn: () => void) => () => {
     onModeExplicit()
     fn()
@@ -51,7 +53,7 @@ export function TodoDueQuickPick({
       }
     >
       <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
-        <span className="col-span-2 text-base text-(--text-muted) sm:col-span-1 sm:mr-1 sm:w-auto">Termin:</span>
+        <span className="col-span-2 text-base text-(--text-muted) sm:col-span-1 sm:mr-1 sm:w-auto">{t('quickPick.dueLabel')}</span>
         <button
           type="button"
           className={`${chip} border-(--border) text-(--text-muted) hover:border-(--border) hover:bg-(--bg-dark) hover:text-(--text-primary)`}
@@ -60,7 +62,7 @@ export function TodoDueQuickPick({
             onChangeQuickDueTime('')
           })}
         >
-          Bez terminu
+          {t('quickPick.noDue')}
         </button>
         <button
           type="button"
@@ -69,7 +71,7 @@ export function TodoDueQuickPick({
             onChangeQuickDueDate(localISODate())
           })}
         >
-          Dziś
+          {t('quickPick.today')}
         </button>
         <button
           type="button"
@@ -78,7 +80,7 @@ export function TodoDueQuickPick({
             onChangeQuickDueDate(addDaysFromToday(1))
           })}
         >
-          Jutro
+          {t('quickPick.tomorrow')}
         </button>
         <button
           type="button"
@@ -87,12 +89,12 @@ export function TodoDueQuickPick({
             onChangeQuickDueDate(addDaysFromToday(7))
           })}
         >
-          Za tydzień
+          {t('quickPick.inAWeek')}
         </button>
       </div>
       <div className="grid grid-cols-1 gap-3 sm:flex sm:flex-row sm:flex-wrap sm:items-end">
         <label className="flex min-w-0 flex-col gap-1 sm:flex-1">
-          <span className="text-base text-(--text-muted)">Data</span>
+          <span className="text-base text-(--text-muted)">{t('quickPick.dateLabel')}</span>
           <input
             type="date"
             value={quickDueDate}
@@ -104,7 +106,7 @@ export function TodoDueQuickPick({
           />
         </label>
         <label className="flex min-w-0 flex-col gap-1 sm:flex-1">
-          <span className="text-base text-(--text-muted)">Godzina</span>
+          <span className="text-base text-(--text-muted)">{t('quickPick.timeLabel')}</span>
           <input
             type="time"
             value={quickDueTime}
@@ -118,14 +120,12 @@ export function TodoDueQuickPick({
       </div>
       {!hideInheritHint && mode === 'inherit' && (
         <p className="text-base text-(--text-muted)">
-          Albo zostaw pola puste i wpisz w treści np. <strong className="text-(--text-primary)">jutro</strong>,{' '}
-          <strong className="text-(--text-primary)">14:30</strong>,{' '}
-          <strong className="text-(--text-primary)">2026-05-01</strong>.
+          {t('quickPick.inheritHint')}
         </p>
       )}
       {!hideInheritHint && mode === 'explicit' && (
         <p className="text-base text-(--text-muted)">
-          Wybrano termin z poniższych pól — ma pierwszeństwo przed słowami w treści zadania.
+          {t('quickPick.explicitHint')}
         </p>
       )}
     </div>

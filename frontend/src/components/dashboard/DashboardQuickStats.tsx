@@ -1,13 +1,13 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { Card } from '../Card'
 import { dashboardSectionStaggerVariants, getDashboardTileVariants } from '../../lib/dashboardMotion'
 
-const monthNames = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru']
-
-function formatEventDate(dateStr: string): string {
+function formatEventDate(dateStr: string, locale: string): string {
   const [y, m, d] = dateStr.split('-').map(Number)
-  return `${d} ${monthNames[m - 1]} ${y}`
+  if (!y || !m || !d) return dateStr
+  return new Date(y, m - 1, d).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 export type DashboardQuickStatsProps = {
@@ -27,13 +27,15 @@ export function DashboardQuickStats({
   habitsToday,
   reduceMotion,
 }: DashboardQuickStatsProps) {
+  const { t, i18n } = useTranslation('dashboard')
+  const locale = i18n.language === 'pl' ? 'pl-PL' : 'en-US'
   return (
     <motion.div
       variants={dashboardSectionStaggerVariants}
       className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-6 items-stretch"
     >
       <motion.div variants={getDashboardTileVariants(reduceMotion, TILE_BASE + 0)} className="min-w-0 flex">
-        <Card title="Nadchodzące wydarzenia" className="border-(--accent-cyan)/20 p-3 flex flex-col h-full w-full" animateEntrance={false}>
+        <Card title={t('upcomingEvents')} className="border-(--accent-cyan)/20 p-3 flex flex-col h-full w-full" animateEntrance={false}>
           <div className="flex-1 min-h-0">
             {upcomingEvents.length > 0 ? (
               <ul className="space-y-1.5">
@@ -51,40 +53,40 @@ export function DashboardQuickStats({
                         {ev.title}
                       </Link>
                       <p className="text-xs text-(--text-muted) font-mono">
-                        {formatEventDate(ev.date)} {ev.time && `• ${ev.time}`}
+                        {formatEventDate(ev.date, locale)} {ev.time && `• ${ev.time}`}
                       </p>
                     </div>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-(--text-muted) text-sm">Brak nadchodzących wydarzeń</p>
+              <p className="text-(--text-muted) text-sm">{t('noUpcomingEvents')}</p>
             )}
           </div>
           <Link
             to="/calendar"
             className="mt-auto pt-2 inline-block text-sm text-(--accent-cyan) hover:underline outline-none focus:outline-none"
           >
-            Zobacz kalendarz →
+            {t('viewCalendar')}
           </Link>
         </Card>
       </motion.div>
       <motion.div variants={getDashboardTileVariants(reduceMotion, TILE_BASE + 1)} className="min-w-0 flex">
-        <Card title="Do zrobienia" className="border-(--accent-amber)/20 p-3 flex flex-col h-full w-full" animateEntrance={false}>
+        <Card title={t('todoTitle')} className="border-(--accent-amber)/20 p-3 flex flex-col h-full w-full" animateEntrance={false}>
           <div className="flex-1 min-h-0">
             <p className="text-xl sm:text-2xl font-bold text-(--accent-amber) font-gaming drop-shadow-[0_0_10px_rgba(255,184,0,0.3)]">{todoCount}</p>
-            <p className="text-xs sm:text-sm text-(--text-muted) mt-1">aktywnych zadań</p>
+            <p className="text-xs sm:text-sm text-(--text-muted) mt-1">{t('activeTasks')}</p>
           </div>
           <Link
             to="/todo"
             className="mt-auto pt-2 inline-block text-sm text-(--accent-cyan) hover:underline outline-none focus:outline-none"
           >
-            Zobacz To-do →
+            {t('viewTodo')}
           </Link>
         </Card>
       </motion.div>
       <motion.div variants={getDashboardTileVariants(reduceMotion, TILE_BASE + 2)} className="min-w-0 flex">
-        <Card title="Aktywne cele" className="border-(--accent-cyan)/20 p-3 flex flex-col h-full w-full" animateEntrance={false}>
+        <Card title={t('activeGoals')} className="border-(--accent-cyan)/20 p-3 flex flex-col h-full w-full" animateEntrance={false}>
           <div className="flex-1 min-h-0">
             {goals.length > 0 ? (
               <div className="space-y-2">
@@ -109,26 +111,26 @@ export function DashboardQuickStats({
                 })}
               </div>
             ) : (
-              <p className="text-(--text-muted) text-sm">Brak aktywnych celów</p>
+              <p className="text-(--text-muted) text-sm">{t('noActiveGoals')}</p>
             )}
           </div>
           <Link
             to="/habits"
             className="mt-auto pt-2 inline-block text-sm text-(--accent-cyan) hover:underline outline-none focus:outline-none"
           >
-            {goals.length > 0 ? 'Zobacz cele →' : 'Dodaj cel →'}
+            {goals.length > 0 ? t('viewGoals') : t('addGoal')}
           </Link>
         </Card>
       </motion.div>
       <motion.div variants={getDashboardTileVariants(reduceMotion, TILE_BASE + 3)} className="min-w-0 flex">
-        <Card title="Nawyki dziś" className="border-(--accent-green)/20 p-3 flex flex-col h-full w-full" animateEntrance={false}>
+        <Card title={t('habitsToday')} className="border-(--accent-green)/20 p-3 flex flex-col h-full w-full" animateEntrance={false}>
           <div className="flex-1 min-h-0">
             {habitsToday.total > 0 ? (
               <>
                 <p className="text-xl sm:text-2xl font-bold text-(--accent-green) font-gaming drop-shadow-[0_0_10px_rgba(0,255,157,0.3)]">
                   {habitsToday.done}/{habitsToday.total}
                 </p>
-                <p className="text-xs sm:text-sm text-(--text-muted) mt-1">odznaczonych dziś</p>
+                <p className="text-xs sm:text-sm text-(--text-muted) mt-1">{t('checkedOffToday')}</p>
                 <div className="mt-2 h-1.5 rounded-full bg-(--bg-dark) overflow-hidden">
                   <div
                     className="h-full rounded-full bg-(--accent-green) transition-all"
@@ -137,14 +139,14 @@ export function DashboardQuickStats({
                 </div>
               </>
             ) : (
-              <p className="text-(--text-muted) text-sm">Brak nawyków</p>
+              <p className="text-(--text-muted) text-sm">{t('noHabits')}</p>
             )}
           </div>
           <Link
             to="/habits"
             className="mt-auto pt-2 inline-block text-sm text-(--accent-cyan) hover:underline outline-none focus:outline-none"
           >
-            Zobacz nawyki →
+            {t('viewHabits')}
           </Link>
         </Card>
       </motion.div>

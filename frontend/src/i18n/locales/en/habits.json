@@ -1,0 +1,213 @@
+{
+  "header": {
+    "title": "HABITS & GOALS",
+    "subtitleDemo": "Sample data",
+    "subtitleNormal": "Track your habits and reach your goals"
+  },
+  "checkInStatus": {
+    "done": "Done",
+    "missed": "Missed",
+    "skipped": "Excused"
+  },
+  "schedule": {
+    "label": {
+      "daily": "Daily",
+      "weekdays": "Selected weekdays",
+      "weekly": "X times a week",
+      "monthly": "X times a month"
+    },
+    "noDays": "no days",
+    "planDaily": "Plan: daily",
+    "planWeekdays": "Plan: {{days}}",
+    "planWeekly": "Plan: {{count}}× weekly",
+    "planMonthly": "Plan: {{count}}× monthly"
+  },
+  "accents": {
+    "green": "Green",
+    "cyan": "Cyan",
+    "magenta": "Magenta",
+    "amber": "Amber",
+    "violet": "Violet",
+    "emerald": "Emerald",
+    "lime": "Lime",
+    "orange": "Orange",
+    "rose": "Rose",
+    "sky": "Sky blue",
+    "coral": "Coral",
+    "white": "White"
+  },
+  "common": {
+    "dayCount_one": "{{count}} day",
+    "dayCount_other": "{{count}} days"
+  },
+  "goalStatus": {
+    "completed": "Completed",
+    "close": "Close to goal"
+  },
+  "habitsCard": {
+    "cardTitle": "Habits",
+    "activeTab": "Active ({{count}})",
+    "archivedTab": "Archived ({{count}})",
+    "archivedHint": "Archived habits are view-only, you can restore them.",
+    "collapseAria": "Collapse habit details",
+    "expandAria": "Expand details: chart and streak record",
+    "collapseTitle": "Collapse details",
+    "expandTitle": "Details: chart and longest streak",
+    "dailyTargetLabel": "Goal: {{value}} {{unit}}/day",
+    "archivedAtLabel": "Archived: {{date}}",
+    "streakLabel": "Streak: {{days}}",
+    "restoreButton": "Restore",
+    "restoreTitle": "Restore habit",
+    "deletePermanentTitle": "Delete permanently",
+    "editTitle": "Edit",
+    "archiveTitle": "Archive habit",
+    "lastNDaysLabel": "Last {{count}} days",
+    "tapDayHint": "Tap a day",
+    "clickDayHint": "Click a day to mark completion",
+    "gridAriaLabel": "Marking habit days",
+    "sliderSrLabel": "Slide right to see older days (current window on the left of the slider)",
+    "sliderTitle": "Right — older days; left — last 10 days",
+    "scrollHint": "Swipe left to see older days",
+    "stats30dLabel": "30 days",
+    "avgValueLabel": "avg.\u00a0{{value}}{{unit}}",
+    "addHabitButton": "Add habit",
+    "emptyArchived": "No archived habits.",
+    "emptyActive": "You don't have any active habits yet."
+  },
+  "detail": {
+    "recordStreak": "Streak record: {{days}}",
+    "trendLabel": "30-day trend vs. the previous 30 days:",
+    "chartLabel": "Chart",
+    "chartOption": {
+      "d30": "Last 30 days",
+      "d90": "Last 90 days",
+      "month": "This month",
+      "year": "Last year (months)",
+      "all": "Entire history"
+    },
+    "weeklyAggregatedHint": "Long history: chart shown by weeks (average), above {{count}} days.",
+    "tooltip": {
+      "completion": "{{pct}}% completion",
+      "dayValue": "{{value}}{{unit}} (day)",
+      "rollingWindow": "{{done}}/{{total}} days in window",
+      "yearAvgMeasurable": "average daily completion in the month",
+      "yearAvgBinary": "average: % of days with an entry in the month",
+      "weekAvgMeasurable": "average daily completion in the week",
+      "weekAvgBinary": "average of the binary window in the week",
+      "seriesName": "Completion"
+    },
+    "monthCalendar": {
+      "summary": "Month calendar",
+      "monthLabel": "Month",
+      "realization": "Completion",
+      "missed": "Missed",
+      "skippedShort": "Excus.",
+      "planned": "Planned",
+      "noEntry": "no entry",
+      "legendDone": "Done",
+      "legendMissed": "Missed",
+      "legendSkipped": "Excused",
+      "legendEmpty": "No entry"
+    },
+    "weekday": {
+      "sectionTitle": "Weekdays",
+      "bestPrefix": "best on {{day}}",
+      "statsAriaLabel": "Average completion by weekday",
+      "countTitle_one": "In history: {{count}} time on {{day}}",
+      "countTitle_other": "In history: {{count}} times on {{day}}"
+    }
+  },
+  "dayEditor": {
+    "entryForDate": "Entry for {{date}}",
+    "dayStatusLabel": "Day status",
+    "valueLabel": "Value",
+    "useTargetButton": "Use daily goal",
+    "noteLabel": "Note",
+    "notePlaceholder": "e.g. energy, context, obstacles",
+    "save": "Save",
+    "removeDay": "Remove day",
+    "close": "Close",
+    "checkedFallback": "checked"
+  },
+  "form": {
+    "nameLabel": "Name",
+    "namePlaceholder": "E.g. Running",
+    "categoryLabel": "Category",
+    "categoryPlaceholder": "e.g. Health",
+    "scheduleLabel": "Schedule",
+    "weeklyCountLabel": "How many times a week",
+    "weeklyCountPlaceholder": "e.g. 3",
+    "monthlyCountLabel": "How many times a month",
+    "monthlyCountPlaceholder": "e.g. 12",
+    "measurableTitle": "Measurable options",
+    "measurableHint": "Empty field = binary habit (yes/no click). Enter a unit or goal to log numbers and a progress bar.",
+    "unitLabel": "Unit",
+    "unitPlaceholder": "e.g. km, min",
+    "targetLabel": "Daily goal",
+    "targetPlaceholder": "optional",
+    "colorLabel": "Habit color",
+    "colorGroupAriaNew": "New habit color",
+    "colorGroupAriaEdit": "Habit color",
+    "submitAdd": "Add habit",
+    "submitSave": "Save",
+    "cancel": "Cancel",
+    "closeAria": "Close",
+    "mobileNewTitle": "New habit",
+    "mobileNewSubtitle": "Add a habit to track",
+    "desktopNewTitle": "New habit",
+    "mobileEditTitle": "Edit habit"
+  },
+  "goalForm": {
+    "nameLabel": "Name",
+    "namePlaceholder": "E.g. Read 12 books",
+    "currentLabel": "Current",
+    "targetLabel": "Goal",
+    "targetPlaceholder": "e.g. 12",
+    "unitLabel": "Unit",
+    "unitPlaceholder": "e.g. books, km",
+    "submitAdd": "Add goal",
+    "cancel": "Cancel",
+    "closeAria": "Close",
+    "mobileNewTitle": "New goal",
+    "mobileNewSubtitle": "Set a goal to track progress",
+    "desktopNewTitle": "New goal"
+  },
+  "goalsCard": {
+    "cardTitle": "Goals",
+    "activeTab": "Active ({{count}})",
+    "completedTab": "Completed ({{count}})",
+    "nameLabel": "Name",
+    "targetLabel": "Goal",
+    "unitLabel": "Unit",
+    "unitPlaceholder": "e.g. km, zł, book",
+    "progressLabel": "Progress (current)",
+    "save": "Save",
+    "cancel": "Cancel",
+    "progressSummary": "{{current}} / {{target}}{{unit}}",
+    "remainingSuffix": " · Remaining: {{remaining}}{{unit}}",
+    "achievedSuffix": " · Goal reached!",
+    "editTitle": "Edit goal",
+    "deleteTitle": "Delete goal",
+    "addGoalButton": "Add goal",
+    "emptyCompleted": "No completed goals.",
+    "emptyActive": "No active goals."
+  },
+  "confirm": {
+    "archiveTitle": "Archive habit?",
+    "archiveDescription": "The habit won't be in the active list, but its history stays in the database.",
+    "archiveConfirmLabel": "Archive",
+    "deletePermanentTitle": "Delete permanently?",
+    "deletePermanentDescription": "This habit and its entire history will be permanently deleted. This action cannot be undone.",
+    "deletePermanentConfirmLabel": "Delete permanently",
+    "deleteGoalTitle": "Delete goal?",
+    "deleteGoalDescription": "The goal will be permanently removed from the list. This action cannot be undone.",
+    "deleteCompletedGoalTitle": "Delete completed goal?",
+    "deleteCompletedGoalDescription": "This goal has been completed. Deleting it is irreversible.",
+    "deleteConfirmLabel": "Delete"
+  },
+  "toast": {
+    "goalCompleted": "Goal completed: {{name}}",
+    "progressAdded": "Progress added · {{name}}",
+    "undo": "Undo"
+  }
+}

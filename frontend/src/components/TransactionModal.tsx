@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { X } from 'lucide-react'
 import { ModalShell } from './ModalShell'
 import { ExpenseCategoryPicker, DEFAULT_NEW_EXPENSE_CATEGORY_COLOR } from './finance/ExpenseCategoryPicker'
@@ -46,6 +47,7 @@ export function TransactionModal({
   submitLabel,
   title,
 }: TransactionModalProps) {
+  const { t } = useTranslation('finances')
   const initialDataKey =
     initialData == null
       ? 'new'
@@ -123,7 +125,7 @@ export function TransactionModal({
     const amt = parseFloat(normalized)
     if (!f.name.trim() || isNaN(amt)) return
     if (!isPaymentMethod(f.paymentMethod)) {
-      alert('Wybierz sposób płatności: karta lub gotówka.')
+      alert(t('transactionModal.selectPaymentAlert'))
       return
     }
     try {
@@ -139,7 +141,7 @@ export function TransactionModal({
       onClose()
     } catch (err) {
       console.error(err)
-      alert(err instanceof Error ? err.message : 'Nie udało się zapisać')
+      alert(err instanceof Error ? err.message : t('transactionModal.saveFailedAlert'))
     }
   }
 
@@ -153,12 +155,12 @@ export function TransactionModal({
     >
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-bold text-(--text-primary) font-gaming">
-          {title ?? (type === 'income' ? 'Nowy przychód' : 'Nowy wydatek')}
+          {title ?? (type === 'income' ? t('transactionModal.newIncomeTitle') : t('transactionModal.newExpenseTitle'))}
         </h3>
         <button
           onClick={onClose}
           className="p-2 rounded-lg hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-(--text-primary) transition-colors"
-          aria-label="Zamknij"
+          aria-label={t('common:close')}
         >
           <X className="w-5 h-5" />
         </button>
@@ -167,7 +169,7 @@ export function TransactionModal({
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-base text-(--text-muted) font-gaming mb-1">
-            {type === 'income' ? 'Źródło' : 'Nazwa'}
+            {type === 'income' ? t('transactionModal.sourceLabel') : t('transactionModal.nameLabel')}
           </label>
           <input
             type="text"
@@ -179,7 +181,7 @@ export function TransactionModal({
           />
         </div>
         <div>
-          <label className="block text-base text-(--text-muted) font-gaming mb-1">Data</label>
+          <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('transactionModal.dateLabel')}</label>
           <input
             type="date"
             value={date}
@@ -188,7 +190,7 @@ export function TransactionModal({
           />
         </div>
         <div>
-          <label className="block text-base text-(--text-muted) font-gaming mb-1">Kwota (zł)</label>
+          <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('transactionModal.amountLabel')}</label>
           <input
             type="number"
             step="0.01"
@@ -222,14 +224,14 @@ export function TransactionModal({
             onClick={onClose}
             className="px-4 py-2 rounded-lg border border-(--border) text-(--text-muted) font-gaming hover:text-(--text-primary)"
           >
-            Anuluj
+            {t('common:cancel')}
           </button>
           <button
             type="submit"
             disabled={!isPaymentMethod(paymentMethod)}
             className="px-4 py-2 rounded-lg bg-(--accent-cyan) text-(--bg-dark) font-gaming hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {submitLabel ?? 'Zapisz'}
+            {submitLabel ?? t('common:save')}
           </button>
         </div>
       </form>

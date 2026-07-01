@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { StickyNote, Calendar, GraduationCap, Target } from 'lucide-react'
 import { dashboardSectionStaggerVariants, getDashboardTileVariants } from '../../lib/dashboardMotion'
 
@@ -15,6 +16,7 @@ const linkShell =
   'group relative rounded-lg border border-(--border) bg-(--bg-card) p-5 transition-[border-color,box-shadow] duration-200 ease-out hover:border-(--accent-cyan)/40 hover:shadow-[0_0_20px_rgba(0,229,255,0.08)] overflow-hidden block'
 
 export function DashboardQuickLinks({ notesCount, habitsCount, reduceMotion }: DashboardQuickLinksProps) {
+  const { t } = useTranslation('dashboard')
   return (
     <motion.div
       variants={dashboardSectionStaggerVariants}
@@ -24,32 +26,32 @@ export function DashboardQuickLinks({ notesCount, habitsCount, reduceMotion }: D
         <Link to="/notes" className={linkShell}>
           <div className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-(--accent-cyan)/40 to-transparent" />
           <StickyNote className="w-8 h-8 text-(--accent-cyan) mb-2 group-hover:drop-shadow-[0_0_8px_rgba(0,229,255,0.5)]" />
-          <p className="text-base font-semibold text-(--text-primary) font-gaming">Notatki</p>
-          <p className="text-sm text-(--text-muted) mt-0.5">{notesCount} notatek</p>
+          <p className="text-base font-semibold text-(--text-primary) font-gaming">{t('linkNotes')}</p>
+          <p className="text-sm text-(--text-muted) mt-0.5">{t('notesCount', { count: notesCount })}</p>
         </Link>
       </motion.div>
       <motion.div variants={getDashboardTileVariants(reduceMotion, LINK_BASE + 1)} className="min-w-0">
         <Link to="/calendar" className={linkShell}>
           <div className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-(--accent-cyan)/40 to-transparent" />
           <Calendar className="w-8 h-8 text-(--accent-cyan) mb-2 group-hover:drop-shadow-[0_0_8px_rgba(0,229,255,0.5)]" />
-          <p className="text-base font-semibold text-(--text-primary) font-gaming">Kalendarz</p>
-          <p className="text-sm text-(--text-muted) mt-0.5">Wydarzenia</p>
+          <p className="text-base font-semibold text-(--text-primary) font-gaming">{t('linkCalendar')}</p>
+          <p className="text-sm text-(--text-muted) mt-0.5">{t('linkCalendarDesc')}</p>
         </Link>
       </motion.div>
       <motion.div variants={getDashboardTileVariants(reduceMotion, LINK_BASE + 2)} className="min-w-0">
         <Link to="/learning" className={linkShell}>
           <div className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-(--accent-cyan)/40 to-transparent" />
           <GraduationCap className="w-8 h-8 text-(--accent-cyan) mb-2 group-hover:drop-shadow-[0_0_8px_rgba(0,229,255,0.5)]" />
-          <p className="text-base font-semibold text-(--text-primary) font-gaming">Nauka</p>
-          <p className="text-sm text-(--text-muted) mt-0.5">Sesje, kursy, projekty</p>
+          <p className="text-base font-semibold text-(--text-primary) font-gaming">{t('linkLearning')}</p>
+          <p className="text-sm text-(--text-muted) mt-0.5">{t('linkLearningDesc')}</p>
         </Link>
       </motion.div>
       <motion.div variants={getDashboardTileVariants(reduceMotion, LINK_BASE + 3)} className="min-w-0">
         <Link to="/habits" className={linkShell}>
           <div className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-(--accent-cyan)/40 to-transparent" />
           <Target className="w-8 h-8 text-(--accent-cyan) mb-2 group-hover:drop-shadow-[0_0_8px_rgba(0,229,255,0.5)]" />
-          <p className="text-base font-semibold text-(--text-primary) font-gaming">Nawyki</p>
-          <p className="text-sm text-(--text-muted) mt-0.5">{habitsCount} nawyków</p>
+          <p className="text-base font-semibold text-(--text-primary) font-gaming">{t('linkHabits')}</p>
+          <p className="text-sm text-(--text-muted) mt-0.5">{t('habitsCount', { count: habitsCount })}</p>
         </Link>
       </motion.div>
     </motion.div>

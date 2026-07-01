@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Card } from '../components/Card'
 import {
   AreaChart,
@@ -36,8 +37,6 @@ import { DashboardQuickLinks } from '../components/dashboard/DashboardQuickLinks
 import { AiWeeklyReport } from '../components/dashboard/AiWeeklyReport'
 import { useIsMobile } from '../hooks/useIsMobile'
 
-const monthNames = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru']
-
 function DonutTooltip(props: { active?: boolean; payload?: readonly unknown[]; total: number }) {
   const { active, payload, total } = props
   if (!active || !payload?.length) return null
@@ -69,9 +68,14 @@ const currentYear = now.getFullYear()
 const currentMonth = now.getMonth()
 
 export function Dashboard() {
+  const { t, i18n } = useTranslation('dashboard')
   const navigate = useNavigate()
   const reduceMotion = useReducedMotion()
   const useApiFinance = useFinanceUsesApi()
+  const monthNames = useMemo(() => {
+    const locale = i18n.language === 'pl' ? 'pl-PL' : 'en-US'
+    return Array.from({ length: 12 }, (_, m) => new Date(2000, m, 1).toLocaleDateString(locale, { month: 'short' }))
+  }, [i18n.language])
   const demoData = useDemoData()
   const { getColor: getCategoryColor } = useFinanceCategories()
   const {
@@ -98,14 +102,24 @@ export function Dashboard() {
   const effectiveIncome = useApiFinance ? qIncome : (demoData?.income ?? DEMO_INCOME)
   const loading = useApiFinance ? financeLoading : false
 
-  const { chartFilteredData, kpiPeriodLabel, emptyCategoryMessage, chartData } = useDashboardFinance(
+  const { chartFilteredData, kpiPeriodLabel, emptyCategoryPeriod, chartData } = useDashboardFinance(
     effectiveExpenses,
     effectiveScheduled,
     effectiveIncome,
     selectedMonth,
     selectedYear,
-    chartPeriod
+    chartPeriod,
+    i18n.language
   )
+
+  const emptyCategoryMessage =
+    emptyCategoryPeriod.type === 'year'
+      ? t('emptyExpensesYear', { year: emptyCategoryPeriod.year })
+      : emptyCategoryPeriod.type === 'quarter'
+        ? t('emptyExpensesQuarter', { quarter: emptyCategoryPeriod.quarter, year: emptyCategoryPeriod.year })
+        : emptyCategoryPeriod.type === 'month'
+          ? t('emptyExpensesMonth', { month: emptyCategoryPeriod.month, year: emptyCategoryPeriod.year })
+          : t('emptyExpensesDefault')
 
   const upcomingEvents = useMemo(() => {
     const today = new Date().toISOString().split('T')[0]
@@ -159,10 +173,10 @@ export function Dashboard() {
       >
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-(--text-primary) font-gaming tracking-wider">
-            DASHBOARD
+            {t('title')}
           </h1>
           <p className="text-sm sm:text-base text-(--text-muted) mt-1 font-gaming tracking-wide">
-            {!useApiFinance ? 'Dane przykładowe' : 'Przegląd Twoich finansów i aktywności'}
+            {!useApiFinance ? t('demoData') : t('subtitle')}
           </p>
         </div>
         <MonthSelector />
@@ -175,7 +189,7 @@ export function Dashboard() {
             animateEntrance={false}
             className="border-(--accent-green)/20 max-md:p-4 hover:border-(--accent-green)/40 hover:shadow-[0_0_15px_rgba(0,255,157,0.08)]"
           >
-            <p className="truncate text-sm text-(--text-muted) font-gaming">Przychody</p>
+            <p className="truncate text-sm text-(--text-muted) font-gaming">{t('income')}</p>
             <p className="truncate text-sm text-(--text-muted) font-gaming">{kpiPeriodLabel}</p>
             <p className="text-base sm:text-2xl font-bold text-(--accent-green) mt-1 font-gaming drop-shadow-[0_0_8px_rgba(0,255,157,0.3)] break-all leading-tight">
               {chartFilteredData.incomeTotal.toLocaleString('pl-PL')} <span className="text-xs sm:text-base">zł</span>
@@ -187,7 +201,7 @@ export function Dashboard() {
             animateEntrance={false}
             className="border-(--accent-magenta)/20 max-md:p-4 hover:border-(--accent-magenta)/40 hover:shadow-[0_0_15px_rgba(255,0,212,0.08)]"
           >
-            <p className="truncate text-sm text-(--text-muted) font-gaming">Wydatki</p>
+            <p className="truncate text-sm text-(--text-muted) font-gaming">{t('expenses')}</p>
             <p className="truncate text-sm text-(--text-muted) font-gaming">{kpiPeriodLabel}</p>
             <p className="text-base sm:text-2xl font-bold text-(--accent-magenta) mt-1 font-gaming drop-shadow-[0_0_8px_rgba(255,0,212,0.3)] break-all leading-tight">
               {chartFilteredData.expensesTotal.toLocaleString('pl-PL')} <span className="text-xs sm:text-base">zł</span>
@@ -203,7 +217,7 @@ export function Dashboard() {
                 : 'border-[#e74c3c]/30 hover:border-[#e74c3c]/50'
             }`}
           >
-            <p className="truncate text-sm text-(--text-muted) font-gaming">Bilans</p>
+            <p className="truncate text-sm text-(--text-muted) font-gaming">{t('balance')}</p>
             <p className="truncate text-sm text-(--text-muted) font-gaming">{kpiPeriodLabel}</p>
             <p
               className={`text-base sm:text-2xl font-bold mt-1 font-gaming break-all leading-tight ${
@@ -225,7 +239,7 @@ export function Dashboard() {
           <Card
             animateEntrance={false}
             className="flex h-full min-h-0 w-full flex-col max-md:p-4"
-            title="Wydatki vs Przychody"
+            title={t('expensesVsIncome')}
             action={chartPeriod ? <ChartPeriodSelector /> : undefined}
           >
           <div className="flex min-h-0 w-full flex-1 flex-col justify-end">
@@ -271,7 +285,7 @@ export function Dashboard() {
                   strokeWidth={2}
                   fillOpacity={1}
                   fill="url(#colorWydatki)"
-                  name="Wydatki"
+                  name={t('expenses')}
                 />
                 <Area
                   type="monotone"
@@ -280,7 +294,7 @@ export function Dashboard() {
                   strokeWidth={2}
                   fillOpacity={1}
                   fill="url(#colorPrzychody)"
-                  name="Przychody"
+                  name={t('income')}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -292,20 +306,21 @@ export function Dashboard() {
           <Card
             animateEntrance={false}
             className="flex h-full min-h-0 w-full flex-col max-md:p-4"
-            title={`Wydatki po kategoriach (${
-            chartPeriod?.period.type === 'quarter'
-              ? `Q${chartPeriod.period.quarter} ${chartPeriod.period.year}`
-              : chartPeriod?.period.type === 'year'
-                ? chartPeriod.period.year
-                : chartPeriod?.period.type === 'month'
-                  ? `${monthNames[chartPeriod.period.month]} ${chartPeriod.period.year}`
-                  : `${monthNames[selectedMonth]} ${selectedYear}`
-          })`}
+            title={t('expensesByCategory', {
+              period:
+                chartPeriod?.period.type === 'quarter'
+                  ? `Q${chartPeriod.period.quarter} ${chartPeriod.period.year}`
+                  : chartPeriod?.period.type === 'year'
+                    ? chartPeriod.period.year
+                    : chartPeriod?.period.type === 'month'
+                      ? `${monthNames[chartPeriod.period.month]} ${chartPeriod.period.year}`
+                      : `${monthNames[selectedMonth]} ${selectedYear}`,
+            })}
           action={chartPeriod ? <ChartPeriodSelector /> : undefined}
         >
           {!isMobile && (
             <p className="mb-3 shrink-0 text-sm text-(--text-muted) font-gaming tracking-wide">
-              Kliknij segment kategorii, aby zobaczyć transakcje w tym okresie.
+              {t('clickCategoryHint')}
             </p>
           )}
           <div className="relative w-full shrink-0 h-[200px] sm:h-[280px] [&_*:focus]:outline-none [&_*:focus-visible]:outline-none">
@@ -352,7 +367,7 @@ export function Dashboard() {
                     <p className="text-sm sm:text-lg font-bold text-(--accent-cyan) font-gaming drop-shadow-[0_0_8px_rgba(0,229,255,0.3)] leading-tight">
                       {chartFilteredData.expensesTotal.toLocaleString('pl-PL')} zł
                     </p>
-                    <p className="text-xs text-(--text-muted) font-gaming mt-0.5">łącznie</p>
+                    <p className="text-xs text-(--text-muted) font-gaming mt-0.5">{t('total')}</p>
                   </div>
                 </div>
               </>

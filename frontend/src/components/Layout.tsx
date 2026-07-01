@@ -11,6 +11,7 @@ import { GlobalQuickTransaction } from './GlobalQuickTransaction'
 import { GlobalQuickNote } from './GlobalQuickNote'
 import { GlobalQuickTodo } from './GlobalQuickTodo'
 import { Onboarding } from './Onboarding'
+import { SettingsModal } from './SettingsModal'
 
 interface LayoutProps {
   children: ReactNode
@@ -41,6 +42,7 @@ export function Layout({ children }: LayoutProps) {
       <GlobalQuickTodo />
       <GlobalSearch />
       <Onboarding />
+      <SettingsModal />
       <Sidebar />
       <MobileDrawer open={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">

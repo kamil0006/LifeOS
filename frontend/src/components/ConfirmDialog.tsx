@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { X } from 'lucide-react'
 import { ModalShell } from './ModalShell'
 
@@ -25,16 +26,18 @@ export function ConfirmDialog({
   emphasis,
   variant = 'neutral',
   confirmLabel,
-  cancelLabel = 'Anuluj',
+  cancelLabel,
   alertOnly = false,
   onConfirm,
   zBackdrop = 10020,
   zPanel = 10021,
 }: ConfirmDialogProps) {
+  const { t } = useTranslation('common')
   const [busy, setBusy] = useState(false)
 
   const danger = variant === 'danger'
-  const primaryLabel = confirmLabel ?? (alertOnly ? 'OK' : 'Potwierdź')
+  const primaryLabel = confirmLabel ?? (alertOnly ? t('ok') : t('confirm'))
+  const resolvedCancelLabel = cancelLabel ?? t('cancel')
 
   const handleConfirm = async () => {
     if (busy) return
@@ -69,7 +72,7 @@ export function ConfirmDialog({
           type="button"
           onClick={onClose}
           className="shrink-0 rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-(--bg-card-hover) hover:text-(--text-primary)"
-          aria-label="Zamknij"
+          aria-label={t('close')}
         >
           <X className="h-5 w-5" />
         </button>
@@ -88,7 +91,7 @@ export function ConfirmDialog({
             disabled={busy}
             className="w-full rounded-lg border border-(--border) py-2.5 font-gaming text-(--text-muted) transition-colors hover:bg-(--bg-card-hover) sm:min-w-28 sm:w-auto"
           >
-            {cancelLabel}
+            {resolvedCancelLabel}
           </button>
         )}
         <button

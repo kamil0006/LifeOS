@@ -1,4 +1,5 @@
 import { useState, memo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Card } from '../../components/Card'
 import { LearningCard } from '../../components/learning/LearningCard'
 import { LearningFormShell } from '../../components/learning/LearningFormShell'
@@ -37,6 +38,7 @@ function getDaysLeft(expiryDate?: string): number | null {
 }
 
 function CertStatusBadge({ cert }: { cert: Certification }) {
+  const { t } = useTranslation('learning')
   const status = getCertStatus(cert)
   const daysLeft = getDaysLeft(cert.expiryDate)
 
@@ -44,7 +46,7 @@ function CertStatusBadge({ cert }: { cert: Certification }) {
     return (
       <span className="flex items-center gap-1 px-2 py-0.5 rounded text-xs font-gaming bg-[#e74c3c]/10 text-[#e74c3c] border border-[#e74c3c]/30">
         <ShieldOff className="w-3 h-3" />
-        Wygasły
+        {t('certificates.expired')}
       </span>
     )
   }
@@ -52,14 +54,14 @@ function CertStatusBadge({ cert }: { cert: Certification }) {
     return (
       <span className="flex items-center gap-1 px-2 py-0.5 rounded text-xs font-gaming bg-(--accent-amber)/10 text-(--accent-amber) border border-(--accent-amber)/30">
         <ShieldAlert className="w-3 h-3" />
-        Wygasa za {daysLeft} dni
+        {t('certificates.expiringIn', { days: daysLeft })}
       </span>
     )
   }
   return (
     <span className="flex items-center gap-1 px-2 py-0.5 rounded text-xs font-gaming bg-(--accent-green)/10 text-(--accent-green) border border-(--accent-green)/30">
       <ShieldCheck className="w-3 h-3" />
-      Ważny
+      {t('certificates.valid')}
     </span>
   )
 }
@@ -71,6 +73,7 @@ interface CertAddFormProps {
 }
 
 const CertAddForm = memo(function CertAddForm({ onAdd }: CertAddFormProps) {
+  const { t } = useTranslation('learning')
   const [name, setName] = useState('')
   const [issuer, setIssuer] = useState('')
   const [date, setDate] = useState(() => new Date().toISOString().split('T')[0])
@@ -104,7 +107,7 @@ const CertAddForm = memo(function CertAddForm({ onAdd }: CertAddFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className={learningLabelClass}>Nazwa *</label>
+        <label className={learningLabelClass}>{t('certificates.name')}</label>
         <input
           type="text"
           value={name}
@@ -113,7 +116,7 @@ const CertAddForm = memo(function CertAddForm({ onAdd }: CertAddFormProps) {
         />
       </div>
       <div>
-        <label className={learningLabelClass}>Wystawca *</label>
+        <label className={learningLabelClass}>{t('certificates.issuer')}</label>
         <input
           type="text"
           value={issuer}
@@ -123,7 +126,7 @@ const CertAddForm = memo(function CertAddForm({ onAdd }: CertAddFormProps) {
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label className={learningLabelClass}>Data zdobycia</label>
+          <label className={learningLabelClass}>{t('certificates.obtainedDate')}</label>
           <input
             type="date"
             value={date}
@@ -133,7 +136,7 @@ const CertAddForm = memo(function CertAddForm({ onAdd }: CertAddFormProps) {
           />
         </div>
         <div>
-          <label className={learningLabelClass}>Data ważności (opcjonalnie)</label>
+          <label className={learningLabelClass}>{t('certificates.expiryDate')}</label>
           <input
             type="date"
             value={expiryDate}
@@ -144,7 +147,7 @@ const CertAddForm = memo(function CertAddForm({ onAdd }: CertAddFormProps) {
         </div>
       </div>
       <div>
-        <label className={learningLabelClass}>URL certyfikatu (opcjonalnie)</label>
+        <label className={learningLabelClass}>{t('certificates.certUrl')}</label>
         <input
           type="url"
           value={url}
@@ -153,7 +156,7 @@ const CertAddForm = memo(function CertAddForm({ onAdd }: CertAddFormProps) {
         />
       </div>
       <div>
-        <label className={learningLabelClass}>Link weryfikacji (opcjonalnie)</label>
+        <label className={learningLabelClass}>{t('certificates.verificationUrl')}</label>
         <input
           type="url"
           value={verificationUrl}
@@ -163,7 +166,7 @@ const CertAddForm = memo(function CertAddForm({ onAdd }: CertAddFormProps) {
       </div>
       {expiryDate && (
         <div>
-          <label className={learningLabelClass}>Powiadom za (dni przed)</label>
+          <label className={learningLabelClass}>{t('certificates.reminderDays')}</label>
           <input
             type="text"
             inputMode="numeric"
@@ -180,7 +183,7 @@ const CertAddForm = memo(function CertAddForm({ onAdd }: CertAddFormProps) {
           disabled={!name.trim() || !issuer.trim()}
         >
           <Plus className="h-4 w-4" />
-          Dodaj
+          {t('common.add')}
         </button>
       </div>
     </form>
@@ -196,6 +199,7 @@ interface EditCertModalProps {
 }
 
 function EditCertModal({ cert, onSave, onClose }: EditCertModalProps) {
+  const { t } = useTranslation('learning')
   const [editName, setEditName] = useState(cert.name)
   const [editIssuer, setEditIssuer] = useState(cert.issuer)
   const [editDate, setEditDate] = useState(cert.date)
@@ -223,10 +227,10 @@ function EditCertModal({ cert, onSave, onClose }: EditCertModalProps) {
   }
 
   return (
-    <LearningModal isOpen onClose={onClose} title="Edytuj certyfikat">
+    <LearningModal isOpen onClose={onClose} title={t('certificates.editTitle')}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className={learningLabelClass}>Nazwa</label>
+          <label className={learningLabelClass}>{t('certificates.nameEdit')}</label>
           <input
             type="text"
             value={editName}
@@ -236,7 +240,7 @@ function EditCertModal({ cert, onSave, onClose }: EditCertModalProps) {
           />
         </div>
         <div>
-          <label className={learningLabelClass}>Wystawca</label>
+          <label className={learningLabelClass}>{t('certificates.issuerEdit')}</label>
           <input
             type="text"
             value={editIssuer}
@@ -246,7 +250,7 @@ function EditCertModal({ cert, onSave, onClose }: EditCertModalProps) {
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className={learningLabelClass}>Data zdobycia</label>
+            <label className={learningLabelClass}>{t('certificates.obtainedDate')}</label>
             <input
               type="date"
               value={editDate}
@@ -256,7 +260,7 @@ function EditCertModal({ cert, onSave, onClose }: EditCertModalProps) {
             />
           </div>
           <div>
-            <label className={learningLabelClass}>Data ważności</label>
+            <label className={learningLabelClass}>{t('certificates.expiryDateEdit')}</label>
             <input
               type="date"
               value={editExpiryDate}
@@ -267,7 +271,7 @@ function EditCertModal({ cert, onSave, onClose }: EditCertModalProps) {
           </div>
         </div>
         <div>
-          <label className={learningLabelClass}>URL certyfikatu</label>
+          <label className={learningLabelClass}>{t('certificates.certUrlEdit')}</label>
           <input
             type="url"
             value={editUrl}
@@ -276,7 +280,7 @@ function EditCertModal({ cert, onSave, onClose }: EditCertModalProps) {
           />
         </div>
         <div>
-          <label className={learningLabelClass}>Link weryfikacji</label>
+          <label className={learningLabelClass}>{t('certificates.verificationUrlEdit')}</label>
           <input
             type="url"
             value={editVerificationUrl}
@@ -286,7 +290,7 @@ function EditCertModal({ cert, onSave, onClose }: EditCertModalProps) {
         </div>
         {editExpiryDate && (
           <div>
-            <label className={learningLabelClass}>Powiadom za (dni przed wygaśnięciem)</label>
+            <label className={learningLabelClass}>{t('certificates.reminderDaysEdit')}</label>
             <input
               type="text"
               inputMode="numeric"
@@ -298,10 +302,10 @@ function EditCertModal({ cert, onSave, onClose }: EditCertModalProps) {
         )}
         <div className={learningFormActionsClass}>
           <button type="button" onClick={onClose} className={learningSecondaryBtnClass}>
-            Anuluj
+            {t('common.cancel')}
           </button>
           <button type="submit" className={learningPrimaryBtnClass}>
-            Zapisz
+            {t('common.save')}
           </button>
         </div>
       </form>
@@ -312,6 +316,7 @@ function EditCertModal({ cert, onSave, onClose }: EditCertModalProps) {
 // ─── MAIN PAGE ─────────────────────────────────────────────────────────────────
 
 export function LearningCertificates() {
+  const { t } = useTranslation('learning')
   const learning = useLearning()
   const [editingCert, setEditingCert] = useState<Certification | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
@@ -326,24 +331,24 @@ export function LearningCertificates() {
   const expired = sorted.filter((c) => getCertStatus(c) === 'wygasly')
   const valid = sorted.filter((c) => getCertStatus(c) === 'wazny')
 
-  const certGroups: { key: string; label: string; items: Certification[] }[] = [
-    { key: 'expiring', label: 'Wygasają wkrótce', items: expiring },
-    { key: 'valid', label: 'Ważne', items: valid },
-    { key: 'expired', label: 'Wygasłe', items: expired },
+  const certGroups: { key: string; labelKey: string; items: Certification[] }[] = [
+    { key: 'expiring', labelKey: 'groupExpiring', items: expiring },
+    { key: 'valid', labelKey: 'groupValid', items: valid },
+    { key: 'expired', labelKey: 'groupExpired', items: expired },
   ]
 
   return (
     <div className="space-y-6">
       {sorted.length === 0 ? (
-        <Card title="Lista certyfikatów">
-          <p className="text-base text-(--text-muted)">Brak certyfikatów. Dodaj pierwszy.</p>
+        <Card title={t('certificates.emptyList')}>
+          <p className="text-base text-(--text-muted)">{t('certificates.emptyMessage')}</p>
         </Card>
       ) : (
         <div className="space-y-6">
           {certGroups.map((group) => {
             if (group.items.length === 0) return null
             return (
-              <Card key={group.key} title={group.label}>
+              <Card key={group.key} title={t(`certificates.${group.labelKey}`)}>
                 <div className="space-y-2">
                   {group.items.map((c) => (
                     <LearningCard
@@ -354,8 +359,8 @@ export function LearningCertificates() {
                         `${c.issuer} · ${c.date}`,
                         c.expiryDate
                           ? getCertStatus(c) === 'wygasly'
-                            ? `Wygasł: ${c.expiryDate}`
-                            : `Ważny do: ${c.expiryDate}`
+                            ? t('certificates.expiredLabel', { date: c.expiryDate })
+                            : t('certificates.validUntilLabel', { date: c.expiryDate })
                           : undefined,
                       ]}
                       quickActions={
@@ -364,17 +369,17 @@ export function LearningCertificates() {
                             <SafeExternalLink
                               href={c.verificationUrl}
                               className="flex items-center gap-1 px-2 py-1 rounded text-xs font-gaming text-(--accent-cyan) bg-(--accent-cyan)/10 hover:bg-(--accent-cyan)/20 transition-colors border border-(--accent-cyan)/20"
-                              title="Zweryfikuj certyfikat"
+                              title={t('certificates.verify')}
                             >
                               <ShieldCheck className="w-3 h-3" />
-                              Weryfikuj
+                              {t('certificates.verifyShort')}
                             </SafeExternalLink>
                           )}
                           {c.url && (
                             <SafeExternalLink
                               href={c.url}
                               className="p-1.5 rounded-lg text-(--text-muted) hover:text-(--accent-cyan) transition-colors"
-                              title="Otwórz certyfikat"
+                              title={t('certificates.openCertificate')}
                             >
                               <ExternalLink className="w-4 h-4" />
                             </SafeExternalLink>
@@ -396,13 +401,13 @@ export function LearningCertificates() {
         {!showAddForm && (
           <button type="button" onClick={() => setShowAddForm(true)} className={learningAddBtnClass}>
             <Plus className="h-4 w-4" />
-            Dodaj certyfikat
+            {t('certificates.addCertificate')}
           </button>
         )}
         <LearningFormShell
           isOpen={showAddForm}
           onClose={() => setShowAddForm(false)}
-          title="Nowy certyfikat"
+          title={t('certificates.addTitle')}
         >
           <CertAddForm
             onAdd={(c) => {

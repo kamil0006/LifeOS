@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, memo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Card } from '../../components/Card'
 import {
   AreaChart,
@@ -63,6 +64,7 @@ const SessionForm = memo(function SessionForm({
   onAddCategory,
   onRemoveCategory,
 }: SessionFormProps) {
+  const { t } = useTranslation('learning')
   const [date, setDate] = useState(() => new Date().toISOString().split('T')[0])
   const [minutes, setMinutes] = useState('')
   const [topic, setTopic] = useState('')
@@ -79,7 +81,7 @@ const SessionForm = memo(function SessionForm({
     onAdd({
       date,
       minutes: m,
-      topic: topic.trim() || 'Nauka',
+      topic: topic.trim() || t('overview.quickSession'),
       type,
       category: category || undefined,
       note: note.trim() || undefined,
@@ -103,7 +105,7 @@ const SessionForm = memo(function SessionForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
         <div className="w-full sm:w-auto">
-          <label className={learningLabelClass}>Data</label>
+          <label className={learningLabelClass}>{t('time.date')}</label>
           <input
             type="date"
             value={date}
@@ -113,23 +115,23 @@ const SessionForm = memo(function SessionForm({
           />
         </div>
         <div className="w-full sm:w-auto">
-          <label className={learningLabelClass}>Czas (min)</label>
+          <label className={learningLabelClass}>{t('time.minutes')}</label>
           <input
             type="text"
             inputMode="numeric"
             value={minutes}
             onChange={(e) => setMinutes(e.target.value.replace(/\D/g, ''))}
-            placeholder="np. 90"
+            placeholder={t('time.minutesPlaceholder')}
             className={`${learningFieldClass} sm:w-28`}
           />
         </div>
         <div className="w-full min-w-0 sm:flex-1 sm:min-w-[160px]">
-          <label className={learningLabelClass}>Temat</label>
+          <label className={learningLabelClass}>{t('time.topic')}</label>
           <input
             type="text"
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            placeholder="np. React hooks"
+            placeholder={t('time.topicPlaceholder')}
             className={learningFieldClass}
           />
         </div>
@@ -137,13 +139,13 @@ const SessionForm = memo(function SessionForm({
 
       <div>
         <div className="mb-2 flex items-center justify-between">
-          <label className={learningLabelClass}>Kategoria</label>
+          <label className={learningLabelClass}>{t('time.category')}</label>
           <button
             type="button"
             onClick={() => setShowCatManager((v) => !v)}
             className="text-sm text-(--text-muted) transition-colors hover:text-(--accent-cyan)"
           >
-            {showCatManager ? 'Zamknij' : 'Zarządzaj'}
+            {showCatManager ? t('common.closeCategories') : t('common.manageCategories')}
           </button>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -152,7 +154,7 @@ const SessionForm = memo(function SessionForm({
             onClick={() => setCategory('')}
             className={learningChipClass(category === '')}
           >
-            Bez kategorii
+            {t('common.noCategory')}
           </button>
           {sessionCategories.map((cat) => (
             <button
@@ -178,7 +180,7 @@ const SessionForm = memo(function SessionForm({
                     handleAddCategory()
                   }
                 }}
-                placeholder="Nowa kategoria"
+                placeholder={t('common.newCategory')}
                 className={learningFieldClass}
               />
               <button
@@ -188,7 +190,7 @@ const SessionForm = memo(function SessionForm({
                 className={`${learningSecondaryBtnClass} shrink-0`}
               >
                 <Plus className="h-4 w-4" />
-                Dodaj
+                {t('common.add')}
               </button>
             </div>
             {sessionCategories.length > 0 && (
@@ -206,7 +208,7 @@ const SessionForm = memo(function SessionForm({
                         if (category === cat) setCategory('')
                       }}
                       className="transition-colors hover:text-[#e74c3c]"
-                      aria-label={`Usuń kategorię ${cat}`}
+                      aria-label={t('common.removeCategoryAria', { name: cat })}
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -219,7 +221,7 @@ const SessionForm = memo(function SessionForm({
       </div>
 
       <div>
-        <label className={learningLabelClass}>Typ sesji</label>
+        <label className={learningLabelClass}>{t('time.sessionType')}</label>
         <div className="flex flex-wrap gap-2">
           {SESSION_TYPE_OPTIONS.map((opt) => (
             <button
@@ -229,14 +231,14 @@ const SessionForm = memo(function SessionForm({
               className={`${learningChipClass(type === opt.value)} flex items-center gap-1.5`}
             >
               <opt.icon className="h-3.5 w-3.5" />
-              {opt.label}
+              {t(`sessionType.${opt.value}`)}
             </button>
           ))}
         </div>
       </div>
 
       <div>
-        <label className={learningLabelClass}>Notatka (opcjonalnie)</label>
+        <label className={learningLabelClass}>{t('time.note')}</label>
         <input
           type="text"
           value={note}
@@ -250,7 +252,7 @@ const SessionForm = memo(function SessionForm({
         disabled={!minutes.trim() || parseInt(minutes, 10) <= 0}
       >
         <Plus className="h-4 w-4" />
-        Dodaj sesję
+        {t('overview.addSession')}
       </button>
     </form>
   )
@@ -267,6 +269,7 @@ interface QuickAddModalProps {
 }
 
 function QuickAddModal({ isOpen, minutes, sessionCategories, onAdd, onClose }: QuickAddModalProps) {
+  const { t } = useTranslation('learning')
   const [topic, setTopic] = useState('')
   const [type, setType] = useState<SessionType>('inne')
   const [category, setCategory] = useState('')
@@ -276,7 +279,7 @@ function QuickAddModal({ isOpen, minutes, sessionCategories, onAdd, onClose }: Q
     onAdd({
       date: new Date().toISOString().split('T')[0],
       minutes,
-      topic: topic.trim() || 'Nauka',
+      topic: topic.trim() || t('overview.quickSession'),
       type,
       category: category || undefined,
     })
@@ -287,19 +290,19 @@ function QuickAddModal({ isOpen, minutes, sessionCategories, onAdd, onClose }: Q
     <LearningModal isOpen={isOpen} onClose={onClose} title={`+ ${formatMinutes(minutes)}`}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className={learningLabelClass}>Temat</label>
+          <label className={learningLabelClass}>{t('time.topic')}</label>
           <input
             type="text"
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            placeholder="np. React hooks"
+            placeholder={t('time.topicPlaceholder')}
             autoFocus
             className={learningFieldClass}
           />
         </div>
         {sessionCategories.length > 0 && (
           <div>
-            <label className={learningLabelClass}>Kategoria</label>
+            <label className={learningLabelClass}>{t('time.category')}</label>
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
@@ -322,7 +325,7 @@ function QuickAddModal({ isOpen, minutes, sessionCategories, onAdd, onClose }: Q
           </div>
         )}
         <div>
-          <label className={learningLabelClass}>Typ</label>
+          <label className={learningLabelClass}>{t('time.sessionType')}</label>
           <div className="flex flex-wrap gap-2">
             {SESSION_TYPE_OPTIONS.map((opt) => (
               <button
@@ -332,17 +335,17 @@ function QuickAddModal({ isOpen, minutes, sessionCategories, onAdd, onClose }: Q
                 className={`${learningChipClass(type === opt.value)} flex items-center gap-1.5`}
               >
                 <opt.icon className="h-3.5 w-3.5" />
-                {opt.label}
+                {t(`sessionType.${opt.value}`)}
               </button>
             ))}
           </div>
         </div>
         <div className={learningFormActionsClass}>
           <button type="button" onClick={onClose} className={learningSecondaryBtnClass}>
-            Anuluj
+            {t('common.cancel')}
           </button>
           <button type="submit" className={learningPrimaryBtnClass}>
-            Dodaj
+            {t('common.add')}
           </button>
         </div>
       </form>
@@ -367,6 +370,7 @@ function EditSessionModal({
   onSave,
   onClose,
 }: EditSessionModalProps) {
+  const { t } = useTranslation('learning')
   const [date, setDate] = useState(session.date)
   const [minutes, setMinutes] = useState(String(session.minutes))
   const [topic, setTopic] = useState(session.topic)
@@ -381,7 +385,7 @@ function EditSessionModal({
     onSave(session.id, {
       date,
       minutes: m,
-      topic: topic.trim() || 'Nauka',
+      topic: topic.trim() || t('overview.quickSession'),
       type,
       category: category || undefined,
       note: note.trim() || undefined,
@@ -390,11 +394,11 @@ function EditSessionModal({
   }
 
   return (
-    <LearningModal isOpen={isOpen} onClose={onClose} title="Edytuj sesję">
+    <LearningModal isOpen={isOpen} onClose={onClose} title={t('time.editSessionTitle')}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="flex flex-col gap-4 sm:flex-row">
           <div className="w-full sm:w-auto">
-            <label className={learningLabelClass}>Data</label>
+            <label className={learningLabelClass}>{t('time.date')}</label>
             <input
               type="date"
               value={date}
@@ -404,7 +408,7 @@ function EditSessionModal({
             />
           </div>
           <div className="w-full sm:w-auto">
-            <label className={learningLabelClass}>Min</label>
+            <label className={learningLabelClass}>{t('time.min')}</label>
             <input
               type="text"
               inputMode="numeric"
@@ -415,7 +419,7 @@ function EditSessionModal({
           </div>
         </div>
         <div>
-          <label className={learningLabelClass}>Temat</label>
+          <label className={learningLabelClass}>{t('time.topic')}</label>
           <input
             type="text"
             value={topic}
@@ -426,7 +430,7 @@ function EditSessionModal({
         </div>
         {sessionCategories.length > 0 && (
           <div>
-            <label className={learningLabelClass}>Kategoria</label>
+            <label className={learningLabelClass}>{t('time.category')}</label>
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
@@ -449,7 +453,7 @@ function EditSessionModal({
           </div>
         )}
         <div>
-          <label className={learningLabelClass}>Typ</label>
+          <label className={learningLabelClass}>{t('time.sessionType')}</label>
           <div className="flex flex-wrap gap-2">
             {SESSION_TYPE_OPTIONS.map((opt) => (
               <button
@@ -459,13 +463,13 @@ function EditSessionModal({
                 className={`${learningChipClass(type === opt.value)} flex items-center gap-1.5`}
               >
                 <opt.icon className="h-3.5 w-3.5" />
-                {opt.label}
+                {t(`sessionType.${opt.value}`)}
               </button>
             ))}
           </div>
         </div>
         <div>
-          <label className={learningLabelClass}>Notatka</label>
+          <label className={learningLabelClass}>{t('time.noteEdit')}</label>
           <input
             type="text"
             value={note}
@@ -475,10 +479,10 @@ function EditSessionModal({
         </div>
         <div className={learningFormActionsClass}>
           <button type="button" onClick={onClose} className={learningSecondaryBtnClass}>
-            Anuluj
+            {t('common.cancel')}
           </button>
           <button type="submit" className={learningPrimaryBtnClass}>
-            Zapisz
+            {t('common.save')}
           </button>
         </div>
       </form>
@@ -496,10 +500,11 @@ interface GoalEditModalProps {
 }
 
 function GoalEditModal({ isOpen, currentGoalMinutes, onSave, onClose }: GoalEditModalProps) {
+  const { t } = useTranslation('learning')
   const [value, setValue] = useState(String(Math.round(currentGoalMinutes / 60)))
 
   return (
-    <LearningModal isOpen={isOpen} onClose={onClose} title="Cel tygodniowy">
+    <LearningModal isOpen={isOpen} onClose={onClose} title={t('time.goalEditTitle')}>
       <form
         onSubmit={(e) => {
           e.preventDefault()
@@ -510,7 +515,7 @@ function GoalEditModal({ isOpen, currentGoalMinutes, onSave, onClose }: GoalEdit
         className="space-y-4"
       >
         <div>
-          <label className={learningLabelClass}>Godzin na tydzień</label>
+          <label className={learningLabelClass}>{t('time.hoursPerWeek')}</label>
           <input
             type="text"
             inputMode="decimal"
@@ -521,7 +526,7 @@ function GoalEditModal({ isOpen, currentGoalMinutes, onSave, onClose }: GoalEdit
           />
         </div>
         <button type="submit" className={`${learningPrimaryBtnClass} w-full sm:w-auto`}>
-          Zapisz
+          {t('common.save')}
         </button>
       </form>
     </LearningModal>
@@ -531,6 +536,7 @@ function GoalEditModal({ isOpen, currentGoalMinutes, onSave, onClose }: GoalEdit
 // ─── MAIN PAGE ─────────────────────────────────────────────────────────────────
 
 export function LearningTime() {
+  const { t } = useTranslation('learning')
   const learning = useLearning()
   const chartPeriod = useChartPeriod()
   const isMobile = useIsMobile()
@@ -628,6 +634,15 @@ export function LearningTime() {
 
   const chartHeight = isMobile ? 192 : 240
 
+  const trendTitleSuffix =
+    chartPeriod?.period.type === 'quarter'
+      ? ` (Q${chartPeriod.period.quarter} ${chartPeriod.period.year})`
+      : chartPeriod?.period.type === 'year'
+        ? ` (${chartPeriod.period.year})`
+        : chartPeriod?.period.type === 'month'
+          ? ` (${monthNames[chartPeriod.period.month]} ${chartPeriod.period.year})`
+          : t('time.trendThisYear')
+
   return (
     <div className="space-y-6">
       {/* Weekly goal bar */}
@@ -635,16 +650,16 @@ export function LearningTime() {
         <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <Target className="h-5 w-5 text-(--accent-cyan)" />
-            <span className="font-gaming tracking-wide text-(--text-primary)">Ten tydzień</span>
+            <span className="font-gaming tracking-wide text-(--text-primary)">{t('time.weekGoalTitle')}</span>
           </div>
           <button
             type="button"
             onClick={() => setShowGoalEdit(true)}
             className="flex min-h-11 items-center gap-1.5 self-start rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-sm text-(--text-muted) transition-colors hover:border-(--accent-cyan)/50 hover:text-(--accent-cyan) sm:min-h-0 sm:py-1.5"
-            title="Zmień cel tygodniowy"
+            title={t('time.changeGoal')}
           >
             <Target className="h-3.5 w-3.5" />
-            Cel: {formatMinutes(weeklyGoalMinutes)}
+            {t('time.goalLabel', { goal: formatMinutes(weeklyGoalMinutes) })}
             <Pencil className="h-3 w-3 opacity-60" />
           </button>
         </div>
@@ -693,7 +708,7 @@ export function LearningTime() {
                 className={`${learningAddBtnClass} mt-0 min-h-11 w-full justify-center`}
               >
                 <Plus className="h-4 w-4" />
-                Dodaj sesję
+                {t('overview.addSession')}
               </button>
             )}
           </div>
@@ -703,7 +718,7 @@ export function LearningTime() {
       <LearningFormShell
         isOpen={showAddForm}
         onClose={() => setShowAddForm(false)}
-        title="Dodaj sesję"
+        title={t('overview.addSession')}
       >
         <SessionForm
           sessionCategories={sessionCategories}
@@ -717,9 +732,9 @@ export function LearningTime() {
       </LearningFormShell>
 
       {/* Session history */}
-      <Card title="Historia sesji" className="max-md:p-4">
+      <Card title={t('time.sessionHistoryTitle')} className="max-md:p-4">
         {sorted.length === 0 ? (
-          <p className="text-base text-(--text-muted)">Brak sesji. Dodaj pierwszą.</p>
+          <p className="text-base text-(--text-muted)">{t('time.noSessionsYet')}</p>
         ) : (
           <div className="space-y-2">
             {sorted.map((s) => {
@@ -746,7 +761,7 @@ export function LearningTime() {
                       <p className="text-sm text-(--text-muted)">
                         <span className="font-mono text-(--accent-cyan)">{formatMinutes(s.minutes)}</span>
                         <span className="ml-2">{s.date}</span>
-                        {typeOpt && <span className="ml-2 opacity-60">• {typeOpt.label}</span>}
+                        {typeOpt && <span className="ml-2 opacity-60">• {t(`sessionType.${typeOpt.value}`)}</span>}
                         {s.note && <span className="ml-2">• {s.note}</span>}
                       </p>
                     </div>
@@ -755,14 +770,14 @@ export function LearningTime() {
                     <button
                       onClick={() => setEditingSession(s)}
                       className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-(--text-muted) transition-colors hover:bg-(--accent-cyan)/10 hover:text-(--accent-cyan) sm:min-h-0 sm:min-w-0 sm:p-1.5"
-                      aria-label="Edytuj"
+                      aria-label={t('time.editAria')}
                     >
                       <Pencil className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => scheduleDelete(s, s.topic)}
                       className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-(--text-muted) transition-colors hover:bg-[#e74c3c]/10 hover:text-[#e74c3c] sm:min-h-0 sm:min-w-0 sm:p-1.5"
-                      aria-label="Usuń"
+                      aria-label={t('time.deleteAria')}
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -777,15 +792,7 @@ export function LearningTime() {
       {/* Trend chart */}
       {trendData.length > 0 && (
         <Card
-          title={`Trend czasu nauki${
-            chartPeriod?.period.type === 'quarter'
-              ? ` (Q${chartPeriod.period.quarter} ${chartPeriod.period.year})`
-              : chartPeriod?.period.type === 'year'
-                ? ` (${chartPeriod.period.year})`
-                : chartPeriod?.period.type === 'month'
-                  ? ` (${monthNames[chartPeriod.period.month]} ${chartPeriod.period.year})`
-                  : ' (ten rok)'
-          }`}
+          title={`${t('time.trendTitle')}${trendTitleSuffix}`}
           action={chartPeriod ? <ChartPeriodSelector /> : undefined}
           className="max-md:p-4"
         >
@@ -810,7 +817,7 @@ export function LearningTime() {
                   }}
                   formatter={(value: number | undefined) => [
                     value != null ? formatMinutes(value) : '',
-                    'Czas nauki',
+                    t('time.chartLabel'),
                   ]}
                 />
                 <Area
@@ -820,7 +827,7 @@ export function LearningTime() {
                   strokeWidth={2}
                   fillOpacity={1}
                   fill="url(#colorMinuty)"
-                  name="Czas nauki"
+                  name={t('time.chartLabel')}
                   baseValue={0}
                 />
               </AreaChart>

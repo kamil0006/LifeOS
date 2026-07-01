@@ -1,0 +1,32 @@
+{
+  "closeAria": "Close",
+  "back": "Back",
+  "next": "Next",
+  "finish": "Finish",
+  "steps": [
+    {
+      "title": "Welcome to LifeOS",
+      "desc": "Your control center for managing life – finances, organization and growth in one place."
+    },
+    {
+      "title": "Dashboard",
+      "desc": "An overview of your finances, expenses, income and activity. All the key data on one screen."
+    },
+    {
+      "title": "Finances",
+      "desc": "Expenses, income, recurring costs and net worth. Full control over your budget."
+    },
+    {
+      "title": "Organization",
+      "desc": "A calendar with events, to-do lists and notes – quick notes, ideas and references."
+    },
+    {
+      "title": "Growth",
+      "desc": "Habits, goals, learning (courses, books, projects) – track your progress."
+    },
+    {
+      "title": "Ready?",
+      "desc": "Start with the Dashboard or use search (Ctrl+K) to quickly find any section."
+    }
+  ]
+}

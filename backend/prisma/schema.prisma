@@ -16,6 +16,8 @@ model User {
   updatedAt DateTime @updatedAt
   /// Pierwsze pobranie kategorii wydatków – jednorazowy zestaw domyślnych; brak ponownego seedu po usunięciu wszystkich.
   financesCategoriesSeededAt DateTime?
+  /// Znacznik czasu ostatniego wykonanego eksportu backupu — do przypomnienia w UI.
+  lastBackupAt DateTime?
 
   expenseCategories  ExpenseCategory[]
   expenses    Expense[]

@@ -13,5 +13,6 @@ export {
   notesApi,
   learningApi,
   aiApi,
+  backupApi,
 } from './api/index'
-export type { WeeklyReport } from './api/index'
+export type { WeeklyReport, BackupStatus } from './api/index'

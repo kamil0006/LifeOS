@@ -1,14 +1,11 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Card } from '../Card'
 import { MarkdownContent } from '../MarkdownContent'
 import { useAuth } from '../../context/AuthContext'
 import { aiApi, type WeeklyReport } from '../../lib/api'
 
-const DEMO_REPORT: WeeklyReport = {
-  source: 'fallback',
-  model: 'demo',
-  generatedAt: new Date().toISOString(),
-  summary: `## Podsumowanie tygodnia (demo)
+const DEMO_SUMMARY_PL = `## Podsumowanie tygodnia (demo)
 
 ### Finanse (30 dni)
 - Przychody: **8 500 zł**
@@ -30,10 +27,43 @@ const DEMO_REPORT: WeeklyReport = {
 - Domknij 1 zadanie po terminie, żeby nie rosła zaległość.
 - Do celu nauki brakuje ~3,5 h — zaplanuj 2 krótkie sesje.
 
-_Tryb demo — w wersji z kontem raport powstaje z Twoich realnych danych._`,
+_Tryb demo — w wersji z kontem raport powstaje z Twoich realnych danych._`
+
+const DEMO_SUMMARY_EN = `## Weekly summary (demo)
+
+### Finances (30 days)
+- Income: **8,500 zł**
+- Expenses: **5,240 zł**
+- Balance: **3,260 zł**
+- Top categories: Housing (1,800 zł), Food (1,120 zł)
+
+### Productivity
+- Open tasks: **6** (overdue: 1)
+- Completed tasks: **14**
+
+### Habits
+- Active habits: **4** — consistency ~78%
+
+### Learning
+- Time in 7 days: **6 h 30 min** out of 10 h goal (65%)
+
+### Suggestions
+- Close 1 overdue task so it doesn't pile up.
+- ~3.5 h left to reach your learning goal — plan 2 short sessions.
+
+_Demo mode — with an account the report is generated from your real data._`
+
+function buildDemoReport(language: string): WeeklyReport {
+  return {
+    source: 'fallback',
+    model: 'demo',
+    generatedAt: new Date().toISOString(),
+    summary: language === 'pl' ? DEMO_SUMMARY_PL : DEMO_SUMMARY_EN,
+  }
 }
 
 export function AiWeeklyReport() {
+  const { t, i18n } = useTranslation('dashboard')
   const { isDemoMode } = useAuth()
   const [report, setReport] = useState<WeeklyReport | null>(null)
   const [loading, setLoading] = useState(false)
@@ -45,12 +75,12 @@ export function AiWeeklyReport() {
     try {
       if (isDemoMode) {
         await new Promise((r) => setTimeout(r, 500))
-        setReport(DEMO_REPORT)
+        setReport(buildDemoReport(i18n.language))
       } else {
         setReport(await aiApi.weeklyReport())
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Nie udało się wygenerować raportu')
+      setError(e instanceof Error ? e.message : t('aiReport.error'))
     } finally {
       setLoading(false)
     }
@@ -63,12 +93,12 @@ export function AiWeeklyReport() {
       disabled={loading}
       className="rounded-lg border border-(--accent-cyan)/40 bg-(--accent-cyan)/10 px-3 py-1.5 text-sm font-medium text-(--accent-cyan) transition-colors hover:bg-(--accent-cyan)/20 disabled:cursor-not-allowed disabled:opacity-60"
     >
-      {loading ? 'Generuję…' : report ? 'Odśwież raport' : 'Wygeneruj raport'}
+      {loading ? t('aiReport.generating') : report ? t('aiReport.refresh') : t('aiReport.generate')}
     </button>
   )
 
   return (
-    <Card title="Asystent AI — raport tygodniowy" action={action} animateEntrance={false}>
+    <Card title={t('aiReport.title')} action={action} animateEntrance={false}>
       {error && (
         <p className="rounded-lg border border-(--accent-pink)/40 bg-(--accent-pink)/10 px-3 py-2 text-sm text-(--accent-pink)">
           {error}
@@ -76,9 +106,7 @@ export function AiWeeklyReport() {
       )}
 
       {!report && !error && (
-        <p className="text-base text-(--text-muted)">
-          Wygeneruj zwięzłe podsumowanie ostatniego tygodnia: finanse, produktywność, nawyki i nauka — z sugestiami następnych kroków.
-        </p>
+        <p className="text-base text-(--text-muted)">{t('aiReport.description')}</p>
       )}
 
       {report && (
@@ -86,9 +114,9 @@ export function AiWeeklyReport() {
           <MarkdownContent content={report.summary} />
           <p className="text-xs text-(--text-muted)">
             {report.source === 'ai'
-              ? `Wygenerowano przez AI (${report.model})`
-              : 'Raport lokalny (bez AI)'}{' '}
-            · {new Date(report.generatedAt).toLocaleString('pl-PL')}
+              ? t('aiReport.generatedByAi', { model: report.model })
+              : t('aiReport.localReport')}{' '}
+            · {new Date(report.generatedAt).toLocaleString(i18n.language === 'pl' ? 'pl-PL' : 'en-US')}
           </p>
         </div>
       )}

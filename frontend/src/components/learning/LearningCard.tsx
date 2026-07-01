@@ -1,5 +1,6 @@
 import { Pencil, Trash2 } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface LearningCardProps {
   title: string
@@ -22,6 +23,7 @@ export function LearningCard({
   onEdit,
   onDelete,
 }: LearningCardProps) {
+  const { t } = useTranslation('learning')
   return (
     <div className="space-y-2 rounded-lg border border-(--border) bg-(--bg-dark)/50 px-3 py-3 sm:px-4">
       <div className="flex items-start justify-between gap-3">
@@ -42,7 +44,7 @@ export function LearningCard({
               type="button"
               onClick={onEdit}
               className="rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-(--accent-cyan)/10 hover:text-(--accent-cyan)"
-              aria-label="Edytuj"
+              aria-label={t('common.edit')}
             >
               <Pencil className="h-4 w-4" />
             </button>
@@ -52,7 +54,7 @@ export function LearningCard({
               type="button"
               onClick={onDelete}
               className="rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-[#e74c3c]/10 hover:text-[#e74c3c]"
-              aria-label="Usuń"
+              aria-label={t('common.delete')}
             >
               <Trash2 className="h-4 w-4" />
             </button>

@@ -1,0 +1,30 @@
+{
+  "cancel": "Cancel",
+  "confirm": "Confirm",
+  "close": "Close",
+  "save": "Save",
+  "delete": "Delete",
+  "edit": "Edit",
+  "ok": "OK",
+  "loading": "Loading…",
+  "error": "An error occurred",
+  "yes": "Yes",
+  "no": "No",
+  "undo": "Undo",
+  "deletedItem": "Deleted: {{label}}",
+  "months": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+  "monthLabel": "Month:",
+  "periodRangeAria": "Period range",
+  "choosePeriodMonth": "Choose month",
+  "choosePeriodQuarter": "Choose quarter",
+  "choosePeriodYear": "Choose year",
+  "periodMonth": "Month",
+  "periodQuarter": "Quarter",
+  "periodYear": "Year",
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "description": "The app ran into an error and couldn't be displayed. Please try again.",
+    "reload": "Reload page",
+    "retry": "Try again"
+  }
+}

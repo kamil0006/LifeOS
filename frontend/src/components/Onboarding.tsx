@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useOnboardingMotion } from '../lib/modalMotion'
 import {
@@ -11,57 +12,36 @@ import {
   Wallet,
   Calendar as CalendarIcon,
   CheckSquare,
-  
+
   Target,
-  
+
   Sparkles,
 } from 'lucide-react'
 import { useOnboarding } from '../context/OnboardingContext'
 
-const STEPS = [
-  {
-    icon: Sparkles,
-    title: 'Witaj w LifeOS',
-    desc: 'Twoja centrala do zarządzania życiem – finanse, organizacja i rozwój w jednym miejscu.',
-    path: '/dashboard',
-  },
-  {
-    icon: LayoutDashboard,
-    title: 'Dashboard',
-    desc: 'Przegląd finansów, wydatków, przychodów i aktywności. Wszystkie kluczowe dane na jednym ekranie.',
-    path: '/dashboard',
-  },
-  {
-    icon: Wallet,
-    title: 'Finanse',
-    desc: 'Wydatki, przychody, stałe koszty i wartość netto. Pełna kontrola nad budżetem.',
-    path: '/finances',
-  },
-  {
-    icon: CalendarIcon,
-    title: 'Organizacja',
-    desc: 'Kalendarz z wydarzeniami, listy To-do oraz notatki – szybkie notatki, pomysły i referencje.',
-    path: '/calendar',
-  },
-  {
-    icon: Target,
-    title: 'Rozwój',
-    desc: 'Nawyki, cele, nauka (kursy, książki, projekty) – śledź swój postęp.',
-    path: '/habits',
-  },
-  {
-    icon: CheckSquare,
-    title: 'Gotowy?',
-    desc: 'Zacznij od Dashboard lub użyj wyszukiwania (Ctrl+K), aby szybko znaleźć dowolną sekcję.',
-    path: '/dashboard',
-  },
+const STEP_ICONS_AND_PATHS = [
+  { icon: Sparkles, path: '/dashboard' },
+  { icon: LayoutDashboard, path: '/dashboard' },
+  { icon: Wallet, path: '/finances' },
+  { icon: CalendarIcon, path: '/calendar' },
+  { icon: Target, path: '/habits' },
+  { icon: CheckSquare, path: '/dashboard' },
 ]
 
 export function Onboarding() {
+  const { t } = useTranslation('onboarding')
   const { isOpen, close } = useOnboarding()
   const { overlay, stepCard } = useOnboardingMotion()
   const navigate = useNavigate()
   const [step, setStep] = useState(0)
+
+  const stepsText = t('steps', { returnObjects: true }) as { title: string; desc: string }[]
+  const STEPS = STEP_ICONS_AND_PATHS.map(({ icon, path }, i) => ({
+    icon,
+    path,
+    title: stepsText[i].title,
+    desc: stepsText[i].desc,
+  }))
 
   useEffect(() => {
     if (isOpen) setStep(0)
@@ -120,7 +100,7 @@ export function Onboarding() {
           <button
             onClick={handleDismiss}
             className="absolute top-4 right-4 p-1.5 rounded-lg text-(--text-muted) hover:text-(--text-primary) hover:bg-(--bg-dark) transition-colors"
-            aria-label="Zamknij"
+            aria-label={t('closeAria')}
           >
             <X className="w-5 h-5" />
           </button>
@@ -150,7 +130,7 @@ export function Onboarding() {
                 }`}
               >
                 <ChevronLeft className="h-4 w-4 shrink-0" />
-                <span className="truncate">Wstecz</span>
+                <span className="truncate">{t('back')}</span>
               </button>
             </div>
 
@@ -160,7 +140,7 @@ export function Onboarding() {
                 onClick={handleNext}
                 className="flex min-w-0 max-w-full items-center justify-center gap-1 rounded-lg border border-(--accent-cyan)/40 bg-(--accent-cyan)/20 px-3 py-2.5 text-sm font-gaming text-(--accent-cyan) transition-colors hover:bg-(--accent-cyan)/30 sm:gap-1.5 sm:px-5 sm:text-base"
               >
-                <span className="truncate">{isLast ? 'Zakończ' : 'Dalej'}</span>
+                <span className="truncate">{isLast ? t('finish') : t('next')}</span>
                 <ChevronRight className="h-4 w-4 shrink-0" />
               </button>
             </div>

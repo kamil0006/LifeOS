@@ -1,0 +1,31 @@
+{
+  "title": "Ustawienia",
+  "closeAria": "Zamknij",
+  "backupSection": "Kopia zapasowa",
+  "demoUnavailable": "Backup jest dostępny tylko na zalogowanym koncie — tryb demo nie zapisuje danych na serwerze.",
+  "lastBackup": "Ostatni backup: {{date}}",
+  "neverBackedUp": "Nie wykonano jeszcze żadnego backupu.",
+  "staleWarning": " — warto zrobić nowy.",
+  "exportButton": "Pobierz backup",
+  "exportButtonBusy": "Pobieranie…",
+  "importButton": "Przywróć z pliku",
+  "exportSuccess": "Backup pobrany.",
+  "exportError": "Nie udało się pobrać backupu.",
+  "fileReadError": "Nie udało się odczytać pliku — sprawdź, czy to poprawny plik backupu JSON.",
+  "importError": "Nie udało się przywrócić backupu.",
+  "errorCode": {
+    "NO_USER": "Brak użytkownika. Zaloguj się ponownie.",
+    "INVALID_BACKUP_FILE": "Nieprawidłowy plik backupu.",
+    "INVALID_ACCOUNT_REFERENCE": "Korekta salda odwołuje się do nieistniejącego konta.",
+    "INVALID_HABIT_REFERENCE": "Wpis nawyku odwołuje się do nieistniejącego nawyku.",
+    "IMPORT_FAILED": "Nie udało się przywrócić backupu. Dane nie zostały zmienione."
+  },
+  "confirmTitle": "Przywrócić dane z backupu?",
+  "confirmEmphasis": "Ta operacja zastąpi WSZYSTKIE obecne dane na koncie.",
+  "confirmDescription": "Wszystkie obecne wydatki, dochody, notatki, nawyki, cele i inne dane zostaną trwale usunięte i zastąpione zawartością wgranego pliku. Tej operacji nie da się cofnąć.",
+  "confirmLabel": "Tak, zastąp dane",
+  "confirmLabelBusy": "Przywracanie…",
+  "languageSection": "Język",
+  "languagePolish": "Polski",
+  "languageEnglish": "English"
+}

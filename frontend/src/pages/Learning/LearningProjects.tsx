@@ -1,4 +1,5 @@
 import { useState, memo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Card } from '../../components/Card'
 import { LearningCard } from '../../components/learning/LearningCard'
 import { LearningFormShell } from '../../components/learning/LearningFormShell'
@@ -17,29 +18,30 @@ import { SafeExternalLink } from '../../components/SafeExternalLink'
 import { useLearning } from '../../context/LearningContext'
 import type { Project, ProjectStatus } from '../../context/LearningContext'
 
-const STATUS_OPTIONS: { value: ProjectStatus; label: string }[] = [
-  { value: 'pomysl', label: 'Pomysł' },
-  { value: 'w_trakcie', label: 'W trakcie' },
-  { value: 'mvp', label: 'MVP' },
-  { value: 'ukonczony', label: 'Ukończony' },
-  { value: 'porzucony', label: 'Porzucony' },
+const STATUS_OPTIONS: { value: ProjectStatus; labelKey: string }[] = [
+  { value: 'pomysl', labelKey: 'statusIdea' },
+  { value: 'w_trakcie', labelKey: 'statusInProgress' },
+  { value: 'mvp', labelKey: 'statusMvp' },
+  { value: 'ukonczony', labelKey: 'statusCompleted' },
+  { value: 'porzucony', labelKey: 'statusAbandoned' },
 ]
 
-const PRIORITY_OPTIONS: { value: NonNullable<Project['priority']>; label: string }[] = [
-  { value: 'niski', label: 'Niski' },
-  { value: 'sredni', label: 'Średni' },
-  { value: 'wysoki', label: 'Wysoki' },
+const PRIORITY_OPTIONS: { value: NonNullable<Project['priority']>; labelKey: string }[] = [
+  { value: 'niski', labelKey: 'priorityLow' },
+  { value: 'sredni', labelKey: 'priorityMedium' },
+  { value: 'wysoki', labelKey: 'priorityHigh' },
 ]
 
-const STATUS_GROUPS: { status: ProjectStatus; label: string }[] = [
-  { status: 'w_trakcie', label: 'W trakcie' },
-  { status: 'mvp', label: 'MVP' },
-  { status: 'pomysl', label: 'Pomysły' },
-  { status: 'ukonczony', label: 'Ukończone' },
-  { status: 'porzucony', label: 'Porzucone' },
+const STATUS_GROUPS: { status: ProjectStatus; labelKey: string }[] = [
+  { status: 'w_trakcie', labelKey: 'groupInProgress' },
+  { status: 'mvp', labelKey: 'groupMvp' },
+  { status: 'pomysl', labelKey: 'groupIdeas' },
+  { status: 'ukonczony', labelKey: 'groupCompleted' },
+  { status: 'porzucony', labelKey: 'groupAbandoned' },
 ]
 
 function StatusBadge({ status }: { status: ProjectStatus }) {
+  const { t } = useTranslation('learning')
   const opt = STATUS_OPTIONS.find((o) => o.value === status)
   const bgMap: Record<ProjectStatus, string> = {
     pomysl: 'bg-(--bg-dark) text-(--text-muted) border border-(--border)',
@@ -50,21 +52,26 @@ function StatusBadge({ status }: { status: ProjectStatus }) {
   }
   return (
     <span className={`px-2 py-0.5 rounded text-xs font-gaming ${bgMap[status]}`}>
-      {opt?.label ?? status}
+      {opt ? t(`projects.${opt.labelKey}`) : status}
     </span>
   )
 }
 
 function PriorityBadge({ priority }: { priority?: Project['priority'] }) {
+  const { t } = useTranslation('learning')
   if (!priority) return null
   const map: Record<NonNullable<Project['priority']>, string> = {
     niski: 'text-(--text-muted)',
     sredni: 'text-(--accent-amber)',
     wysoki: 'text-(--accent-magenta)',
   }
-  const labels = { niski: '↓ Niski', sredni: '→ Średni', wysoki: '↑ Wysoki' }
+  const labelKeys: Record<NonNullable<Project['priority']>, string> = {
+    niski: 'priorityLowArrow',
+    sredni: 'priorityMediumArrow',
+    wysoki: 'priorityHighArrow',
+  }
   return (
-    <span className={`text-xs font-gaming ${map[priority]}`}>{labels[priority]}</span>
+    <span className={`text-xs font-gaming ${map[priority]}`}>{t(`projects.${labelKeys[priority]}`)}</span>
   )
 }
 
@@ -76,6 +83,7 @@ interface ProjectAddFormProps {
 }
 
 const ProjectAddForm = memo(function ProjectAddForm({ onAdd, onCancel }: ProjectAddFormProps) {
+  const { t } = useTranslation('learning')
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [tech, setTech] = useState('')
@@ -112,7 +120,7 @@ const ProjectAddForm = memo(function ProjectAddForm({ onAdd, onCancel }: Project
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label className={learningLabelClass}>Nazwa *</label>
+          <label className={learningLabelClass}>{t('projects.name')}</label>
           <input
             type="text"
             value={name}
@@ -121,7 +129,7 @@ const ProjectAddForm = memo(function ProjectAddForm({ onAdd, onCancel }: Project
           />
         </div>
         <div>
-          <label className={learningLabelClass}>Opis</label>
+          <label className={learningLabelClass}>{t('projects.description')}</label>
           <input
             type="text"
             value={description}
@@ -132,29 +140,29 @@ const ProjectAddForm = memo(function ProjectAddForm({ onAdd, onCancel }: Project
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label className={learningLabelClass}>Technologie</label>
+          <label className={learningLabelClass}>{t('projects.tech')}</label>
           <input
             type="text"
             value={tech}
             onChange={(e) => setTech(e.target.value)}
-            placeholder="np. React, Node.js"
+            placeholder={t('projects.techPlaceholder')}
             className={learningFieldClass}
           />
         </div>
         <div>
-          <label className={learningLabelClass}>Następny krok</label>
+          <label className={learningLabelClass}>{t('projects.nextStep')}</label>
           <input
             type="text"
             value={nextStep}
             onChange={(e) => setNextStep(e.target.value)}
-            placeholder="np. Dodać autoryzację"
+            placeholder={t('projects.nextStepPlaceholder')}
             className={learningFieldClass}
           />
         </div>
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label className={learningLabelClass}>URL</label>
+          <label className={learningLabelClass}>{t('projects.url')}</label>
           <input
             type="url"
             value={url}
@@ -163,7 +171,7 @@ const ProjectAddForm = memo(function ProjectAddForm({ onAdd, onCancel }: Project
           />
         </div>
         <div>
-          <label className={learningLabelClass}>GitHub</label>
+          <label className={learningLabelClass}>{t('projects.github')}</label>
           <input
             type="url"
             value={githubUrl}
@@ -173,7 +181,7 @@ const ProjectAddForm = memo(function ProjectAddForm({ onAdd, onCancel }: Project
         </div>
       </div>
       <div>
-        <label className={learningLabelClass}>Status</label>
+        <label className={learningLabelClass}>{t('projects.status')}</label>
         <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
           {STATUS_OPTIONS.map((opt) => (
             <button
@@ -182,13 +190,13 @@ const ProjectAddForm = memo(function ProjectAddForm({ onAdd, onCancel }: Project
               onClick={() => setStatus(opt.value)}
               className={learningChipClass(status === opt.value)}
             >
-              {opt.label}
+              {t(`projects.${opt.labelKey}`)}
             </button>
           ))}
         </div>
       </div>
       <div>
-        <label className={learningLabelClass}>Priorytet</label>
+        <label className={learningLabelClass}>{t('projects.priority')}</label>
         <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
           {PRIORITY_OPTIONS.map((opt) => (
             <button
@@ -197,7 +205,7 @@ const ProjectAddForm = memo(function ProjectAddForm({ onAdd, onCancel }: Project
               onClick={() => setPriority(opt.value)}
               className={learningChipClass(priority === opt.value)}
             >
-              {opt.label}
+              {t(`projects.${opt.labelKey}`)}
             </button>
           ))}
         </div>
@@ -205,10 +213,10 @@ const ProjectAddForm = memo(function ProjectAddForm({ onAdd, onCancel }: Project
       <div className={learningFormActionsClass}>
         <button type="submit" className={learningPrimaryBtnClass} disabled={!name.trim()}>
           <Plus className="h-4 w-4 shrink-0" />
-          Dodaj projekt
+          {t('projects.addProject')}
         </button>
         <button type="button" onClick={onCancel} className={learningSecondaryBtnClass}>
-          Anuluj
+          {t('common.cancel')}
         </button>
       </div>
     </form>
@@ -224,6 +232,7 @@ interface EditProjectModalProps {
 }
 
 function EditProjectModal({ project, onSave, onClose }: EditProjectModalProps) {
+  const { t } = useTranslation('learning')
   const [editName, setEditName] = useState(project.name)
   const [editDescription, setEditDescription] = useState(project.description ?? '')
   const [editTech, setEditTech] = useState(project.tech ?? '')
@@ -250,10 +259,10 @@ function EditProjectModal({ project, onSave, onClose }: EditProjectModalProps) {
   }
 
   return (
-    <LearningModal isOpen onClose={onClose} title="Edytuj projekt">
+    <LearningModal isOpen onClose={onClose} title={t('projects.editTitle')}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className={learningLabelClass}>Nazwa</label>
+          <label className={learningLabelClass}>{t('projects.nameEdit')}</label>
           <input
             type="text"
             value={editName}
@@ -263,7 +272,7 @@ function EditProjectModal({ project, onSave, onClose }: EditProjectModalProps) {
           />
         </div>
         <div>
-          <label className={learningLabelClass}>Opis</label>
+          <label className={learningLabelClass}>{t('projects.description')}</label>
           <input
             type="text"
             value={editDescription}
@@ -272,7 +281,7 @@ function EditProjectModal({ project, onSave, onClose }: EditProjectModalProps) {
           />
         </div>
         <div>
-          <label className={learningLabelClass}>Technologie</label>
+          <label className={learningLabelClass}>{t('projects.tech')}</label>
           <input
             type="text"
             value={editTech}
@@ -281,7 +290,7 @@ function EditProjectModal({ project, onSave, onClose }: EditProjectModalProps) {
           />
         </div>
         <div>
-          <label className={learningLabelClass}>Następny krok</label>
+          <label className={learningLabelClass}>{t('projects.nextStep')}</label>
           <input
             type="text"
             value={editNextStep}
@@ -291,7 +300,7 @@ function EditProjectModal({ project, onSave, onClose }: EditProjectModalProps) {
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className={learningLabelClass}>URL</label>
+            <label className={learningLabelClass}>{t('projects.url')}</label>
             <input
               type="url"
               value={editUrl}
@@ -300,7 +309,7 @@ function EditProjectModal({ project, onSave, onClose }: EditProjectModalProps) {
             />
           </div>
           <div>
-            <label className={learningLabelClass}>GitHub</label>
+            <label className={learningLabelClass}>{t('projects.github')}</label>
             <input
               type="url"
               value={editGithubUrl}
@@ -310,7 +319,7 @@ function EditProjectModal({ project, onSave, onClose }: EditProjectModalProps) {
           </div>
         </div>
         <div>
-          <label className={learningLabelClass}>Status</label>
+          <label className={learningLabelClass}>{t('projects.status')}</label>
           <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
             {STATUS_OPTIONS.map((opt) => (
               <button
@@ -319,13 +328,13 @@ function EditProjectModal({ project, onSave, onClose }: EditProjectModalProps) {
                 onClick={() => setEditStatus(opt.value)}
                 className={learningChipClass(editStatus === opt.value)}
               >
-                {opt.label}
+                {t(`projects.${opt.labelKey}`)}
               </button>
             ))}
           </div>
         </div>
         <div>
-          <label className={learningLabelClass}>Priorytet</label>
+          <label className={learningLabelClass}>{t('projects.priority')}</label>
           <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
             {PRIORITY_OPTIONS.map((opt) => (
               <button
@@ -334,17 +343,17 @@ function EditProjectModal({ project, onSave, onClose }: EditProjectModalProps) {
                 onClick={() => setEditPriority(opt.value)}
                 className={learningChipClass(editPriority === opt.value)}
               >
-                {opt.label}
+                {t(`projects.${opt.labelKey}`)}
               </button>
             ))}
           </div>
         </div>
         <div className={learningFormActionsClass}>
           <button type="submit" className={learningPrimaryBtnClass} disabled={!editName.trim()}>
-            Zapisz
+            {t('common.save')}
           </button>
           <button type="button" onClick={onClose} className={learningSecondaryBtnClass}>
-            Anuluj
+            {t('common.cancel')}
           </button>
         </div>
       </form>
@@ -355,6 +364,7 @@ function EditProjectModal({ project, onSave, onClose }: EditProjectModalProps) {
 // ─── MAIN PAGE ─────────────────────────────────────────────────────────────────
 
 export function LearningProjects() {
+  const { t } = useTranslation('learning')
   const learning = useLearning()
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingProject, setEditingProject] = useState<Project | null>(null)
@@ -371,7 +381,7 @@ export function LearningProjects() {
             const items = projects.filter((p) => p.status === group.status)
             if (items.length === 0) return null
             return (
-              <Card key={group.status} title={group.label} className="max-md:p-4">
+              <Card key={group.status} title={t(`projects.${group.labelKey}`)} className="max-md:p-4">
                 <div className="space-y-2">
                   {items.map((p) => (
                     <LearningCard
@@ -402,7 +412,7 @@ export function LearningProjects() {
                               target="_blank"
                               rel="noopener noreferrer"
                               className="p-1.5 rounded-lg text-(--text-muted) hover:text-(--accent-cyan) transition-colors"
-                              aria-label="Otwórz"
+                              aria-label={t('projects.openAria')}
                             >
                               <ExternalLink className="w-4 h-4" />
                             </a>
@@ -419,8 +429,8 @@ export function LearningProjects() {
           })}
         </div>
       ) : (
-        <Card title="Lista projektów" className="max-md:p-4">
-          <p className="text-base text-(--text-muted)">Brak projektów. Dodaj pierwszy.</p>
+        <Card title={t('projects.emptyList')} className="max-md:p-4">
+          <p className="text-base text-(--text-muted)">{t('projects.emptyMessage')}</p>
         </Card>
       )}
 
@@ -429,7 +439,7 @@ export function LearningProjects() {
           <LearningFormShell
             isOpen
             onClose={() => setShowAddForm(false)}
-            title="Dodaj projekt"
+            title={t('projects.addProject')}
           >
             <ProjectAddForm
               onAdd={(p) => {
@@ -442,7 +452,7 @@ export function LearningProjects() {
         ) : (
           <button type="button" onClick={() => setShowAddForm(true)} className={learningAddBtnClass}>
             <Plus className="h-4 w-4" />
-            Dodaj projekt
+            {t('projects.addProject')}
           </button>
         )}
       </div>

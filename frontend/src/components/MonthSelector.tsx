@@ -1,7 +1,9 @@
+import { useTranslation } from 'react-i18next'
 import { useMonth } from '../context/MonthContext'
 import { useChartPeriod } from '../context/ChartPeriodContext'
 
 export function MonthSelector() {
+  const { t } = useTranslation('common')
   const monthCtx = useMonth()
   const chartPeriodCtx = useChartPeriod()
   if (!monthCtx) return null
@@ -11,7 +13,7 @@ export function MonthSelector() {
   return (
     <div className="flex w-full max-w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
       <label htmlFor="dashboard-month-select" className="shrink-0 text-base text-(--text-muted) font-gaming tracking-wide">
-        Miesiąc:
+        {t('monthLabel')}
       </label>
       <select
         id="dashboard-month-select"

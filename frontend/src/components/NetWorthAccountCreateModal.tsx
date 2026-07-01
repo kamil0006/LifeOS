@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { X } from 'lucide-react'
 import { ModalShell } from './ModalShell'
 import { useIsMobile } from '../hooks/useIsMobile'
@@ -35,6 +36,7 @@ function capitalizeFirstLetter(value: string): string {
 }
 
 export function NetWorthAccountCreateModal({ isOpen, onClose, kind, onSubmit }: NetWorthAccountCreateModalProps) {
+  const { t } = useTranslation('finances')
   const isMobile = useIsMobile()
   const lastKindRef = useRef<'asset' | 'liability'>('asset')
   if (kind != null) lastKindRef.current = kind
@@ -54,8 +56,8 @@ export function NetWorthAccountCreateModal({ isOpen, onClose, kind, onSubmit }: 
     }
   }, [isOpen, kind])
 
-  const title = resolvedKind === 'asset' ? 'Nowe aktywo' : 'Nowy dług / kredyt'
-  const submitLabel = resolvedKind === 'asset' ? 'Dodaj aktywo' : 'Dodaj zobowiązanie'
+  const title = resolvedKind === 'asset' ? t('netWorthAccountCreateModal.newAssetTitle') : t('netWorthAccountCreateModal.newLiabilityTitle')
+  const submitLabel = resolvedKind === 'asset' ? t('netWorth.addAsset') : t('netWorth.addLiability')
   const iconOptions = resolvedKind === 'asset' ? NW_ASSET_ICON_OPTIONS : NW_LIABILITY_ICON_OPTIONS
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -98,7 +100,7 @@ export function NetWorthAccountCreateModal({ isOpen, onClose, kind, onSubmit }: 
                   type="button"
                   onClick={onClose}
                   className="p-2 rounded-lg hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-(--text-primary) transition-colors"
-                  aria-label="Zamknij"
+                  aria-label={t('common:close')}
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -106,7 +108,7 @@ export function NetWorthAccountCreateModal({ isOpen, onClose, kind, onSubmit }: 
               <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
                 <div>
                   <label className="block text-base text-(--text-muted) font-gaming mb-1">
-                    {resolvedKind === 'asset' ? 'Nazwa aktywa' : 'Nazwa (np. kredyt hipoteczny, karta)'}
+                    {resolvedKind === 'asset' ? t('netWorthAccountCreateModal.assetNameLabel') : t('netWorthAccountCreateModal.liabilityNameLabel')}
                   </label>
                   <input
                     type="text"
@@ -116,10 +118,10 @@ export function NetWorthAccountCreateModal({ isOpen, onClose, kind, onSubmit }: 
                     autoFocus={!isMobile}
                     className="w-full px-3 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
                   />
-                  <p className="mt-1 text-base text-(--text-muted)">Pierwsza litera zostanie zapisana jako wielka.</p>
+                  <p className="mt-1 text-base text-(--text-muted)">{t('netWorthAccountCreateModal.capitalizeHint')}</p>
                 </div>
                 <div>
-                  <span className="mb-2 block text-base text-(--text-muted) font-gaming">Ikona na liście</span>
+                  <span className="mb-2 block text-base text-(--text-muted) font-gaming">{t('netWorthAccountCreateModal.iconLabel')}</span>
                   <div className="flex flex-wrap gap-2">
                     {iconOptions.map(({ key, label }) => {
                       const Icon = getNetWorthAccountIcon(key)
@@ -148,7 +150,7 @@ export function NetWorthAccountCreateModal({ isOpen, onClose, kind, onSubmit }: 
                 </div>
                 {resolvedKind === 'asset' ? (
                   <div>
-                    <span className="mb-2 block text-base text-(--text-muted) font-gaming">Kolor na liście</span>
+                    <span className="mb-2 block text-base text-(--text-muted) font-gaming">{t('netWorthAccountCreateModal.colorLabel')}</span>
                     <div className="flex flex-wrap gap-3">
                       {NW_ASSET_ACCENT_OPTIONS.map(({ key, label }) => {
                         const { swatch } = getNwAssetAccentClasses(key)
@@ -171,27 +173,27 @@ export function NetWorthAccountCreateModal({ isOpen, onClose, kind, onSubmit }: 
                       })}
                     </div>
                     <p className="mt-1.5 text-base text-(--text-muted)">
-                      Ikona i kwota aktywa będą w tym kolorze.
+                      {t('netWorthAccountCreateModal.colorHint')}
                     </p>
                   </div>
                 ) : null}
                 <div>
                   <label className="block text-base text-(--text-muted) font-gaming mb-1">
-                    {resolvedKind === 'asset' ? 'Wartość początkowa (zł)' : 'Saldo zadłużenia (zł)'}
+                    {resolvedKind === 'asset' ? t('netWorthAccountCreateModal.initialValueLabel') : t('netWorthAccountCreateModal.debtBalanceLabel')}
                   </label>
                   <input
                     type="text"
                     inputMode="decimal"
                     value={balanceStr}
                     onChange={(e) => setBalanceStr(e.target.value.replace(/[^0-9,.]/g, ''))}
-                    placeholder="np. 15000"
+                    placeholder={t('netWorthAccountCreateModal.balancePlaceholder')}
                     className="w-full px-3 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-mono focus:border-(--accent-cyan) focus:outline-none"
                   />
                 </div>
                 <p className="text-base text-(--text-muted)">
                   {resolvedKind === 'liability'
-                    ? 'Kwota to wielkość zobowiązania. Późniejsze spłaty zapisujesz korektą ujemną.'
-                    : 'Saldo początkowe; zmiany wprowadzisz przez korektę na karcie pozycji.'}
+                    ? t('netWorthAccountCreateModal.liabilityAmountHint')
+                    : t('netWorthAccountCreateModal.assetAmountHint')}
                 </p>
                 <div className="flex gap-2 pt-2">
                   <button
@@ -199,7 +201,7 @@ export function NetWorthAccountCreateModal({ isOpen, onClose, kind, onSubmit }: 
                     onClick={onClose}
                     className="flex-1 py-2.5 rounded-lg border border-(--border) text-(--text-muted) font-gaming hover:bg-(--bg-card-hover) transition-colors"
                   >
-                    Anuluj
+                    {t('common:cancel')}
                   </button>
                   <button
                     type="submit"

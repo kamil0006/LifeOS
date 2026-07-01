@@ -19,4 +19,5 @@ export const queryKeys = {
   learningBooks: (userId: string) => [...queryKeys.root, 'learningBooks', userId] as const,
   learningCertifications: (userId: string) => [...queryKeys.root, 'learningCertifications', userId] as const,
   learningSettings: (userId: string) => [...queryKeys.root, 'learningSettings', userId] as const,
+  backupStatus: (userId: string) => [...queryKeys.root, 'backupStatus', userId] as const,
 }

@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { EmptyState } from '../../components/EmptyState'
 import { Tooltip } from '../../components/Tooltip'
 import {
@@ -36,20 +37,6 @@ interface NotesPageProps {
   type: NoteType
 }
 
-const TYPE_LABELS: Record<NoteType, string> = {
-  inbox: 'Inbox',
-  idea: 'Pomysły',
-  reference: 'Referencje',
-}
-
-const IDEA_LABELS: Record<IdeaStatus, string> = {
-  nowy: 'Nowy',
-  do_sprawdzenia: 'Do sprawdzenia',
-  w_realizacji: 'W realizacji',
-  zrobiony: 'Zrobiony',
-  odrzucony: 'Odrzucony',
-}
-
 const IDEA_STATUS_BADGE: Record<IdeaStatus, string> = {
   nowy: 'border-sky-400/30 bg-sky-400/8 text-sky-300',
   do_sprawdzenia: 'border-(--accent-amber)/40 bg-(--accent-amber)/10 text-(--accent-amber)',
@@ -67,16 +54,8 @@ const REF_ICONS: Record<ReferenceKind, typeof LinkIcon> = {
   inne: CircleEllipsis,
 }
 
-const REF_LABELS: Record<ReferenceKind, string> = {
-  link: 'Link',
-  ksiazka: 'Książka',
-  artykul: 'Artykuł',
-  wideo: 'Wideo',
-  cytat: 'Cytat',
-  inne: 'Inne',
-}
-
 export function NotesPage({ type }: NotesPageProps) {
+  const { t, i18n } = useTranslation('notes')
   const notesCtx = useNotes()
   const [searchParams, setSearchParams] = useSearchParams()
   const tagFromUrl = searchParams.get('tag') ?? ''
@@ -154,7 +133,7 @@ export function NotesPage({ type }: NotesPageProps) {
 
   const formatDate = (s: string) => {
     const d = new Date(s)
-    return d.toLocaleDateString('pl-PL', {
+    return d.toLocaleDateString(i18n.language === 'pl' ? 'pl-PL' : 'en-US', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
@@ -162,8 +141,7 @@ export function NotesPage({ type }: NotesPageProps) {
   }
 
   const emptyIcon = type === 'inbox' ? StickyNote : type === 'idea' ? Lightbulb : BookMarked
-
-  const notesWord = (n: number) => (n === 1 ? 'notatka' : n >= 2 && n <= 4 ? 'notatki' : 'notatek')
+  const typeLabelPlural = t(`typeLabelPlural.${type}`)
 
   return (
     <div className="space-y-5">
@@ -174,7 +152,7 @@ export function NotesPage({ type }: NotesPageProps) {
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Szukaj po tytule, treści lub tagu…"
+            placeholder={t('notesPage.searchPlaceholder')}
             className="min-h-11 w-full rounded-lg border border-(--border) bg-(--bg-dark) py-2 pr-4 pl-10 text-base text-(--text-primary) placeholder:text-(--text-muted) focus:border-(--accent-cyan)/50 focus:outline-none"
           />
         </div>
@@ -184,7 +162,7 @@ export function NotesPage({ type }: NotesPageProps) {
           className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-(--accent-cyan)/45 bg-(--accent-cyan)/18 px-4 font-gaming text-sm tracking-wide text-(--accent-cyan) transition-colors hover:bg-(--accent-cyan)/26"
         >
           <Plus className="h-4 w-4" />
-          Dodaj
+          {t('notesPage.add')}
         </button>
       </div>
 
@@ -192,16 +170,16 @@ export function NotesPage({ type }: NotesPageProps) {
         <div className="space-y-3 rounded-lg border border-(--border)/70 bg-(--bg-card)/20 px-3 py-3 sm:px-4">
           {type === 'idea' && (
             <label className="flex flex-col gap-1.5 sm:max-w-xs">
-              <span className="text-base text-(--text-muted)">Status pomysłu</span>
+              <span className="text-base text-(--text-muted)">{t('notesPage.ideaStatusLabel')}</span>
               <select
                 value={ideaStatusFilter}
                 onChange={(e) => setIdeaStatusFilter(e.target.value as IdeaStatus | 'wszystkie')}
                 className="min-h-11 rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none"
               >
-                <option value="wszystkie">Wszystkie statusy</option>
+                <option value="wszystkie">{t('notesPage.allStatuses')}</option>
                 {IDEA_STATUS_WORKFLOW_ORDER.map((k) => (
                   <option key={k} value={k}>
-                    {IDEA_LABELS[k]}
+                    {t(`ideaStatus.${k}`)}
                   </option>
                 ))}
               </select>
@@ -210,14 +188,14 @@ export function NotesPage({ type }: NotesPageProps) {
           {allTags.length > 0 && (
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-base text-(--text-muted)">Tagi</span>
+                <span className="text-base text-(--text-muted)">{t('notesPage.tagsLabel')}</span>
                 {tagFromUrl && (
                   <button
                     type="button"
                     onClick={clearUrlTag}
                     className="text-sm text-(--accent-cyan) hover:underline"
                   >
-                    Wyczyść filtr z linku
+                    {t('notesPage.clearUrlFilter')}
                   </button>
                 )}
               </div>
@@ -247,20 +225,20 @@ export function NotesPage({ type }: NotesPageProps) {
 
       <div className="flex items-baseline justify-between gap-3">
         <p className="text-base text-(--text-muted)">
-          <span className="font-gaming text-(--text-primary)">{TYPE_LABELS[type]}</span>
+          <span className="font-gaming text-(--text-primary)">{typeLabelPlural}</span>
           {' · '}
-          {filtered.length} {notesWord(filtered.length)}
+          {filtered.length} {t('notesPage.countSuffix', { count: filtered.length })}
         </p>
       </div>
 
       {filtered.length === 0 ? (
         <EmptyState
           icon={emptyIcon}
-          title={search || selectedTags.size > 0 ? 'Brak wyników' : 'Brak notatek'}
+          title={search || selectedTags.size > 0 ? t('notesPage.emptyResultsTitle') : t('notesPage.emptyTitle')}
           description={
             search || selectedTags.size > 0
-              ? 'Zmień wyszukiwanie lub odznacz filtry tagów.'
-              : `Dodaj pierwszą pozycję w ${TYPE_LABELS[type]}.`
+              ? t('notesPage.emptyResultsDescription')
+              : t('notesPage.emptyDescription', { type: typeLabelPlural })
           }
           action={
             !search && selectedTags.size === 0 ? (
@@ -269,7 +247,7 @@ export function NotesPage({ type }: NotesPageProps) {
                 className="inline-flex items-center gap-2 rounded-lg border border-(--accent-cyan)/40 bg-(--accent-cyan)/15 px-4 py-2 font-gaming text-sm text-(--accent-cyan) transition-colors hover:bg-(--accent-cyan)/25"
               >
                 <Plus className="h-4 w-4" />
-                Dodaj
+                {t('notesPage.add')}
               </button>
             ) : undefined
           }
@@ -289,7 +267,7 @@ export function NotesPage({ type }: NotesPageProps) {
                     {note.pinned && (
                       <Pin
                         className="mt-0.5 h-4 w-4 shrink-0 fill-current text-(--accent-amber)"
-                        aria-label="Przypięte"
+                        aria-label={t('notesPage.pinnedAria')}
                       />
                     )}
                     <h3 className="min-w-0 flex-1 text-base font-semibold leading-snug text-(--text-primary)">
@@ -299,16 +277,16 @@ export function NotesPage({ type }: NotesPageProps) {
                       <span
                         className={`shrink-0 rounded-md border px-2 py-0.5 text-xs ${IDEA_STATUS_BADGE[note.ideaStatus]}`}
                       >
-                        {IDEA_LABELS[note.ideaStatus]}
+                        {t(`ideaStatus.${note.ideaStatus}`)}
                       </span>
                     )}
                     {note.type === 'reference' && (
                       <span
                         className="inline-flex shrink-0 items-center gap-1 rounded-md border border-(--border) bg-(--bg-dark)/80 px-2 py-0.5 text-xs text-(--text-muted)"
-                        title={REF_LABELS[note.referenceKind]}
+                        title={t(`referenceKind.${note.referenceKind}`)}
                       >
                         <RefIcon className="h-3.5 w-3.5" />
-                        {REF_LABELS[note.referenceKind]}
+                        {t(`referenceKind.${note.referenceKind}`)}
                       </span>
                     )}
                   </div>
@@ -326,14 +304,14 @@ export function NotesPage({ type }: NotesPageProps) {
                           className="inline-flex items-center gap-1.5 text-(--accent-cyan) hover:underline"
                         >
                           <ExternalLink className="h-3.5 w-3.5 shrink-0" />
-                          Otwórz link
+                          {t('notesPage.openLink')}
                         </SafeExternalLink>
                       ) : (
-                        <span className="text-(--text-muted)">Brak adresu URL</span>
+                        <span className="text-(--text-muted)">{t('notesPage.noUrl')}</span>
                       )}
                       {note.referenceSource ? (
                         <p className="text-(--text-muted)">
-                          <span className="text-(--text-primary)/90">Źródło:</span> {note.referenceSource}
+                          <span className="text-(--text-primary)/90">{t('notesPage.source')}</span> {note.referenceSource}
                         </p>
                       ) : null}
                     </div>
@@ -346,10 +324,10 @@ export function NotesPage({ type }: NotesPageProps) {
                           #{tag}
                         </span>
                       ))}
-                      <span>{note.tags.length > 0 ? '· ' : ''}edytowano {formatDate(note.updatedAt)}</span>
+                      <span>{note.tags.length > 0 ? '· ' : ''}{t('notesPage.editedOn', { date: formatDate(note.updatedAt) })}</span>
                     </div>
                     <div className="flex shrink-0 items-center gap-1 self-end sm:self-auto">
-                      <Tooltip content={note.pinned ? 'Odepnij' : 'Przypnij'}>
+                      <Tooltip content={note.pinned ? t('notesPage.unpin') : t('notesPage.pin')}>
                         <button
                           type="button"
                           onClick={() => togglePin(note.id)}
@@ -358,27 +336,27 @@ export function NotesPage({ type }: NotesPageProps) {
                               ? 'bg-(--accent-amber)/10 text-(--accent-amber)'
                               : 'text-(--text-muted) hover:bg-(--bg-dark) hover:text-(--text-primary)'
                           }`}
-                          aria-label={note.pinned ? 'Odepnij' : 'Przypnij'}
+                          aria-label={note.pinned ? t('notesPage.unpin') : t('notesPage.pin')}
                         >
                           {note.pinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
                         </button>
                       </Tooltip>
-                      <Tooltip content="Edytuj">
+                      <Tooltip content={t('notesPage.edit')}>
                         <button
                           type="button"
                           onClick={() => setEditingNote(note)}
                           className="rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-(--bg-dark) hover:text-(--accent-cyan)"
-                          aria-label="Edytuj"
+                          aria-label={t('notesPage.edit')}
                         >
                           <Pencil className="h-4 w-4" />
                         </button>
                       </Tooltip>
-                      <Tooltip content="Archiwizuj">
+                      <Tooltip content={t('notesPage.archive')}>
                         <button
                           type="button"
                           onClick={() => setNotePendingArchive(note)}
                           className="rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-(--bg-dark) hover:text-(--accent-magenta)"
-                          aria-label="Archiwizuj"
+                          aria-label={t('notesPage.archive')}
                         >
                           <Archive className="h-4 w-4" />
                         </button>
@@ -394,10 +372,10 @@ export function NotesPage({ type }: NotesPageProps) {
 
       <ConfirmDialog
         isOpen={!!notePendingArchive}
-        title="Zarchiwizować notatkę?"
-        description="Notatka zniknie z aktywnej listy. Możesz ją przywrócić z zakładki Archiwum."
+        title={t('notesPage.archiveConfirmTitle')}
+        description={t('notesPage.archiveConfirmDescription')}
         emphasis={notePendingArchive ? getNoteDisplayTitle(notePendingArchive) : undefined}
-        confirmLabel="Archiwizuj"
+        confirmLabel={t('notesPage.archiveConfirmLabel')}
         onClose={() => setNotePendingArchive(null)}
         onConfirm={() => {
           if (notePendingArchive) {

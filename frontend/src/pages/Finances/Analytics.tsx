@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Card } from '../../components/Card'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import {
@@ -19,7 +20,6 @@ import {
 } from 'recharts'
 import { CalendarDays, CreditCard, Info, PiggyBank, Receipt, UtensilsCrossed, Wallet } from 'lucide-react'
 import type { PaymentMethod } from '../../lib/paymentMethod'
-import { PAYMENT_METHOD_LABELS } from '../../lib/paymentMethod'
 import type { LucideIcon } from 'lucide-react'
 import { ChartPeriodSelector } from '../../components/ChartPeriodSelector'
 import { useChartPeriod, getMonthsInQuarter } from '../../context/ChartPeriodContext'
@@ -30,20 +30,6 @@ import { useFinanceCategories } from '../../context/FinanceCategoriesContext'
 import { useFinanceListsQuery } from '../../hooks/useFinanceListsQuery'
 import { useFinanceUsesApi } from '../../hooks/useFinanceUsesApi'
 import { AnalyticsPageSkeleton } from '../../components/skeletons'
-
-const monthNames = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru']
-const dayNames = ['Nd', 'Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb']
-
-/** Do zdań w narzędniku / bierniku: „w poniedziałek”, „we wtorek” */
-const WEEKDAY_INSIGHT_ACCUSATIVE: Record<string, string> = {
-  Nd: 'niedzielę',
-  Pn: 'poniedziałek',
-  Wt: 'wtorek',
-  Śr: 'środę',
-  Cz: 'czwartek',
-  Pt: 'piątek',
-  Sb: 'sobotę',
-}
 
 function AnalyticsInsightTile({
   icon: Icon,
@@ -102,12 +88,16 @@ function DonutTooltip(props: { active?: boolean; payload?: readonly unknown[]; t
 }
 
 export function Analytics() {
+  const { t } = useTranslation('finances')
   const isMobile = useIsMobile()
   const chartHeight = isMobile ? 200 : 240
   const useApiFinance = useFinanceUsesApi()
   const { getColor } = useFinanceCategories()
   const demoData = useDemoData()
   const monthCtx = useMonth()
+  const monthNames = t('analytics.monthShort', { returnObjects: true }) as string[]
+  const dayNames = t('analytics.weekdayShort', { returnObjects: true }) as string[]
+  const weekdayNarrative = t('analytics.weekdayNarrative', { returnObjects: true }) as string[]
   const {
     expenses: qExpenses,
     income: qIncome,
@@ -215,7 +205,7 @@ export function Analytics() {
       cum += row.bilans
       return { ...row, bilansNarastająco: cum }
     }) as ChartRow[]
-  }, [effectiveExpenses, effectiveScheduled, effectiveIncome, selectedMonth, selectedYear, chartPeriod])
+  }, [effectiveExpenses, effectiveScheduled, effectiveIncome, selectedMonth, selectedYear, chartPeriod, monthNames])
 
   const chartMonth = chartPeriod?.period.type === 'month' ? chartPeriod.period.month : selectedMonth
   const chartYear = chartPeriod?.period.type === 'month' ? chartPeriod.period.year : chartPeriod?.period.type === 'quarter' ? chartPeriod.period.year : chartPeriod?.period.type === 'year' ? chartPeriod.period.year : selectedYear
@@ -263,8 +253,8 @@ export function Analytics() {
         byDay[dayOfWeek] = (byDay[dayOfWeek] || 0) + e.amount
       })
     }
-    return dayNames.map((name, i) => ({ dzień: name, kwota: byDay[i] ?? 0 }))
-  }, [effectiveExpenses, effectiveScheduled, chartMonth, chartYear, chartPeriod])
+    return dayNames.map((name, i) => ({ dzień: name, kwota: byDay[i] ?? 0, idx: i }))
+  }, [effectiveExpenses, effectiveScheduled, chartMonth, chartYear, chartPeriod, dayNames])
 
   const topExpenses = useMemo(() => {
     let mergedList: MergedExpense[]
@@ -417,39 +407,42 @@ export function Analytics() {
 
     let foodLine: string
     if (foodNow === 0 && foodPrev === 0) {
-      foodLine = 'W tym i poprzednim miesiącu nie zapisano wydatków w kategorii Jedzenie.'
+      foodLine = t('analytics.foodNoData')
     } else if (foodPrev <= 0 && foodNow > 0) {
-      foodLine = `W tym miesiącu: ${foodNow.toLocaleString('pl-PL')} zł. W poprzednim miesiącu brak tej kategorii — brak porównania procentowego.`
+      foodLine = t('analytics.foodThisMonthOnly', { amount: foodNow.toLocaleString('pl-PL') })
     } else if (foodPrev > 0) {
       const absPct = Math.abs(foodChangePct)
       if (absPct < 0.5) {
-        foodLine = 'Wydatki na jedzenie na podobnym poziomie jak w poprzednim miesiącu.'
+        foodLine = t('analytics.foodSimilar')
       } else if (foodChangePct > 0) {
-        foodLine = `Wzrost o ok. ${absPct.toFixed(0)}% względem poprzedniego miesiąca.`
+        foodLine = t('analytics.foodIncrease', { pct: absPct.toFixed(0) })
       } else {
-        foodLine = `Spadek o ok. ${absPct.toFixed(0)}% względem poprzedniego miesiąca.`
+        foodLine = t('analytics.foodDecrease', { pct: absPct.toFixed(0) })
       }
     } else {
-      foodLine = 'W poprzednim miesiącu były wydatki na jedzenie, w tym — brak.'
+      foodLine = t('analytics.foodPrevOnly')
     }
 
     const biggestLine = biggestExpense
-      ? `${biggestExpense.name} — ${biggestExpense.amount.toLocaleString('pl-PL')} zł`
-      : 'Brak wydatków w wybranym miesiącu.'
+      ? t('analytics.biggestLine', { name: biggestExpense.name, amount: biggestExpense.amount.toLocaleString('pl-PL') })
+      : t('analytics.biggestLineEmpty')
 
     const weekdayLine =
       topWeekday && topWeekday.kwota > 0
-        ? (() => {
-            const d = topWeekday.dzień
-            const when = WEEKDAY_INSIGHT_ACCUSATIVE[d] ?? d.toLowerCase()
-            return `Łącznie najwięcej wydajesz w ${when}: ${topWeekday.kwota.toLocaleString('pl-PL')} zł (suma w analizowanym okresie wykresu).`
-          })()
-        : 'Brak wydatków w analizowanym okresie wykresu.'
+        ? t('analytics.weekdayLine', {
+            weekday: weekdayNarrative[topWeekday.idx] ?? topWeekday.dzień,
+            amount: topWeekday.kwota.toLocaleString('pl-PL'),
+          })
+        : t('analytics.weekdayLineEmpty')
 
     const fixedLine =
       totalIncome <= 0
-        ? 'Brak przychodu w wybranym miesiącu — nie można policzyć udziału stałych kosztów.'
-        : `Aktywne stałe koszty (${fixedCosts.toLocaleString('pl-PL')} zł / mies.) to ok. ${fixedShare.toFixed(0)}% przychodu z tego miesiąca (${totalIncome.toLocaleString('pl-PL')} zł).`
+        ? t('analytics.fixedLineNoIncome')
+        : t('analytics.fixedLine', {
+            fixed: fixedCosts.toLocaleString('pl-PL'),
+            pct: fixedShare.toFixed(0),
+            income: totalIncome.toLocaleString('pl-PL'),
+          })
 
     return {
       foodLine,
@@ -457,7 +450,7 @@ export function Analytics() {
       weekdayLine,
       fixedLine,
     }
-  }, [effectiveExpenses, effectiveScheduled, effectiveIncome, chartMonth, chartYear, weekdayData])
+  }, [effectiveExpenses, effectiveScheduled, effectiveIncome, chartMonth, chartYear, weekdayData, t, weekdayNarrative])
 
   if (loading) {
     return <AnalyticsPageSkeleton />
@@ -466,42 +459,42 @@ export function Analytics() {
   return (
     <div className="space-y-5">
       <div className="flex w-full min-w-0">
-        {chartPeriod && <ChartPeriodSelector leadingLabel="Okres:" />}
+        {chartPeriod && <ChartPeriodSelector leadingLabel={t('analytics.periodLabel')} />}
       </div>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 lg:gap-6">
-        <Card title="Szybkie spostrzeżenia" className="border-(--accent-cyan)/20 lg:col-span-2 max-md:p-4">
+        <Card title={t('analytics.insightsTitle')} className="border-(--accent-cyan)/20 lg:col-span-2 max-md:p-4">
           <p className="mb-4 text-base text-(--text-muted)">
             {isMobile
-              ? 'Skrót analizy dla wybranego miesiąca.'
-              : 'Jedzenie i stałe koszty liczone dla miesiąca z selektora (porównanie z poprzednim miesiącem). Ranking dnia tygodnia — według tego samego okresu co wykres „Wydatki wg dni tygodnia”.'
+              ? t('analytics.insightsDescMobile')
+              : t('analytics.insightsDescDesktop')
             }
           </p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <AnalyticsInsightTile
               icon={UtensilsCrossed}
-              eyebrow="Kategoria: jedzenie"
+              eyebrow={t('analytics.foodCategoryEyebrow')}
               body={insights.foodLine}
               accentBorder="border-l-(--accent-amber)/65"
               iconClass="text-(--accent-amber)"
             />
             <AnalyticsInsightTile
               icon={Receipt}
-              eyebrow="Największy pojedynczy wydatek"
+              eyebrow={t('analytics.biggestExpenseEyebrow')}
               body={insights.biggestLine}
               accentBorder="border-l-(--accent-magenta)/60"
               iconClass="text-(--accent-magenta)"
             />
             <AnalyticsInsightTile
               icon={CalendarDays}
-              eyebrow="Dzień tygodnia"
+              eyebrow={t('analytics.weekdayEyebrow')}
               body={insights.weekdayLine}
               accentBorder="border-l-(--accent-cyan)/60"
               iconClass="text-(--accent-cyan)"
             />
             <AnalyticsInsightTile
               icon={PiggyBank}
-              eyebrow="Stałe koszty a przychód"
+              eyebrow={t('analytics.fixedCostsEyebrow')}
               body={insights.fixedLine}
               accentBorder="border-l-(--accent-green)/55"
               iconClass="text-(--accent-green)"
@@ -509,40 +502,40 @@ export function Analytics() {
           </div>
         </Card>
 
-        <Card title="Karta vs gotówka" className="border-(--accent-cyan)/20 lg:col-span-2 max-md:p-4">
+        <Card title={t('analytics.cardVsCashTitle')} className="border-(--accent-cyan)/20 lg:col-span-2 max-md:p-4">
           <p className="mb-4 text-base text-(--text-muted)">
-            Podsumowanie transakcji z oznaczonym sposobem płatności w wybranym okresie (bez stałych kosztów).
+            {t('analytics.cardVsCashDesc')}
           </p>
           {paymentBreakdown.labeledCount === 0 ? (
             <p className="text-base text-(--text-muted)">
-              Brak transakcji z oznaczoną kartą lub gotówką w tym okresie.
+              {t('analytics.noLabeledTransactions')}
             </p>
           ) : (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <AnalyticsInsightTile
                 icon={CreditCard}
-                eyebrow={`Wydatki — ${PAYMENT_METHOD_LABELS.card.toLowerCase()}`}
+                eyebrow={t('analytics.expensesEyebrow', { method: t('transactions.card').toLowerCase() })}
                 body={`${paymentBreakdown.expenseCard.toLocaleString('pl-PL')} zł`}
                 accentBorder="border-l-(--accent-magenta)/60"
                 iconClass="text-(--accent-magenta)"
               />
               <AnalyticsInsightTile
                 icon={Wallet}
-                eyebrow={`Wydatki — ${PAYMENT_METHOD_LABELS.cash.toLowerCase()}`}
+                eyebrow={t('analytics.expensesEyebrow', { method: t('transactions.cash').toLowerCase() })}
                 body={`${paymentBreakdown.expenseCash.toLocaleString('pl-PL')} zł`}
                 accentBorder="border-l-(--accent-magenta)/40"
                 iconClass="text-(--accent-magenta)"
               />
               <AnalyticsInsightTile
                 icon={CreditCard}
-                eyebrow={`Przychody — ${PAYMENT_METHOD_LABELS.card.toLowerCase()}`}
+                eyebrow={t('analytics.incomeEyebrow', { method: t('transactions.card').toLowerCase() })}
                 body={`${paymentBreakdown.incomeCard.toLocaleString('pl-PL')} zł`}
                 accentBorder="border-l-(--accent-green)/55"
                 iconClass="text-(--accent-green)"
               />
               <AnalyticsInsightTile
                 icon={Wallet}
-                eyebrow={`Przychody — ${PAYMENT_METHOD_LABELS.cash.toLowerCase()}`}
+                eyebrow={t('analytics.incomeEyebrow', { method: t('transactions.cash').toLowerCase() })}
                 body={`${paymentBreakdown.incomeCash.toLocaleString('pl-PL')} zł`}
                 accentBorder="border-l-(--accent-green)/35"
                 iconClass="text-(--accent-green)"
@@ -551,7 +544,7 @@ export function Analytics() {
           )}
         </Card>
 
-        <Card title="Trend wydatków i przychodów" className="max-md:p-4">
+        <Card title={t('analytics.trendTitle')} className="max-md:p-4">
           <div className="chart-shell h-[200px] w-full min-h-[200px] sm:h-60">
             <ResponsiveContainer width="100%" height={chartHeight}>
               <AreaChart data={chartData}>
@@ -578,20 +571,20 @@ export function Analytics() {
                   formatter={(value: number | undefined) => [value != null ? `${value} zł` : '', '']}
                 />
                 {!isMobile && <Legend />}
-                <Area type="monotone" dataKey="wydatki" stroke="#ff00d4" strokeWidth={2} fillOpacity={1} fill="url(#colorWydatki)" name="Wydatki" activeDot={false} />
-                <Area type="monotone" dataKey="przychody" stroke="#00ff9d" strokeWidth={2} fillOpacity={1} fill="url(#colorPrzychody)" name="Przychody" activeDot={false} />
+                <Area type="monotone" dataKey="wydatki" stroke="#ff00d4" strokeWidth={2} fillOpacity={1} fill="url(#colorWydatki)" name={t('overview.expenses')} activeDot={false} />
+                <Area type="monotone" dataKey="przychody" stroke="#00ff9d" strokeWidth={2} fillOpacity={1} fill="url(#colorPrzychody)" name={t('overview.income')} activeDot={false} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </Card>
 
-        <Card title={`Wg kategorii (${
-          chartPeriod?.period.type === 'quarter'
-            ? `Q${chartPeriod.period.quarter} ${chartPeriod.period.year}`
+        <Card title={t('analytics.categoryChartTitle', {
+          period: chartPeriod?.period.type === 'quarter'
+            ? t('analytics.quarterPeriod', { quarter: chartPeriod.period.quarter, year: chartPeriod.period.year })
             : chartPeriod?.period.type === 'year'
               ? chartPeriod.period.year
               : `${monthNames[chartMonth]} ${chartYear}`
-        })`} className="max-md:p-4">
+        })} className="max-md:p-4">
           <div className="chart-shell relative h-[220px] w-full min-h-[200px] sm:h-60">
             {categoryData.length > 0 ? (
               <>
@@ -633,22 +626,22 @@ export function Analytics() {
                     <p className="text-base font-bold leading-tight text-(--accent-cyan) font-gaming sm:text-lg">
                       {expensesTotal.toLocaleString('pl-PL')} zł
                     </p>
-                    <p className="mt-0.5 text-xs text-(--text-muted)">łącznie</p>
+                    <p className="mt-0.5 text-xs text-(--text-muted)">{t('analytics.totalShort')}</p>
                   </div>
                 </div>
               </>
             ) : (
               <div className="flex items-center justify-center h-full text-base text-(--text-muted)">
-                Brak wydatków w tym miesiącu
+                {t('analytics.noExpensesThisMonth')}
               </div>
             )}
           </div>
         </Card>
 
-        <Card title="Trend oszczędności" className="max-md:p-4">
+        <Card title={t('analytics.savingsTrendTitle')} className="max-md:p-4">
           <div className="mb-1 inline-flex items-center gap-1 text-sm text-(--text-muted)">
             <Info className="h-3.5 w-3.5" />
-            <span title="Narastająca suma nadwyżek i deficytów z kolejnych punktów wykresu.">Bilans narastający w czasie</span>
+            <span title={t('analytics.savingsTrendTooltipTitle')}>{t('analytics.cumulativeBalanceOverTime')}</span>
           </div>
           <div className="chart-shell h-[200px] w-full min-h-[200px] sm:h-60">
             <ResponsiveContainer width="100%" height={chartHeight}>
@@ -679,9 +672,9 @@ export function Analytics() {
                     const okresowy = payload?.bilans
                     const suffix =
                       okresowy != null
-                        ? ` (w tym okresie: ${okresowy >= 0 ? '+' : ''}${okresowy.toLocaleString('pl-PL')} zł)`
+                        ? t('analytics.inPeriod', { amount: `${okresowy >= 0 ? '+' : ''}${okresowy.toLocaleString('pl-PL')}` })
                         : ''
-                    return [value != null ? `${value.toLocaleString('pl-PL')} zł${suffix}` : '', 'Bilans narastający']
+                    return [value != null ? `${value.toLocaleString('pl-PL')} zł${suffix}` : '', t('analytics.cumulativeBalance')]
                   }}
                 />
                 <Area
@@ -691,7 +684,7 @@ export function Analytics() {
                   strokeWidth={2}
                   fillOpacity={1}
                   fill="url(#colorBilans)"
-                  name="Bilans narastający"
+                  name={t('analytics.cumulativeBalance')}
                   baseValue={0}
                   activeDot={false}
                 />
@@ -700,9 +693,9 @@ export function Analytics() {
           </div>
         </Card>
 
-        <Card title="Wydatki wg dni tygodnia" className="max-md:p-4">
+        <Card title={t('analytics.weekdayChartTitle')} className="max-md:p-4">
           <p className="mb-1 text-sm text-(--text-muted)">
-            {chartPeriod?.period.type === 'quarter' ? `Q${chartPeriod.period.quarter} ${chartPeriod.period.year}` : chartPeriod?.period.type === 'year' ? chartPeriod.period.year : `${monthNames[chartMonth]} ${chartYear}`}
+            {chartPeriod?.period.type === 'quarter' ? t('analytics.quarterPeriod', { quarter: chartPeriod.period.quarter, year: chartPeriod.period.year }) : chartPeriod?.period.type === 'year' ? chartPeriod.period.year : `${monthNames[chartMonth]} ${chartYear}`}
           </p>
           <div className="chart-shell h-[200px] w-full min-h-[200px] sm:h-60">
             <ResponsiveContainer width="100%" height={chartHeight}>
@@ -717,18 +710,18 @@ export function Analytics() {
                     border: '1px solid var(--border)',
                     borderRadius: '8px',
                   }}
-                  formatter={(value: number | undefined) => [value != null ? `${value} zł` : '', 'Wydatki']}
+                  formatter={(value: number | undefined) => [value != null ? `${value} zł` : '', t('overview.expenses')]}
                 />
-                <Bar dataKey="kwota" fill="#ff00d4" fillOpacity={0.8} radius={[4, 4, 0, 0]} name="Wydatki" activeBar={false} />
+                <Bar dataKey="kwota" fill="#ff00d4" fillOpacity={0.8} radius={[4, 4, 0, 0]} name={t('overview.expenses')} activeBar={false} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </Card>
 
-        <Card title="Top 10 wydatków" className="max-md:p-4">
+        <Card title={t('analytics.top10Title')} className="max-md:p-4">
           <p className="mb-2 text-base text-(--text-muted)">
-            {chartPeriod?.period.type === 'quarter' ? `Q${chartPeriod.period.quarter} ${chartPeriod.period.year}` : chartPeriod?.period.type === 'year' ? chartPeriod.period.year : `${monthNames[chartMonth]} ${chartYear}`}
-            {!isMobile && ' — te same nazwy są zsumowane'}
+            {chartPeriod?.period.type === 'quarter' ? t('analytics.quarterPeriod', { quarter: chartPeriod.period.quarter, year: chartPeriod.period.year }) : chartPeriod?.period.type === 'year' ? chartPeriod.period.year : `${monthNames[chartMonth]} ${chartYear}`}
+            {!isMobile && t('analytics.top10SameNamesNote')}
           </p>
           {topExpenses.length > 0 ? (
             isMobile ? (
@@ -765,14 +758,14 @@ export function Analytics() {
                     ]}
                     labelFormatter={() => ''}
                   />
-                  <Bar dataKey="kwota" fill="#ff00d4" fillOpacity={0.8} radius={[0, 4, 4, 0]} name="Kwota" activeBar={false} />
+                  <Bar dataKey="kwota" fill="#ff00d4" fillOpacity={0.8} radius={[0, 4, 4, 0]} name={t('transactions.colAmount')} activeBar={false} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
             )
           ) : (
             <div className="flex justify-center items-center h-48 text-base text-(--text-muted)">
-              Brak wydatków w tym miesiącu
+              {t('analytics.noExpensesThisMonth')}
             </div>
           )}
         </Card>

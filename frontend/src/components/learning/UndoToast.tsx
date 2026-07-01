@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
+import i18n from '../../i18n'
 
 interface UndoToastProps {
   message: string
@@ -11,6 +13,7 @@ interface UndoToastProps {
 }
 
 export function UndoToast({ message, duration = 5000, onUndo, onExpire }: UndoToastProps) {
+  const { t } = useTranslation('common')
   const [progress, setProgress] = useState(100)
   const expireFnRef = useRef(onExpire)
 
@@ -48,13 +51,13 @@ export function UndoToast({ message, duration = 5000, onUndo, onExpire }: UndoTo
             onClick={onUndo}
             className="text-sm font-gaming text-(--accent-cyan) hover:opacity-80 transition-opacity whitespace-nowrap"
           >
-            Cofnij
+            {t('undo')}
           </button>
           <button
             type="button"
             onClick={onExpire}
             className="p-1 rounded text-(--text-muted) hover:text-(--text-primary) transition-colors"
-            aria-label="Zamknij"
+            aria-label={t('close')}
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -113,7 +116,7 @@ export function useUndoDelete<T extends { id: string }>(onDelete: (id: string) =
     pending ? (
       <UndoToast
         key={pending.item.id}
-        message={`Usunięto: ${pending.label}`}
+        message={i18n.t('common:deletedItem', { label: pending.label })}
         onUndo={undo}
         onExpire={expire}
       />

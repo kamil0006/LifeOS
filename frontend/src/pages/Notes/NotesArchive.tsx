@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { EmptyState } from '../../components/EmptyState'
 import { Tooltip } from '../../components/Tooltip'
 import { RotateCcw, Trash2, Search, Archive, ExternalLink } from 'lucide-react'
@@ -8,12 +9,6 @@ import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { SafeExternalLink } from '../../components/SafeExternalLink'
 import { getNoteDisplayTitle, notePlainExcerpt } from '../../lib/notesModel'
 
-const ARCHIVE_TYPE_LABEL: Record<NoteType, string> = {
-  inbox: 'Inbox',
-  idea: 'Pomysł',
-  reference: 'Referencja',
-}
-
 const ARCHIVE_TYPE_BADGE: Record<NoteType, string> = {
   inbox: 'border-sky-400/30 bg-sky-400/8 text-sky-300',
   idea: 'border-(--accent-amber)/40 bg-(--accent-amber)/10 text-(--accent-amber)',
@@ -21,6 +16,7 @@ const ARCHIVE_TYPE_BADGE: Record<NoteType, string> = {
 }
 
 export function NotesArchive() {
+  const { t, i18n } = useTranslation('notes')
   const notesCtx = useNotes()
   const [search, setSearch] = useState('')
   const [notePendingPermanentDelete, setNotePendingPermanentDelete] = useState<Note | null>(null)
@@ -47,14 +43,12 @@ export function NotesArchive() {
 
   const formatDate = (s: string) => {
     const d = new Date(s)
-    return d.toLocaleDateString('pl-PL', {
+    return d.toLocaleDateString(i18n.language === 'pl' ? 'pl-PL' : 'en-US', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
     })
   }
-
-  const notesWord = (n: number) => (n === 1 ? 'pozycja' : n >= 2 && n <= 4 ? 'pozycje' : 'pozycji')
 
   return (
     <div className="space-y-5">
@@ -64,25 +58,25 @@ export function NotesArchive() {
           type="search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Szukaj po tytule, treści, tagach…"
+          placeholder={t('archive.searchPlaceholder')}
           className="min-h-11 w-full rounded-lg border border-(--border) bg-(--bg-dark) py-2 pr-4 pl-10 text-base text-(--text-primary) placeholder:text-(--text-muted) focus:border-(--accent-cyan)/50 focus:outline-none"
         />
       </div>
 
       <p className="text-base text-(--text-muted)">
-        <span className="font-gaming text-(--text-primary)">Archiwum</span>
+        <span className="font-gaming text-(--text-primary)">{t('archive.title')}</span>
         {' · '}
-        {archived.length} {notesWord(archived.length)}
+        {archived.length} {t('archive.countSuffix', { count: archived.length })}
       </p>
 
       {archived.length === 0 ? (
         <EmptyState
           icon={Archive}
-          title={search ? 'Brak wyników' : 'Archiwum jest puste'}
+          title={search ? t('archive.emptyResultsTitle') : t('archive.emptyTitle')}
           description={
             search
-              ? 'Zmień frazę wyszukiwania.'
-              : 'Zarchiwizowane notatki pojawią się tutaj. Usuń trwale tylko stąd.'
+              ? t('archive.emptyResultsDescription')
+              : t('archive.emptyDescription')
           }
           compact
         />
@@ -98,7 +92,7 @@ export function NotesArchive() {
                   <span
                     className={`shrink-0 rounded-md border px-2 py-0.5 text-xs ${ARCHIVE_TYPE_BADGE[note.type]}`}
                   >
-                    {ARCHIVE_TYPE_LABEL[note.type]}
+                    {t(`typeLabel.${note.type}`)}
                   </span>
                   <h3 className="min-w-0 flex-1 text-base font-semibold leading-snug text-(--text-primary)">
                     {getNoteDisplayTitle(note)}
@@ -116,12 +110,12 @@ export function NotesArchive() {
                         className="inline-flex items-center gap-1.5 text-(--accent-cyan) hover:underline"
                       >
                         <ExternalLink className="h-3.5 w-3.5 shrink-0" />
-                        Otwórz link
+                        {t('archive.openLink')}
                       </SafeExternalLink>
                     ) : null}
                     {note.referenceSource ? (
                       <p className="text-(--text-muted)">
-                        <span className="text-(--text-primary)/90">Źródło:</span> {note.referenceSource}
+                        <span className="text-(--text-primary)/90">{t('archive.source')}</span> {note.referenceSource}
                       </p>
                     ) : null}
                   </div>
@@ -135,26 +129,26 @@ export function NotesArchive() {
                     ))}
                     <span>
                       {note.tags.length > 0 ? '· ' : ''}
-                      zarchiwizowano {note.archivedAt ? formatDate(note.archivedAt) : '—'}
+                      {t('archive.archivedOn', { date: note.archivedAt ? formatDate(note.archivedAt) : '—' })}
                     </span>
                   </div>
                   <div className="flex shrink-0 items-center gap-1 self-end sm:self-auto">
-                    <Tooltip content="Przywróć">
+                    <Tooltip content={t('archive.restore')}>
                       <button
                         type="button"
                         onClick={() => restoreNote(note.id)}
                         className="rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-(--bg-dark) hover:text-(--accent-cyan)"
-                        aria-label="Przywróć"
+                        aria-label={t('archive.restore')}
                       >
                         <RotateCcw className="h-4 w-4" />
                       </button>
                     </Tooltip>
-                    <Tooltip content="Usuń trwale">
+                    <Tooltip content={t('archive.deletePermanently')}>
                       <button
                         type="button"
                         onClick={() => setNotePendingPermanentDelete(note)}
                         className="rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-(--bg-dark) hover:text-[#e74c3c]"
-                        aria-label="Usuń trwale"
+                        aria-label={t('archive.deletePermanently')}
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -169,12 +163,12 @@ export function NotesArchive() {
 
       <ConfirmDialog
         isOpen={!!notePendingPermanentDelete}
-        title="Usunąć notatkę na stałe?"
-        description="Ta operacja jest nieodwracalna. Notatka zostanie trwale usunięta z archiwum."
+        title={t('archive.deleteConfirmTitle')}
+        description={t('archive.deleteConfirmDescription')}
         emphasis={
           notePendingPermanentDelete ? getNoteDisplayTitle(notePendingPermanentDelete) : undefined
         }
-        confirmLabel="Usuń na stałe"
+        confirmLabel={t('archive.deleteConfirmLabel')}
         variant="danger"
         onClose={() => setNotePendingPermanentDelete(null)}
         onConfirm={() => {

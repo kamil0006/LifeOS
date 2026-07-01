@@ -1,14 +1,15 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { authApi } from '../lib/api'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 
-const PASSWORD_HINT = 'Minimum 8 znaków, co najmniej jedna litera i jedna cyfra'
 const isDev = import.meta.env.DEV
 
 export function Login() {
+  const { t } = useTranslation('auth')
   const [isRegister, setIsRegister] = useState(false)
   const [showReset, setShowReset] = useState(false)
   const [email, setEmail] = useState('')
@@ -36,11 +37,11 @@ export function Login() {
     if (err instanceof Error) {
       const m = err.message.toLowerCase()
       if (m.includes('failed to fetch') || m.includes('econnrefused') || m.includes('networkerror')) {
-        return 'Nie można połączyć z serwerem. Upewnij się, że backend działa (port 3002).'
+        return t('networkError')
       }
       return err.message
     }
-    return 'Wystąpił nieoczekiwany błąd'
+    return t('unexpectedError')
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,7 +49,7 @@ export function Login() {
     setError('')
     setSuccess('')
     if (isRegister && password !== passwordConfirm) {
-      setError('Hasła muszą być identyczne')
+      setError(t('passwordsMustMatch'))
       return
     }
     setLoading(true)
@@ -57,7 +58,7 @@ export function Login() {
     try {
       if (showReset) {
         await authApi.resetPassword(email.trim().toLowerCase(), newPassword)
-        setSuccess('Hasło zaktualizowane. Możesz się zalogować.')
+        setSuccess(t('passwordResetSuccess'))
         setShowReset(false)
         setNewPassword('')
       } else if (isRegister) {
@@ -81,11 +82,7 @@ export function Login() {
     }
   }
 
-  const listItems = [
-    'Śledź wydatki i przychody',
-    'Buduj nawyki i osiągaj cele',
-    'Kalendarz, notatki i nauka',
-  ]
+  const listItems = [t('listExpenses'), t('listHabits'), t('listOrganize')]
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-(--bg-dark) bg-grid p-6">
@@ -118,7 +115,7 @@ export function Login() {
             transition={{ delay: 0.2, duration: 0.5 }}
             className="text-xl text-(--text-muted) mt-4 font-gaming tracking-wide max-w-md"
           >
-            Finanse, nawyki, cele i notatki w jednym miejscu. Zarządzaj życiem świadomie.
+            {t('tagline')}
           </motion.p>
           <ul className="mt-8 space-y-3 text-base text-(--text-muted)">
             {listItems.map((text, i) => (
@@ -146,7 +143,7 @@ export function Login() {
             whileTap={{ scale: 0.98 }}
             transition={{ duration: 0.4, delay: 0.25 }}
           >
-            Wypróbuj demo
+            {t('tryDemo')}
           </motion.button>
         </motion.div>
 
@@ -165,7 +162,7 @@ export function Login() {
           >
             <div className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-(--accent-cyan)/50 to-transparent" />
             <p className="text-base text-(--text-muted) mb-4 font-gaming tracking-wide">
-              {isRegister ? 'Załóż konto' : 'Zaloguj się, aby zarządzać danymi'}
+              {isRegister ? t('createAccount') : t('loginPrompt')}
             </p>
             <form onSubmit={handleSubmit} className="space-y-4">
               <AnimatePresence mode="wait">
@@ -193,7 +190,7 @@ export function Login() {
                 )}
               </AnimatePresence>
               <div>
-                <label className="block text-base text-(--text-muted) mb-1">Email</label>
+                <label className="block text-base text-(--text-muted) mb-1">{t('email')}</label>
                 <input
                   type="email"
                   value={email}
@@ -207,7 +204,7 @@ export function Login() {
               </div>
               {showReset ? (
                 <div>
-                  <label className="block text-base text-(--text-muted) mb-1">Nowe hasło</label>
+                  <label className="block text-base text-(--text-muted) mb-1">{t('newPassword')}</label>
                   <div className="relative">
                     <input
                       type={showNewPassword ? 'text' : 'password'}
@@ -222,17 +219,17 @@ export function Login() {
                       onClick={() => setShowNewPassword(!showNewPassword)}
                       className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-(--text-muted) hover:text-(--accent-cyan) transition-colors"
                       tabIndex={-1}
-                      aria-label={showNewPassword ? 'Ukryj hasło' : 'Pokaż hasło'}
+                      aria-label={showNewPassword ? t('hidePassword') : t('showPassword')}
                     >
                       {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
-                  <p className="text-sm text-(--text-muted) mt-1">{PASSWORD_HINT}</p>
+                  <p className="text-sm text-(--text-muted) mt-1">{t('passwordHint')}</p>
                 </div>
               ) : (
                 <>
                   <div>
-                    <label className="block text-base text-(--text-muted) mb-1">Hasło</label>
+                    <label className="block text-base text-(--text-muted) mb-1">{t('password')}</label>
                     <div className="relative">
                       <input
                         type={showPassword ? 'text' : 'password'}
@@ -250,18 +247,18 @@ export function Login() {
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-(--text-muted) hover:text-(--accent-cyan) transition-colors"
                         tabIndex={-1}
-                        aria-label={showPassword ? 'Ukryj hasło' : 'Pokaż hasło'}
+                        aria-label={showPassword ? t('hidePassword') : t('showPassword')}
                       >
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
                     {isRegister && (
-                      <p className="text-sm text-(--text-muted) mt-1">{PASSWORD_HINT}</p>
+                      <p className="text-sm text-(--text-muted) mt-1">{t('passwordHint')}</p>
                     )}
                   </div>
                   {isRegister && (
                     <div>
-                      <label className="block text-base text-(--text-muted) mb-1">Potwierdź hasło</label>
+                      <label className="block text-base text-(--text-muted) mb-1">{t('confirmPassword')}</label>
                       <div className="relative">
                         <input
                           type={showPasswordConfirm ? 'text' : 'password'}
@@ -279,7 +276,7 @@ export function Login() {
                           onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
                           className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-(--text-muted) hover:text-(--accent-cyan) transition-colors"
                           tabIndex={-1}
-                          aria-label={showPasswordConfirm ? 'Ukryj hasło' : 'Pokaż hasło'}
+                          aria-label={showPasswordConfirm ? t('hidePassword') : t('showPassword')}
                         >
                           {showPasswordConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
@@ -296,7 +293,7 @@ export function Login() {
                     onChange={(e) => setRememberMe(e.target.checked)}
                     className="w-4 h-4 rounded border-(--border) bg-(--bg-dark) text-(--accent-cyan) focus:ring-(--accent-cyan)/50"
                   />
-                  <span className="text-sm text-(--text-muted)">Zapamiętaj mnie</span>
+                  <span className="text-sm text-(--text-muted)">{t('rememberMe')}</span>
                 </label>
               )}
               <motion.button
@@ -311,11 +308,11 @@ export function Login() {
                   <>
                     <Loader2 className="w-5 h-5 animate-spin shrink-0" />
                     <span>
-                      {showReset ? 'Resetowanie...' : isRegister ? 'Rejestracja...' : 'Logowanie...'}
+                      {showReset ? t('resettingPassword') : isRegister ? t('registering') : t('loggingIn')}
                     </span>
                   </>
                 ) : (
-                  showReset ? 'Zresetuj hasło' : isRegister ? 'Zarejestruj' : 'Zaloguj'
+                  showReset ? t('resetPasswordButton') : isRegister ? t('registerButton') : t('loginButton')
                 )}
               </motion.button>
             </form>
@@ -330,7 +327,7 @@ export function Login() {
                 }}
                 className="w-full mt-4 text-sm text-(--text-muted) hover:text-(--accent-cyan) transition-colors"
               >
-                ← Wróć do logowania
+                {t('backToLogin')}
               </button>
             ) : (
               <>
@@ -345,7 +342,7 @@ export function Login() {
                   }}
                   className="w-full mt-4 text-sm text-(--text-muted) hover:text-(--accent-cyan) transition-colors"
                 >
-                  {isRegister ? 'Mam konto – zaloguj się' : 'Nie mam konta – zarejestruj się'}
+                  {isRegister ? t('haveAccount') : t('noAccount')}
                 </button>
                 {isDev && (
                   <button
@@ -357,7 +354,7 @@ export function Login() {
                     }}
                     className="w-full mt-2 text-sm text-(--text-muted) hover:text-(--accent-cyan) transition-colors"
                   >
-                    Nie mogę się zalogować – zresetuj hasło (dev)
+                    {t('cannotLogin')}
                   </button>
                 )}
               </>

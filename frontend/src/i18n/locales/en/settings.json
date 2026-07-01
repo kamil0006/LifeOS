@@ -1,0 +1,31 @@
+{
+  "title": "Settings",
+  "closeAria": "Close",
+  "backupSection": "Backup",
+  "demoUnavailable": "Backup is only available on a logged-in account — demo mode doesn't save data on the server.",
+  "lastBackup": "Last backup: {{date}}",
+  "neverBackedUp": "No backup has been made yet.",
+  "staleWarning": " — you should make a new one.",
+  "exportButton": "Download backup",
+  "exportButtonBusy": "Downloading…",
+  "importButton": "Restore from file",
+  "exportSuccess": "Backup downloaded.",
+  "exportError": "Failed to download the backup.",
+  "fileReadError": "Couldn't read the file — check that it's a valid backup JSON file.",
+  "importError": "Failed to restore the backup.",
+  "errorCode": {
+    "NO_USER": "No user found. Please log in again.",
+    "INVALID_BACKUP_FILE": "Invalid backup file.",
+    "INVALID_ACCOUNT_REFERENCE": "A balance correction refers to a non-existent account.",
+    "INVALID_HABIT_REFERENCE": "A habit entry refers to a non-existent habit.",
+    "IMPORT_FAILED": "Failed to restore the backup. No data was changed."
+  },
+  "confirmTitle": "Restore data from backup?",
+  "confirmEmphasis": "This will replace ALL current data on the account.",
+  "confirmDescription": "All current expenses, income, notes, habits, goals and other data will be permanently deleted and replaced with the contents of the uploaded file. This action cannot be undone.",
+  "confirmLabel": "Yes, replace my data",
+  "confirmLabelBusy": "Restoring…",
+  "languageSection": "Language",
+  "languagePolish": "Polski",
+  "languageEnglish": "English"
+}

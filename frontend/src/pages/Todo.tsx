@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { ModalShell } from '../components/ModalShell'
 import { TodoDueQuickPick, type TodoDuePickMode } from '../components/todo/TodoDueQuickPick'
@@ -28,9 +29,7 @@ import { TODO_ITEM_SPRING, todoItemEnterVariants } from '../lib/todoMotion'
 import { parseQuickTodoInput } from '../lib/todoQuickParse'
 import { useIsMobile } from '../hooks/useIsMobile'
 import {
-  TODO_CATEGORY_LABEL,
   TODO_CATEGORIES,
-  TODO_PRIORITY_LABEL,
   compareTodosForDisplay,
   formatTodoDueSummary,
   isArchivedTodo,
@@ -45,117 +44,93 @@ import {
   type TodoTabFilter,
 } from '../lib/todoDomain'
 
-const TAB_DEFS: { id: TodoTabFilter; label: string }[] = [
-  { id: 'today', label: 'Dzisiaj' },
-  { id: 'upcoming', label: 'Nadchodzące' },
-  { id: 'all', label: 'Wszystkie' },
-  { id: 'done', label: 'Zrobione' },
-]
-
-function tasksWord(n: number) {
-  if (n === 1) return 'zadanie'
-  if (n >= 2 && n <= 4) return 'zadania'
-  return 'zadań'
-}
-
-function eventsWord(n: number) {
-  if (n === 1) return 'wydarzenie'
-  if (n >= 2 && n <= 4) return 'wydarzenia'
-  return 'wydarzeń'
-}
-
-function habitsWord(n: number) {
-  if (n === 1) return 'nawyk'
-  if (n >= 2 && n <= 4) return 'nawyki'
-  return 'nawyków'
-}
+const TAB_IDS: TodoTabFilter[] = ['today', 'upcoming', 'all', 'done']
+const PRIORITY_IDS: TodoPriority[] = ['low', 'medium', 'high']
 
 /** Wyświetlanie: pierwsza litera jak zdania (bez zmiany zapisanego tekstu). */
-function formatTodoTitleForDisplay(text: string): string {
+function formatTodoTitleForDisplay(text: string, locale: string): string {
   const s = text.trim()
   if (!s) return text
-  return s.charAt(0).toLocaleUpperCase('pl-PL') + s.slice(1)
+  return s.charAt(0).toLocaleUpperCase(locale) + s.slice(1)
 }
 
 function TodoQuickParseHintContent() {
+  const { t, i18n } = useTranslation('todo')
+  const priorityLabel = (p: TodoPriority) => t(`priorityLabel.${p}`)
+  const categoryLabel = (c: TodoCategory) => t(`categoryLabel.${c}`)
   const categoryTags = TODO_CATEGORIES.map((c) => `#${c}`).join(' ')
+  const dueWordTokens =
+    i18n.language === 'pl'
+      ? { today: 'dziś', tomorrow: 'jutro', dayAfterTomorrow: 'pojutrze' }
+      : { today: 'today', tomorrow: 'tomorrow', dayAfterTomorrow: 'the day after tomorrow' }
 
   return (
     <div className="space-y-4 text-base text-(--text-muted)">
-      <p className="leading-relaxed">
-        Możesz ustawić termin, priorytet i obszar bezpośrednio w treści zadania — reszta tekstu zostanie jako
-        tytuł.
-      </p>
+      <p className="leading-relaxed">{t('quickParseHint.intro')}</p>
 
       <section className="space-y-2">
-        <h4 className="font-gaming text-sm tracking-wide text-(--text-primary)">Priorytet na końcu</h4>
+        <h4 className="font-gaming text-sm tracking-wide text-(--text-primary)">{t('quickParseHint.priorityTitle')}</h4>
         <ul className="space-y-1.5 leading-relaxed">
           <li>
-            <code className="text-(--text-primary)">?</code> — {TODO_PRIORITY_LABEL.low}
+            <code className="text-(--text-primary)">?</code> — {priorityLabel('low')}
           </li>
-          <li>Bez znaku — {TODO_PRIORITY_LABEL.medium} (domyślnie)</li>
+          <li>{t('quickParseHint.priorityMediumDefault', { label: priorityLabel('medium') })}</li>
           <li>
-            <code className="text-(--text-primary)">!</code> — {TODO_PRIORITY_LABEL.high}
+            <code className="text-(--text-primary)">!</code> — {priorityLabel('high')}
           </li>
         </ul>
       </section>
 
       <section className="space-y-2">
-        <h4 className="font-gaming text-sm tracking-wide text-(--text-primary)">Termin w treści</h4>
+        <h4 className="font-gaming text-sm tracking-wide text-(--text-primary)">{t('quickParseHint.dueTitle')}</h4>
         <ul className="space-y-1.5 leading-relaxed">
           <li>
-            Słowa: <code className="text-(--text-primary)">dziś</code>,{' '}
-            <code className="text-(--text-primary)">jutro</code>,{' '}
-            <code className="text-(--text-primary)">pojutrze</code>
+            {t('quickParseHint.dueWordsLabel')}{' '}
+            <code className="text-(--text-primary)">{dueWordTokens.today}</code>,{' '}
+            <code className="text-(--text-primary)">{dueWordTokens.tomorrow}</code>,{' '}
+            <code className="text-(--text-primary)">{dueWordTokens.dayAfterTomorrow}</code>
           </li>
-          <li>
-            Data: <code className="text-(--text-primary)">RRRR-MM-DD</code> (np.{' '}
-            <code className="text-(--text-primary)">2026-06-20</code>)
-          </li>
-          <li>
-            Godzina: <code className="text-(--text-primary)">14:30</code>
-          </li>
+          <li>{t('quickParseHint.dueDate')}</li>
+          <li>{t('quickParseHint.dueTime')}</li>
         </ul>
       </section>
 
       <section className="space-y-2">
-        <h4 className="font-gaming text-sm tracking-wide text-(--text-primary)">Obszar</h4>
+        <h4 className="font-gaming text-sm tracking-wide text-(--text-primary)">{t('quickParseHint.areaTitle')}</h4>
         <p className="leading-relaxed">
-          Hasztag w tekście:{' '}
+          {t('quickParseHint.areaHint')}{' '}
           <code className="wrap-break-word text-(--text-primary)">{categoryTags}</code>
         </p>
       </section>
 
       <section className="space-y-2 rounded-lg border border-(--border)/70 bg-(--bg-dark)/40 px-3 py-2.5">
-        <h4 className="font-gaming text-sm tracking-wide text-(--text-primary)">Przykład</h4>
+        <h4 className="font-gaming text-sm tracking-wide text-(--text-primary)">{t('quickParseHint.exampleTitle')}</h4>
         <p>
           <code className="text-(--text-primary)">Zapłacić rachunki jutro 14:30 #finanse !</code>
         </p>
         <ul className="mt-2 space-y-1 text-sm leading-relaxed">
           <li>
-            <span className="text-(--text-primary)">Tytuł:</span> Zapłacić rachunki
+            <span className="text-(--text-primary)">{t('quickParseHint.exampleTitleField')}</span> {t('quickParseHint.exampleTitleValue')}
           </li>
           <li>
-            <span className="text-(--text-primary)">Termin:</span> jutro, 14:30
+            <span className="text-(--text-primary)">{t('quickParseHint.exampleDueField')}</span> {t('quickParseHint.exampleDueValue')}
           </li>
           <li>
-            <span className="text-(--text-primary)">Obszar:</span> {TODO_CATEGORY_LABEL.finanse}
+            <span className="text-(--text-primary)">{t('quickParseHint.exampleAreaField')}</span> {categoryLabel('finanse')}
           </li>
           <li>
-            <span className="text-(--text-primary)">Priorytet:</span> {TODO_PRIORITY_LABEL.high}
+            <span className="text-(--text-primary)">{t('quickParseHint.examplePriorityField')}</span> {priorityLabel('high')}
           </li>
         </ul>
       </section>
 
-      <p className="leading-relaxed">
-        <span className="font-gaming text-(--text-primary)">Opcje</span> — jeśli ustawisz termin, priorytet lub
-        obszar w panelu poniżej, te wartości mają pierwszeństwo przed skrótami w tekście.
-      </p>
+      <p className="leading-relaxed">{t('quickParseHint.optionsHint')}</p>
     </div>
   )
 }
 
 function TodoQuickParseHint() {
+  const { t } = useTranslation('todo')
   const [open, setOpen] = useState(false)
   const isMobile = useIsMobile()
   const wrapRef = useRef<HTMLDivElement>(null)
@@ -185,7 +160,7 @@ function TodoQuickParseHint() {
           type="button"
           onClick={() => setOpen((v) => !v)}
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-(--border) bg-(--bg-dark) text-(--text-muted) transition-colors hover:border-(--border) hover:bg-(--bg-card-hover) hover:text-(--text-primary)"
-          aria-label="Skróty wpisywania zadania"
+          aria-label={t('quickParseHint.buttonAria')}
           aria-expanded={open}
         >
           <HelpCircle className="h-5 w-5" />
@@ -193,10 +168,10 @@ function TodoQuickParseHint() {
         {open && !isMobile && (
           <div
             role="dialog"
-            aria-label="Skróty wpisywania zadania"
+            aria-label={t('quickParseHint.buttonAria')}
             className="absolute right-0 top-[calc(100%+0.35rem)] z-50 w-[min(26rem,calc(100vw-2rem))] max-h-[min(70vh,28rem)] overflow-y-auto rounded-lg border border-(--border) bg-(--bg-card) p-4 shadow-lg"
           >
-            <p className="mb-3 font-gaming text-sm tracking-wide text-(--text-primary)">Skróty wpisywania</p>
+            <p className="mb-3 font-gaming text-sm tracking-wide text-(--text-primary)">{t('quickParseHint.title')}</p>
             <TodoQuickParseHintContent />
           </div>
         )}
@@ -212,12 +187,12 @@ function TodoQuickParseHint() {
           zPanel={70}
         >
           <div className="mb-3 flex items-center justify-between gap-2">
-            <span className="font-gaming text-sm tracking-wide text-(--text-primary)">Skróty wpisywania</span>
+            <span className="font-gaming text-sm tracking-wide text-(--text-primary)">{t('quickParseHint.title')}</span>
             <button
               type="button"
               onClick={() => setOpen(false)}
               className="rounded-lg p-1.5 text-(--text-muted) hover:bg-(--bg-card-hover) hover:text-(--text-primary)"
-              aria-label="Zamknij"
+              aria-label={t('quickParseHint.closeAria')}
             >
               <X className="h-5 w-5" />
             </button>
@@ -257,17 +232,18 @@ function chipClass(kind: 'priority' | 'date', variant: string) {
 }
 
 function TodoMetaChips({ todo }: { todo: TodoItem }) {
+  const { t } = useTranslation('todo')
   const ds = todoDateStatus(todo.dueDate)
   const pri =
     todo.priority === 'high' ? 'high' : todo.priority === 'medium' ? 'medium' : 'low'
 
   return (
     <div className="flex flex-wrap items-center justify-end gap-1.5">
-      <span className={chipClass('priority', pri)}>{TODO_PRIORITY_LABEL[todo.priority]}</span>
-      {ds === 'overdue' && <span className={chipClass('date', 'overdue')}>Po terminie</span>}
-      {ds === 'today' && <span className={chipClass('date', 'today')}>Dziś</span>}
+      <span className={chipClass('priority', pri)}>{t(`priorityLabel.${todo.priority}`)}</span>
+      {ds === 'overdue' && <span className={chipClass('date', 'overdue')}>{t('priorityOverdue')}</span>}
+      {ds === 'today' && <span className={chipClass('date', 'today')}>{t('priorityToday')}</span>}
       {ds === 'none' && (
-        <span className={chipClass('date', 'none')}>Bez terminu</span>
+        <span className={chipClass('date', 'none')}>{t('priorityNone')}</span>
       )}
     </div>
   )
@@ -286,6 +262,7 @@ function TodoTaskCard({
   onRemove: () => void
   onEdit: () => void
 }) {
+  const { t, i18n } = useTranslation('todo')
   const reduceMotion = useReducedMotion()
   const layoutTransition = reduceMotion
     ? { duration: 0.2 }
@@ -371,12 +348,12 @@ function TodoTaskCard({
                 todo.done ? 'text-(--text-muted) line-through decoration-(--accent-green)/50' : 'text-(--text-primary)'
               }`}
             >
-              {formatTodoTitleForDisplay(todo.text)}
+              {formatTodoTitleForDisplay(todo.text, i18n.language === 'pl' ? 'pl-PL' : 'en-US')}
             </span>
             <TodoMetaChips todo={todo} />
           </div>
           <p className={`text-base text-(--text-muted) ${compact ? 'mt-0.5' : 'mt-1'}`}>
-            {TODO_CATEGORY_LABEL[todo.category]}
+            {t(`categoryLabel.${todo.category}`)}
             {' · '}
             {formatTodoDueSummary(todo.dueDate, todo.dueTime)}
           </p>
@@ -387,7 +364,7 @@ function TodoTaskCard({
                 className="font-gaming text-xs tracking-wide text-(--text-muted) underline-offset-2 hover:text-(--text-primary) hover:underline"
                 onClick={(e) => e.stopPropagation()}
               >
-                Powiązana notatka
+                {t('linkedNote')}
               </Link>
             </p>
           )}
@@ -401,7 +378,7 @@ function TodoTaskCard({
             onEdit()
           }}
           className="rounded p-1.5 text-(--text-muted) opacity-70 transition-all hover:text-(--text-primary) group-hover:opacity-100"
-          aria-label="Edytuj"
+          aria-label={t('editAria')}
         >
           <Pencil className="h-4 w-4" />
         </button>
@@ -412,7 +389,7 @@ function TodoTaskCard({
             onRemove()
           }}
           className="rounded p-1.5 text-(--text-muted) opacity-0 transition-all hover:text-red-400 group-hover:opacity-100"
-          aria-label="Usuń"
+          aria-label={t('deleteAria')}
         >
           <Trash2 className="h-4 w-4" />
         </button>
@@ -436,6 +413,7 @@ function TodoEditModal({
     category: TodoCategory
   }) => void
 }) {
+  const { t } = useTranslation('todo')
   const [text, setText] = useState(todo.text)
   const [dueDate, setDueDate] = useState(todo.dueDate ?? '')
   const [dueTime, setDueTime] = useState(todo.dueTime ?? '')
@@ -451,10 +429,10 @@ function TodoEditModal({
   }, [todo.id, todo.text, todo.dueDate, todo.dueTime, todo.priority, todo.category])
 
   const save = () => {
-    const t = text.trim()
-    if (!t) return
+    const value = text.trim()
+    if (!value) return
     onSave({
-      text: t,
+      text: value,
       dueDate: dueDate.trim() || null,
       dueTime: dueTime.trim() || null,
       priority,
@@ -472,19 +450,19 @@ function TodoEditModal({
       panelKey="todo-edit-panel"
     >
       <div className="mb-4 flex items-center justify-between gap-2">
-        <h3 className="font-gaming text-lg font-bold text-(--text-primary)">Zadanie</h3>
+        <h3 className="font-gaming text-lg font-bold text-(--text-primary)">{t('editModal.title')}</h3>
         <button
           type="button"
           onClick={onClose}
           className="rounded-lg p-2 text-(--text-muted) hover:bg-(--bg-card-hover) hover:text-(--text-primary)"
-          aria-label="Zamknij"
+          aria-label={t('editModal.closeAria')}
         >
           <X className="h-5 w-5" />
         </button>
       </div>
       <div className="space-y-4">
         <div>
-          <label className="mb-1 block text-base text-(--text-muted)">Treść</label>
+          <label className="mb-1 block text-base text-(--text-muted)">{t('editModal.textLabel')}</label>
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -503,21 +481,21 @@ function TodoEditModal({
         />
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="mb-1 block text-base text-(--text-muted)">Priorytet</label>
+            <label className="mb-1 block text-base text-(--text-muted)">{t('editModal.priorityLabel')}</label>
             <select
               value={priority}
               onChange={(e) => setPriority(e.target.value as TodoPriority)}
               className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none"
             >
-              {(Object.keys(TODO_PRIORITY_LABEL) as TodoPriority[]).map((p) => (
+              {PRIORITY_IDS.map((p) => (
                 <option key={p} value={p}>
-                  {TODO_PRIORITY_LABEL[p]}
+                  {t(`priorityLabel.${p}`)}
                 </option>
               ))}
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-base text-(--text-muted)">Obszar</label>
+            <label className="mb-1 block text-base text-(--text-muted)">{t('editModal.areaLabel')}</label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value as TodoCategory)}
@@ -525,7 +503,7 @@ function TodoEditModal({
             >
               {TODO_CATEGORIES.map((c) => (
                 <option key={c} value={c}>
-                  {TODO_CATEGORY_LABEL[c]}
+                  {t(`categoryLabel.${c}`)}
                 </option>
               ))}
             </select>
@@ -538,7 +516,7 @@ function TodoEditModal({
           onClick={onClose}
           className="w-full rounded-lg border border-(--border) px-4 py-2.5 text-base text-(--text-muted) hover:bg-(--bg-card-hover) hover:text-(--text-primary) sm:w-auto"
         >
-          Anuluj
+          {t('editModal.cancel')}
         </button>
         <button
           type="button"
@@ -546,7 +524,7 @@ function TodoEditModal({
           disabled={!text.trim()}
           className="w-full rounded-lg border border-(--accent-cyan)/40 bg-(--accent-cyan)/20 px-4 py-2.5 font-gaming text-base text-(--accent-cyan) hover:bg-(--accent-cyan)/30 disabled:opacity-40 sm:w-auto"
         >
-          Zapisz
+          {t('editModal.save')}
         </button>
       </div>
     </ModalShell>
@@ -562,10 +540,8 @@ function partitionTodayTodos(items: TodoItem[]) {
   return { overdue, todayDated, undated }
 }
 
-const QUICK_ADD_PLACEHOLDER_MOBILE = 'Nowe zadanie…'
-const QUICK_ADD_PLACEHOLDER_DESKTOP = 'Co masz do zrobienia? np. Zapłacić rachunki jutro #finanse !'
-
 export function Todo() {
+  const { t } = useTranslation('todo')
   const isMobile = useIsMobile()
   const { isDemoMode } = useAuth()
   const { todos, addTodo, updateTodo, toggleTodo, removeTodo, clearCompletedTodos, loading } =
@@ -667,12 +643,8 @@ export function Todo() {
       return (
         <EmptyState
           icon={ClipboardList}
-          title={tab === 'done' ? 'Brak zrobionych' : 'Nic tu nie ma'}
-          description={
-            tab === 'done'
-              ? 'Ukończone zadania pojawią się tutaj.'
-              : 'Dodaj zadanie lub zmień filtr obszaru.'
-          }
+          title={tab === 'done' ? t('emptyDoneTitle') : t('emptyDefaultTitle')}
+          description={tab === 'done' ? t('emptyDoneDescription') : t('emptyDefaultDescription')}
           compact
         />
       )
@@ -704,8 +676,8 @@ export function Todo() {
       }
       return (
         <div className="space-y-6">
-          {renderGroup('Po terminie', overdue)}
-          {renderGroup('Na dziś', todayDated)}
+          {renderGroup(t('groupOverdue'), overdue)}
+          {renderGroup(t('groupToday'), todayDated)}
           {undated.length > 0 && (
             <div className="space-y-2">
               <button
@@ -714,9 +686,7 @@ export function Todo() {
                 className="flex w-full items-center justify-between gap-2 rounded-lg border border-transparent px-1 py-0.5 text-left font-gaming text-base tracking-wide text-(--text-muted) transition-colors hover:border-(--border)/60 hover:bg-(--bg-dark)/40 hover:text-(--text-primary)"
                 aria-expanded={!undatedCollapsed}
               >
-                <span>
-                  Bez terminu ({undated.length})
-                </span>
+                <span>{t('groupUndated', { count: undated.length })}</span>
                 <ChevronDown
                   className={`h-4 w-4 shrink-0 transition-transform ${undatedCollapsed ? '-rotate-90' : 'rotate-0'}`}
                   aria-hidden
@@ -783,7 +753,7 @@ export function Todo() {
       <motion.div variants={itemEnter} className="relative flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <h1 className="font-gaming text-2xl font-bold tracking-wider text-(--text-primary)">TO-DO</h1>
         {isDemoMode && (
-          <span className="font-gaming text-sm tracking-wide text-(--text-muted)">Dane przykładowe</span>
+          <span className="font-gaming text-sm tracking-wide text-(--text-muted)">{t('demoLabel')}</span>
         )}
       </motion.div>
 
@@ -792,9 +762,9 @@ export function Todo() {
         className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-(--border)/80 bg-(--bg-card)/25 px-3 py-2"
       >
         <p className="min-w-0 text-base text-(--text-muted)">
-          <span className="font-gaming text-(--text-primary)">Dzisiaj:</span>{' '}
-          {planStats.todosToday} {tasksWord(planStats.todosToday)} · {planStats.eventsToday}{' '}
-          {eventsWord(planStats.eventsToday)} · {planStats.activeHabits} {habitsWord(planStats.activeHabits)}
+          <span className="font-gaming text-(--text-primary)">{t('todayCard.label')}</span>{' '}
+          {planStats.todosToday} {t('taskWord', { count: planStats.todosToday })} · {planStats.eventsToday}{' '}
+          {t('eventWord', { count: planStats.eventsToday })} · {planStats.activeHabits} {t('habitWord', { count: planStats.activeHabits })}
         </p>
         <div className="flex shrink-0 flex-wrap gap-2">
           <Link
@@ -802,14 +772,14 @@ export function Todo() {
             className="inline-flex items-center gap-1.5 rounded-md border border-(--border) px-2.5 py-1.5 font-gaming text-sm text-(--text-muted) transition-colors hover:border-(--border) hover:bg-(--bg-dark) hover:text-(--text-primary)"
           >
             <CalendarDays className="h-3.5 w-3.5" />
-            Kalendarz
+            {t('todayCard.calendarLink')}
           </Link>
           <Link
             to="/habits"
             className="inline-flex items-center gap-1.5 rounded-md border border-(--border) px-2.5 py-1.5 font-gaming text-sm text-(--text-muted) transition-colors hover:border-(--border) hover:bg-(--bg-dark) hover:text-(--text-primary)"
           >
             <Target className="h-3.5 w-3.5" />
-            Nawyki
+            {t('todayCard.habitsLink')}
           </Link>
         </div>
       </motion.div>
@@ -820,21 +790,21 @@ export function Todo() {
             value={newText}
             onChange={(e) => setNewText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && add()}
-            placeholder={isMobile ? QUICK_ADD_PLACEHOLDER_MOBILE : QUICK_ADD_PLACEHOLDER_DESKTOP}
+            placeholder={isMobile ? t('quickAddPlaceholderMobile') : t('quickAddPlaceholderDesktop')}
             className="min-h-11 min-w-0 flex-1 rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) placeholder:text-(--text-muted) focus:border-(--border) focus:outline-none focus:ring-1 focus:ring-(--text-primary)/15"
           />
           <TodoQuickParseHint />
           <motion.button
             type="button"
             onClick={add}
-            title="Dodaj zadanie"
+            title={t('addTaskTitle')}
             whileHover={reduceMotion ? undefined : { scale: 1.02 }}
             whileTap={reduceMotion ? undefined : { scale: 0.97 }}
             className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-(--accent-cyan)/45 bg-(--accent-cyan)/18 px-4 font-gaming text-sm tracking-wide text-(--accent-cyan) shadow-[0_0_0_1px_rgba(0,229,255,0.08)] transition-colors hover:bg-(--accent-cyan)/26"
-            aria-label="Dodaj zadanie"
+            aria-label={t('addTaskTitle')}
           >
             <Plus className="h-5 w-5 shrink-0" />
-            <span className="hidden sm:inline">Dodaj</span>
+            <span className="hidden sm:inline">{t('addButton')}</span>
           </motion.button>
         </div>
         <button
@@ -844,9 +814,9 @@ export function Todo() {
           aria-expanded={optionsOpen}
         >
           {optionsOpen ? <ChevronUp className="h-4 w-4 shrink-0" /> : <ChevronDown className="h-4 w-4 shrink-0" />}
-          <span>Opcje</span>
+          <span>{t('optionsButton')}</span>
           {!optionsOpen && optionsDirty && (
-            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-(--accent-amber)/80" title="Ustawiono termin lub pola z Opcji" />
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-(--accent-amber)/80" title={t('optionsDirtyHint')} />
           )}
         </button>
         {optionsOpen && (
@@ -863,7 +833,7 @@ export function Todo() {
             />
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <label className="flex flex-col gap-1">
-                <span className="text-base text-(--text-muted)">Priorytet</span>
+                <span className="text-base text-(--text-muted)">{t('priorityFieldLabel')}</span>
                 <select
                   value={draftPriority ?? ''}
                   onChange={(e) => {
@@ -873,15 +843,15 @@ export function Todo() {
                   className="min-h-11 rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--border) focus:outline-none focus:ring-1 focus:ring-(--text-primary)/15"
                 >
                   <option value="">—</option>
-                  {(Object.keys(TODO_PRIORITY_LABEL) as TodoPriority[]).map((p) => (
+                  {PRIORITY_IDS.map((p) => (
                     <option key={p} value={p}>
-                      {TODO_PRIORITY_LABEL[p]}
+                      {t(`priorityLabel.${p}`)}
                     </option>
                   ))}
                 </select>
               </label>
               <label className="flex flex-col gap-1">
-                <span className="text-base text-(--text-muted)">Obszar</span>
+                <span className="text-base text-(--text-muted)">{t('areaFieldLabel')}</span>
                 <select
                   value={draftCategory ?? ''}
                   onChange={(e) => {
@@ -893,7 +863,7 @@ export function Todo() {
                   <option value="">—</option>
                   {TODO_CATEGORIES.map((c) => (
                     <option key={c} value={c}>
-                      {TODO_CATEGORY_LABEL[c]}
+                      {t(`categoryLabel.${c}`)}
                     </option>
                   ))}
                 </select>
@@ -908,18 +878,18 @@ export function Todo() {
         className="flex flex-col gap-1.5 rounded-lg border border-(--border)/70 bg-(--bg-card)/20 px-2 py-1.5 sm:flex-row sm:items-center sm:justify-between"
       >
         <div className="flex flex-wrap gap-1">
-          {TAB_DEFS.map((t) => (
+          {TAB_IDS.map((id) => (
             <button
-              key={t.id}
+              key={id}
               type="button"
-              onClick={() => setTab(t.id)}
+              onClick={() => setTab(id)}
               className={`rounded-md border px-2.5 py-1.5 font-gaming text-sm tracking-wide transition-colors ${
-                tab === t.id
+                tab === id
                   ? 'border-(--border) bg-(--bg-dark) text-(--text-primary)'
                   : 'border-transparent bg-transparent text-(--text-muted) hover:bg-(--bg-card-hover)/50 hover:text-(--text-primary)'
               }`}
             >
-              {t.label}
+              {t(`tabs.${id}`)}
             </button>
           ))}
         </div>
@@ -930,11 +900,11 @@ export function Todo() {
               onClick={() => setClearPrompt(true)}
               className="rounded-md border border-red-500/25 bg-red-500/5 px-2.5 py-1.5 font-gaming text-sm text-red-400/90 hover:bg-red-500/10"
             >
-              Wyczyść zrobione
+              {t('clearCompleted')}
             </button>
           )}
           <label className="flex items-center gap-1.5 whitespace-nowrap font-gaming text-sm text-(--text-muted)">
-            Obszar
+            {t('areaFieldLabel')}
             <select
               value={categoryFilter}
               onChange={(e) =>
@@ -942,10 +912,10 @@ export function Todo() {
               }
               className="max-w-44 rounded-md border border-(--border) bg-(--bg-dark) px-2 py-1.5 text-base text-(--text-primary) focus:border-(--border) focus:outline-none focus:ring-1 focus:ring-(--text-primary)/15"
             >
-              <option value="all">Wszystkie</option>
+              <option value="all">{t('areaAllOption')}</option>
               {TODO_CATEGORIES.map((c) => (
                 <option key={c} value={c}>
-                  {TODO_CATEGORY_LABEL[c]}
+                  {t(`categoryLabel.${c}`)}
                 </option>
               ))}
             </select>
@@ -955,11 +925,10 @@ export function Todo() {
 
       {tab === 'today' && (
         <motion.div variants={itemEnter} className="space-y-0.5">
-          <h2 className="font-gaming text-lg font-semibold tracking-wide text-(--text-primary)">Dzisiaj</h2>
+          <h2 className="font-gaming text-lg font-semibold tracking-wide text-(--text-primary)">{t('todaySection.title')}</h2>
           <p className="text-base text-(--text-muted)">
-            {todaySummary.count}{' '}
-            {todaySummary.count === 1 ? 'zadanie' : todaySummary.count < 5 ? 'zadania' : 'zadań'}
-            {todaySummary.high > 0 && <> · {todaySummary.high} wysokie</>}
+            {todaySummary.count} {t('taskWord', { count: todaySummary.count })}
+            {todaySummary.high > 0 && <>{t('todaySection.highCount', { count: todaySummary.high })}</>}
             {todayDoneCount > 0 && (
               <>
                 {' · '}
@@ -967,9 +936,9 @@ export function Todo() {
                   type="button"
                   onClick={() => setTab('done')}
                   className="font-gaming text-(--text-muted) underline-offset-2 hover:text-(--text-primary) hover:underline"
-                  title="Przejdź do zakładki Zrobione"
+                  title={t('todaySection.doneLinkTitle')}
                 >
-                  {todayDoneCount} zrobione
+                  {t('todaySection.doneLink', { count: todayDoneCount })}
                 </button>
               </>
             )}
@@ -1005,10 +974,10 @@ export function Todo() {
           clearCompletedTodos()
           setClearPrompt(false)
         }}
-        title="Wyczyścić zrobione?"
-        description="Wszystkie ukończone zadania zostaną trwale usunięte z listy."
+        title={t('clearCompletedConfirm.title')}
+        description={t('clearCompletedConfirm.description')}
         variant="danger"
-        confirmLabel="Wyczyść"
+        confirmLabel={t('clearCompletedConfirm.confirmLabel')}
       />
     </motion.div>
   )

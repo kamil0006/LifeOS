@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { X } from 'lucide-react'
 import { ModalShell } from './ModalShell'
 import {
@@ -42,6 +43,7 @@ export function NetWorthCorrectionModal({
   currentBalance,
   onSubmit,
 }: NetWorthCorrectionModalProps) {
+  const { t } = useTranslation('finances')
   const [amountStr, setAmountStr] = useState('')
   const [description, setDescription] = useState('')
   const [iconKey, setIconKey] = useState('')
@@ -105,25 +107,27 @@ export function NetWorthCorrectionModal({
     >
               <div className="absolute top-0 left-0 h-px w-full bg-linear-to-r from-transparent via-(--accent-cyan)/40 to-transparent" />
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-(--text-primary) font-gaming">Edycja pozycji</h3>
+                <h3 className="text-lg font-bold text-(--text-primary) font-gaming">{t('netWorthCorrectionModal.title')}</h3>
                 <button
                   type="button"
                   onClick={onClose}
                   className="p-2 rounded-lg hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-(--text-primary) transition-colors"
-                  aria-label="Zamknij"
+                  aria-label={t('common:close')}
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
               <p className="text-base text-(--text-primary) font-medium mb-1">{account.name}</p>
               <p className="text-base text-(--text-muted) mb-4">
-                {account.kind === 'asset' ? 'Aktywo' : 'Zobowiązanie'} · bieżące saldo:{' '}
-                <span className="font-mono text-(--text-primary)">{currentBalance.toLocaleString('pl-PL')} zł</span>
+                {t('netWorthCorrectionModal.currentBalanceLine', {
+                  kind: account.kind === 'asset' ? t('netWorthCorrectionModal.kindAsset') : t('netWorthCorrectionModal.kindLiability'),
+                  balance: currentBalance.toLocaleString('pl-PL'),
+                })}
               </p>
 
               <form onSubmit={(e) => void handleSubmit(e)} className="space-y-5">
                 <div>
-                  <span className="mb-2 block text-base text-(--text-muted) font-gaming">Ikona na liście</span>
+                  <span className="mb-2 block text-base text-(--text-muted) font-gaming">{t('netWorthAccountCreateModal.iconLabel')}</span>
                   <div className="flex flex-wrap gap-2">
                     {iconOptions.map(({ key: ik, label }) => {
                       const Icon = getNetWorthAccountIcon(ik)
@@ -153,7 +157,7 @@ export function NetWorthCorrectionModal({
 
                 {account.kind === 'asset' ? (
                   <div>
-                    <span className="mb-2 block text-base text-(--text-muted) font-gaming">Kolor na liście</span>
+                    <span className="mb-2 block text-base text-(--text-muted) font-gaming">{t('netWorthAccountCreateModal.colorLabel')}</span>
                     <div className="flex flex-wrap gap-3">
                       {NW_ASSET_ACCENT_OPTIONS.map(({ key: ck, label }) => {
                         const { swatch } = getNwAssetAccentClasses(ck)
@@ -181,37 +185,37 @@ export function NetWorthCorrectionModal({
                 <div className="border-t border-(--border)/60 pt-4">
                   <p className="text-sm text-(--text-muted) mb-3">
                     {account.kind === 'asset'
-                      ? 'Dodatnia kwota zwiększa wartość aktywa, ujemna — zmniejsza. Możesz zostawić 0, jeśli zmieniasz tylko ikonę lub kolor.'
-                      : 'Dodatnia kwota zwiększa dług, ujemna — spłata. Możesz zostawić 0, jeśli zmieniasz tylko ikonę.'}
+                      ? t('netWorthCorrectionModal.assetAmountHint')
+                      : t('netWorthCorrectionModal.liabilityAmountHint')}
                   </p>
-                  <label className="block text-base text-(--text-muted) font-gaming mb-1">Kwota korekty (zł)</label>
+                  <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('netWorthCorrectionModal.correctionAmountLabel')}</label>
                   <input
                     type="text"
                     inputMode="decimal"
                     value={amountStr}
                     onChange={(e) => setAmountStr(e.target.value.replace(/[^0-9,.-]/g, ''))}
-                    placeholder="0 — tylko ikona / kolor"
+                    placeholder={t('netWorthCorrectionModal.amountPlaceholder')}
                     className="w-full px-3 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-mono focus:border-(--accent-cyan) focus:outline-none"
                   />
                 </div>
                 {preview != null && !Number.isNaN(preview) && (
                   <div className="rounded-lg border border-(--border) bg-(--bg-dark)/50 px-3 py-2">
-                    <p className="text-base text-(--text-muted) font-gaming">Po korekcie</p>
+                    <p className="text-base text-(--text-muted) font-gaming">{t('netWorthCorrectionModal.afterCorrectionLabel')}</p>
                     <p className="text-base font-mono text-(--text-primary) mt-0.5">
-                      {currentBalance.toLocaleString('pl-PL')} zł → {preview.toLocaleString('pl-PL')} zł
+                      {t('netWorth.balanceArrow', { from: currentBalance.toLocaleString('pl-PL'), to: preview.toLocaleString('pl-PL') })}
                     </p>
                   </div>
                 )}
                 <div>
                   <label className="block text-base text-(--text-muted) font-gaming mb-1">
-                    Opis {hasAmount ? 'korekty' : '(opcjonalnie)'}
+                    {hasAmount ? t('netWorthCorrectionModal.descriptionLabelWithAmount') : t('netWorthCorrectionModal.descriptionLabelOptional')}
                   </label>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     rows={3}
                     maxLength={200}
-                    placeholder="Np. spłata raty, zmiana wyceny…"
+                    placeholder={t('netWorthCorrectionModal.descriptionPlaceholder')}
                     className="w-full px-3 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base focus:border-(--accent-cyan) focus:outline-none resize-y min-h-[88px]"
                   />
                   <p className="text-base text-(--text-muted) mt-1">{description.length}/200</p>
@@ -222,14 +226,14 @@ export function NetWorthCorrectionModal({
                     onClick={onClose}
                     className="flex-1 py-2.5 rounded-lg border border-(--border) text-(--text-muted) font-gaming hover:bg-(--bg-card-hover) transition-colors"
                   >
-                    Anuluj
+                    {t('common:cancel')}
                   </button>
                   <button
                     type="submit"
                     className="flex-1 py-2.5 rounded-lg bg-(--accent-cyan)/20 text-(--accent-cyan) border border-(--accent-cyan)/45 font-gaming hover:bg-(--accent-cyan)/30 transition-colors disabled:opacity-50"
                     disabled={!canSubmit}
                   >
-                    Zapisz zmiany
+                    {t('transactions.saveChanges')}
                   </button>
                 </div>
               </form>

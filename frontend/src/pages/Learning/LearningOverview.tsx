@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Card } from '../../components/Card'
 import {
   Clock,
@@ -17,6 +18,7 @@ import { formatMinutes, SESSION_TYPE_OPTIONS } from './learningUtils'
 import { PomodoroCardButton } from '../../components/learning/PomodoroTimer'
 
 export function LearningOverview() {
+  const { t } = useTranslation('learning')
   const learning = useLearning()
   const navigate = useNavigate()
 
@@ -112,44 +114,48 @@ export function LearningOverview() {
         <Card className="border-(--accent-cyan)/20 max-md:p-4">
           <div className="mb-1 flex items-center gap-2">
             <Clock className="h-4 w-4 shrink-0 text-(--accent-cyan)" />
-            <p className="text-sm text-(--text-muted)">Łącznie</p>
+            <p className="text-sm text-(--text-muted)">{t('overview.statTotal')}</p>
           </div>
           <p className="text-xl font-bold text-(--accent-cyan) sm:text-2xl">{formatMinutes(totalMinutes)}</p>
-          <p className="mt-0.5 text-sm text-(--text-muted)">{sessions.length} sesji</p>
+          <p className="mt-0.5 text-sm text-(--text-muted)">
+            {t('overview.statSessions', { count: sessions.length })}
+          </p>
         </Card>
 
         <Card className="border-(--accent-green)/20 max-md:p-4">
           <div className="mb-1 flex items-center gap-2">
             <Target className="h-4 w-4 shrink-0 text-(--accent-green)" />
-            <p className="text-sm text-(--text-muted)">Ten tydzień</p>
+            <p className="text-sm text-(--text-muted)">{t('overview.statThisWeek')}</p>
           </div>
           <p className="text-xl font-bold text-(--accent-green) sm:text-2xl">{formatMinutes(weekProgress)}</p>
-          <p className="mt-0.5 text-sm text-(--text-muted)">{goalPercent}% celu</p>
+          <p className="mt-0.5 text-sm text-(--text-muted)">
+            {t('overview.statGoalPercent', { percent: goalPercent })}
+          </p>
         </Card>
 
         <Card className="border-(--accent-magenta)/20 max-md:p-4">
           <div className="mb-1 flex items-center gap-2">
             <GraduationCap className="h-4 w-4 shrink-0 text-(--accent-magenta)" />
-            <p className="text-sm text-(--text-muted)">Kursy</p>
+            <p className="text-sm text-(--text-muted)">{t('overview.statCourses')}</p>
           </div>
           <p className="text-xl font-bold text-(--accent-magenta) sm:text-2xl">
-            {courses.filter((c) => c.status === 'w_trakcie').length} aktywne
+            {t('overview.statCoursesActive', { count: courses.filter((c) => c.status === 'w_trakcie').length })}
           </p>
           <p className="mt-0.5 text-sm text-(--text-muted)">
-            {courses.filter((c) => c.status === 'ukonczony').length} ukończonych
+            {t('overview.statCoursesCompleted', { count: courses.filter((c) => c.status === 'ukonczony').length })}
           </p>
         </Card>
 
         <Card className="border-(--accent-amber)/20 max-md:p-4">
           <div className="mb-1 flex items-center gap-2">
             <BookOpen className="h-4 w-4 shrink-0 text-(--accent-amber)" />
-            <p className="text-sm text-(--text-muted)">Książki</p>
+            <p className="text-sm text-(--text-muted)">{t('overview.statBooks')}</p>
           </div>
           <p className="text-xl font-bold text-(--accent-amber) sm:text-2xl">
-            {books.filter((b) => b.status === 'czytam').length} czytam
+            {t('overview.statBooksReading', { count: books.filter((b) => b.status === 'czytam').length })}
           </p>
           <p className="mt-0.5 text-sm text-(--text-muted)">
-            {books.filter((b) => b.status === 'przeczytane').length} przeczytanych
+            {t('overview.statBooksRead', { count: books.filter((b) => b.status === 'przeczytane').length })}
           </p>
         </Card>
       </div>
@@ -161,10 +167,10 @@ export function LearningOverview() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Currently learning — courses + projects + books */}
-        <Card title="Aktualnie uczysz się">
+        <Card title={t('overview.currentlyLearning')}>
           {!hasAnythingActive ? (
             <div className="space-y-3">
-              <p className="text-base text-(--text-muted)">Nic aktywnego. Zacznij kurs, projekt lub książkę.</p>
+              <p className="text-base text-(--text-muted)">{t('overview.nothingActive')}</p>
               <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                 <button
                   type="button"
@@ -172,7 +178,7 @@ export function LearningOverview() {
                   className={learningAddBtnClass}
                 >
                   <Plus className="h-4 w-4" />
-                  Dodaj kurs
+                  {t('overview.addCourse')}
                 </button>
                 <button
                   type="button"
@@ -180,7 +186,7 @@ export function LearningOverview() {
                   className="flex min-h-11 items-center gap-2 rounded-lg border border-(--accent-green)/40 bg-(--accent-green)/15 px-4 py-2 text-base font-medium text-(--accent-green) transition-colors hover:bg-(--accent-green)/25"
                 >
                   <Plus className="h-4 w-4" />
-                  Dodaj projekt
+                  {t('overview.addProject')}
                 </button>
                 <button
                   type="button"
@@ -188,22 +194,22 @@ export function LearningOverview() {
                   className="flex min-h-11 items-center gap-2 rounded-lg border border-(--accent-amber)/40 bg-(--accent-amber)/15 px-4 py-2 text-base font-medium text-(--accent-amber) transition-colors hover:bg-(--accent-amber)/25"
                 >
                   <Plus className="h-4 w-4" />
-                  Dodaj książkę
+                  {t('overview.addBook')}
                 </button>
               </div>
               {recentTopics.length > 0 && (
                 <div className="pt-2 border-t border-(--border)">
                   <p className="text-xs text-(--text-muted) font-gaming uppercase tracking-widest mb-2">
-                    Ostatnie tematy
+                    {t('overview.recentTopics')}
                   </p>
                   <div className="flex flex-wrap gap-1.5">
-                    {recentTopics.map((t) => (
+                    {recentTopics.map((topic) => (
                       <span
-                        key={t}
+                        key={topic}
                         className="flex items-center gap-1 px-2 py-1 rounded-lg bg-(--bg-dark) border border-(--border) text-sm font-gaming text-(--text-muted)"
                       >
                         <Tag className="w-3 h-3" />
-                        {t}
+                        {topic}
                       </span>
                     ))}
                   </div>
@@ -288,24 +294,24 @@ export function LearningOverview() {
                 onClick={() => navigate('/learning/courses')}
                 className="text-sm text-(--accent-cyan) hover:underline font-gaming"
               >
-                Zarządzaj →
+                {t('overview.manage')}
               </button>
             </div>
           )}
         </Card>
 
         {/* Last sessions */}
-        <Card title="Ostatnie sesje">
+        <Card title={t('overview.recentSessions')}>
           {recentSessions.length === 0 ? (
             <div className="space-y-3">
-              <p className="text-base text-(--text-muted)">Brak sesji.</p>
+              <p className="text-base text-(--text-muted)">{t('overview.noSessions')}</p>
               <button
                 type="button"
                 onClick={() => navigate('/learning/hours')}
                 className={learningAddBtnClass}
               >
                 <Plus className="h-4 w-4" />
-                Dodaj sesję
+                {t('overview.addSession')}
               </button>
             </div>
           ) : (
@@ -323,7 +329,7 @@ export function LearningOverview() {
                       </p>
                       <p className="text-xs text-(--text-muted)">
                         {s.date}
-                        {typeOpt && ` · ${typeOpt.label}`}
+                        {typeOpt && ` · ${t(`sessionType.${typeOpt.value}`)}`}
                         {s.category && ` · ${s.category}`}
                       </p>
                     </div>
@@ -337,7 +343,7 @@ export function LearningOverview() {
                 onClick={() => navigate('/learning/hours')}
                 className="text-sm text-(--accent-cyan) hover:underline font-gaming pt-1"
               >
-                Historia →
+                {t('overview.history')}
               </button>
             </div>
           )}
@@ -351,7 +357,7 @@ export function LearningOverview() {
             <ArrowRight className="w-5 h-5 text-(--accent-cyan) mt-0.5 shrink-0" />
             <div>
               <p className="text-sm text-(--text-muted) font-gaming uppercase tracking-widest mb-0.5">
-                Następny krok
+                {t('overview.nextStep')}
               </p>
               <p className="text-base font-gaming text-(--text-primary)">{nextStepItem.step}</p>
               <p className="text-sm text-(--text-muted) mt-0.5">{nextStepItem.label}</p>
@@ -361,26 +367,26 @@ export function LearningOverview() {
       )}
 
       {/* Quick actions */}
-      <Card title="Szybkie akcje" className="max-md:p-4">
+      <Card title={t('overview.quickActions')} className="max-md:p-4">
         <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3">
           {[
             {
-              label: 'Sesja',
+              labelKey: 'quickSession',
               route: '/learning/hours',
               cls: 'border-(--accent-cyan)/30 text-(--accent-cyan) hover:bg-(--accent-cyan)/10',
             },
             {
-              label: 'Kurs',
+              labelKey: 'quickCourse',
               route: '/learning/courses',
               cls: 'border-(--accent-magenta)/30 text-(--accent-magenta) hover:bg-(--accent-magenta)/10',
             },
             {
-              label: 'Książka',
+              labelKey: 'quickBook',
               route: '/learning/books',
               cls: 'border-(--accent-amber)/30 text-(--accent-amber) hover:bg-(--accent-amber)/10',
             },
             {
-              label: 'Projekt',
+              labelKey: 'quickProject',
               route: '/learning/projects',
               cls: 'border-(--accent-green)/30 text-(--accent-green) hover:bg-(--accent-green)/10',
             },
@@ -392,7 +398,7 @@ export function LearningOverview() {
               className={`flex min-h-11 items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors sm:px-4 ${action.cls}`}
             >
               <Plus className="h-4 w-4 shrink-0" />
-              {action.label}
+              {t(`overview.${action.labelKey}`)}
             </button>
           ))}
         </div>

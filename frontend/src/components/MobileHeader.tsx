@@ -1,5 +1,6 @@
 import { Menu, Search } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useGlobalSearch } from '../context/GlobalSearchContext'
 
 type MobileHeaderProps = {
@@ -7,6 +8,7 @@ type MobileHeaderProps = {
 }
 
 export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
+  const { t } = useTranslation('nav')
   const { open: openSearch } = useGlobalSearch()
 
   return (
@@ -18,7 +20,7 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
         type="button"
         onClick={onMenuClick}
         className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-(--border) bg-(--bg-dark) text-(--text-primary) hover:border-(--accent-cyan)/50 hover:text-(--accent-cyan) transition-colors"
-        aria-label="Otwórz menu nawigacji"
+        aria-label={t('openMenuAria')}
       >
         <Menu className="h-5 w-5" aria-hidden />
       </button>
@@ -33,7 +35,7 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
         type="button"
         onClick={openSearch}
         className="ml-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-(--border) bg-(--bg-dark) text-(--text-muted) hover:border-(--accent-cyan)/50 hover:text-(--accent-cyan) transition-colors"
-        aria-label="Wyszukaj (Ctrl+K)"
+        aria-label={t('searchAria')}
       >
         <Search className="h-5 w-5" aria-hidden />
       </button>

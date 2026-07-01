@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AppNavPanel } from './Sidebar'
 
 type MobileDrawerProps = {
@@ -7,6 +8,7 @@ type MobileDrawerProps = {
 }
 
 export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
+  const { t } = useTranslation('nav')
   useEffect(() => {
     if (!open) return
     const prev = document.body.style.overflow
@@ -43,7 +45,7 @@ export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
         }`}
         role="dialog"
         aria-modal="true"
-        aria-label="Menu nawigacji"
+        aria-label={t('drawerAria')}
       >
         <div className="absolute top-0 left-0 h-px w-full bg-linear-to-r from-transparent via-(--accent-cyan)/50 to-transparent" />
         <AppNavPanel onNavigate={onClose} mobileClose={onClose} />

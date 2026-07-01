@@ -18,7 +18,10 @@ export const ROLLING_MONTH_NAMES = [
  * Opcje miesiąca: od bieżącego miesiąca w dół do stycznia tego samego roku
  * (bez wieloletniej listy wstecz — np. tylko Sty–Maj 2026 zamiast do czerwca 2024).
  */
-export function buildCurrentYearMonthOptions(recalcToken: number): {
+export function buildCurrentYearMonthOptions(
+  recalcToken: number,
+  monthNames: readonly string[] = ROLLING_MONTH_NAMES
+): {
   month: number
   year: number
   label: string
@@ -32,7 +35,7 @@ export function buildCurrentYearMonthOptions(recalcToken: number): {
     options.push({
       month: m,
       year,
-      label: `${ROLLING_MONTH_NAMES[m]} ${year}`,
+      label: `${monthNames[m]} ${year}`,
     })
   }
   return options

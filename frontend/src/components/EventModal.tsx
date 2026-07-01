@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, Eye, EyeOff, Pencil, Plus, Trash2, X } from 'lucide-react'
 import { ModalShell } from './ModalShell'
@@ -38,6 +39,7 @@ export function EventModal({
   onToggleCategoryVisibility,
   openCategoryManager,
 }: EventModalProps) {
+  const { t } = useTranslation('calendar')
   const isValidIsoDate = (value: string): boolean => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
     const [year, month, day] = value.split('-').map(Number)
@@ -131,7 +133,7 @@ export function EventModal({
     e.preventDefault()
     if (!title.trim()) return
     if (!isValidIsoDate(date)) {
-      setDateError('Podaj poprawną datę (format RRRR-MM-DD).')
+      setDateError(t('eventModal.invalidDate'))
       return
     }
     const cat = categories.find((c) => c.id === category)
@@ -140,11 +142,11 @@ export function EventModal({
     const normalizedDate = normalizeEventDate(date)
     const normalizedUntil = recurrenceUntil ? normalizeEventDate(recurrenceUntil) : undefined
     if (normalizedUntil && !isValidIsoDate(normalizedUntil)) {
-      setRecurrenceUntilError('Data zakończenia cykliczności jest niepoprawna.')
+      setRecurrenceUntilError(t('eventModal.invalidUntilDate'))
       return
     }
     if (normalizedUntil && normalizedUntil < normalizedDate) {
-      setRecurrenceUntilError('Data zakończenia cykliczności nie może być wcześniejsza niż data wydarzenia.')
+      setRecurrenceUntilError(t('eventModal.untilBeforeDate'))
       return
     }
     setDateError(null)
@@ -181,7 +183,7 @@ export function EventModal({
     if (!newCategoryName.trim()) return
     onAddCategory(newCategoryName, newCategoryColor)
     setNewCategoryName('')
-    showToast('Kategoria dodana')
+    showToast(t('eventModal.categoryAdded'))
   }
 
   const startCategoryEdit = (categoryToEdit: EventCategory) => {
@@ -203,7 +205,7 @@ export function EventModal({
       color: editingCategoryColor,
     })
     cancelCategoryEdit()
-    showToast('Kategoria zapisana')
+    showToast(t('eventModal.categorySaved'))
   }
 
   return (
@@ -219,18 +221,18 @@ export function EventModal({
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-lg font-bold text-(--text-primary) font-gaming">
-                {categoryOnlyMode ? 'Zarządzaj kategoriami' : isEdit ? 'Edytuj wydarzenie' : 'Dodaj wydarzenie'}
+                {categoryOnlyMode ? t('eventModal.manageCategories') : isEdit ? t('eventModal.editEvent') : t('eventModal.addEvent')}
               </h3>
               {holidayName && (
                 <p className="text-sm font-mono mt-1" style={{ color: '#e57373' }}>
-                  Ten dzień: {holidayName}
+                  {t('eventModal.holidayToday', { name: holidayName })}
                 </p>
               )}
             </div>
             <button
               onClick={onClose}
               className="p-2 rounded-lg hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-(--text-primary) transition-colors"
-              aria-label="Zamknij"
+              aria-label={t('eventModal.closeAria')}
             >
               <X className="w-5 h-5" />
             </button>
@@ -239,7 +241,7 @@ export function EventModal({
           {categoryOnlyMode ? (
             <div className="space-y-4">
               <p className="text-base text-(--text-muted)">
-                Dodawaj, edytuj i ukrywaj kategorie bez tworzenia wydarzenia.
+                {t('eventModal.manageIntro')}
               </p>
               <div className="p-3 rounded-lg border border-(--border) bg-(--bg-dark) space-y-3">
                 {!editingCategoryId && (
@@ -247,7 +249,7 @@ export function EventModal({
                     <div className="grid grid-cols-1 gap-2">
                       <input
                         type="text"
-                        placeholder="Nazwa kategorii"
+                        placeholder={t('eventModal.categoryNamePlaceholder')}
                         value={newCategoryName}
                         onChange={(e) => setNewCategoryName(e.target.value)}
                         className="px-3 py-2 rounded-lg bg-(--bg-card) border border-(--border) text-(--text-primary) text-base"
@@ -277,7 +279,7 @@ export function EventModal({
                         onClick={handleAddCategory}
                         className="px-3 py-1.5 rounded-lg bg-(--accent-cyan) text-(--bg-dark) font-gaming text-sm"
                       >
-                        Dodaj kategorię
+                        {t('eventModal.addCategory')}
                       </button>
                     </div>
                   </>
@@ -316,14 +318,14 @@ export function EventModal({
                               onClick={cancelCategoryEdit}
                               className="px-2 py-1 rounded border border-(--border) text-(--text-muted) hover:text-(--text-primary) transition-colors"
                             >
-                              Anuluj
+                              {t('eventModal.cancel')}
                             </button>
                             <button
                               type="button"
                               onClick={saveCategoryEdit}
                               className="px-2 py-1 rounded bg-(--accent-cyan) text-(--bg-dark)"
                             >
-                              Zapisz
+                              {t('eventModal.save')}
                             </button>
                           </div>
                         </div>
@@ -338,10 +340,10 @@ export function EventModal({
                               type="button"
                               onClick={() => {
                                 onToggleCategoryVisibility(catItem.id)
-                                showToast(catItem.isVisible ? 'Kategoria ukryta w kalendarzu' : 'Kategoria widoczna w kalendarzu')
+                                showToast(catItem.isVisible ? t('eventModal.categoryHidden') : t('eventModal.categoryVisible'))
                               }}
                               className="p-1 rounded text-(--text-muted) hover:bg-(--bg-card-hover) hover:text-(--accent-cyan) transition-colors"
-                              title={catItem.isVisible ? 'Ukryj w kalendarzu' : 'Pokaż w kalendarzu'}
+                              title={catItem.isVisible ? t('eventModal.hideInCalendar') : t('eventModal.showInCalendar')}
                             >
                               {catItem.isVisible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                             </button>
@@ -349,7 +351,7 @@ export function EventModal({
                               type="button"
                               onClick={() => startCategoryEdit(catItem)}
                               className="p-1 rounded text-(--text-muted) hover:bg-(--bg-card-hover) hover:text-(--accent-cyan) transition-colors"
-                              title="Edytuj"
+                              title={t('eventModal.edit')}
                             >
                               <Pencil className="w-3.5 h-3.5" />
                             </button>
@@ -357,10 +359,10 @@ export function EventModal({
                               type="button"
                               onClick={() => {
                                 onDeleteCategory(catItem.id)
-                                showToast('Kategoria usunięta')
+                                showToast(t('eventModal.categoryDeleted'))
                               }}
                               className="p-1 rounded text-(--text-muted) hover:bg-(--bg-card-hover) hover:text-(--accent-magenta) transition-colors"
-                              title="Usuń"
+                              title={t('eventModal.delete')}
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -375,7 +377,7 @@ export function EventModal({
           ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">Tytuł *</label>
+              <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('eventModal.titleLabel')}</label>
               <input
                 type="text"
                 value={title}
@@ -388,7 +390,7 @@ export function EventModal({
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-base text-(--text-muted) font-gaming mb-1">Data</label>
+                <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('eventModal.dateLabel')}</label>
                 <input
                   type="date"
                   value={date}
@@ -405,7 +407,7 @@ export function EventModal({
                 )}
               </div>
               <div>
-                <label className="block text-base text-(--text-muted) font-gaming mb-1">Godzina</label>
+                <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('eventModal.timeLabel')}</label>
                 <input
                   type="time"
                   value={time}
@@ -416,7 +418,7 @@ export function EventModal({
             </div>
 
             <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-2">Kategoria</label>
+              <label className="block text-base text-(--text-muted) font-gaming mb-2">{t('eventModal.categoryLabel')}</label>
               <div className="flex gap-2 flex-wrap">
                 {categories.map(({ id, name, color: hex }) => (
                   <button
@@ -436,7 +438,7 @@ export function EventModal({
                   type="button"
                   onClick={() => setShowCategoryEditor((current) => !current)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-(--border) text-base text-(--text-muted) hover:text-(--text-primary)"
-                  title="Zarządzaj kategoriami"
+                  title={t('eventModal.manageCategories')}
                 >
                   <Plus className="w-4 h-4" />
                 </button>
@@ -448,7 +450,7 @@ export function EventModal({
                       <div className="grid grid-cols-1 gap-2">
                         <input
                           type="text"
-                          placeholder="Nazwa kategorii"
+                          placeholder={t('eventModal.categoryNamePlaceholder')}
                           value={newCategoryName}
                           onChange={(e) => setNewCategoryName(e.target.value)}
                           className="px-3 py-2 rounded-lg bg-(--bg-card) border border-(--border) text-(--text-primary) text-base"
@@ -478,7 +480,7 @@ export function EventModal({
                           onClick={handleAddCategory}
                           className="px-3 py-1.5 rounded-lg bg-(--accent-cyan) text-(--bg-dark) font-gaming text-sm"
                         >
-                          Dodaj kategorię
+                          {t('eventModal.addCategory')}
                         </button>
                       </div>
                     </>
@@ -517,14 +519,14 @@ export function EventModal({
                                 onClick={cancelCategoryEdit}
                                 className="px-2 py-1 rounded border border-(--border) text-(--text-muted) hover:text-(--text-primary) transition-colors"
                               >
-                                Anuluj
+                                {t('eventModal.cancel')}
                               </button>
                               <button
                                 type="button"
                                 onClick={saveCategoryEdit}
                                 className="px-2 py-1 rounded bg-(--accent-cyan) text-(--bg-dark)"
                               >
-                                Zapisz
+                                {t('eventModal.save')}
                               </button>
                             </div>
                           </div>
@@ -539,10 +541,10 @@ export function EventModal({
                                 type="button"
                                 onClick={() => {
                                   onToggleCategoryVisibility(catItem.id)
-                                  showToast(catItem.isVisible ? 'Kategoria ukryta w kalendarzu' : 'Kategoria widoczna w kalendarzu')
+                                  showToast(catItem.isVisible ? t('eventModal.categoryHidden') : t('eventModal.categoryVisible'))
                                 }}
                                 className="p-1 rounded text-(--text-muted) hover:bg-(--bg-card-hover) hover:text-(--accent-cyan) transition-colors"
-                                title={catItem.isVisible ? 'Ukryj w kalendarzu' : 'Pokaż w kalendarzu'}
+                                title={catItem.isVisible ? t('eventModal.hideInCalendar') : t('eventModal.showInCalendar')}
                               >
                                 {catItem.isVisible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                               </button>
@@ -550,7 +552,7 @@ export function EventModal({
                                 type="button"
                                 onClick={() => startCategoryEdit(catItem)}
                                 className="p-1 rounded text-(--text-muted) hover:bg-(--bg-card-hover) hover:text-(--accent-cyan) transition-colors"
-                                title="Edytuj"
+                                title={t('eventModal.edit')}
                               >
                                 <Pencil className="w-3.5 h-3.5" />
                               </button>
@@ -558,10 +560,10 @@ export function EventModal({
                                 type="button"
                                 onClick={() => {
                                   onDeleteCategory(catItem.id)
-                                  showToast('Kategoria usunięta')
+                                  showToast(t('eventModal.categoryDeleted'))
                                 }}
                                 className="p-1 rounded text-(--text-muted) hover:bg-(--bg-card-hover) hover:text-(--accent-magenta) transition-colors"
-                                title="Usuń"
+                                title={t('eventModal.delete')}
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
@@ -576,19 +578,19 @@ export function EventModal({
             </div>
 
             <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">Cykliczność</label>
+              <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('eventModal.recurrenceLabel')}</label>
               <div className="space-y-2">
                 <select
                   value={recurrenceType}
                   onChange={(e) => updateField('recurrenceType', e.target.value)}
                   className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
                 >
-                  <option value="none">Brak</option>
-                  <option value="daily">Codziennie</option>
-                  <option value="weekly">Co tydzień</option>
-                  <option value="monthly">Co miesiąc</option>
-                  <option value="yearly">Co rok</option>
-                  <option value="custom">Własny interwał</option>
+                  <option value="none">{t('eventModal.recurrenceNone')}</option>
+                  <option value="daily">{t('eventModal.recurrenceDaily')}</option>
+                  <option value="weekly">{t('eventModal.recurrenceWeekly')}</option>
+                  <option value="monthly">{t('eventModal.recurrenceMonthly')}</option>
+                  <option value="yearly">{t('eventModal.recurrenceYearly')}</option>
+                  <option value="custom">{t('eventModal.recurrenceCustom')}</option>
                 </select>
                 {recurrenceType === 'custom' && (
                   <div className="grid grid-cols-2 gap-3">
@@ -605,16 +607,16 @@ export function EventModal({
                       onChange={(e) => updateField('recurrenceUnit', e.target.value)}
                       className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base"
                     >
-                      <option value="day">dni</option>
-                      <option value="week">tygodni</option>
-                      <option value="month">miesięcy</option>
-                      <option value="year">lat</option>
+                      <option value="day">{t('eventModal.recurrenceUnitDay')}</option>
+                      <option value="week">{t('eventModal.recurrenceUnitWeek')}</option>
+                      <option value="month">{t('eventModal.recurrenceUnitMonth')}</option>
+                      <option value="year">{t('eventModal.recurrenceUnitYear')}</option>
                     </select>
                   </div>
                 )}
                 {recurrenceType !== 'none' && (
                   <div>
-                    <label className="block text-sm text-(--text-muted) font-gaming mb-1">Powtarzaj do (opcjonalnie)</label>
+                    <label className="block text-sm text-(--text-muted) font-gaming mb-1">{t('eventModal.recurrenceUntilLabel')}</label>
                     <input
                       type="date"
                       value={recurrenceUntil}
@@ -635,7 +637,7 @@ export function EventModal({
             </div>
 
             <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">Notatki</label>
+              <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('eventModal.notesLabel')}</label>
               <textarea
                 value={notes}
                 onChange={(e) => updateField('notes', e.target.value)}
@@ -652,7 +654,7 @@ export function EventModal({
                   className="flex items-center gap-2 px-4 py-2 rounded-lg border border-(--accent-magenta)/40 text-(--accent-magenta) hover:bg-(--accent-magenta)/10 font-gaming transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
-                  Usuń
+                  {t('eventModal.delete2')}
                 </button>
               )}
               <div className="flex-1" />
@@ -661,13 +663,13 @@ export function EventModal({
                 onClick={onClose}
                 className="px-4 py-2 rounded-lg border border-(--border) text-(--text-muted) hover:text-(--text-primary) font-gaming transition-colors"
               >
-                Anuluj
+                {t('eventModal.cancel')}
               </button>
               <button
                 type="submit"
                 className="px-4 py-2 rounded-lg bg-(--accent-cyan) text-(--bg-dark) font-gaming hover:opacity-90 transition-opacity"
               >
-                {isEdit ? 'Zapisz' : 'Dodaj'}
+                {isEdit ? t('eventModal.update') : t('eventModal.create')}
               </button>
             </div>
           </form>

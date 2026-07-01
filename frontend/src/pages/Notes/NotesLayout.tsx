@@ -1,17 +1,19 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { LayoutDashboard, Inbox, Lightbulb, BookMarked, Archive } from 'lucide-react'
 import { getSubpageOutletVariants } from '../../lib/layoutSectionMotion'
 
 const subNavItems = [
-  { to: '/notes', end: true, icon: LayoutDashboard, label: 'Przegląd' },
-  { to: '/notes/inbox', end: false, icon: Inbox, label: 'Inbox' },
-  { to: '/notes/ideas', end: false, icon: Lightbulb, label: 'Pomysły' },
-  { to: '/notes/references', end: false, icon: BookMarked, label: 'Referencje' },
-  { to: '/notes/archive', end: false, icon: Archive, label: 'Archiwum' },
-]
+  { to: '/notes', end: true, icon: LayoutDashboard, labelKey: 'tabOverview' },
+  { to: '/notes/inbox', end: false, icon: Inbox, labelKey: 'tabInbox' },
+  { to: '/notes/ideas', end: false, icon: Lightbulb, labelKey: 'tabIdeas' },
+  { to: '/notes/references', end: false, icon: BookMarked, labelKey: 'tabReferences' },
+  { to: '/notes/archive', end: false, icon: Archive, labelKey: 'tabArchive' },
+] as const
 
 export function NotesLayout() {
+  const { t } = useTranslation('notes')
   const location = useLocation()
   const reduceMotion = useReducedMotion()
   const contentVariants = getSubpageOutletVariants(reduceMotion)
@@ -19,8 +21,8 @@ export function NotesLayout() {
   return (
     <div className="space-y-5 sm:space-y-6">
       <div>
-        <h1 className="font-gaming text-2xl font-bold tracking-wider text-(--text-primary)">NOTATKI</h1>
-        <p className="mt-1 text-base text-(--text-muted)">Inbox, pomysły i referencje w jednym miejscu</p>
+        <h1 className="font-gaming text-2xl font-bold tracking-wider text-(--text-primary)">{t('layout.title')}</h1>
+        <p className="mt-1 text-base text-(--text-muted)">{t('layout.subtitle')}</p>
       </div>
 
       <nav className="-mx-1 flex flex-nowrap gap-1.5 overflow-x-auto px-1 pb-1 scrollbar-theme sm:gap-2 md:flex-wrap">
@@ -38,7 +40,7 @@ export function NotesLayout() {
             }
           >
             <item.icon className="h-4 w-4 shrink-0" />
-            {item.label}
+            {t(item.labelKey)}
           </NavLink>
         ))}
       </nav>

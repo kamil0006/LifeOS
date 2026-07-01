@@ -19,6 +19,7 @@ import { netWorthRouter } from './routes/netWorth.js'
 import { notesRouter } from './routes/notes.js'
 import { learningRouter } from './routes/learning.js'
 import { aiRouter } from './routes/ai.js'
+import { backupRouter } from './routes/backup.js'
 import { authMiddleware } from './middleware/auth.js'
 import { errorHandler } from './middleware/errorHandler.js'
 import { apiRateLimiter, authRateLimiter } from './middleware/rateLimit.js'
@@ -43,7 +44,7 @@ app.use(
     credentials: true,
   })
 )
-app.use(express.json({ limit: '512kb' }))
+app.use(express.json({ limit: '8mb' }))
 app.use(cookieParser())
 
 app.get('/api/health', (_req, res) => {
@@ -64,6 +65,7 @@ app.use('/api/net-worth', authMiddleware, netWorthRouter)
 app.use('/api/notes', authMiddleware, notesRouter)
 app.use('/api/learning', authMiddleware, learningRouter)
 app.use('/api/ai', authMiddleware, aiRouter)
+app.use('/api/backup', authMiddleware, backupRouter)
 
 app.use(errorHandler)
 

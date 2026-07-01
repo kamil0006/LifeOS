@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ModalShell } from './ModalShell'
 import {
   X,
@@ -45,60 +46,9 @@ interface NoteModalProps {
   onSave: (data: NoteModalSaveData) => void
 }
 
-const TYPE_LABELS: Record<NoteType, string> = {
-  inbox: 'notatkę (Inbox)',
-  idea: 'pomysł',
-  reference: 'referencję',
-}
-
-const IDEA_LABELS_MAP: Record<IdeaStatus, string> = {
-  nowy: 'Nowy',
-  do_sprawdzenia: 'Do sprawdzenia',
-  w_realizacji: 'W realizacji',
-  zrobiony: 'Zrobiony',
-  odrzucony: 'Odrzucony',
-}
-
-const IDEA_OPTIONS: { value: IdeaStatus; label: string }[] = IDEA_STATUS_WORKFLOW_ORDER.map(
-  (value) => ({
-    value,
-    label: IDEA_LABELS_MAP[value],
-  })
-)
-
-const REF_OPTIONS: { value: ReferenceKind; label: string }[] = [
-  { value: 'link', label: 'Link' },
-  { value: 'ksiazka', label: 'Książka' },
-  { value: 'artykul', label: 'Artykuł' },
-  { value: 'wideo', label: 'Wideo' },
-  { value: 'cytat', label: 'Cytat' },
-  { value: 'inne', label: 'Inne' },
-]
+const REF_KINDS: ReferenceKind[] = ['link', 'ksiazka', 'artykul', 'wideo', 'cytat', 'inne']
 
 type MdMode = 'edit' | 'preview' | 'split'
-
-const MARKDOWN_HINT = (
-  <div className="text-sm text-(--text-muted) font-mono space-y-1">
-    <p>
-      <strong className="text-(--text-primary)">**tekst**</strong> – pogrubienie
-    </p>
-    <p>
-      <strong className="text-(--text-primary)">*tekst*</strong> – kursywa
-    </p>
-    <p>
-      <strong className="text-(--text-primary)">## Nagłówek</strong> – nagłówek 2
-    </p>
-    <p>
-      <strong className="text-(--text-primary)">- element</strong> – lista punktowana
-    </p>
-    <p>
-      <strong className="text-(--text-primary)">[link](url)</strong> – odnośnik
-    </p>
-    <p>
-      <strong className="text-(--text-primary)">`kod`</strong> – kod inline
-    </p>
-  </div>
-)
 
 function buildSyntheticNote(
   type: NoteType,
@@ -128,12 +78,42 @@ function buildSyntheticNote(
 }
 
 export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProps) {
+  const { t } = useTranslation('notes')
   const navigate = useNavigate()
   const notesCtx = useNotes()
   const { addTodo } = useTodos()
   const learningCtx = useLearning()
   const { addGoal } = useHabits()
   const [archivePromptOpen, setArchivePromptOpen] = useState(false)
+
+  const TYPE_LABELS: Record<NoteType, string> = {
+    inbox: t('noteModal.typeInbox'),
+    idea: t('noteModal.typeIdea'),
+    reference: t('noteModal.typeReference'),
+  }
+
+  const markdownHint = (
+    <div className="text-sm text-(--text-muted) font-mono space-y-1">
+      <p>
+        <strong className="text-(--text-primary)">**text**</strong> – {t('noteModal.markdown.bold')}
+      </p>
+      <p>
+        <strong className="text-(--text-primary)">*text*</strong> – {t('noteModal.markdown.italic')}
+      </p>
+      <p>
+        <strong className="text-(--text-primary)">## Heading</strong> – {t('noteModal.markdown.heading')}
+      </p>
+      <p>
+        <strong className="text-(--text-primary)">- item</strong> – {t('noteModal.markdown.list')}
+      </p>
+      <p>
+        <strong className="text-(--text-primary)">[link](url)</strong> – {t('noteModal.markdown.link')}
+      </p>
+      <p>
+        <strong className="text-(--text-primary)">`code`</strong> – {t('noteModal.markdown.code')}
+      </p>
+    </div>
+  )
 
   const getInitialForm = useCallback(() => {
     const titleVal = note?.title?.trim() ?? ''
@@ -221,7 +201,7 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
     updateField('error', '')
     const trimmed = content.trim()
     if (!trimmed) {
-      updateField('error', 'Treść nie może być pusta.')
+      updateField('error', t('noteModal.contentRequired'))
       return
     }
     onSave(gatherSaveData())
@@ -296,6 +276,9 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
   const showPreviewOnly = mdMode === 'preview'
   const panelMax = showSplit ? 'max-w-5xl' : 'max-w-lg'
 
+  const modeLabel = (m: MdMode) =>
+    m === 'edit' ? t('noteModal.modeEdit') : m === 'preview' ? t('noteModal.modePreview') : t('noteModal.modeSplit')
+
   const modalContent = (
     <ModalShell
       isOpen={isOpen}
@@ -306,13 +289,13 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
     >
               <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
                 <h3 className="text-lg font-bold text-(--text-primary) font-gaming">
-                  {isEdit ? 'Edytuj notatkę' : `Dodaj ${TYPE_LABELS[type]}`}
+                  {isEdit ? t('noteModal.editTitle') : `${t('noteModal.addTitlePrefix')} ${TYPE_LABELS[type]}`}
                 </h3>
                 <button
                   type="button"
                   onClick={onClose}
                   className="p-2 rounded-lg hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-(--text-primary) transition-colors"
-                  aria-label="Zamknij"
+                  aria-label={t('noteModal.close')}
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -326,27 +309,27 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
                 )}
 
                 <div>
-                  <label className="block text-base text-(--text-muted) font-gaming mb-1">Tytuł (opcjonalnie)</label>
+                  <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('noteModal.titleLabel')}</label>
                   <input
                     type="text"
                     value={titleInput}
                     onChange={(e) => updateField('titleInput', e.target.value)}
-                    placeholder="Puste = pierwsza linia treści"
+                    placeholder={t('noteModal.titlePlaceholder')}
                     className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
                   />
                 </div>
 
                 {type === 'idea' && (
                   <div>
-                    <label className="block text-base text-(--text-muted) font-gaming mb-1">Status pomysłu</label>
+                    <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('noteModal.ideaStatusLabel')}</label>
                     <select
                       value={ideaStatus}
                       onChange={(e) => updateField('ideaStatus', e.target.value as IdeaStatus)}
                       className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
                     >
-                      {IDEA_OPTIONS.map((o) => (
-                        <option key={o.value} value={o.value}>
-                          {o.label}
+                      {IDEA_STATUS_WORKFLOW_ORDER.map((value) => (
+                        <option key={value} value={value}>
+                          {t(`ideaStatus.${value}`)}
                         </option>
                       ))}
                     </select>
@@ -356,21 +339,21 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
                 {type === 'reference' && (
                   <>
                     <div>
-                      <label className="block text-base text-(--text-muted) font-gaming mb-1">Typ referencji</label>
+                      <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('noteModal.referenceKindLabel')}</label>
                       <select
                         value={referenceKind}
                         onChange={(e) => updateField('referenceKind', e.target.value as ReferenceKind)}
                         className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
                       >
-                        {REF_OPTIONS.map((o) => (
-                          <option key={o.value} value={o.value}>
-                            {o.label}
+                        {REF_KINDS.map((value) => (
+                          <option key={value} value={value}>
+                            {t(`referenceKind.${value}`)}
                           </option>
                         ))}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-base text-(--text-muted) font-gaming mb-1">URL (opcjonalnie)</label>
+                      <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('noteModal.urlLabel')}</label>
                       <input
                         type="url"
                         value={referenceUrl}
@@ -381,13 +364,13 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
                     </div>
                     <div>
                       <label className="block text-base text-(--text-muted) font-gaming mb-1">
-                        Źródło (opcjonalnie)
+                        {t('noteModal.sourceLabel')}
                       </label>
                       <input
                         type="text"
                         value={referenceSourceInput}
                         onChange={(e) => updateField('referenceSourceInput', e.target.value)}
-                        placeholder="Np. autor, książka, wydawca – przydatne przy cytacie"
+                        placeholder={t('noteModal.sourcePlaceholder')}
                         className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
                       />
                     </div>
@@ -396,7 +379,7 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
 
                 <div>
                   <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <span className="text-base text-(--text-muted) font-gaming">Treść (Markdown)</span>
+                    <span className="text-base text-(--text-muted) font-gaming">{t('noteModal.contentLabel')}</span>
                     <div className="flex rounded-lg border border-(--border) overflow-hidden">
                       {(['edit', 'preview', 'split'] as const).map((m) => (
                         <button
@@ -409,7 +392,7 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
                               : 'text-(--text-muted) hover:bg-(--bg-dark)'
                           }`}
                         >
-                          {m === 'edit' ? 'Edycja' : m === 'preview' ? 'Podgląd' : 'Split'}
+                          {modeLabel(m)}
                         </button>
                       ))}
                     </div>
@@ -417,15 +400,15 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
                       type="button"
                       onClick={() => setForm((f) => ({ ...f, showMarkdownHelp: !f.showMarkdownHelp }))}
                       className="p-1 rounded text-(--text-muted) hover:text-(--accent-cyan) hover:bg-(--accent-cyan)/10 transition-colors"
-                      title="Składnia Markdown"
-                      aria-label="Pokaż składnię Markdown"
+                      title={t('noteModal.markdownSyntax')}
+                      aria-label={t('noteModal.showMarkdownSyntax')}
                     >
                       <HelpCircle className="w-4 h-4" />
                     </button>
                   </div>
                   {showMarkdownHelp && (
                     <div className="mb-2 p-3 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-muted)">
-                      {MARKDOWN_HINT}
+                      {markdownHint}
                     </div>
                   )}
                   <div
@@ -447,7 +430,7 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
                           showPreviewOnly ? '' : 'min-h-[180px]'
                         }`}
                       >
-                        <MarkdownContent content={content || '*Brak treści*'} />
+                        <MarkdownContent content={content || t('noteModal.noContentPreview')} />
                       </div>
                     )}
                   </div>
@@ -455,7 +438,7 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
 
                 <div>
                   <label className="block text-base text-(--text-muted) font-gaming mb-1">
-                    Tagi (oddzielone przecinkami)
+                    {t('noteModal.tagsLabel')}
                   </label>
                   <input
                     type="text"
@@ -473,7 +456,7 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
                       className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-(--border) text-(--text-muted) hover:text-(--accent-amber) font-gaming text-sm"
                     >
                       <Pin className={`w-4 h-4 ${note.pinned ? 'fill-current text-(--accent-amber)' : ''}`} />
-                      {note.pinned ? 'Odepnij' : 'Przypnij'}
+                      {note.pinned ? t('noteModal.unpin') : t('noteModal.pin')}
                     </button>
                     <button
                       type="button"
@@ -481,7 +464,7 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
                       className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-(--border) text-(--text-muted) hover:text-(--accent-magenta) font-gaming text-sm"
                     >
                       <Archive className="w-4 h-4" />
-                      Archiwizuj
+                      {t('noteModal.archive')}
                     </button>
                   </div>
                 )}
@@ -493,7 +476,7 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
                     className="flex items-center gap-2 text-base text-(--accent-cyan) font-gaming hover:underline"
                   >
                     <ChevronDown className={`w-4 h-4 transition-transform ${convertOpen ? 'rotate-180' : ''}`} />
-                    Przekształć w…
+                    {t('noteModal.convertTo')}
                   </button>
                   {convertOpen && (
                     <div className="flex flex-col gap-3 pl-1">
@@ -505,12 +488,12 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
                             className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming text-sm hover:border-(--accent-cyan)/50 w-fit"
                           >
                             <CheckSquare className="w-4 h-4 text-(--accent-cyan)" />
-                            Zadanie (To-do)
+                            {t('noteModal.convertTodo')}
                           </button>
                           <div className="rounded-lg border border-(--border) bg-(--bg-dark)/50 p-3 space-y-2 max-w-md">
-                            <p className="text-base text-(--text-muted) font-gaming">Cel (nawyki)</p>
+                            <p className="text-base text-(--text-muted) font-gaming">{t('noteModal.convertGoalTitle')}</p>
                             <div className="flex flex-wrap gap-2 items-center">
-                              <label className="text-base text-(--text-muted)">Wartość docelowa</label>
+                              <label className="text-base text-(--text-muted)">{t('noteModal.goalTargetLabel')}</label>
                               <input
                                 type="number"
                                 min={1}
@@ -522,7 +505,7 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
                                 type="text"
                                 value={goalUnit}
                                 onChange={(e) => updateField('goalUnit', e.target.value)}
-                                placeholder="jednostka (np. książek)"
+                                placeholder={t('noteModal.goalUnitPlaceholder')}
                                 className="flex-1 min-w-[120px] px-2 py-1 rounded bg-(--bg-dark) border border-(--border) text-sm font-gaming"
                               />
                             </div>
@@ -532,7 +515,7 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
                               className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-(--accent-cyan)/15 text-(--accent-cyan) border border-(--accent-cyan)/40 font-gaming text-sm"
                             >
                               <Target className="w-4 h-4" />
-                              Utwórz cel
+                              {t('noteModal.createGoal')}
                             </button>
                           </div>
                         </>
@@ -544,7 +527,7 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
                           className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming text-sm hover:border-(--accent-cyan)/50 w-fit"
                         >
                           <FolderKanban className="w-4 h-4 text-(--accent-amber)" />
-                          Projekt (Nauka)
+                          {t('noteModal.convertProject')}
                         </button>
                       )}
                       {type === 'reference' && (
@@ -555,7 +538,7 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
                             className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming text-sm hover:border-(--accent-cyan)/50"
                           >
                             <GraduationCap className="w-4 h-4 text-(--accent-magenta)" />
-                            Kurs
+                            {t('noteModal.convertCourse')}
                           </button>
                           <button
                             type="button"
@@ -563,7 +546,7 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
                             className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming text-sm hover:border-(--accent-cyan)/50"
                           >
                             <BookOpen className="w-4 h-4 text-(--accent-green)" />
-                            Książka
+                            {t('noteModal.convertBook')}
                           </button>
                         </div>
                       )}
@@ -577,13 +560,13 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
                     onClick={onClose}
                     className="px-4 py-2 rounded-lg border border-(--border) text-(--text-muted) hover:text-(--text-primary) font-gaming transition-colors"
                   >
-                    Anuluj
+                    {t('noteModal.cancel')}
                   </button>
                   <button
                     type="submit"
                     className="px-4 py-2 rounded-lg bg-(--accent-cyan) text-(--bg-dark) font-gaming hover:opacity-90 transition-opacity"
                   >
-                    {isEdit ? 'Zapisz' : 'Dodaj'}
+                    {isEdit ? t('noteModal.save') : t('noteModal.add')}
                   </button>
                 </div>
               </form>
@@ -597,10 +580,10 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
         zBackdrop={10030}
         zPanel={10031}
         isOpen={archivePromptOpen && !!note && !!notesCtx}
-        title="Zarchiwizować notatkę?"
-        description="Notatka zniknie z aktywnej listy. Możesz ją przywrócić z zakładki Archiwum."
+        title={t('noteModal.archiveConfirmTitle')}
+        description={t('noteModal.archiveConfirmDescription')}
         emphasis={note ? getNoteDisplayTitle(note) : undefined}
-        confirmLabel="Archiwizuj"
+        confirmLabel={t('noteModal.archiveConfirmLabel')}
         onClose={() => setArchivePromptOpen(false)}
         onConfirm={() => {
           if (note && notesCtx) {

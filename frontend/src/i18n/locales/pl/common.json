@@ -1,0 +1,30 @@
+{
+  "cancel": "Anuluj",
+  "confirm": "Potwierdź",
+  "close": "Zamknij",
+  "save": "Zapisz",
+  "delete": "Usuń",
+  "edit": "Edytuj",
+  "ok": "OK",
+  "loading": "Ładowanie…",
+  "error": "Wystąpił błąd",
+  "yes": "Tak",
+  "no": "Nie",
+  "undo": "Cofnij",
+  "deletedItem": "Usunięto: {{label}}",
+  "months": ["Sty", "Lut", "Mar", "Kwi", "Maj", "Cze", "Lip", "Sie", "Wrz", "Paź", "Lis", "Gru"],
+  "monthLabel": "Miesiąc:",
+  "periodRangeAria": "Zakres okresu",
+  "choosePeriodMonth": "Wybierz miesiąc",
+  "choosePeriodQuarter": "Wybierz kwartał",
+  "choosePeriodYear": "Wybierz rok",
+  "periodMonth": "Miesiąc",
+  "periodQuarter": "Kwartał",
+  "periodYear": "Rok",
+  "errorBoundary": {
+    "title": "Coś poszło nie tak",
+    "description": "Aplikacja napotkała błąd i nie mogła się wyświetlić. Spróbuj ponownie.",
+    "reload": "Odśwież stronę",
+    "retry": "Spróbuj ponownie"
+  }
+}

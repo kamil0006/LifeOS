@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { X } from 'lucide-react'
 import { ModalShell } from './ModalShell'
 import { ExpenseCategoryPicker, DEFAULT_NEW_EXPENSE_CATEGORY_COLOR } from './finance/ExpenseCategoryPicker'
@@ -58,6 +59,7 @@ export function RecurringModal({
   onAddCategory,
   onDeleteCategory,
 }: RecurringModalProps) {
+  const { t } = useTranslation('finances')
   const buildInitialForm = useCallback(
     () => ({
       name: '',
@@ -103,7 +105,7 @@ export function RecurringModal({
     const displayName = leadingUpperPl(name)
     if (!displayName || isNaN(amt) || amt <= 0 || isNaN(day) || day < 1 || day > 31) return
     if (!isPaymentMethod(paymentMethod)) {
-      alert('Wybierz sposób płatności: karta lub gotówka.')
+      alert(t('transactionModal.selectPaymentAlert'))
       return
     }
     const payload: RecurringFormPayload = {
@@ -133,12 +135,12 @@ export function RecurringModal({
     >
       <div className="flex items-center justify-between mb-5">
         <h3 className="text-xl font-bold text-(--text-primary) font-gaming">
-          {isEdit ? 'Edytuj stały koszt' : 'Nowy stały koszt'}
+          {isEdit ? t('transactions.editRecurring') : t('recurringModal.newTitle')}
         </h3>
         <button
           onClick={onClose}
           className="p-2 rounded-lg hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-(--text-primary) transition-colors"
-          aria-label="Zamknij"
+          aria-label={t('common:close')}
         >
           <X className="w-5 h-5" />
         </button>
@@ -146,7 +148,7 @@ export function RecurringModal({
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-base text-(--text-muted) font-gaming mb-1">Nazwa</label>
+          <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('transactionModal.nameLabel')}</label>
           <input
             type="text"
             value={name}
@@ -161,7 +163,7 @@ export function RecurringModal({
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-base text-(--text-muted) font-gaming mb-1">Kwota (zł)</label>
+            <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('transactionModal.amountLabel')}</label>
             <input
               type="number"
               step="0.01"
@@ -173,7 +175,7 @@ export function RecurringModal({
             />
           </div>
           <div>
-            <label className="block text-base text-(--text-muted) font-gaming mb-1">Dzień miesiąca (1-31)</label>
+            <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('recurringModal.dayOfMonthLabel')}</label>
             <input
               type="text"
               inputMode="numeric"
@@ -215,14 +217,14 @@ export function RecurringModal({
             onClick={onClose}
             className="px-4 py-2 rounded-lg border border-(--border) text-(--text-muted) font-gaming hover:text-(--text-primary)"
           >
-            Anuluj
+            {t('common:cancel')}
           </button>
           <button
             type="submit"
             disabled={!isPaymentMethod(paymentMethod)}
             className="px-4 py-2 rounded-lg bg-(--accent-amber)/15 text-(--accent-amber) border border-(--accent-amber)/40 font-gaming hover:bg-(--accent-amber)/25 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isEdit ? 'Zapisz zmiany' : 'Zapisz'}
+            {isEdit ? t('transactions.saveChanges') : t('common:save')}
           </button>
         </div>
       </form>

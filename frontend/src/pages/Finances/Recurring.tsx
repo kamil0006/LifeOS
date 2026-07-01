@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { Card } from '../../components/Card'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { RecurringModal, type RecurringFormPayload } from '../../components/RecurringModal'
@@ -32,6 +33,7 @@ function getNextPaymentDate(dayOfMonth: number): Date {
 type RecurringSortBy = 'payment' | 'amount' | 'category'
 
 export function Recurring() {
+  const { t, i18n } = useTranslation('finances')
   const { user } = useAuth()
   const useApiFinance = useFinanceUsesApi()
   const queryClient = useQueryClient()
@@ -54,7 +56,8 @@ export function Recurring() {
   const total = allScheduled.reduce((s, e) => s + e.amount, 0)
   const annualTotal = total * 12
 
-  const nextPaymentLabel = (dayOfMonth: number) => getNextPaymentDate(dayOfMonth).toLocaleDateString('pl-PL')
+  const nextPaymentLabel = (dayOfMonth: number) =>
+    getNextPaymentDate(dayOfMonth).toLocaleDateString(i18n.language === 'pl' ? 'pl-PL' : 'en-US')
 
   const sortedScheduled = useMemo(() => {
     const list = [...allScheduled]
@@ -99,11 +102,11 @@ export function Recurring() {
   }
 
   const runConfirmedDelete = () => {
-    const t = deleteTarget
+    const target = deleteTarget
     setDeleteTarget(null)
-    if (!t) return
-    if (editingRecurring?.id === t.id) closeRecurringModal()
-    void handleDelete(t.id)
+    if (!target) return
+    if (editingRecurring?.id === target.id) closeRecurringModal()
+    void handleDelete(target.id)
   }
 
   const handleUpdate = async (
@@ -133,39 +136,39 @@ export function Recurring() {
   return (
     <div className="space-y-5">
       <Card className="border-(--accent-amber)/20 max-md:p-4">
-        <p className="text-base text-(--text-muted)">Suma miesięczna</p>
+        <p className="text-base text-(--text-muted)">{t('recurring.monthlyTotal')}</p>
         <p className="mt-1 text-2xl font-bold font-gaming text-(--accent-amber)">
           {total.toLocaleString('pl-PL')} zł
         </p>
-        <p className="mt-1 text-sm text-(--text-muted) sm:text-base">Rocznie: {annualTotal.toLocaleString('pl-PL')} zł</p>
+        <p className="mt-1 text-sm text-(--text-muted) sm:text-base">{t('recurring.annually', { amount: annualTotal.toLocaleString('pl-PL') })}</p>
       </Card>
 
-      <Card title="Subskrypcje i stałe koszty" className="max-md:p-4">
+      <Card title={t('recurring.title')} className="max-md:p-4">
         <p className="mb-4 text-base text-(--text-muted)">
-          Wydatki dodawane automatycznie każdego miesiąca w wybranym dniu.
+          {t('recurring.description')}
         </p>
         <label className="mb-4 flex flex-col gap-1.5 md:hidden">
-          <span className="text-base text-(--text-muted)">Sortuj</span>
+          <span className="text-base text-(--text-muted)">{t('recurring.sortLabel')}</span>
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as RecurringSortBy)}
             className="min-h-11 rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent-amber)/50 focus:outline-none"
           >
-            <option value="payment">Najbliższa płatność</option>
-            <option value="amount">Kwota</option>
-            <option value="category">Kategoria</option>
+            <option value="payment">{t('recurring.sortPayment')}</option>
+            <option value="amount">{t('recurring.sortAmount')}</option>
+            <option value="category">{t('recurring.sortCategory')}</option>
           </select>
         </label>
         <div className="mb-4 hidden flex-wrap items-center gap-2 md:flex">
-          <span className="text-base text-(--text-muted)">Sortuj:</span>
+          <span className="text-base text-(--text-muted)">{t('recurring.sortLabel')}:</span>
           <button type="button" className={sortButtonClass('payment')} onClick={() => setSortBy('payment')}>
-            Najbliższa płatność
+            {t('recurring.sortPayment')}
           </button>
           <button type="button" className={sortButtonClass('amount')} onClick={() => setSortBy('amount')}>
-            Kwota
+            {t('recurring.sortAmount')}
           </button>
           <button type="button" className={sortButtonClass('category')} onClick={() => setSortBy('category')}>
-            Kategoria
+            {t('recurring.sortCategory')}
           </button>
         </div>
         <div className="mb-4 space-y-3">
@@ -189,7 +192,7 @@ export function Recurring() {
                     <div className="min-w-0 flex-1">
                       <p className="text-base font-medium text-(--text-primary)">{s.name}</p>
                       <p className="text-sm text-(--text-muted) sm:text-base">
-                        {s.category} · dzień {s.dayOfMonth}
+                        {s.category} · {t('overview.dayOfMonth', { day: s.dayOfMonth })}
                         {s.paymentMethod ? (
                           <span className="ml-2">
                             <PaymentMethodBadge method={s.paymentMethod} />
@@ -198,11 +201,11 @@ export function Recurring() {
                       </p>
                       <p className="mt-1.5 font-mono text-lg tabular-nums leading-none text-(--accent-amber)">
                         −{s.amount.toLocaleString('pl-PL')} zł{' '}
-                        <span className="text-sm font-sans font-normal text-(--text-muted)">/ mies.</span>
+                        <span className="text-sm font-sans font-normal text-(--text-muted)">{t('recurring.perMonth')}</span>
                       </p>
                       <p className="mt-1 inline-flex items-center gap-1 text-sm text-(--text-muted)">
                         <CalendarClock className="h-3.5 w-3.5 shrink-0" />
-                        Następna: {nextPaymentLabel(s.dayOfMonth)}
+                        {t('recurring.next', { date: nextPaymentLabel(s.dayOfMonth) })}
                       </p>
                     </div>
                   </div>
@@ -213,16 +216,16 @@ export function Recurring() {
                         void handleUpdate(s.id, { active: !s.active, pausedUntil: null })
                       }
                       className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg border border-(--border) bg-(--bg-card) px-3 text-sm text-(--text-primary) font-gaming shadow-sm hover:border-(--accent-cyan)/45 hover:bg-(--accent-cyan)/12 hover:text-(--accent-cyan) transition-colors"
-                      title={s.active ? 'Wstrzymaj stały koszt' : 'Wznów stały koszt'}
+                      title={s.active ? t('recurring.pauseTitle') : t('recurring.resumeTitle')}
                     >
                       {s.active ? <Pause className="h-4 w-4 shrink-0" /> : <Play className="h-4 w-4 shrink-0" />}
-                      <span>{s.active ? 'Pauza' : 'Wznów'}</span>
+                      <span>{s.active ? t('recurring.pause') : t('recurring.resume')}</span>
                     </button>
                     <div
                       className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg border border-(--border) bg-(--bg-card) px-2.5"
-                      title="Przypomnienie X dni przed płatnością"
+                      title={t('recurring.reminderTitle')}
                     >
-                      <span className="whitespace-nowrap text-base text-(--text-muted)">Przypomnij:</span>
+                      <span className="whitespace-nowrap text-base text-(--text-muted)">{t('recurring.reminderLabel')}</span>
                       <input
                         type="number"
                         min={0}
@@ -234,9 +237,9 @@ export function Recurring() {
                           })
                         }
                         className="no-spinners h-7 w-10 rounded bg-(--bg-dark) border border-(--border) px-1 text-center text-base text-(--text-primary) focus:border-(--accent-cyan) focus:outline-none"
-                        aria-label="Liczba dni przed płatnością"
+                        aria-label={t('recurring.reminderDaysAria')}
                       />
-                      <span className="whitespace-nowrap text-base text-(--text-muted)">dni</span>
+                      <span className="whitespace-nowrap text-base text-(--text-muted)">{t('recurring.reminderDaysSuffix')}</span>
                     </div>
                     <button
                       type="button"
@@ -245,7 +248,7 @@ export function Recurring() {
                         setRecurringModalOpen(true)
                       }}
                       className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-(--text-muted) hover:bg-(--accent-amber)/10 hover:text-(--accent-amber) transition-colors"
-                      title="Edytuj"
+                      title={t('common:edit')}
                     >
                       <Pencil className="h-4 w-4" />
                     </button>
@@ -253,7 +256,7 @@ export function Recurring() {
                       type="button"
                       onClick={() => setDeleteTarget(s)}
                       className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-(--text-muted) hover:bg-red-500/10 hover:text-red-400 transition-colors"
-                      title="Usuń"
+                      title={t('common:delete')}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -273,7 +276,7 @@ export function Recurring() {
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-(--accent-amber)/15 text-(--accent-amber) border border-(--accent-amber)/40 font-gaming hover:bg-(--accent-amber)/25 transition-colors"
         >
           <Plus className="w-4 h-4" />
-          Dodaj subskrypcję / stały koszt
+          {t('recurring.addRecurring')}
         </button>
 
         <RecurringModal
@@ -304,12 +307,12 @@ export function Recurring() {
           isOpen={deleteTarget != null}
           onClose={() => setDeleteTarget(null)}
           onConfirm={runConfirmedDelete}
-          title="Usunąć?"
-          description="Stały koszt zostanie usunięty z listy. Tej operacji nie można cofnąć."
+          title={t('recurring.deleteConfirmTitle')}
+          description={t('recurring.deleteConfirmDescription')}
           emphasis={deleteTarget?.name}
           variant="danger"
-          confirmLabel="Usuń"
-          cancelLabel="Anuluj"
+          confirmLabel={t('common:delete')}
+          cancelLabel={t('common:cancel')}
         />
       </Card>
     </div>

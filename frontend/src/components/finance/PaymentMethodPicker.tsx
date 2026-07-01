@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import type { PaymentMethod } from '../../lib/paymentMethod'
 import { PAYMENT_METHODS, PAYMENT_METHOD_LABELS } from '../../lib/paymentMethod'
 
@@ -8,10 +9,11 @@ type PaymentMethodPickerProps = {
 }
 
 export function PaymentMethodPicker({ value, onChange, id = 'payment-method' }: PaymentMethodPickerProps) {
+  const { t } = useTranslation('finances')
   return (
     <div>
       <p id={`${id}-label`} className="mb-2 text-base text-(--text-muted) font-gaming">
-        Sposób płatności
+        {t('paymentMethodPicker.label')}
       </p>
       <div
         role="group"

@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   LayoutDashboard,
   Wallet,
@@ -8,10 +9,10 @@ import {
 } from 'lucide-react'
 
 const NAV_ITEMS = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/finances',  icon: Wallet,          label: 'Finanse'   },
-  { to: '/todo',      icon: CheckSquare,     label: 'To-do'     },
-  { to: '/habits',    icon: Target,          label: 'Nawyki'    },
+  { to: '/dashboard', icon: LayoutDashboard, labelKey: 'dashboard' },
+  { to: '/finances',  icon: Wallet,          labelKey: 'finances' },
+  { to: '/todo',      icon: CheckSquare,     labelKey: 'todo'     },
+  { to: '/habits',    icon: Target,          labelKey: 'habits'  },
 ] as const
 
 type Props = {
@@ -19,14 +20,15 @@ type Props = {
 }
 
 export function MobileBottomNav({ onMoreClick }: Props) {
+  const { t } = useTranslation('nav')
   return (
     <nav
       className="lg:hidden fixed bottom-0 left-0 right-0 z-30 flex items-stretch border-t border-(--border) bg-(--bg-card)/95 backdrop-blur-md"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       role="navigation"
-      aria-label="Główna nawigacja"
+      aria-label={t('mainNavAria')}
     >
-      {NAV_ITEMS.map(({ to, icon: Icon, label }) => (
+      {NAV_ITEMS.map(({ to, icon: Icon, labelKey }) => (
         <NavLink
           key={to}
           to={to}
@@ -47,7 +49,7 @@ export function MobileBottomNav({ onMoreClick }: Props) {
                 }`}
                 aria-hidden
               />
-              <span>{label}</span>
+              <span>{t(labelKey)}</span>
             </>
           )}
         </NavLink>
@@ -58,10 +60,10 @@ export function MobileBottomNav({ onMoreClick }: Props) {
         type="button"
         onClick={onMoreClick}
         className="flex flex-1 flex-col items-center justify-center gap-0.5 py-2.5 min-h-[56px] text-xs font-medium text-(--text-muted) hover:text-(--text-primary) transition-colors duration-150 outline-none"
-        aria-label="Więcej opcji nawigacji"
+        aria-label={t('moreAria')}
       >
         <Menu className="h-5 w-5 shrink-0" aria-hidden />
-        <span>Więcej</span>
+        <span>{t('more')}</span>
       </button>
     </nav>
   )

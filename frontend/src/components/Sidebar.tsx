@@ -1,4 +1,5 @@
 import { NavLink, Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   LayoutDashboard,
   Wallet,
@@ -10,38 +11,40 @@ import {
   LogOut,
   HelpCircle,
   Search,
+  Settings,
   X,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useGlobalSearch } from '../context/GlobalSearchContext'
 import { useOnboarding } from '../context/OnboardingContext'
+import { useSettings } from '../context/SettingsContext'
 import { Tooltip } from './Tooltip'
 
 const navSections = [
   {
-    label: null,
-    items: [{ to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' }],
+    labelKey: null,
+    items: [{ to: '/dashboard', icon: LayoutDashboard, labelKey: 'dashboard' }],
   },
   {
-    label: 'Organizacja',
+    labelKey: 'sectionOrganization',
     items: [
-      { to: '/calendar', icon: CalendarIcon, label: 'Kalendarz' },
-      { to: '/todo', icon: CheckSquare, label: 'To-do' },
-      { to: '/notes', icon: StickyNote, label: 'Notatki' },
+      { to: '/calendar', icon: CalendarIcon, labelKey: 'calendar' },
+      { to: '/todo', icon: CheckSquare, labelKey: 'todo' },
+      { to: '/notes', icon: StickyNote, labelKey: 'notes' },
     ],
   },
   {
-    label: 'Finanse',
-    items: [{ to: '/finances', icon: Wallet, label: 'Finanse' }],
+    labelKey: 'sectionFinances',
+    items: [{ to: '/finances', icon: Wallet, labelKey: 'finances' }],
   },
   {
-    label: 'Rozwój',
+    labelKey: 'sectionDevelopment',
     items: [
-      { to: '/habits', icon: Target, label: 'Nawyki' },
-      { to: '/learning', icon: GraduationCap, label: 'Nauka' },
+      { to: '/habits', icon: Target, labelKey: 'habits' },
+      { to: '/learning', icon: GraduationCap, labelKey: 'learning' },
     ],
   },
-]
+] as const
 
 export type AppNavPanelProps = {
   /** Wywoływane po przejściu w nawigacji (np. zamknięcie menu mobilnego). */
@@ -51,9 +54,11 @@ export type AppNavPanelProps = {
 }
 
 export function AppNavPanel({ onNavigate, mobileClose }: AppNavPanelProps) {
+  const { t } = useTranslation('nav')
   const { user, logout, isDemoMode } = useAuth()
   const { open: openSearch } = useGlobalSearch()
   const { open: openOnboarding } = useOnboarding()
+  const { open: openSettings } = useSettings()
   const navigate = useNavigate()
 
   const handleLogout = async () => {
@@ -71,14 +76,14 @@ export function AppNavPanel({ onNavigate, mobileClose }: AppNavPanelProps) {
               to="/dashboard"
               onClick={() => onNavigate?.()}
               className="block text-xl font-bold tracking-widest font-gaming hover:opacity-90 transition-opacity outline-none focus:outline-none"
-              title="Przejdź do Dashboard"
+              title={t('homeAria')}
             >
               <span className="text-(--accent-cyan) drop-shadow-[0_0_8px_rgba(0,229,255,0.5)]">Life</span>
               <span className="text-(--text-primary)">OS</span>
             </Link>
-            <p className="text-sm text-(--text-muted) mt-1 font-mono tracking-wider">v1.0.0</p>
+            <p className="text-sm text-(--text-muted) mt-1 font-mono tracking-wider">{t('version')}</p>
             <div className="mt-2 grid grid-cols-[2.75rem_minmax(0,1fr)] gap-2">
-              <Tooltip content="Samouczek – co jest w aplikacji" align="start">
+              <Tooltip content={t('tutorialTooltip')} align="start">
                 <button
                   type="button"
                   onClick={() => {
@@ -86,7 +91,7 @@ export function AppNavPanel({ onNavigate, mobileClose }: AppNavPanelProps) {
                     onNavigate?.()
                   }}
                   className="grid size-11 place-items-center rounded-lg border border-(--border) bg-(--bg-dark) p-0 text-(--text-muted) transition-colors hover:border-(--accent-cyan)/50 hover:text-(--accent-cyan)"
-                  aria-label="Otwórz samouczek"
+                  aria-label={t('tutorialAria')}
                 >
                   <HelpCircle
                     className="size-[18px] shrink-0 text-current [stroke-linecap:round] [stroke-linejoin:round]"
@@ -95,7 +100,7 @@ export function AppNavPanel({ onNavigate, mobileClose }: AppNavPanelProps) {
                   />
                 </button>
               </Tooltip>
-              <Tooltip content="Szybkie wyszukiwanie (Ctrl+K)" wrapperClassName="min-w-0 w-full">
+              <Tooltip content={t('searchTooltip')} wrapperClassName="min-w-0 w-full">
                 <button
                   type="button"
                   onClick={() => {
@@ -105,7 +110,7 @@ export function AppNavPanel({ onNavigate, mobileClose }: AppNavPanelProps) {
                   className="flex min-h-11 w-full min-w-0 items-center justify-center gap-1.5 rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-sm font-gaming text-(--text-muted) transition-colors hover:border-(--accent-cyan)/50 hover:text-(--accent-cyan)"
                 >
                   <Search className="h-3.5 w-3.5 shrink-0" />
-                  <span className="truncate">Wyszukaj</span>
+                  <span className="truncate">{t('search')}</span>
                 </button>
               </Tooltip>
             </div>
@@ -115,7 +120,7 @@ export function AppNavPanel({ onNavigate, mobileClose }: AppNavPanelProps) {
               type="button"
               onClick={mobileClose}
               className="lg:hidden shrink-0 flex h-11 w-11 items-center justify-center rounded-lg border border-(--border) bg-(--bg-dark) text-(--text-muted) transition-colors hover:border-(--accent-cyan)/50 hover:text-(--accent-cyan)"
-              aria-label="Zamknij menu"
+              aria-label={t('closeMenuAria')}
             >
               <X className="h-5 w-5" />
             </button>
@@ -124,10 +129,10 @@ export function AppNavPanel({ onNavigate, mobileClose }: AppNavPanelProps) {
       </div>
       <nav className="scrollbar-hidden min-h-0 flex-1 space-y-7 overflow-y-auto overflow-x-hidden p-5">
         {navSections.map((section) => (
-          <div key={section.label ?? 'dashboard'}>
-            {section.label && (
+          <div key={section.labelKey ?? 'dashboard'}>
+            {section.labelKey && (
               <p className="mb-2 px-4 text-xs font-medium uppercase tracking-wider text-(--text-muted)">
-                {section.label}
+                {t(section.labelKey)}
               </p>
             )}
             <div className="space-y-1">
@@ -149,7 +154,7 @@ export function AppNavPanel({ onNavigate, mobileClose }: AppNavPanelProps) {
                       <item.icon
                         className={`h-5 w-5 shrink-0 transition-[filter] duration-200 ${isActive ? 'drop-shadow-[0_0_4px_rgba(0,229,255,0.6)]' : ''}`}
                       />
-                      <span className="font-medium tracking-wide">{item.label}</span>
+                      <span className="font-medium tracking-wide">{t(item.labelKey)}</span>
                     </>
                   )}
                 </NavLink>
@@ -158,17 +163,30 @@ export function AppNavPanel({ onNavigate, mobileClose }: AppNavPanelProps) {
           </div>
         ))}
       </nav>
-      <div className="space-y-2 border-t border-(--border) p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <div className="space-y-3 border-t border-(--border) p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <Tooltip content={t('settingsTooltip')} align="start">
+          <button
+            type="button"
+            onClick={() => {
+              openSettings()
+              onNavigate?.()
+            }}
+            className="grid size-11 place-items-center rounded-lg border border-(--border) bg-(--bg-dark) p-0 text-(--text-muted) transition-colors hover:border-(--accent-cyan)/50 hover:text-(--accent-cyan)"
+            aria-label={t('settingsAria')}
+          >
+            <Settings className="size-[18px] shrink-0 text-current [stroke-linecap:round] [stroke-linejoin:round]" strokeWidth={2} aria-hidden />
+          </button>
+        </Tooltip>
         {isDemoMode ? (
           <>
-            <p className="text-sm text-(--text-muted) font-mono">Demo (dane przykładowe)</p>
+            <p className="text-sm text-(--text-muted) font-mono">{t('demoLabel')}</p>
             <button
               type="button"
               onClick={handleLogout}
               className="flex min-h-[44px] items-center gap-2 text-sm text-(--text-muted) transition-colors hover:text-(--accent-cyan)"
             >
               <LogOut className="h-3 w-3" />
-              Wyjdź z demo
+              {t('exitDemo')}
             </button>
           </>
         ) : (
@@ -182,7 +200,7 @@ export function AppNavPanel({ onNavigate, mobileClose }: AppNavPanelProps) {
               className="flex min-h-[44px] items-center gap-2 text-sm text-(--text-muted) transition-colors hover:text-(--accent-cyan)"
             >
               <LogOut className="h-3 w-3" />
-              Wyloguj
+              {t('logout')}
             </button>
           </>
         )}

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ConfirmDialog } from './ConfirmDialog'
 import { X, Trash2 } from 'lucide-react'
 import { ModalShell } from './ModalShell'
@@ -23,6 +24,7 @@ export function NetWorthAdjustmentEditModal({
   onSave,
   onDelete,
 }: NetWorthAdjustmentEditModalProps) {
+  const { t } = useTranslation('finances')
   const [text, setText] = useState('')
   const [amountStr, setAmountStr] = useState('')
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
@@ -57,23 +59,23 @@ export function NetWorthAdjustmentEditModal({
         panelKey="nw-adj-edit-panel"
       >
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-(--text-primary) font-gaming">Korekta w historii</h3>
+                <h3 className="text-lg font-bold text-(--text-primary) font-gaming">{t('netWorthAdjustmentEditModal.title')}</h3>
                 <button
                   type="button"
                   onClick={onClose}
                   className="rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-(--bg-card-hover) hover:text-(--text-primary)"
-                  aria-label="Zamknij"
+                  aria-label={t('common:close')}
                 >
                   <X className="h-5 w-5" />
                 </button>
               </div>
               <p className="mb-4 text-base text-(--text-muted)">{title}</p>
               <p className="mb-4 text-base text-(--text-muted)">
-                Zmiana kwoty przelicza saldo powiązanego konta. Usunięcie wpisu cofa całą kwotę tej korekty z salda.
+                {t('netWorthAdjustmentEditModal.description')}
               </p>
               <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
                 <div>
-                  <label className="mb-1 block text-base text-(--text-muted) font-gaming">Kwota korekty (zł)</label>
+                  <label className="mb-1 block text-base text-(--text-muted) font-gaming">{t('netWorthCorrectionModal.correctionAmountLabel')}</label>
                   <input
                     type="text"
                     inputMode="decimal"
@@ -83,7 +85,7 @@ export function NetWorthAdjustmentEditModal({
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-base text-(--text-muted) font-gaming">Opis</label>
+                  <label className="mb-1 block text-base text-(--text-muted) font-gaming">{t('netWorthAdjustmentEditModal.descriptionLabel')}</label>
                   <textarea
                     value={text}
                     onChange={(e) => setText(e.target.value)}
@@ -100,14 +102,14 @@ export function NetWorthAdjustmentEditModal({
                     className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-[#e74c3c]/45 bg-[#e74c3c]/15 py-2.5 font-gaming text-[#e74c3c] transition-colors hover:bg-[#e74c3c]/25"
                   >
                     <Trash2 className="h-4 w-4" />
-                    Usuń wpis
+                    {t('netWorthAdjustmentEditModal.deleteEntryButton')}
                   </button>
                   <button
                     type="button"
                     onClick={onClose}
                     className="flex-1 rounded-lg border border-(--border) py-2.5 font-gaming text-(--text-muted) transition-colors hover:bg-(--bg-card-hover)"
                   >
-                    Anuluj
+                    {t('common:cancel')}
                   </button>
                   <button
                     type="submit"
@@ -118,7 +120,7 @@ export function NetWorthAdjustmentEditModal({
                       Number(amountStr.replace(',', '.')) === 0
                     }
                   >
-                    Zapisz
+                    {t('common:save')}
                   </button>
                 </div>
               </form>
@@ -128,10 +130,10 @@ export function NetWorthAdjustmentEditModal({
       onClose={() => setDeleteConfirmOpen(false)}
       zBackdrop={10030}
       zPanel={10031}
-      title="Usunąć wpis z historii?"
-      description="Cofniemy wpływ tej korekty na saldo powiązanego konta. Operacji nie da się cofnąć."
+      title={t('netWorth.deleteAdjustmentConfirmTitle')}
+      description={t('netWorth.deleteAdjustmentConfirmDescriptionApi')}
       variant="danger"
-      confirmLabel="Usuń"
+      confirmLabel={t('common:delete')}
       onConfirm={async () => {
         await onDelete()
         onClose()
