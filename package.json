@@ -7,7 +7,8 @@
     "dev:frontend": "cd frontend && npm run dev",
     "dev:backend": "cd backend && npm run dev",
     "kill:ports": "npx kill-port 3001 3002 5173 5174",
-    "check": "cd frontend && npm run lint && npm run build && cd ../backend && npm run build",
+    "check": "cd frontend && npm run lint && npm test && npm run build && cd ../backend && npm test && npm run build",
+    "test": "cd frontend && npm test && cd ../backend && npm test",
     "build": "cd frontend && npm run build",
     "db:migrate": "cd backend && npx prisma migrate dev",
     "db:studio": "cd backend && npx prisma studio"
