@@ -15,7 +15,7 @@ Osobisty panel do codziennych spraw: **finanse**, **produktywność** (to-do, ka
 | **Gość / portfolio** | Sklonuj repo, uruchom **tryb demo** (sam frontend, przykładowe dane). Bez PostgreSQL. |
 | **Ty (właściciel)** | Pełny stack lokalnie albo **prywatny** deploy z PostgreSQL, szyfrowaniem i własnym `.env`. |
 
-Repozytorium nadaje się na **publiczny GitHub** jako **showcase**. **Produkcyjna** instancja z prawdziwymi finansami = osobne sekrety, opcjonalnie prywatny hosting, checklista w [Bezpieczeństwo (PL)](docs/SECURITY.md).
+Repozytorium nadaje się na **publiczny GitHub** jako **showcase**. **Produkcyjna** instancja z prawdziwymi finansami = osobne sekrety, opcjonalnie prywatny hosting, checklista w [Bezpieczeństwo (PL)](docs/SECURITY.pl.md).
 
 **Nie commituj** plików `.env`, kluczy API ani `ENCRYPTION_KEY` — w git są tylko szablony `.env.example`.
 
@@ -50,7 +50,7 @@ Po `git pull` ze zmianami schematu uruchom **`npx prisma migrate dev`** (lokalni
 
 W kodzie m.in.: bcrypt, sesja w httpOnly cookies + refresh, Helmet, CORS, rate limit, opcjonalne szyfrowanie pól, walidacja wejścia, bezpieczne linki, nagłówki CSP (Vercel).
 
-**Szczegóły i checklista prod:** [PL](docs/SECURITY.md) · [EN](docs/SECURITY.en.md)
+**Szczegóły i checklista prod:** [PL](docs/SECURITY.pl.md) · [EN](docs/SECURITY.md)
 
 Przy lokalnych prawdziwych danych: **losowy `JWT_SECRET`** i rozważ `ENCRYPTION_ENABLED=true` — patrz `.env.example`.
 
@@ -61,7 +61,7 @@ Przy lokalnych prawdziwych danych: **losowy `JWT_SECRET`** i rozważ `ENCRYPTION
 | Temat | Linki |
 |-------|--------|
 | Uruchomienie (demo vs konto) | [PL](docs/URUCHOMIENIE.md) · [EN](docs/URUCHOMIENIE.en.md) |
-| Bezpieczeństwo i deploy | [PL](docs/SECURITY.md) · [EN](docs/SECURITY.en.md) |
+| Bezpieczeństwo i deploy | [PL](docs/SECURITY.pl.md) · [EN](docs/SECURITY.md) |
 
 ARCHITECTURE, OpenAPI i pełny przewodnik wdrożenia w chmurze **nie są** jeszcze w pełni utrzymywane w `docs/`.
 
@@ -174,7 +174,7 @@ Lint + build frontendu, build TypeScript backendu. CI robi podobnie przy push/PR
 | Baza | PostgreSQL |
 | Auth | JWT w httpOnly cookies, bcrypt |
 
-Opcjonalny hosting: frontend **Vercel**, backend **Railway** / **Render** — zmienne prod w [SECURITY](docs/SECURITY.md).
+Opcjonalny hosting: frontend **Vercel**, backend **Railway** / **Render** — zmienne prod w [SECURITY](docs/SECURITY.pl.md).
 
 ---
 

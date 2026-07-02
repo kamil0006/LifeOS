@@ -1,27 +1,27 @@
-[English](SECURITY.en.md) · **Polski**
+**English** · [Polski](https://github.com/kamil0006/LifeOS/blob/main/docs/SECURITY.pl.md)
 
 # LifeOS — Security
 
-Przewodnik bezpieczeństwa dla wersji **prywatnej (production)** i **publicznej (showcase/demo)**.
+Security guide for the **private (production)** and **public (showcase/demo)** versions.
 
-## Podział wersji
+## Version split
 
-| Aspekt | Showcase (GitHub) | Produkcja prywatna |
+| Aspect | Showcase (GitHub) | Private production |
 |--------|-------------------|---------------------|
-| Dane | Demo / seed | Prawdziwe dane użytkownika |
+| Data | Demo / seed | Real user data |
 | `ENCRYPTION_ENABLED` | `false` | **`true`** |
-| `REGISTRATION_ENABLED` | `true` (opcjonalnie) | **`false`** |
-| OpenAI | **`false`** | Tylko świadomy opt-in |
-| JWT / sesja | Silny secret w `.env` | Silny secret + httpOnly cookies |
+| `REGISTRATION_ENABLED` | `true` (optional) | **`false`** |
+| OpenAI | **`false`** | Opt-in only |
+| JWT / session | Strong secret in `.env` | Strong secret + httpOnly cookies |
 
-## Checklist wdrożenia produkcyjnego
+## Production deployment checklist
 
 ### Backend (`.env`)
 
 ```env
 NODE_ENV=production
-JWT_SECRET=<losowy, min. 32 znaki>
-FRONTEND_URL=https://twoja-domena.pl
+JWT_SECRET=<random, min. 32 characters>
+FRONTEND_URL=https://your-domain.com
 REGISTRATION_ENABLED=false
 ALLOW_DEV_RESET=false
 
@@ -32,73 +32,74 @@ AI_REPORT_ENABLED=false
 AI_USE_OPENAI=false
 ```
 
-### Po wdrożeniu
+### After deploy
 
-- [ ] `npx prisma migrate deploy` na produkcyjnej bazie
-- [ ] HTTPS na frontendzie i backendzie (wymagane dla `Secure` cookies)
-- [ ] `FRONTEND_URL` dokładnie zgadza się z domeną FE (CORS)
-- [ ] Backup bazy + **bezpieczne przechowywanie `ENCRYPTION_KEY`** (utrata klucza = utrata odszyfrowanych pól)
-- [ ] Rotacja `JWT_SECRET` wymusza ponowne logowanie wszystkich użytkowników
+- [ ] Run `npx prisma migrate deploy` on the production database
+- [ ] HTTPS on frontend and backend (required for `Secure` cookies)
+- [ ] `FRONTEND_URL` matches the FE domain exactly (CORS)
+- [ ] Database backups + **secure storage of `ENCRYPTION_KEY`** (losing the key means losing decrypted fields)
+- [ ] Rotating `JWT_SECRET` forces all users to log in again
 
-## Warstwy zabezpieczeń (zaimplementowane)
+## Security layers (implemented)
 
-### Autentykacja
+### Authentication
 
-- Hasła: bcrypt cost 12, min. 8 znaków, litera + cyfra
-- JWT w **httpOnly cookies** (`lifeos_session` + `lifeos_refresh`)
-- Access token: **1 h**; refresh: **7 dni** (zapamiętaj mnie) lub **24 h** (sesja)
-- `POST /api/auth/refresh` — automatyczne odświeżanie sesji (frontend)
-- Rejestracja i reset hasła gated flagami env
-- Rate limit logowania: 30 req / 15 min
+- Passwords: bcrypt cost 12, min. 8 characters, letter + digit
+- JWT in **httpOnly cookies** (`lifeos_session` + `lifeos_refresh`)
+- Access token: **1 h**; refresh: **7 days** (remember me) or **24 h** (session)
+- `POST /api/auth/refresh` — automatic session refresh (frontend)
+- Registration and password reset gated by env flags
+- Login rate limit: 30 req / 15 min
 
-### Transport i nagłówki
+### Transport and headers
 
 - Helmet (BE)
-- CORS z whitelistą (`FRONTEND_URL`)
+- CORS allowlist (`FRONTEND_URL`)
 - CSP, X-Frame-Options, Referrer-Policy (`frontend/vercel.json`)
-- Limit body JSON: 512 KB
+- JSON body limit: 512 KB
 
-### Dane wrażliwe
+### Sensitive data
 
-- AES-256-GCM (`ENCRYPTION_ENABLED=true`) dla:
-  - Notatki: treść, tytuł, źródło referencji
-  - Finanse (tekst): nazwy transakcji, źródła przychodów, nazwy kont, opisy korekt
-- Kwoty finansowe pozostają jako liczby (sortowanie w DB)
+- AES-256-GCM (`ENCRYPTION_ENABLED=true`) for:
+  - Notes: content, title, reference source
+  - Finance (text): transaction names, income sources, account names, adjustment descriptions
+- Financial amounts remain numeric (DB sorting/filtering)
 
 ### AI
 
-- Domyślnie wyłączone
-- Wymaga `AI_REPORT_ENABLED=true` **oraz** `AI_USE_OPENAI=true` **oraz** klucza API
-- Do OpenAI trafia tylko zagregowany, zminimalizowany payload (bez treści notatek ani pojedynczych transakcji)
+- Disabled by default
+- Requires `AI_REPORT_ENABLED=true` **and** `AI_USE_OPENAI=true` **and** an API key
+- Only aggregated, minimized payload is sent to OpenAI (no note content or individual transactions)
 
-### Walidacja wejścia
+### Input validation
 
-- Zod na wszystkich route'ach API
-- Limity długości pól tekstowych
-- Ownership powiązań: todo ↔ event ↔ note, learning session ↔ course/project/book
-- Sanityzacja URL (`http`/`https` only) w notatkach i nauce
+- Zod on all API routes
+- Text field length limits
+- Link ownership: todo ↔ event ↔ note, learning session ↔ course/project/book
+- URL sanitization (`http`/`https` only) in notes and learning
 
 ### Frontend
 
-- Bezpieczne linki zewnętrzne (`SafeExternalLink` / `safeHref`)
-- Reset hasła widoczny tylko w dev buildzie
-- Brak JWT w `localStorage`
+- Safe external links (`SafeExternalLink` / `safeHref`)
+- Password reset visible only in dev build
+- No JWT in `localStorage`
 
 ## CI
 
 Workflow `.github/workflows/security-ci.yml`:
 
-- `npm audit --audit-level=high` (backend + frontend)
-- Build TypeScript (BE + FE)
+- `npm audit --audit-level=high` (backend + frontend, non-blocking)
+- Backend and frontend unit tests (Vitest) — blocking
+- TypeScript build (BE + FE)
 
-## Zgłaszanie luk
+## Reporting vulnerabilities
 
-W wersji prywatnej — kontakt bezpośredni z maintainerem.  
-W wersji publicznej — issue na GitHubie **bez** załączania prawdziwych danych ani sekretów.
+Private deployment — contact the maintainer directly.
+Public repo — open a GitHub issue **without** real data or secrets.
 
-## Znane ograniczenia / roadmap
+## Known limitations / roadmap
 
-- Kwoty finansowe nie są szyfrowane (świadomy kompromis: zapytania SQL)
-- Brak rotacji refresh tokenów w bazie (JWT stateless)
-- Brak 2FA / WebAuthn
-- Demo mode używa localStorage — nie dotyczy kont z API
+- Financial amounts are not encrypted (deliberate trade-off: SQL queries)
+- No refresh token rotation in the database (stateless JWT)
+- No 2FA / WebAuthn
+- Demo mode uses localStorage — does not apply to API accounts

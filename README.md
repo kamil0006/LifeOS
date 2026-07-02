@@ -15,7 +15,7 @@ Personal dashboard for everyday life: **finances**, **productivity** (to-do, cal
 | **Visitors / portfolio** | Clone the repo, run **demo mode** (frontend only, sample data). No PostgreSQL required. |
 | **You (owner)** | Full stack locally or on a **private** deploy with PostgreSQL, encryption, and your own `.env`. |
 
-This repo is suitable for **public GitHub** as a **showcase**. A **private production** instance with real financial data should use separate secrets, optional private hosting, and the checklist in [Security (EN)](docs/SECURITY.en.md).
+This repo is suitable for **public GitHub** as a **showcase**. A **private production** instance with real financial data should use separate secrets, optional private hosting, and the checklist in [Security](docs/SECURITY.md).
 
 **Do not commit** `.env` files, API keys, or `ENCRYPTION_KEY` — only `.env.example` templates are in git.
 
@@ -50,7 +50,7 @@ Run **`npx prisma migrate dev`** (or `migrate deploy` in production) after pulli
 
 Implemented in code: bcrypt passwords, httpOnly session cookies + refresh, Helmet, CORS allowlist, rate limits, field encryption (optional), input validation, safe external links, CSP headers on Vercel.
 
-**Details & production checklist:** [Security (EN)](docs/SECURITY.en.md) · [Polski](docs/SECURITY.md)
+**Details & production checklist:** [Security (EN)](docs/SECURITY.md) · [Polski](docs/SECURITY.pl.md)
 
 For local development with real data, use a **random `JWT_SECRET`** and consider `ENCRYPTION_ENABLED=true` — see `.env.example`.
 
@@ -61,7 +61,7 @@ For local development with real data, use a **random `JWT_SECRET`** and consider
 | Topic | Links |
 |-------|--------|
 | Getting started (demo vs account) | [EN](docs/URUCHOMIENIE.en.md) · [PL](docs/URUCHOMIENIE.md) |
-| Security & deploy checklist | [EN](docs/SECURITY.en.md) · [PL](docs/SECURITY.md) |
+| Security & deploy checklist | [EN](docs/SECURITY.md) · [PL](docs/SECURITY.pl.md) |
 
 Architecture, OpenAPI, and step-by-step cloud deployment guides are **not** fully maintained in `docs/` yet.
 
@@ -174,7 +174,7 @@ Frontend lint + build, backend TypeScript build. CI runs a similar check on push
 | Database | PostgreSQL |
 | Auth | JWT in httpOnly cookies, bcrypt |
 
-Optional hosting: frontend **Vercel**, backend **Railway** / **Render** — see [Security](docs/SECURITY.en.md) for production env vars.
+Optional hosting: frontend **Vercel**, backend **Railway** / **Render** — see [Security](docs/SECURITY.md) for production env vars.
 
 ---
 
