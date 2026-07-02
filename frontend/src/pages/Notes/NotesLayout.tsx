@@ -40,7 +40,7 @@ export function NotesLayout() {
             }
           >
             <item.icon className="h-4 w-4 shrink-0" />
-            {t(item.labelKey)}
+            {t(`layout.${item.labelKey}`)}
           </NavLink>
         ))}
       </nav>

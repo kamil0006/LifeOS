@@ -64,9 +64,9 @@ backupRouter.get('/export', async (req, res) => {
     exportedAt: new Date().toISOString(),
     data: {
       expenseCategories,
-      expenses: expenses.map((e) => ({ ...e, name: decryptField(e.name) })),
-      scheduledExpenses: scheduledExpenses.map((e) => ({ ...e, name: decryptField(e.name) })),
-      income: income.map((i) => ({ ...i, source: decryptField(i.source) })),
+      expenses: expenses.map((e) => ({ ...e, name: decryptField(e.name), note: decryptFieldNullable(e.note) })),
+      scheduledExpenses: scheduledExpenses.map((e) => ({ ...e, name: decryptField(e.name), note: decryptFieldNullable(e.note) })),
+      income: income.map((i) => ({ ...i, source: decryptField(i.source), note: decryptFieldNullable(i.note) })),
       netWorthAccounts: netWorthAccounts.map((a) => ({ ...a, name: decryptField(a.name) })),
       netWorthAdjustments: netWorthAdjustments.map((a) => ({
         ...a,
@@ -152,17 +152,32 @@ backupRouter.post('/import', async (req, res) => {
         }
         if (data.expenses.length) {
           await tx.expense.createMany({
-            data: data.expenses.map((e) => ({ ...e, userId, name: encryptField(e.name) })) as Prisma.ExpenseCreateManyInput[],
+            data: data.expenses.map((e) => ({
+              ...e,
+              userId,
+              name: encryptField(e.name),
+              note: encryptFieldNullable(e.note ?? null),
+            })) as Prisma.ExpenseCreateManyInput[],
           })
         }
         if (data.scheduledExpenses.length) {
           await tx.scheduledExpense.createMany({
-            data: data.scheduledExpenses.map((e) => ({ ...e, userId, name: encryptField(e.name) })) as Prisma.ScheduledExpenseCreateManyInput[],
+            data: data.scheduledExpenses.map((e) => ({
+              ...e,
+              userId,
+              name: encryptField(e.name),
+              note: encryptFieldNullable(e.note ?? null),
+            })) as Prisma.ScheduledExpenseCreateManyInput[],
           })
         }
         if (data.income.length) {
           await tx.income.createMany({
-            data: data.income.map((i) => ({ ...i, userId, source: encryptField(i.source) })) as Prisma.IncomeCreateManyInput[],
+            data: data.income.map((i) => ({
+              ...i,
+              userId,
+              source: encryptField(i.source),
+              note: encryptFieldNullable(i.note ?? null),
+            })) as Prisma.IncomeCreateManyInput[],
           })
         }
         if (data.netWorthAccounts.length) {

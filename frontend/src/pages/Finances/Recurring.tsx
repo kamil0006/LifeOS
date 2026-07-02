@@ -4,8 +4,9 @@ import { useTranslation } from 'react-i18next'
 import { Card } from '../../components/Card'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { RecurringModal, type RecurringFormPayload } from '../../components/RecurringModal'
+import { TransactionNoteModal } from '../../components/TransactionNoteModal'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CalendarClock, Pause, Pencil, Play, Plus, Trash2 } from 'lucide-react'
+import { CalendarClock, Pause, Pencil, Play, Plus, StickyNote, Trash2 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useDemoData, DEMO_SCHEDULED_EXPENSES } from '../../context/DemoDataContext'
 import { useFinanceCategories } from '../../context/FinanceCategoriesContext'
@@ -44,6 +45,7 @@ export function Recurring() {
   const [recurringModalOpen, setRecurringModalOpen] = useState(false)
   const [editingRecurring, setEditingRecurring] = useState<ScheduledExpenseRow | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<ScheduledExpenseRow | null>(null)
+  const [noteTarget, setNoteTarget] = useState<ScheduledExpenseRow | null>(null)
   const [sortBy, setSortBy] = useState<RecurringSortBy>('payment')
 
   const closeRecurringModal = () => {
@@ -131,14 +133,21 @@ export function Recurring() {
       category?: string
       dayOfMonth?: number
       paymentMethod?: PaymentMethod
+      note?: string | null
     }
   ) => {
     if (!useApiFinance && demoData) demoData.updateScheduledExpense(id, updates)
     else {
-      const { originalAmount: _originalAmount, ...apiUpdates } = updates
+      // originalAmount is server-derived from amount+currency; not part of the update endpoint's contract
+      const { originalAmount, ...apiUpdates } = updates
+      void originalAmount
       await scheduledExpensesApi.update(id, apiUpdates)
       await invalidateFinanceQueries(queryClient, userId)
     }
+  }
+
+  const handleSaveNote = async (id: string, note: string) => {
+    await handleUpdate(id, { note: note.trim() ? note.trim() : null })
   }
 
   if (loading) {
@@ -264,6 +273,14 @@ export function Recurring() {
                     </div>
                     <button
                       type="button"
+                      onClick={() => setNoteTarget(s)}
+                      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-(--text-muted) hover:bg-(--accent-amber)/10 hover:text-(--accent-amber) transition-colors"
+                      title={t('transactions.viewNote')}
+                    >
+                      <StickyNote className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => {
                         setEditingRecurring(s)
                         setRecurringModalOpen(true)
@@ -306,11 +323,17 @@ export function Recurring() {
           onSubmit={handleAdd}
           onUpdate={async (id, data) => {
             const { convertedAmount, ...rest } = data
-            await handleUpdate(id, {
-              ...rest,
-              amount: convertedAmount ?? data.amount,
-              originalAmount: data.currency === 'PLN' ? null : data.amount,
-            })
+            if (!useApiFinance && demoData) {
+              // Tryb demo nie ma backendu liczącego kurs — zapisujemy już przeliczoną kwotę.
+              await handleUpdate(id, {
+                ...rest,
+                amount: convertedAmount ?? data.amount,
+                originalAmount: data.currency === 'PLN' ? null : data.amount,
+              })
+            } else {
+              // API samo przelicza z surowej kwoty w walucie `currency` — nie wysyłamy tu kwoty już przeliczonej.
+              await handleUpdate(id, rest)
+            }
           }}
           editing={
             editingRecurring
@@ -323,6 +346,7 @@ export function Recurring() {
                   category: editingRecurring.category,
                   dayOfMonth: editingRecurring.dayOfMonth,
                   paymentMethod: editingRecurring.paymentMethod,
+                  note: editingRecurring.note,
                 }
               : null
           }
@@ -341,6 +365,14 @@ export function Recurring() {
           variant="danger"
           confirmLabel={t('common:delete')}
           cancelLabel={t('common:cancel')}
+        />
+
+        <TransactionNoteModal
+          isOpen={noteTarget != null}
+          onClose={() => setNoteTarget(null)}
+          title={noteTarget?.name ?? ''}
+          initialNote={noteTarget?.note ?? ''}
+          onSave={(note) => (noteTarget ? handleSaveNote(noteTarget.id, note) : undefined)}
         />
       </Card>
     </div>

@@ -17,6 +17,7 @@ const createSchema = z.object({
   recurring: z.boolean().optional(),
   category: z.string().max(100).optional(),
   paymentMethod: paymentMethodSchema,
+  note: z.string().max(2000).nullable().optional(),
 })
 
 const updateSchema = z.object({
@@ -26,6 +27,7 @@ const updateSchema = z.object({
   recurring: z.boolean().optional(),
   category: z.string().max(100).optional(),
   paymentMethod: paymentMethodSchema.optional(),
+  note: z.string().max(2000).nullable().optional(),
 })
 
 export const incomeRouter = Router()
@@ -42,7 +44,7 @@ incomeRouter.get('/', async (req, res) => {
 incomeRouter.post('/', async (req, res) => {
   const userId = getAuthUser(req).userId
   const data = createSchema.parse(req.body)
-  const enc = encryptIncomeWrite({ source: data.source })
+  const enc = encryptIncomeWrite({ source: data.source, note: data.note })
   const income = await prisma.income.create({
     data: {
       userId,
@@ -52,6 +54,7 @@ incomeRouter.post('/', async (req, res) => {
       recurring: data.recurring ?? false,
       ...(data.category !== undefined ? { category: data.category } : {}),
       paymentMethod: data.paymentMethod,
+      note: enc.note ?? null,
     },
   })
   res.status(201).json(decryptIncomeRow(income))
@@ -63,7 +66,10 @@ incomeRouter.patch('/:id', async (req, res) => {
   const data = updateSchema.parse(req.body)
   const existing = await prisma.income.findFirst({ where: { id, userId } })
   if (!existing) return res.status(404).json({ error: 'Nie znaleziono' })
-  const enc = encryptIncomeWrite(data.source !== undefined ? { source: data.source } : {})
+  const enc = encryptIncomeWrite({
+    ...(data.source !== undefined ? { source: data.source } : {}),
+    ...(data.note !== undefined ? { note: data.note } : {}),
+  })
   const updated = await prisma.income.update({
     where: { id },
     data: {
@@ -73,6 +79,7 @@ incomeRouter.patch('/:id', async (req, res) => {
       ...(data.recurring !== undefined ? { recurring: data.recurring } : {}),
       ...(data.category !== undefined ? { category: data.category } : {}),
       ...(data.paymentMethod !== undefined ? { paymentMethod: data.paymentMethod } : {}),
+      ...(enc.note !== undefined ? { note: enc.note } : {}),
     },
   })
   res.json(decryptIncomeRow(updated))

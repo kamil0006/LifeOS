@@ -14,6 +14,7 @@ export type TransactionFormPayload = {
   category?: string
   date: string
   paymentMethod: PaymentMethod
+  note?: string | null
 }
 
 interface TransactionModalProps {
@@ -30,6 +31,7 @@ interface TransactionModalProps {
     category?: string
     date: string
     paymentMethod?: PaymentMethod | null
+    note?: string | null
   } | null
   submitLabel?: string
   title?: string
@@ -51,7 +53,7 @@ export function TransactionModal({
   const initialDataKey =
     initialData == null
       ? 'new'
-      : `${initialData.name}\t${initialData.amount}\t${initialData.date}\t${initialData.category ?? ''}\t${initialData.paymentMethod ?? ''}`
+      : `${initialData.name}\t${initialData.amount}\t${initialData.date}\t${initialData.category ?? ''}\t${initialData.paymentMethod ?? ''}\t${initialData.note ?? ''}`
 
   const formDefaults = (
     cats: typeof categories,
@@ -62,6 +64,7 @@ export function TransactionModal({
     category: string
     date: string
     paymentMethod: PaymentMethod | ''
+    note: string
     showAddCategory: boolean
     newCategoryName: string
     newCategoryColor: string
@@ -77,6 +80,7 @@ export function TransactionModal({
       category,
       date: init?.date ?? new Date().toISOString().split('T')[0],
       paymentMethod,
+      note: init?.note ?? '',
       showAddCategory: false,
       newCategoryName: '',
       newCategoryColor: DEFAULT_NEW_EXPENSE_CATEGORY_COLOR,
@@ -116,7 +120,7 @@ export function TransactionModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, type, initialDataKey])
 
-  const { name, amount, category, date, paymentMethod, showAddCategory, newCategoryName, newCategoryColor } = form
+  const { name, amount, category, date, paymentMethod, note, showAddCategory, newCategoryName, newCategoryColor } = form
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -136,6 +140,7 @@ export function TransactionModal({
           category: f.category || EXPENSE_CATEGORY_NONE,
           date: f.date,
           paymentMethod: f.paymentMethod,
+          note: f.note.trim() ? f.note.trim() : null,
         })
       )
       onClose()
@@ -218,6 +223,19 @@ export function TransactionModal({
           setNewCategoryColor={(v) => updateField('newCategoryColor', v)}
           onAddedCategory={(normalized) => updateField('category', normalized)}
         />
+        <div>
+          <label className="block text-base text-(--text-muted) font-gaming mb-1">
+            {t('transactionModal.noteLabel')}
+          </label>
+          <textarea
+            value={note}
+            onChange={(e) => updateField('note', e.target.value)}
+            rows={2}
+            maxLength={2000}
+            placeholder={t('transactionModal.notePlaceholder')}
+            className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base focus:border-(--accent-cyan) focus:outline-none resize-y"
+          />
+        </div>
         <div className="flex gap-2 pt-2">
           <button
             type="button"

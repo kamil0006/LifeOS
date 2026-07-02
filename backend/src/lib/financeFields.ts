@@ -1,45 +1,54 @@
 import type { Expense, Income, NetWorthAccount, NetWorthAdjustment, ScheduledExpense } from '@prisma/client'
 import { decryptField, decryptFieldNullable, encryptField, encryptFieldNullable } from './encryption.js'
 
-export function encryptExpenseWrite(data: { name?: string }) {
+export function encryptExpenseWrite(data: { name?: string; note?: string | null }) {
   return {
     ...(data.name !== undefined && { name: encryptField(data.name.trim()) }),
+    ...(data.note !== undefined && {
+      note: encryptFieldNullable(data.note?.trim() ? data.note.trim() : null),
+    }),
   }
 }
 
-export function decryptExpenseRow<T extends Pick<Expense, 'name'>>(row: T): T {
-  return { ...row, name: decryptField(row.name) }
+export function decryptExpenseRow<T extends Pick<Expense, 'name' | 'note'>>(row: T): T {
+  return { ...row, name: decryptField(row.name), note: decryptFieldNullable(row.note) }
 }
 
-export function decryptExpenseRows<T extends Pick<Expense, 'name'>>(rows: T[]): T[] {
+export function decryptExpenseRows<T extends Pick<Expense, 'name' | 'note'>>(rows: T[]): T[] {
   return rows.map(decryptExpenseRow)
 }
 
-export function encryptIncomeWrite(data: { source?: string }) {
+export function encryptIncomeWrite(data: { source?: string; note?: string | null }) {
   return {
     ...(data.source !== undefined && { source: encryptField(data.source.trim()) }),
+    ...(data.note !== undefined && {
+      note: encryptFieldNullable(data.note?.trim() ? data.note.trim() : null),
+    }),
   }
 }
 
-export function decryptIncomeRow<T extends Pick<Income, 'source'>>(row: T): T {
-  return { ...row, source: decryptField(row.source) }
+export function decryptIncomeRow<T extends Pick<Income, 'source' | 'note'>>(row: T): T {
+  return { ...row, source: decryptField(row.source), note: decryptFieldNullable(row.note) }
 }
 
-export function decryptIncomeRows<T extends Pick<Income, 'source'>>(rows: T[]): T[] {
+export function decryptIncomeRows<T extends Pick<Income, 'source' | 'note'>>(rows: T[]): T[] {
   return rows.map(decryptIncomeRow)
 }
 
-export function encryptScheduledExpenseWrite(data: { name?: string }) {
+export function encryptScheduledExpenseWrite(data: { name?: string; note?: string | null }) {
   return {
     ...(data.name !== undefined && { name: encryptField(data.name.trim()) }),
+    ...(data.note !== undefined && {
+      note: encryptFieldNullable(data.note?.trim() ? data.note.trim() : null),
+    }),
   }
 }
 
-export function decryptScheduledExpenseRow<T extends Pick<ScheduledExpense, 'name'>>(row: T): T {
-  return { ...row, name: decryptField(row.name) }
+export function decryptScheduledExpenseRow<T extends Pick<ScheduledExpense, 'name' | 'note'>>(row: T): T {
+  return { ...row, name: decryptField(row.name), note: decryptFieldNullable(row.note) }
 }
 
-export function decryptScheduledExpenseRows<T extends Pick<ScheduledExpense, 'name'>>(rows: T[]): T[] {
+export function decryptScheduledExpenseRows<T extends Pick<ScheduledExpense, 'name' | 'note'>>(rows: T[]): T[] {
   return rows.map(decryptScheduledExpenseRow)
 }
 

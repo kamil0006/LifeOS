@@ -2,10 +2,11 @@ import { useMemo, useRef, useState, useCallback, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { AnimatePresence } from 'framer-motion'
-import { Pencil, Plus, Receipt, Trash2 } from 'lucide-react'
+import { Pencil, Plus, Receipt, StickyNote, Trash2 } from 'lucide-react'
 import { Card } from '../../components/Card'
 import { EmptyState } from '../../components/EmptyState'
 import { TransactionModal } from '../../components/TransactionModal'
+import { TransactionNoteModal } from '../../components/TransactionNoteModal'
 import { MonthSelector } from '../../components/MonthSelector'
 import { useAuth } from '../../context/AuthContext'
 import { useDemoData, DEMO_EXPENSES, DEMO_INCOME, DEMO_SCHEDULED_EXPENSES } from '../../context/DemoDataContext'
@@ -60,6 +61,7 @@ export function Transactions() {
   const [amountMax, setAmountMax] = useState('')
   const [sortBy, setSortBy] = useState<SortBy>('date_desc')
   const [deleteConfirmTx, setDeleteConfirmTx] = useState<Transaction | null>(null)
+  const [noteTx, setNoteTx] = useState<Transaction | null>(null)
   const loading = useApiFinance ? financeLoading : false
   const pendingDeleteRef = useRef<Record<string, Transaction>>({})
 
@@ -153,6 +155,7 @@ export function Transactions() {
             category: data.category ?? EXPENSE_CATEGORY_NONE,
             dayOfMonth,
             paymentMethod: data.paymentMethod,
+            note: data.note ?? null,
           })
         } else {
           await scheduledExpensesApi.update(editingTx.scheduledId, {
@@ -162,6 +165,7 @@ export function Transactions() {
             category: data.category ?? EXPENSE_CATEGORY_NONE,
             dayOfMonth,
             paymentMethod: data.paymentMethod,
+            note: data.note ?? null,
           })
           await invalidateFinanceQueries(queryClient, userId)
         }
@@ -180,6 +184,28 @@ export function Transactions() {
     setEditingTx(tx)
     setFormType(tx.type)
     setShowForm(true)
+  }
+
+  const handleSaveNote = async (tx: Transaction, note: string) => {
+    const noteValue = note.trim() ? note.trim() : null
+    if (tx.type === 'expense' && tx.isScheduled && tx.scheduledId) {
+      if (!useApiFinance && demoData) demoData.updateScheduledExpense(tx.scheduledId, { note: noteValue })
+      else {
+        await scheduledExpensesApi.update(tx.scheduledId, { note: noteValue })
+        await invalidateFinanceQueries(queryClient, userId)
+      }
+    } else if (tx.type === 'income') {
+      if (!useApiFinance && demoData) demoData.updateIncome(tx.id, { note: noteValue })
+      else {
+        await incomeApi.update(tx.id, { note: noteValue })
+        await invalidateFinanceQueries(queryClient, userId)
+      }
+    } else if (!useApiFinance && demoData) {
+      demoData.updateExpense(tx.id, { note: noteValue })
+    } else {
+      await expensesApi.update(tx.id, { note: noteValue })
+      await invalidateFinanceQueries(queryClient, userId)
+    }
   }
 
   const handleDeleteRequest = (tx: Transaction) => {
@@ -455,6 +481,14 @@ export function Transactions() {
                     <td className="py-3 whitespace-nowrap">
                       <button
                         type="button"
+                        onClick={() => setNoteTx(tx)}
+                        className="p-2 text-(--text-muted) transition-colors hover:text-(--accent-cyan)"
+                        title={t('transactions.viewNote')}
+                      >
+                        <StickyNote className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => handleEdit(tx)}
                         className="p-2 text-(--text-muted) transition-colors hover:text-(--accent-cyan)"
                         title={tx.isScheduled ? t('transactions.editRecurring') : t('common:edit')}
@@ -528,6 +562,14 @@ export function Transactions() {
                   <div className="flex shrink-0 items-center gap-1">
                     <button
                       type="button"
+                      onClick={() => setNoteTx(tx)}
+                      className="rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-(--bg-dark) hover:text-(--accent-cyan)"
+                      aria-label={t('transactions.viewNote')}
+                    >
+                      <StickyNote className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => handleEdit(tx)}
                       className="rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-(--bg-dark) hover:text-(--accent-cyan)"
                       aria-label={tx.isScheduled ? t('transactions.editRecurring') : t('common:edit')}
@@ -595,6 +637,7 @@ export function Transactions() {
                 category: editingTx.category,
                 date: editingTx.date,
                 paymentMethod: editingTx.paymentMethod,
+                note: editingTx.note,
               }
             : null
         }
@@ -630,6 +673,14 @@ export function Transactions() {
       />
 
       <AnimatePresence>{toast}</AnimatePresence>
+
+      <TransactionNoteModal
+        isOpen={noteTx != null}
+        onClose={() => setNoteTx(null)}
+        title={noteTx ? capitalizeFirstPl(noteTx.name) : ''}
+        initialNote={noteTx?.note ?? ''}
+        onSave={(note) => (noteTx ? handleSaveNote(noteTx, note) : undefined)}
+      />
     </div>
   )
 }

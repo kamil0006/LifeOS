@@ -9,6 +9,7 @@ type ExpenseDto = {
   category: string
   date: string
   paymentMethod?: PaymentMethod | null
+  note?: string | null
 }
 
 type IncomeDto = {
@@ -19,15 +20,16 @@ type IncomeDto = {
   recurring: boolean
   category: string
   paymentMethod?: PaymentMethod | null
+  note?: string | null
 }
 
 export const expensesApi = {
   getAll: () => api<ExpenseDto[]>('/expenses'),
-  create: (data: { name: string; amount: number; category: string; date: string; paymentMethod: PaymentMethod }) =>
+  create: (data: { name: string; amount: number; category: string; date: string; paymentMethod: PaymentMethod; note?: string | null }) =>
     api<ExpenseDto>('/expenses', { method: 'POST', body: JSON.stringify(data) }),
   update: (
     id: string,
-    data: { name?: string; amount?: number; category?: string; date?: string; paymentMethod?: PaymentMethod },
+    data: { name?: string; amount?: number; category?: string; date?: string; paymentMethod?: PaymentMethod; note?: string | null },
   ) => api<ExpenseDto>(`/expenses/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id: string) => api(`/expenses/${id}`, { method: 'DELETE' }),
 }
@@ -60,6 +62,7 @@ type ScheduledExpenseDto = {
   paymentMethod?: PaymentMethod | null
   pausedUntil?: string | null
   reminderDaysBefore?: number | null
+  note?: string | null
   createdAt?: string
 }
 
@@ -72,6 +75,7 @@ export const scheduledExpensesApi = {
     category: string
     dayOfMonth: number
     paymentMethod: PaymentMethod
+    note?: string | null
   }) => api<ScheduledExpenseDto>('/scheduled-expenses', { method: 'POST', body: JSON.stringify(data) }),
   update: (
     id: string,
@@ -85,6 +89,7 @@ export const scheduledExpensesApi = {
       paymentMethod?: PaymentMethod
       pausedUntil?: string | null
       reminderDaysBefore?: number | null
+      note?: string | null
     }
   ) => api<ScheduledExpenseDto>(`/scheduled-expenses/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id: string) => api(`/scheduled-expenses/${id}`, { method: 'DELETE' }),
@@ -99,6 +104,7 @@ export const incomeApi = {
     recurring?: boolean
     category?: string
     paymentMethod: PaymentMethod
+    note?: string | null
   }) => api<IncomeDto>('/income', { method: 'POST', body: JSON.stringify(data) }),
   update: (
     id: string,
@@ -109,6 +115,7 @@ export const incomeApi = {
       recurring?: boolean
       category?: string
       paymentMethod?: PaymentMethod
+      note?: string | null
     },
   ) => api<IncomeDto>(`/income/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id: string) => api(`/income/${id}`, { method: 'DELETE' }),

@@ -16,6 +16,7 @@ const createSchema = z.object({
   category: z.string().max(100),
   date: z.union([z.string().datetime(), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]),
   paymentMethod: paymentMethodSchema,
+  note: z.string().max(2000).nullable().optional(),
 })
 
 const updateSchema = z.object({
@@ -24,6 +25,7 @@ const updateSchema = z.object({
   category: z.string().max(100).optional(),
   date: z.union([z.string().datetime(), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]).optional(),
   paymentMethod: paymentMethodSchema.optional(),
+  note: z.string().max(2000).nullable().optional(),
 })
 
 export const expensesRouter = Router()
@@ -40,7 +42,7 @@ expensesRouter.get('/', async (req, res) => {
 expensesRouter.post('/', async (req, res) => {
   const userId = getAuthUser(req).userId
   const data = createSchema.parse(req.body)
-  const enc = encryptExpenseWrite({ name: data.name })
+  const enc = encryptExpenseWrite({ name: data.name, note: data.note })
   const expense = await prisma.expense.create({
     data: {
       userId,
@@ -49,6 +51,7 @@ expensesRouter.post('/', async (req, res) => {
       category: data.category,
       date: new Date(data.date),
       paymentMethod: data.paymentMethod,
+      note: enc.note ?? null,
     },
   })
   res.status(201).json(decryptExpenseRow(expense))
@@ -60,7 +63,10 @@ expensesRouter.patch('/:id', async (req, res) => {
   const data = updateSchema.parse(req.body)
   const existing = await prisma.expense.findFirst({ where: { id, userId } })
   if (!existing) return res.status(404).json({ error: 'Nie znaleziono' })
-  const enc = encryptExpenseWrite(data.name !== undefined ? { name: data.name } : {})
+  const enc = encryptExpenseWrite({
+    ...(data.name !== undefined ? { name: data.name } : {}),
+    ...(data.note !== undefined ? { note: data.note } : {}),
+  })
   const updated = await prisma.expense.update({
     where: { id },
     data: {
@@ -69,6 +75,7 @@ expensesRouter.patch('/:id', async (req, res) => {
       ...(data.category !== undefined ? { category: data.category } : {}),
       ...(data.date !== undefined ? { date: new Date(data.date) } : {}),
       ...(data.paymentMethod !== undefined ? { paymentMethod: data.paymentMethod } : {}),
+      ...(enc.note !== undefined ? { note: enc.note } : {}),
     },
   })
   res.json(decryptExpenseRow(updated))

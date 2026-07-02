@@ -8,6 +8,7 @@ export type ExpenseRow = {
   category: string
   date: string
   paymentMethod?: PaymentMethod | null
+  note?: string | null
 }
 export type IncomeRow = {
   id: string
@@ -17,6 +18,7 @@ export type IncomeRow = {
   recurring: boolean
   category?: string
   paymentMethod?: PaymentMethod | null
+  note?: string | null
 }
 export type ScheduledExpenseRow = {
   id: string
@@ -32,5 +34,6 @@ export type ScheduledExpenseRow = {
   paymentMethod?: PaymentMethod | null
   pausedUntil?: string | null
   reminderDaysBefore?: number | null
+  note?: string | null
   createdAt?: string
 }

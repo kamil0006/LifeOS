@@ -19,6 +19,7 @@ export interface Transaction {
   scheduledId?: string
   currency?: string
   originalAmount?: number | null
+  note?: string | null
 }
 
 const FALLBACK_MONTH_NAMES = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru']
@@ -43,6 +44,7 @@ export interface UseTransactionsListParams {
     category: string
     date: string
     paymentMethod?: PaymentMethod | null
+    note?: string | null
   }[]
   effectiveScheduled: {
     id: string
@@ -56,6 +58,7 @@ export interface UseTransactionsListParams {
     paymentMethod?: PaymentMethod | null
     pausedUntil?: string | null
     reminderDaysBefore?: number | null
+    note?: string | null
     createdAt?: string
   }[]
   effectiveIncome: {
@@ -66,6 +69,7 @@ export interface UseTransactionsListParams {
     recurring: boolean
     category?: string
     paymentMethod?: PaymentMethod | null
+    note?: string | null
   }[]
   selectedMonth: number
   selectedYear: number
@@ -84,6 +88,7 @@ function buildTransactionsForDateRange(
     recurring: boolean
     category?: string
     paymentMethod?: PaymentMethod | null
+    note?: string | null
   }[],
   from: string,
   to: string
@@ -123,6 +128,7 @@ function buildTransactionsForDateRange(
       scheduledId: e.scheduledId,
       currency: e.currency,
       originalAmount: e.originalAmount,
+      note: raw?.note ?? e.note ?? null,
     }
   })
 
@@ -134,6 +140,7 @@ function buildTransactionsForDateRange(
     amount: i.amount,
     type: 'income' as const,
     paymentMethod: i.paymentMethod ?? null,
+    note: i.note,
   }))
 
   return [...excludeFutureScheduled(expenseTx), ...incomeTx].sort((a, b) => b.date.localeCompare(a.date))
@@ -226,6 +233,7 @@ export function useTransactionsList(params: UseTransactionsListParams) {
         scheduledId: e.scheduledId,
         currency: e.currency,
         originalAmount: e.originalAmount,
+        note: raw?.note ?? e.note ?? null,
       }
     })
 
@@ -237,6 +245,7 @@ export function useTransactionsList(params: UseTransactionsListParams) {
       amount: i.amount,
       type: 'income' as const,
       paymentMethod: i.paymentMethod ?? null,
+      note: i.note,
     }))
 
     return [...excludeFutureScheduled(expenseTx), ...incomeTx].sort((a, b) => b.date.localeCompare(a.date))

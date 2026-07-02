@@ -10,6 +10,7 @@ export interface DemoExpense {
   category: string
   date: string
   paymentMethod?: PaymentMethod
+  note?: string | null
 }
 
 export interface DemoIncome {
@@ -21,6 +22,7 @@ export interface DemoIncome {
   /** Jak Expense.category — wspólne kategorie finansów */
   category: string
   paymentMethod?: PaymentMethod
+  note?: string | null
 }
 
 export interface DemoScheduledExpense {
@@ -36,6 +38,7 @@ export interface DemoScheduledExpense {
   paymentMethod?: PaymentMethod
   pausedUntil?: string | null
   reminderDaysBefore?: number | null
+  note?: string | null
   /** Kiedy dodano stały wydatek — nie pokazujemy go w miesiącach sprzed tej daty. */
   createdAt?: string
 }

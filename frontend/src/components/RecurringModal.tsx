@@ -25,6 +25,7 @@ export type RecurringFormPayload = {
   category: string
   dayOfMonth: number
   paymentMethod: PaymentMethod
+  note?: string | null
 }
 
 export type RecurringModalEditing = {
@@ -37,6 +38,7 @@ export type RecurringModalEditing = {
   category: string
   dayOfMonth: number
   paymentMethod?: PaymentMethod | null
+  note?: string | null
 }
 
 interface Category {
@@ -76,6 +78,7 @@ export function RecurringModal({
       category: categories[0]?.name ?? EXPENSE_CATEGORY_NONE,
       dayOfMonthStr: '',
       paymentMethod: '' as PaymentMethod | '',
+      note: '',
       showAddCategory: false,
       newCategoryName: '',
       newCategoryColor: DEFAULT_NEW_EXPENSE_CATEGORY_COLOR,
@@ -111,6 +114,7 @@ export function RecurringModal({
         dayOfMonthStr: String(editing.dayOfMonth),
         paymentMethod:
           editing.paymentMethod && isPaymentMethod(editing.paymentMethod) ? editing.paymentMethod : '',
+        note: editing.note ?? '',
         showAddCategory: false,
         newCategoryName: '',
         newCategoryColor: DEFAULT_NEW_EXPENSE_CATEGORY_COLOR,
@@ -120,7 +124,7 @@ export function RecurringModal({
     }
   }, [isOpen, editing, buildInitialForm])
 
-  const { name, amount, currency, category, dayOfMonthStr, paymentMethod, showAddCategory, newCategoryName, newCategoryColor } = form
+  const { name, amount, currency, category, dayOfMonthStr, paymentMethod, note, showAddCategory, newCategoryName, newCategoryColor } = form
 
   const convertedPreview = useMemo(() => {
     if (currency === 'PLN') return null
@@ -147,6 +151,7 @@ export function RecurringModal({
       category: category || EXPENSE_CATEGORY_NONE,
       dayOfMonth: day,
       paymentMethod,
+      note: note.trim() ? note.trim() : null,
     }
     if (editing && onUpdate) {
       await onUpdate(editing.id, payload)
@@ -265,6 +270,19 @@ export function RecurringModal({
           onChange={(method) => updateField('paymentMethod', method)}
           id="recurring-payment"
         />
+        <div>
+          <label className="block text-base text-(--text-muted) font-gaming mb-1">
+            {t('transactionModal.noteLabel')}
+          </label>
+          <textarea
+            value={note}
+            onChange={(e) => updateField('note', e.target.value)}
+            rows={2}
+            maxLength={2000}
+            placeholder={t('transactionModal.notePlaceholder')}
+            className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base focus:border-(--accent-cyan) focus:outline-none resize-y"
+          />
+        </div>
         <div className="flex gap-2 pt-2">
           <button
             type="button"

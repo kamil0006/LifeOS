@@ -64,6 +64,7 @@
     "colPayment": "Payment",
     "colAmount": "Amount",
     "editRecurring": "Edit recurring cost",
+    "viewNote": "View / edit note",
     "emptyTitle": "No transactions",
     "emptyDescription": "No {{kind}} found for {{period}}.",
     "emptyKindCategory": "\"{{category}}\" category",
@@ -213,7 +214,12 @@
     "sourceLabel": "Source",
     "nameLabel": "Name",
     "dateLabel": "Date",
-    "amountLabel": "Amount (zł)"
+    "amountLabel": "Amount (zł)",
+    "noteLabel": "Note (optional)",
+    "notePlaceholder": "Add a note to this transaction…"
+  },
+  "transactionNoteModal": {
+    "title": "Note"
   },
   "recurringModal": {
     "newTitle": "New recurring cost",

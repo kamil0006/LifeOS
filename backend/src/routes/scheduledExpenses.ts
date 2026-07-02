@@ -20,6 +20,7 @@ const createSchema = z.object({
   category: z.string().max(100),
   dayOfMonth: z.number().min(1).max(31),
   paymentMethod: paymentMethodSchema,
+  note: z.string().max(2000).nullable().optional(),
 })
 
 const updateSchema = z.object({
@@ -32,6 +33,7 @@ const updateSchema = z.object({
   paymentMethod: paymentMethodSchema.optional(),
   pausedUntil: z.union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.null()]).optional(),
   reminderDaysBefore: z.number().int().min(0).max(31).nullable().optional(),
+  note: z.string().max(2000).nullable().optional(),
 })
 
 /** Przelicza kwotę wpisaną w danej walucie na parę (amount w PLN, originalAmount). */
@@ -88,7 +90,7 @@ scheduledExpensesRouter.get('/', async (req, res) => {
 scheduledExpensesRouter.post('/', async (req, res) => {
   const userId = getAuthUser(req).userId
   const data = createSchema.parse(req.body)
-  const enc = encryptScheduledExpenseWrite({ name: data.name })
+  const enc = encryptScheduledExpenseWrite({ name: data.name, note: data.note })
   const resolved = await resolveAmounts(data.amount, data.currency)
   const item = await prisma.scheduledExpense.create({
     data: {
@@ -100,6 +102,7 @@ scheduledExpensesRouter.post('/', async (req, res) => {
       category: data.category,
       dayOfMonth: data.dayOfMonth,
       paymentMethod: data.paymentMethod,
+      note: enc.note ?? null,
     },
   })
   res.status(201).json(decryptScheduledExpenseRow(item))
@@ -111,7 +114,10 @@ scheduledExpensesRouter.patch('/:id', async (req, res) => {
   const data = updateSchema.parse(req.body)
   const existing = await prisma.scheduledExpense.findFirst({ where: { id, userId } })
   if (!existing) return res.status(404).json({ error: 'Nie znaleziono' })
-  const enc = encryptScheduledExpenseWrite(data.name !== undefined ? { name: data.name } : {})
+  const enc = encryptScheduledExpenseWrite({
+    ...(data.name !== undefined ? { name: data.name } : {}),
+    ...(data.note !== undefined ? { note: data.note } : {}),
+  })
 
   let amountUpdate: { amount: number; currency: string; originalAmount: number | null } | null = null
   if (data.amount !== undefined || data.currency !== undefined) {
@@ -135,6 +141,7 @@ scheduledExpensesRouter.patch('/:id', async (req, res) => {
         ? { pausedUntil: data.pausedUntil ? new Date(data.pausedUntil) : null }
         : {}),
       ...(data.reminderDaysBefore !== undefined ? { reminderDaysBefore: data.reminderDaysBefore } : {}),
+      ...(enc.note !== undefined ? { note: enc.note } : {}),
     },
   })
   res.json(decryptScheduledExpenseRow(updated))

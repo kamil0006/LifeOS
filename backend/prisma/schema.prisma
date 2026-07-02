@@ -61,6 +61,8 @@ model Expense {
   date           DateTime
   /// card | cash — opcjonalne dla starych wpisów sprzed migracji
   paymentMethod  String?
+  /// Opcjonalna notatka do transakcji
+  note           String?
   createdAt      DateTime @default(now())
 
   @@index([userId])
@@ -82,6 +84,8 @@ model ScheduledExpense {
   paymentMethod String?
   pausedUntil DateTime? @db.Date
   reminderDaysBefore Int?
+  /// Opcjonalna notatka do stałego wydatku
+  note       String?
   createdAt  DateTime @default(now())
 
   @@index([userId])
@@ -131,6 +135,8 @@ model Income {
   category       String   @default("")
   /// card | cash — opcjonalne dla starych wpisów sprzed migracji
   paymentMethod  String?
+  /// Opcjonalna notatka do transakcji
+  note           String?
   createdAt      DateTime @default(now())
 
   @@index([userId])

@@ -7,6 +7,7 @@ export interface ExpenseLike {
   category: string
   date: string
   paymentMethod?: PaymentMethod | null
+  note?: string | null
 }
 
 export interface ScheduledExpenseLike {
@@ -20,6 +21,7 @@ export interface ScheduledExpenseLike {
   active: boolean
   paymentMethod?: PaymentMethod | null
   pausedUntil?: string | null
+  note?: string | null
   /** Kiedy dodano stały wydatek — nie pokazujemy go w miesiącach sprzed tej daty. */
   createdAt?: string | Date
 }
@@ -78,6 +80,7 @@ export function mergeExpensesWithScheduled<E extends ExpenseLike, S extends Sche
         category: s.category,
         date,
         paymentMethod: s.paymentMethod ?? null,
+        note: s.note ?? null,
         isScheduled: true,
         scheduledId: s.id,
       })

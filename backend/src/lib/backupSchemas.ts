@@ -22,6 +22,7 @@ export const expenseBackupSchema = z.object({
   category: z.string().max(100),
   date: dateVal,
   paymentMethod,
+  note: z.string().max(2000).nullable().optional(),
   createdAt: dateVal,
 })
 
@@ -37,6 +38,7 @@ export const scheduledExpenseBackupSchema = z.object({
   paymentMethod,
   pausedUntil: nullableDate.optional(),
   reminderDaysBefore: z.number().int().nullable().optional(),
+  note: z.string().max(2000).nullable().optional(),
   createdAt: dateVal,
 })
 
@@ -48,6 +50,7 @@ export const incomeBackupSchema = z.object({
   recurring: z.boolean(),
   category: z.string().max(100),
   paymentMethod,
+  note: z.string().max(2000).nullable().optional(),
   createdAt: dateVal,
 })
 

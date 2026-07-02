@@ -66,6 +66,7 @@
     "colPayment": "Płatność",
     "colAmount": "Kwota",
     "editRecurring": "Edytuj stały koszt",
+    "viewNote": "Zobacz / edytuj notatkę",
     "emptyTitle": "Brak transakcji",
     "emptyDescription": "Nie znaleziono {{kind}} w okresie {{period}}.",
     "emptyKindCategory": "kategorii „{{category}}”",
@@ -215,7 +216,12 @@
     "sourceLabel": "Źródło",
     "nameLabel": "Nazwa",
     "dateLabel": "Data",
-    "amountLabel": "Kwota (zł)"
+    "amountLabel": "Kwota (zł)",
+    "noteLabel": "Notatka (opcjonalnie)",
+    "notePlaceholder": "Dodaj notatkę do tej transakcji…"
+  },
+  "transactionNoteModal": {
+    "title": "Notatka"
   },
   "recurringModal": {
     "newTitle": "Nowy stały koszt",

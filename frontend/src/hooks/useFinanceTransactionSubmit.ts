@@ -13,6 +13,7 @@ export type TransactionFormData = {
   category?: string
   date: string
   paymentMethod: PaymentMethod
+  note?: string | null
 }
 export type TransactionUpdateData = TransactionFormData & { recurring?: boolean }
 
@@ -40,6 +41,7 @@ export function useFinanceTransactionSubmit() {
               recurring: false,
               category,
               paymentMethod: data.paymentMethod,
+              note: data.note ?? null,
             })
           } else {
             console.warn('DemoDataProvider brak – przychód nie został zapisany')
@@ -51,6 +53,7 @@ export function useFinanceTransactionSubmit() {
             date,
             category,
             paymentMethod: data.paymentMethod,
+            note: data.note ?? null,
           })
           await invalidateFinanceQueries(queryClient, userId)
         }
@@ -63,6 +66,7 @@ export function useFinanceTransactionSubmit() {
               category: data.category ?? EXPENSE_CATEGORY_NONE,
               date,
               paymentMethod: data.paymentMethod,
+              note: data.note ?? null,
             })
           } else {
             console.warn('DemoDataProvider brak – wydatek nie został zapisany')
@@ -74,6 +78,7 @@ export function useFinanceTransactionSubmit() {
             category: data.category ?? EXPENSE_CATEGORY_NONE,
             date,
             paymentMethod: data.paymentMethod,
+            note: data.note ?? null,
           })
           await invalidateFinanceQueries(queryClient, userId)
         }
@@ -94,6 +99,7 @@ export function useFinanceTransactionSubmit() {
             recurring: data.recurring ?? false,
             category: data.category ?? EXPENSE_CATEGORY_NONE,
             paymentMethod: data.paymentMethod,
+            note: data.note ?? null,
           })
         } else {
           await incomeApi.update(id, {
@@ -103,6 +109,7 @@ export function useFinanceTransactionSubmit() {
             recurring: data.recurring,
             category: data.category ?? EXPENSE_CATEGORY_NONE,
             paymentMethod: data.paymentMethod,
+            note: data.note ?? null,
           })
           await invalidateFinanceQueries(queryClient, userId)
         }
@@ -113,6 +120,7 @@ export function useFinanceTransactionSubmit() {
           category: data.category ?? EXPENSE_CATEGORY_NONE,
           date,
           paymentMethod: data.paymentMethod,
+          note: data.note ?? null,
         })
       } else {
         await expensesApi.update(id, {
@@ -121,6 +129,7 @@ export function useFinanceTransactionSubmit() {
           category: data.category ?? EXPENSE_CATEGORY_NONE,
           date,
           paymentMethod: data.paymentMethod,
+          note: data.note ?? null,
         })
         await invalidateFinanceQueries(queryClient, userId)
       }
