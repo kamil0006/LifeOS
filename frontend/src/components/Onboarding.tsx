@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -36,20 +36,28 @@ export function Onboarding() {
   const [step, setStep] = useState(0)
 
   const stepsText = t('steps', { returnObjects: true }) as { title: string; desc: string }[]
-  const STEPS = STEP_ICONS_AND_PATHS.map(({ icon, path }, i) => ({
-    icon,
-    path,
-    title: stepsText[i].title,
-    desc: stepsText[i].desc,
-  }))
+  const STEPS = useMemo(
+    () =>
+      STEP_ICONS_AND_PATHS.map(({ icon, path }, i) => ({
+        icon,
+        path,
+        title: stepsText[i].title,
+        desc: stepsText[i].desc,
+      })),
+    [stepsText]
+  )
 
   useEffect(() => {
     if (isOpen) setStep(0)
   }, [isOpen])
 
   useEffect(() => {
-    if (isOpen && STEPS[step]?.path) {
-      navigate(STEPS[step].path)
+    // Navigate off STEP_ICONS_AND_PATHS (a stable module-level constant), not the
+    // translated STEPS — t()'s returned array isn't guaranteed referentially
+    // stable across renders, and depending on it here caused a navigate/render loop.
+    const path = STEP_ICONS_AND_PATHS[step]?.path
+    if (isOpen && path) {
+      navigate(path)
     }
   }, [isOpen, step, navigate])
 

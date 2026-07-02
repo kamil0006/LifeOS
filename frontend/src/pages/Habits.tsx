@@ -1873,12 +1873,13 @@ function HabitGridMobileStrip({
 }: HabitGridMobileStripProps) {
   const { t } = useTranslation('habits')
   const scrollRef = useRef<HTMLDivElement>(null)
+  const lastDate = dates[dates.length - 1]
 
   useLayoutEffect(() => {
     const el = scrollRef.current
     if (!el) return
     el.scrollLeft = el.scrollWidth - el.clientWidth
-  }, [habit.id, dates.length, dates[dates.length - 1]])
+  }, [habit.id, dates.length, lastDate])
 
   return (
     <div className="pt-0.5 sm:hidden">

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { X } from 'lucide-react'
 import { ModalShell } from './ModalShell'
@@ -38,9 +38,16 @@ function capitalizeFirstLetter(value: string): string {
 export function NetWorthAccountCreateModal({ isOpen, onClose, kind, onSubmit }: NetWorthAccountCreateModalProps) {
   const { t } = useTranslation('finances')
   const isMobile = useIsMobile()
-  const lastKindRef = useRef<'asset' | 'liability'>('asset')
-  if (kind != null) lastKindRef.current = kind
-  const resolvedKind = kind ?? lastKindRef.current
+  // Keep showing the last non-null kind while the modal plays its close animation
+  // (kind briefly becomes null before isOpen does). Derived during render per
+  // https://react.dev/reference/react/useState#storing-information-from-previous-renders
+  // rather than a ref, since mutating a ref during render isn't safe under React 19.
+  const [prevKind, setPrevKind] = useState(kind)
+  const [resolvedKind, setResolvedKind] = useState<'asset' | 'liability'>(kind ?? 'asset')
+  if (kind !== prevKind) {
+    setPrevKind(kind)
+    if (kind != null) setResolvedKind(kind)
+  }
 
   const [name, setName] = useState('')
   const [balanceStr, setBalanceStr] = useState('')

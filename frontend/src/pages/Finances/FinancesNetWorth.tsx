@@ -43,6 +43,11 @@ const NW_HISTORY_COLLAPSED_KEY = 'lifeos_nw_history_collapsed'
 
 const DEMO_DETAIL_PLACEHOLDER = '—'
 
+// Stable reference so useMemo hooks keyed on `apiAccounts` don't recompute every
+// render while the query is still loading (netWorthAccountsQuery.data ?? [] would
+// otherwise allocate a new empty array on each render).
+const EMPTY_NET_WORTH_ACCOUNTS: NetWorthAccountDto[] = []
+
 type DemoLiability = { id: string; name: string; balance: number; iconKey?: string; accentKey?: string }
 
 type DemoAdjUndo =
@@ -364,7 +369,7 @@ export function FinancesNetWorth() {
   const effectiveIncome = useApiFinance ? qIncome : (demoData?.income ?? DEMO_INCOME)
   const netWorthPositions = demoData?.netWorth ?? DEMO_NET_WORTH
 
-  const apiAccounts = netWorthAccountsQuery.data ?? []
+  const apiAccounts = netWorthAccountsQuery.data ?? EMPTY_NET_WORTH_ACCOUNTS
   const assetAccounts = useMemo(() => apiAccounts.filter((a) => a.kind === 'asset'), [apiAccounts])
   const liabilityAccounts = useMemo(() => apiAccounts.filter((a) => a.kind === 'liability'), [apiAccounts])
 

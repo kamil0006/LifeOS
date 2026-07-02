@@ -49,18 +49,22 @@ export function NetWorthCorrectionModal({
   const [iconKey, setIconKey] = useState('')
   const [accentKey, setAccentKey] = useState(DEFAULT_NW_ASSET_ACCENT_KEY)
 
+  const accountId = account?.id
+  const accountKind = account?.kind
+  const accountIconKey = account?.iconKey
+  const accountAccentKey = account?.accentKey
+
   useEffect(() => {
-    if (isOpen && account != null) {
-      setAmountStr('')
-      setDescription('')
-      setIconKey(account.iconKey ?? getNetWorthAccountIconKey(account.kind))
-      setAccentKey(
-        account.kind === 'asset'
-          ? normalizeNwAssetAccentKey(account.accentKey)
-          : DEFAULT_NW_ASSET_ACCENT_KEY
-      )
-    }
-  }, [isOpen, account?.id, account?.kind, account?.iconKey, account?.accentKey])
+    if (!isOpen || accountId == null || accountKind == null) return
+    setAmountStr('')
+    setDescription('')
+    setIconKey(accountIconKey ?? getNetWorthAccountIconKey(accountKind))
+    setAccentKey(
+      accountKind === 'asset'
+        ? normalizeNwAssetAccentKey(accountAccentKey)
+        : DEFAULT_NW_ASSET_ACCENT_KEY
+    )
+  }, [isOpen, accountId, accountKind, accountIconKey, accountAccentKey])
 
   const parsedAmount = amountStr.trim() === '' ? 0 : Number(amountStr.replace(',', '.'))
   const amountInvalid = amountStr.trim() !== '' && Number.isNaN(parsedAmount)
