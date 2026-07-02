@@ -88,7 +88,7 @@ AI_USE_OPENAI=false
 
 Workflow `.github/workflows/security-ci.yml`:
 
-- `npm audit --audit-level=high` (backend + frontend, non-blocking)
+- `npm audit --audit-level=high` (root + backend + frontend) — blocking
 - Backend and frontend unit tests (Vitest) — blocking
 - TypeScript build (BE + FE)
 

@@ -37,15 +37,16 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: npm audit (root)
+        run: npm audit --audit-level=high
+
       - name: npm audit (backend)
         working-directory: backend
         run: npm audit --audit-level=high
-        continue-on-error: true
 
       - name: npm audit (frontend)
         working-directory: frontend
         run: npm audit --audit-level=high
-        continue-on-error: true
 
       - name: Test backend
         working-directory: backend

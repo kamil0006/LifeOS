@@ -11,10 +11,13 @@
     "test": "cd frontend && npm test && cd ../backend && npm test",
     "build": "cd frontend && npm run build",
     "db:migrate": "cd backend && npx prisma migrate dev",
-    "db:studio": "cd backend && npx prisma studio"
+    "db:studio": "cd backend && npx prisma studio",
+    "prepare": "husky"
   },
   "devDependencies": {
-    "concurrently": "^9.1.0",
-    "kill-port": "^2.0.1"
+    "concurrently": "^9.2.3",
+    "husky": "^9.1.7",
+    "kill-port": "^2.0.1",
+    "lint-staged": "^17.0.8"
   }
 }
