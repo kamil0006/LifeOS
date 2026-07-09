@@ -55,7 +55,9 @@ export function Recurring() {
   const { scheduledExpenses: qScheduled, isLoading: financeLoading } = useFinanceListsQuery()
   const loading = useApiFinance ? financeLoading : false
 
-  const allScheduled = useApiFinance ? qScheduled : (demoData?.scheduledExpenses ?? DEMO_SCHEDULED_EXPENSES)
+  const allScheduledRaw = useApiFinance ? qScheduled : (demoData?.scheduledExpenses ?? DEMO_SCHEDULED_EXPENSES)
+  // Zakończone (soft delete) nie pojawiają się na liście zarządzania — żyją tylko w historii transakcji
+  const allScheduled = useMemo(() => allScheduledRaw.filter((s) => !s.endedAt), [allScheduledRaw])
   const total = allScheduled.reduce((s, e) => s + e.amount, 0)
   const annualTotal = total * 12
 

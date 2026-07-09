@@ -402,7 +402,7 @@ export function Analytics() {
         return month === chartMonth && year === chartYear
       })
       .reduce((s, i) => s + i.amount, 0)
-    const fixedCosts = effectiveScheduled.filter((s) => s.active).reduce((s, item) => s + item.amount, 0)
+    const fixedCosts = effectiveScheduled.filter((s) => s.active && !s.endedAt).reduce((s, item) => s + item.amount, 0)
     const fixedShare = totalIncome > 0 ? (fixedCosts / totalIncome) * 100 : 0
 
     let foodLine: string

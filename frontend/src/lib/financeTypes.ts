@@ -35,5 +35,7 @@ export type ScheduledExpenseRow = {
   pausedUntil?: string | null
   reminderDaysBefore?: number | null
   note?: string | null
+  /** Data zakończenia (soft delete) — płatności po tej dacie nie są generowane. */
+  endedAt?: string | null
   createdAt?: string
 }

@@ -76,7 +76,7 @@
     "editExpense": "Edytuj wydatek",
     "deleteConfirmTitle": "Usunąć transakcję?",
     "deleteIncomeDescription": "Przychód zostanie trwale usunięty. Tej operacji nie można cofnąć.",
-    "deleteRecurringDescription": "To usunie tylko tę płatność stałego kosztu w tym miesiącu. Sam stały koszt pozostanie aktywny.",
+    "deleteRecurringDescription": "Stały koszt zostanie zakończony — przeszłe płatności pozostaną w historii, a przyszłe nie będą już naliczane.",
     "deleteExpenseDescription": "Wydatek zostanie trwale usunięty. Tej operacji nie można cofnąć."
   },
   "recurring": {
@@ -101,7 +101,7 @@
     "reminderDaysSuffix": "dni",
     "addRecurring": "Dodaj subskrypcję / stały koszt",
     "deleteConfirmTitle": "Usunąć?",
-    "deleteConfirmDescription": "Stały koszt zostanie usunięty z listy. Tej operacji nie można cofnąć."
+    "deleteConfirmDescription": "Stały koszt zostanie zakończony i zniknie z listy. Dotychczasowe płatności pozostaną w historii transakcji, przyszłe nie będą już naliczane."
   },
   "netWorth": {
     "periodLabel": "Okres:",

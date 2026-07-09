@@ -63,6 +63,7 @@ type ScheduledExpenseDto = {
   pausedUntil?: string | null
   reminderDaysBefore?: number | null
   note?: string | null
+  endedAt?: string | null
   createdAt?: string
 }
 
