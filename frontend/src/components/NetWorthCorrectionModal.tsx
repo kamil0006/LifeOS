@@ -109,9 +109,9 @@ export function NetWorthCorrectionModal({
       backdropKey="nw-cor-backdrop"
       panelKey="nw-cor-panel"
     >
-              <div className="absolute top-0 left-0 h-px w-full bg-linear-to-r from-transparent via-(--accent-cyan)/40 to-transparent" />
+              <div className="absolute top-0 left-0 h-px w-full bg-linear-to-r from-transparent via-(--accent)/40 to-transparent" />
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-(--text-primary) font-gaming">{t('netWorthCorrectionModal.title')}</h3>
+                <h3 className="text-lg font-bold text-(--text-primary) font-display">{t('netWorthCorrectionModal.title')}</h3>
                 <button
                   type="button"
                   onClick={onClose}
@@ -131,7 +131,7 @@ export function NetWorthCorrectionModal({
 
               <form onSubmit={(e) => void handleSubmit(e)} className="space-y-5">
                 <div>
-                  <span className="mb-2 block text-base text-(--text-muted) font-gaming">{t('netWorthAccountCreateModal.iconLabel')}</span>
+                  <span className="mb-2 block text-base text-(--text-muted) font-display">{t('netWorthAccountCreateModal.iconLabel')}</span>
                   <div className="flex flex-wrap gap-2">
                     {iconOptions.map(({ key: ik, label }) => {
                       const Icon = getNetWorthAccountIcon(ik)
@@ -147,9 +147,9 @@ export function NetWorthCorrectionModal({
                           className={`flex h-11 w-11 items-center justify-center rounded-lg border transition-colors ${
                             selected
                               ? account.kind === 'asset'
-                                ? 'border-(--accent-cyan)/55 bg-(--accent-cyan)/20 text-(--accent-cyan)'
+                                ? 'border-(--accent)/55 bg-(--accent)/20 text-(--accent)'
                                 : 'border-[#e74c3c]/50 bg-[#e74c3c]/15 text-[#e74c3c]'
-                              : 'border-(--border) bg-(--bg-dark) text-(--text-muted) hover:border-(--accent-cyan)/35 hover:text-(--text-primary)'
+                              : 'border-(--border) bg-(--bg-dark) text-(--text-muted) hover:border-(--accent)/35 hover:text-(--text-primary)'
                           }`}
                         >
                           <Icon className="h-5 w-5" aria-hidden />
@@ -161,7 +161,7 @@ export function NetWorthCorrectionModal({
 
                 {account.kind === 'asset' ? (
                   <div>
-                    <span className="mb-2 block text-base text-(--text-muted) font-gaming">{t('netWorthAccountCreateModal.colorLabel')}</span>
+                    <span className="mb-2 block text-base text-(--text-muted) font-display">{t('netWorthAccountCreateModal.colorLabel')}</span>
                     <div className="flex flex-wrap gap-3">
                       {NW_ASSET_ACCENT_OPTIONS.map(({ key: ck, label }) => {
                         const { swatch } = getNwAssetAccentClasses(ck)
@@ -192,26 +192,26 @@ export function NetWorthCorrectionModal({
                       ? t('netWorthCorrectionModal.assetAmountHint')
                       : t('netWorthCorrectionModal.liabilityAmountHint')}
                   </p>
-                  <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('netWorthCorrectionModal.correctionAmountLabel')}</label>
+                  <label className="block text-base text-(--text-muted) font-display mb-1">{t('netWorthCorrectionModal.correctionAmountLabel')}</label>
                   <input
                     type="text"
                     inputMode="decimal"
                     value={amountStr}
                     onChange={(e) => setAmountStr(e.target.value.replace(/[^0-9,.-]/g, ''))}
                     placeholder={t('netWorthCorrectionModal.amountPlaceholder')}
-                    className="w-full px-3 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-mono focus:border-(--accent-cyan) focus:outline-none"
+                    className="w-full px-3 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-mono focus:border-(--accent) focus:outline-none"
                   />
                 </div>
                 {preview != null && !Number.isNaN(preview) && (
                   <div className="rounded-lg border border-(--border) bg-(--bg-dark)/50 px-3 py-2">
-                    <p className="text-base text-(--text-muted) font-gaming">{t('netWorthCorrectionModal.afterCorrectionLabel')}</p>
+                    <p className="text-base text-(--text-muted) font-display">{t('netWorthCorrectionModal.afterCorrectionLabel')}</p>
                     <p className="text-base font-mono text-(--text-primary) mt-0.5">
                       {t('netWorth.balanceArrow', { from: currentBalance.toLocaleString('pl-PL'), to: preview.toLocaleString('pl-PL') })}
                     </p>
                   </div>
                 )}
                 <div>
-                  <label className="block text-base text-(--text-muted) font-gaming mb-1">
+                  <label className="block text-base text-(--text-muted) font-display mb-1">
                     {hasAmount ? t('netWorthCorrectionModal.descriptionLabelWithAmount') : t('netWorthCorrectionModal.descriptionLabelOptional')}
                   </label>
                   <textarea
@@ -220,7 +220,7 @@ export function NetWorthCorrectionModal({
                     rows={3}
                     maxLength={200}
                     placeholder={t('netWorthCorrectionModal.descriptionPlaceholder')}
-                    className="w-full px-3 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base focus:border-(--accent-cyan) focus:outline-none resize-y min-h-[88px]"
+                    className="w-full px-3 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base focus:border-(--accent) focus:outline-none resize-y min-h-[88px]"
                   />
                   <p className="text-base text-(--text-muted) mt-1">{description.length}/200</p>
                 </div>
@@ -228,13 +228,13 @@ export function NetWorthCorrectionModal({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="flex-1 py-2.5 rounded-lg border border-(--border) text-(--text-muted) font-gaming hover:bg-(--bg-card-hover) transition-colors"
+                    className="flex-1 py-2.5 rounded-lg border border-(--border) text-(--text-muted) font-display hover:bg-(--bg-card-hover) transition-colors"
                   >
                     {t('common:cancel')}
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 py-2.5 rounded-lg bg-(--accent-cyan)/20 text-(--accent-cyan) border border-(--accent-cyan)/45 font-gaming hover:bg-(--accent-cyan)/30 transition-colors disabled:opacity-50"
+                    className="flex-1 py-2.5 rounded-lg bg-(--accent)/20 text-(--accent) border border-(--accent)/45 font-display hover:bg-(--accent)/30 transition-colors disabled:opacity-50"
                     disabled={!canSubmit}
                   >
                     {t('transactions.saveChanges')}

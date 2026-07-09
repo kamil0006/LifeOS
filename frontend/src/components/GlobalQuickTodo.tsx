@@ -42,7 +42,7 @@ export function GlobalQuickTodo() {
       panelKey="todo-quick-panel"
     >
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-lg font-bold text-(--text-primary) font-gaming">{t('quickModal.title')}</h3>
+        <h3 className="text-lg font-bold text-(--text-primary) font-display">{t('quickModal.title')}</h3>
         <button
           type="button"
           onClick={closeQuickTodo}
@@ -54,28 +54,28 @@ export function GlobalQuickTodo() {
       </div>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="mb-1 block text-base text-(--text-muted) font-gaming">{t('quickModal.textLabel')}</label>
+          <label className="mb-1 block text-base text-(--text-muted) font-display">{t('quickModal.textLabel')}</label>
           <input
             type="text"
             value={text}
             onChange={(e) => setText(e.target.value)}
             autoFocus
             placeholder={t('quickModal.placeholder')}
-            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-4 py-2.5 text-base font-gaming text-(--text-primary) focus:border-(--accent-cyan) focus:outline-none"
+            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-4 py-2.5 text-base font-display text-(--text-primary) focus:border-(--accent) focus:outline-none"
           />
         </div>
         <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:justify-end">
           <button
             type="button"
             onClick={closeQuickTodo}
-            className="w-full rounded-lg border border-(--border) px-4 py-2.5 font-gaming text-(--text-muted) hover:text-(--text-primary) sm:w-auto"
+            className="w-full rounded-lg border border-(--border) px-4 py-2.5 font-display text-(--text-muted) hover:text-(--text-primary) sm:w-auto"
           >
             {t('quickModal.cancel')}
           </button>
           <button
             type="submit"
             disabled={!text.trim()}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-(--accent-cyan) px-4 py-2.5 font-gaming font-bold text-(--bg-dark) hover:opacity-90 disabled:opacity-50 sm:w-auto"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-(--accent) px-4 py-2.5 font-display font-bold text-(--bg-dark) hover:opacity-90 disabled:opacity-50 sm:w-auto"
           >
             <Plus className="h-4 w-4" />
             {t('quickModal.add')}

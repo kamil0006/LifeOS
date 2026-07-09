@@ -288,7 +288,7 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
       panelKey="note-panel"
     >
               <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
-                <h3 className="text-lg font-bold text-(--text-primary) font-gaming">
+                <h3 className="text-lg font-bold text-(--text-primary) font-display">
                   {isEdit ? t('noteModal.editTitle') : `${t('noteModal.addTitlePrefix')} ${TYPE_LABELS[type]}`}
                 </h3>
                 <button
@@ -303,29 +303,29 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 {error && (
-                  <p className="text-sm text-[#e74c3c] font-gaming px-3 py-2 rounded-lg bg-[#e74c3c]/10 border border-[#e74c3c]/30">
+                  <p className="text-sm text-[#e74c3c] font-display px-3 py-2 rounded-lg bg-[#e74c3c]/10 border border-[#e74c3c]/30">
                     {error}
                   </p>
                 )}
 
                 <div>
-                  <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('noteModal.titleLabel')}</label>
+                  <label className="block text-base text-(--text-muted) font-display mb-1">{t('noteModal.titleLabel')}</label>
                   <input
                     type="text"
                     value={titleInput}
                     onChange={(e) => updateField('titleInput', e.target.value)}
                     placeholder={t('noteModal.titlePlaceholder')}
-                    className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
+                    className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-display focus:border-(--accent) focus:outline-none"
                   />
                 </div>
 
                 {type === 'idea' && (
                   <div>
-                    <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('noteModal.ideaStatusLabel')}</label>
+                    <label className="block text-base text-(--text-muted) font-display mb-1">{t('noteModal.ideaStatusLabel')}</label>
                     <select
                       value={ideaStatus}
                       onChange={(e) => updateField('ideaStatus', e.target.value as IdeaStatus)}
-                      className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
+                      className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-display focus:border-(--accent) focus:outline-none"
                     >
                       {IDEA_STATUS_WORKFLOW_ORDER.map((value) => (
                         <option key={value} value={value}>
@@ -339,11 +339,11 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
                 {type === 'reference' && (
                   <>
                     <div>
-                      <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('noteModal.referenceKindLabel')}</label>
+                      <label className="block text-base text-(--text-muted) font-display mb-1">{t('noteModal.referenceKindLabel')}</label>
                       <select
                         value={referenceKind}
                         onChange={(e) => updateField('referenceKind', e.target.value as ReferenceKind)}
-                        className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
+                        className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-display focus:border-(--accent) focus:outline-none"
                       >
                         {REF_KINDS.map((value) => (
                           <option key={value} value={value}>
@@ -353,17 +353,17 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
                       </select>
                     </div>
                     <div>
-                      <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('noteModal.urlLabel')}</label>
+                      <label className="block text-base text-(--text-muted) font-display mb-1">{t('noteModal.urlLabel')}</label>
                       <input
                         type="url"
                         value={referenceUrl}
                         onChange={(e) => updateField('referenceUrl', e.target.value)}
                         placeholder="https://…"
-                        className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-mono text-sm focus:border-(--accent-cyan) focus:outline-none"
+                        className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-mono text-sm focus:border-(--accent) focus:outline-none"
                       />
                     </div>
                     <div>
-                      <label className="block text-base text-(--text-muted) font-gaming mb-1">
+                      <label className="block text-base text-(--text-muted) font-display mb-1">
                         {t('noteModal.sourceLabel')}
                       </label>
                       <input
@@ -371,7 +371,7 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
                         value={referenceSourceInput}
                         onChange={(e) => updateField('referenceSourceInput', e.target.value)}
                         placeholder={t('noteModal.sourcePlaceholder')}
-                        className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
+                        className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-display focus:border-(--accent) focus:outline-none"
                       />
                     </div>
                   </>
@@ -379,16 +379,16 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
 
                 <div>
                   <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <span className="text-base text-(--text-muted) font-gaming">{t('noteModal.contentLabel')}</span>
+                    <span className="text-base text-(--text-muted) font-display">{t('noteModal.contentLabel')}</span>
                     <div className="flex rounded-lg border border-(--border) overflow-hidden">
                       {(['edit', 'preview', 'split'] as const).map((m) => (
                         <button
                           key={m}
                           type="button"
                           onClick={() => updateField('mdMode', m)}
-                          className={`px-3 py-1.5 text-sm font-gaming capitalize ${
+                          className={`px-3 py-1.5 text-sm font-display capitalize ${
                             mdMode === m
-                              ? 'bg-(--accent-cyan)/20 text-(--accent-cyan)'
+                              ? 'bg-(--accent)/20 text-(--accent)'
                               : 'text-(--text-muted) hover:bg-(--bg-dark)'
                           }`}
                         >
@@ -399,7 +399,7 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
                     <button
                       type="button"
                       onClick={() => setForm((f) => ({ ...f, showMarkdownHelp: !f.showMarkdownHelp }))}
-                      className="p-1 rounded text-(--text-muted) hover:text-(--accent-cyan) hover:bg-(--accent-cyan)/10 transition-colors"
+                      className="p-1 rounded text-(--text-muted) hover:text-(--accent) hover:bg-(--accent)/10 transition-colors"
                       title={t('noteModal.markdownSyntax')}
                       aria-label={t('noteModal.showMarkdownSyntax')}
                     >
@@ -421,7 +421,7 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
                         value={content}
                         onChange={(e) => updateField('content', e.target.value)}
                         rows={showSplit ? 12 : 8}
-                        className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-mono text-sm focus:border-(--accent-cyan) focus:outline-none resize-y min-h-[180px]"
+                        className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-mono text-sm focus:border-(--accent) focus:outline-none resize-y min-h-[180px]"
                       />
                     )}
                     {(showPreviewOnly || showSplit) && (
@@ -437,14 +437,14 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
                 </div>
 
                 <div>
-                  <label className="block text-base text-(--text-muted) font-gaming mb-1">
+                  <label className="block text-base text-(--text-muted) font-display mb-1">
                     {t('noteModal.tagsLabel')}
                   </label>
                   <input
                     type="text"
                     value={tagsInput}
                     onChange={(e) => updateField('tagsInput', e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
+                    className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-display focus:border-(--accent) focus:outline-none"
                   />
                 </div>
 
@@ -453,15 +453,15 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
                     <button
                       type="button"
                       onClick={handlePin}
-                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-(--border) text-(--text-muted) hover:text-(--accent-amber) font-gaming text-sm"
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-(--border) text-(--text-muted) hover:text-(--warning) font-display text-sm"
                     >
-                      <Pin className={`w-4 h-4 ${note.pinned ? 'fill-current text-(--accent-amber)' : ''}`} />
+                      <Pin className={`w-4 h-4 ${note.pinned ? 'fill-current text-(--warning)' : ''}`} />
                       {note.pinned ? t('noteModal.unpin') : t('noteModal.pin')}
                     </button>
                     <button
                       type="button"
                       onClick={handleArchiveClick}
-                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-(--border) text-(--text-muted) hover:text-(--accent-magenta) font-gaming text-sm"
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-(--border) text-(--text-muted) hover:text-(--accent-2) font-display text-sm"
                     >
                       <Archive className="w-4 h-4" />
                       {t('noteModal.archive')}
@@ -473,7 +473,7 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
                   <button
                     type="button"
                     onClick={() => updateField('convertOpen', !convertOpen)}
-                    className="flex items-center gap-2 text-base text-(--accent-cyan) font-gaming hover:underline"
+                    className="flex items-center gap-2 text-base text-(--accent) font-display hover:underline"
                   >
                     <ChevronDown className={`w-4 h-4 transition-transform ${convertOpen ? 'rotate-180' : ''}`} />
                     {t('noteModal.convertTo')}
@@ -485,13 +485,13 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
                           <button
                             type="button"
                             onClick={handleConvertTodo}
-                            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming text-sm hover:border-(--accent-cyan)/50 w-fit"
+                            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-display text-sm hover:border-(--accent)/50 w-fit"
                           >
-                            <CheckSquare className="w-4 h-4 text-(--accent-cyan)" />
+                            <CheckSquare className="w-4 h-4 text-(--accent)" />
                             {t('noteModal.convertTodo')}
                           </button>
                           <div className="rounded-lg border border-(--border) bg-(--bg-dark)/50 p-3 space-y-2 max-w-md">
-                            <p className="text-base text-(--text-muted) font-gaming">{t('noteModal.convertGoalTitle')}</p>
+                            <p className="text-base text-(--text-muted) font-display">{t('noteModal.convertGoalTitle')}</p>
                             <div className="flex flex-wrap gap-2 items-center">
                               <label className="text-base text-(--text-muted)">{t('noteModal.goalTargetLabel')}</label>
                               <input
@@ -506,13 +506,13 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
                                 value={goalUnit}
                                 onChange={(e) => updateField('goalUnit', e.target.value)}
                                 placeholder={t('noteModal.goalUnitPlaceholder')}
-                                className="flex-1 min-w-[120px] px-2 py-1 rounded bg-(--bg-dark) border border-(--border) text-sm font-gaming"
+                                className="flex-1 min-w-[120px] px-2 py-1 rounded bg-(--bg-dark) border border-(--border) text-sm font-display"
                               />
                             </div>
                             <button
                               type="button"
                               onClick={() => void handleConvertGoal()}
-                              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-(--accent-cyan)/15 text-(--accent-cyan) border border-(--accent-cyan)/40 font-gaming text-sm"
+                              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-(--accent)/15 text-(--accent) border border-(--accent)/40 font-display text-sm"
                             >
                               <Target className="w-4 h-4" />
                               {t('noteModal.createGoal')}
@@ -524,9 +524,9 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
                         <button
                           type="button"
                           onClick={handleConvertProject}
-                          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming text-sm hover:border-(--accent-cyan)/50 w-fit"
+                          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-display text-sm hover:border-(--accent)/50 w-fit"
                         >
-                          <FolderKanban className="w-4 h-4 text-(--accent-amber)" />
+                          <FolderKanban className="w-4 h-4 text-(--warning)" />
                           {t('noteModal.convertProject')}
                         </button>
                       )}
@@ -535,17 +535,17 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
                           <button
                             type="button"
                             onClick={handleConvertCourse}
-                            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming text-sm hover:border-(--accent-cyan)/50"
+                            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-display text-sm hover:border-(--accent)/50"
                           >
-                            <GraduationCap className="w-4 h-4 text-(--accent-magenta)" />
+                            <GraduationCap className="w-4 h-4 text-(--accent-2)" />
                             {t('noteModal.convertCourse')}
                           </button>
                           <button
                             type="button"
                             onClick={handleConvertBook}
-                            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming text-sm hover:border-(--accent-cyan)/50"
+                            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-display text-sm hover:border-(--accent)/50"
                           >
-                            <BookOpen className="w-4 h-4 text-(--accent-green)" />
+                            <BookOpen className="w-4 h-4 text-(--positive)" />
                             {t('noteModal.convertBook')}
                           </button>
                         </div>
@@ -558,13 +558,13 @@ export function NoteModal({ isOpen, onClose, note, type, onSave }: NoteModalProp
                   <button
                     type="button"
                     onClick={onClose}
-                    className="px-4 py-2 rounded-lg border border-(--border) text-(--text-muted) hover:text-(--text-primary) font-gaming transition-colors"
+                    className="px-4 py-2 rounded-lg border border-(--border) text-(--text-muted) hover:text-(--text-primary) font-display transition-colors"
                   >
                     {t('noteModal.cancel')}
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 rounded-lg bg-(--accent-cyan) text-(--bg-dark) font-gaming hover:opacity-90 transition-opacity"
+                    className="px-4 py-2 rounded-lg bg-(--accent) text-(--bg-dark) font-display hover:opacity-90 transition-opacity"
                   >
                     {isEdit ? t('noteModal.save') : t('noteModal.add')}
                   </button>

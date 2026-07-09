@@ -114,10 +114,10 @@ export function Onboarding() {
           </button>
 
           <div className="flex flex-col items-center text-center pt-2">
-            <div className="mb-4 grid size-14 place-items-center rounded-xl border border-(--accent-cyan)/40 bg-(--accent-cyan)/15">
-              <Icon className="size-7 shrink-0 text-(--accent-cyan) [stroke-linecap:round] [stroke-linejoin:round]" aria-hidden />
+            <div className="mb-4 grid size-14 place-items-center rounded-xl border border-(--accent)/40 bg-(--accent)/15">
+              <Icon className="size-7 shrink-0 text-(--accent) [stroke-linecap:round] [stroke-linejoin:round]" aria-hidden />
             </div>
-            <h2 className="text-xl font-bold text-(--text-primary) font-gaming tracking-wider">
+            <h2 className="text-xl font-bold text-(--text-primary) font-display tracking-wider">
               {current.title}
             </h2>
             <p className="text-base text-(--text-muted) mt-3 leading-relaxed">
@@ -131,10 +131,10 @@ export function Onboarding() {
                 type="button"
                 onClick={handlePrev}
                 disabled={isFirst}
-                className={`flex min-w-0 max-w-full items-center gap-1 rounded-lg px-3 py-2.5 text-sm font-gaming transition-colors sm:gap-1.5 sm:px-4 sm:text-base ${
+                className={`flex min-w-0 max-w-full items-center gap-1 rounded-lg px-3 py-2.5 text-sm font-display transition-colors sm:gap-1.5 sm:px-4 sm:text-base ${
                   isFirst
                     ? 'cursor-not-allowed text-(--text-muted)/50'
-                    : 'border border-(--border) text-(--text-muted) hover:bg-(--accent-cyan)/10 hover:text-(--accent-cyan)'
+                    : 'border border-(--border) text-(--text-muted) hover:bg-(--accent)/10 hover:text-(--accent)'
                 }`}
               >
                 <ChevronLeft className="h-4 w-4 shrink-0" />
@@ -146,7 +146,7 @@ export function Onboarding() {
               <button
                 type="button"
                 onClick={handleNext}
-                className="flex min-w-0 max-w-full items-center justify-center gap-1 rounded-lg border border-(--accent-cyan)/40 bg-(--accent-cyan)/20 px-3 py-2.5 text-sm font-gaming text-(--accent-cyan) transition-colors hover:bg-(--accent-cyan)/30 sm:gap-1.5 sm:px-5 sm:text-base"
+                className="flex min-w-0 max-w-full items-center justify-center gap-1 rounded-lg border border-(--accent)/40 bg-(--accent)/20 px-3 py-2.5 text-sm font-display text-(--accent) transition-colors hover:bg-(--accent)/30 sm:gap-1.5 sm:px-5 sm:text-base"
               >
                 <span className="truncate">{isLast ? t('finish') : t('next')}</span>
                 <ChevronRight className="h-4 w-4 shrink-0" />
@@ -158,7 +158,7 @@ export function Onboarding() {
                 <span
                   key={i}
                   className={`h-2 w-2 shrink-0 rounded-full transition-colors ${
-                    i === step ? 'bg-(--accent-cyan)' : 'bg-(--border)'
+                    i === step ? 'bg-(--accent)' : 'bg-(--border)'
                   }`}
                   aria-hidden
                 />

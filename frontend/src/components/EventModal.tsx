@@ -220,7 +220,7 @@ export function EventModal({
       <div className="relative">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-lg font-bold text-(--text-primary) font-gaming">
+              <h3 className="text-lg font-bold text-(--text-primary) font-display">
                 {categoryOnlyMode ? t('eventModal.manageCategories') : isEdit ? t('eventModal.editEvent') : t('eventModal.addEvent')}
               </h3>
               {holidayName && (
@@ -261,7 +261,7 @@ export function EventModal({
                             type="button"
                             onClick={() => setNewCategoryColor(color)}
                             className={`relative flex items-center justify-center w-7 h-7 rounded-full border-2 ${
-                              newCategoryColor === color ? 'border-(--accent-cyan)' : 'border-transparent'
+                              newCategoryColor === color ? 'border-(--accent)' : 'border-transparent'
                             }`}
                             style={{ backgroundColor: color }}
                             title={color}
@@ -277,7 +277,7 @@ export function EventModal({
                       <button
                         type="button"
                         onClick={handleAddCategory}
-                        className="px-3 py-1.5 rounded-lg bg-(--accent-cyan) text-(--bg-dark) font-gaming text-sm"
+                        className="px-3 py-1.5 rounded-lg bg-(--accent) text-(--bg-dark) font-display text-sm"
                       >
                         {t('eventModal.addCategory')}
                       </button>
@@ -302,7 +302,7 @@ export function EventModal({
                                 type="button"
                                 onClick={() => setEditingCategoryColor(color)}
                                 className={`relative flex items-center justify-center w-6 h-6 rounded-full border-2 ${
-                                  editingCategoryColor === color ? 'border-(--accent-cyan)' : 'border-transparent'
+                                  editingCategoryColor === color ? 'border-(--accent)' : 'border-transparent'
                                 }`}
                                 style={{ backgroundColor: color }}
                               >
@@ -323,7 +323,7 @@ export function EventModal({
                             <button
                               type="button"
                               onClick={saveCategoryEdit}
-                              className="px-2 py-1 rounded bg-(--accent-cyan) text-(--bg-dark)"
+                              className="px-2 py-1 rounded bg-(--accent) text-(--bg-dark)"
                             >
                               {t('eventModal.save')}
                             </button>
@@ -342,7 +342,7 @@ export function EventModal({
                                 onToggleCategoryVisibility(catItem.id)
                                 showToast(catItem.isVisible ? t('eventModal.categoryHidden') : t('eventModal.categoryVisible'))
                               }}
-                              className="p-1 rounded text-(--text-muted) hover:bg-(--bg-card-hover) hover:text-(--accent-cyan) transition-colors"
+                              className="p-1 rounded text-(--text-muted) hover:bg-(--bg-card-hover) hover:text-(--accent) transition-colors"
                               title={catItem.isVisible ? t('eventModal.hideInCalendar') : t('eventModal.showInCalendar')}
                             >
                               {catItem.isVisible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
@@ -350,7 +350,7 @@ export function EventModal({
                             <button
                               type="button"
                               onClick={() => startCategoryEdit(catItem)}
-                              className="p-1 rounded text-(--text-muted) hover:bg-(--bg-card-hover) hover:text-(--accent-cyan) transition-colors"
+                              className="p-1 rounded text-(--text-muted) hover:bg-(--bg-card-hover) hover:text-(--accent) transition-colors"
                               title={t('eventModal.edit')}
                             >
                               <Pencil className="w-3.5 h-3.5" />
@@ -361,7 +361,7 @@ export function EventModal({
                                 onDeleteCategory(catItem.id)
                                 showToast(t('eventModal.categoryDeleted'))
                               }}
-                              className="p-1 rounded text-(--text-muted) hover:bg-(--bg-card-hover) hover:text-(--accent-magenta) transition-colors"
+                              className="p-1 rounded text-(--text-muted) hover:bg-(--bg-card-hover) hover:text-(--danger) transition-colors"
                               title={t('eventModal.delete')}
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -377,12 +377,12 @@ export function EventModal({
           ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('eventModal.titleLabel')}</label>
+              <label className="block text-base text-(--text-muted) font-display mb-1">{t('eventModal.titleLabel')}</label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => updateField('title', e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
+                className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-display focus:border-(--accent) focus:outline-none"
                 required
                 autoFocus
               />
@@ -390,7 +390,7 @@ export function EventModal({
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('eventModal.dateLabel')}</label>
+                <label className="block text-base text-(--text-muted) font-display mb-1">{t('eventModal.dateLabel')}</label>
                 <input
                   type="date"
                   value={date}
@@ -400,35 +400,35 @@ export function EventModal({
                   }}
                   min="1900-01-01"
                   max="2100-12-31"
-                  className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
+                  className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-display focus:border-(--accent) focus:outline-none"
                 />
                 {dateError && (
-                  <p className="mt-1 text-sm text-(--accent-magenta)">{dateError}</p>
+                  <p className="mt-1 text-sm text-(--danger)">{dateError}</p>
                 )}
               </div>
               <div>
-                <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('eventModal.timeLabel')}</label>
+                <label className="block text-base text-(--text-muted) font-display mb-1">{t('eventModal.timeLabel')}</label>
                 <input
                   type="time"
                   value={time}
                   onChange={(e) => updateField('time', e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
+                  className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-display focus:border-(--accent) focus:outline-none"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-2">{t('eventModal.categoryLabel')}</label>
+              <label className="block text-base text-(--text-muted) font-display mb-2">{t('eventModal.categoryLabel')}</label>
               <div className="flex gap-2 flex-wrap">
                 {categories.map(({ id, name, color: hex }) => (
                   <button
                     key={id}
                     type="button"
                     onClick={() => updateField('category', id)}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 transition-all text-sm font-gaming ${
-                      category === id ? 'border-(--accent-cyan)' : 'border-transparent hover:opacity-90'
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 transition-all text-sm font-display ${
+                      category === id ? 'border-(--accent)' : 'border-transparent hover:opacity-90'
                     }`}
-                    style={{ backgroundColor: `${hex}30`, borderColor: category === id ? 'var(--accent-cyan)' : 'transparent' }}
+                    style={{ backgroundColor: `${hex}30`, borderColor: category === id ? 'var(--accent)' : 'transparent' }}
                   >
                     <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: hex }} />
                     {name}
@@ -462,7 +462,7 @@ export function EventModal({
                               type="button"
                               onClick={() => setNewCategoryColor(color)}
                               className={`relative flex items-center justify-center w-7 h-7 rounded-full border-2 ${
-                                newCategoryColor === color ? 'border-(--accent-cyan)' : 'border-transparent'
+                                newCategoryColor === color ? 'border-(--accent)' : 'border-transparent'
                               }`}
                               style={{ backgroundColor: color }}
                               title={color}
@@ -478,7 +478,7 @@ export function EventModal({
                         <button
                           type="button"
                           onClick={handleAddCategory}
-                          className="px-3 py-1.5 rounded-lg bg-(--accent-cyan) text-(--bg-dark) font-gaming text-sm"
+                          className="px-3 py-1.5 rounded-lg bg-(--accent) text-(--bg-dark) font-display text-sm"
                         >
                           {t('eventModal.addCategory')}
                         </button>
@@ -503,7 +503,7 @@ export function EventModal({
                                   type="button"
                                   onClick={() => setEditingCategoryColor(color)}
                                   className={`relative flex items-center justify-center w-6 h-6 rounded-full border-2 ${
-                                    editingCategoryColor === color ? 'border-(--accent-cyan)' : 'border-transparent'
+                                    editingCategoryColor === color ? 'border-(--accent)' : 'border-transparent'
                                   }`}
                                   style={{ backgroundColor: color }}
                                 >
@@ -524,7 +524,7 @@ export function EventModal({
                               <button
                                 type="button"
                                 onClick={saveCategoryEdit}
-                                className="px-2 py-1 rounded bg-(--accent-cyan) text-(--bg-dark)"
+                                className="px-2 py-1 rounded bg-(--accent) text-(--bg-dark)"
                               >
                                 {t('eventModal.save')}
                               </button>
@@ -543,7 +543,7 @@ export function EventModal({
                                   onToggleCategoryVisibility(catItem.id)
                                   showToast(catItem.isVisible ? t('eventModal.categoryHidden') : t('eventModal.categoryVisible'))
                                 }}
-                                className="p-1 rounded text-(--text-muted) hover:bg-(--bg-card-hover) hover:text-(--accent-cyan) transition-colors"
+                                className="p-1 rounded text-(--text-muted) hover:bg-(--bg-card-hover) hover:text-(--accent) transition-colors"
                                 title={catItem.isVisible ? t('eventModal.hideInCalendar') : t('eventModal.showInCalendar')}
                               >
                                 {catItem.isVisible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
@@ -551,7 +551,7 @@ export function EventModal({
                               <button
                                 type="button"
                                 onClick={() => startCategoryEdit(catItem)}
-                                className="p-1 rounded text-(--text-muted) hover:bg-(--bg-card-hover) hover:text-(--accent-cyan) transition-colors"
+                                className="p-1 rounded text-(--text-muted) hover:bg-(--bg-card-hover) hover:text-(--accent) transition-colors"
                                 title={t('eventModal.edit')}
                               >
                                 <Pencil className="w-3.5 h-3.5" />
@@ -562,7 +562,7 @@ export function EventModal({
                                   onDeleteCategory(catItem.id)
                                   showToast(t('eventModal.categoryDeleted'))
                                 }}
-                                className="p-1 rounded text-(--text-muted) hover:bg-(--bg-card-hover) hover:text-(--accent-magenta) transition-colors"
+                                className="p-1 rounded text-(--text-muted) hover:bg-(--bg-card-hover) hover:text-(--danger) transition-colors"
                                 title={t('eventModal.delete')}
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -578,12 +578,12 @@ export function EventModal({
             </div>
 
             <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('eventModal.recurrenceLabel')}</label>
+              <label className="block text-base text-(--text-muted) font-display mb-1">{t('eventModal.recurrenceLabel')}</label>
               <div className="space-y-2">
                 <select
                   value={recurrenceType}
                   onChange={(e) => updateField('recurrenceType', e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
+                  className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-display focus:border-(--accent) focus:outline-none"
                 >
                   <option value="none">{t('eventModal.recurrenceNone')}</option>
                   <option value="daily">{t('eventModal.recurrenceDaily')}</option>
@@ -616,7 +616,7 @@ export function EventModal({
                 )}
                 {recurrenceType !== 'none' && (
                   <div>
-                    <label className="block text-sm text-(--text-muted) font-gaming mb-1">{t('eventModal.recurrenceUntilLabel')}</label>
+                    <label className="block text-sm text-(--text-muted) font-display mb-1">{t('eventModal.recurrenceUntilLabel')}</label>
                     <input
                       type="date"
                       value={recurrenceUntil}
@@ -629,7 +629,7 @@ export function EventModal({
                       className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base"
                     />
                     {recurrenceUntilError && (
-                      <p className="mt-1 text-sm text-(--accent-magenta)">{recurrenceUntilError}</p>
+                      <p className="mt-1 text-sm text-(--danger)">{recurrenceUntilError}</p>
                     )}
                   </div>
                 )}
@@ -637,12 +637,12 @@ export function EventModal({
             </div>
 
             <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('eventModal.notesLabel')}</label>
+              <label className="block text-base text-(--text-muted) font-display mb-1">{t('eventModal.notesLabel')}</label>
               <textarea
                 value={notes}
                 onChange={(e) => updateField('notes', e.target.value)}
                 rows={2}
-                className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none resize-none"
+                className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-display focus:border-(--accent) focus:outline-none resize-none"
               />
             </div>
 
@@ -651,7 +651,7 @@ export function EventModal({
                 <button
                   type="button"
                   onClick={handleDelete}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg border border-(--accent-magenta)/40 text-(--accent-magenta) hover:bg-(--accent-magenta)/10 font-gaming transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg border border-(--danger)/40 text-(--danger) hover:bg-(--danger)/10 font-display transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
                   {t('eventModal.delete2')}
@@ -661,13 +661,13 @@ export function EventModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 rounded-lg border border-(--border) text-(--text-muted) hover:text-(--text-primary) font-gaming transition-colors"
+                className="px-4 py-2 rounded-lg border border-(--border) text-(--text-muted) hover:text-(--text-primary) font-display transition-colors"
               >
                 {t('eventModal.cancel')}
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 rounded-lg bg-(--accent-cyan) text-(--bg-dark) font-gaming hover:opacity-90 transition-opacity"
+                className="px-4 py-2 rounded-lg bg-(--accent) text-(--bg-dark) font-display hover:opacity-90 transition-opacity"
               >
                 {isEdit ? t('eventModal.update') : t('eventModal.create')}
               </button>
@@ -680,7 +680,7 @@ export function EventModal({
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 8 }}
-              className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 rounded-lg border border-(--accent-cyan)/40 bg-(--bg-dark) px-3 py-2 text-sm text-(--text-primary) shadow-lg"
+              className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 rounded-lg border border-(--accent)/40 bg-(--bg-dark) px-3 py-2 text-sm text-(--text-primary) shadow-lg"
             >
               {toastMessage}
             </motion.div>

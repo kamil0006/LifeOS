@@ -68,13 +68,13 @@ function PomodoroModal({ onClose }: { onClose: () => void }) {
           <div className="p-7">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2.5">
-                <Timer className="w-6 h-6 text-(--accent-cyan)" />
-                <h3 className="text-xl font-bold font-gaming text-(--text-primary) tracking-wide">
+                <Timer className="w-6 h-6 text-(--accent)" />
+                <h3 className="text-xl font-bold font-display text-(--text-primary) tracking-wide">
                   {t('pomodoro.title')}
                 </h3>
                 {isRunning && (
-                  <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-gaming bg-(--accent-cyan)/15 text-(--accent-cyan) border border-(--accent-cyan)/30">
-                    <span className="w-1.5 h-1.5 rounded-full bg-(--accent-cyan) animate-pulse" />
+                  <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-display bg-(--accent)/15 text-(--accent) border border-(--accent)/30">
+                    <span className="w-1.5 h-1.5 rounded-full bg-(--accent) animate-pulse" />
                     live
                   </span>
                 )}
@@ -95,10 +95,10 @@ function PomodoroModal({ onClose }: { onClose: () => void }) {
                   type="button"
                   onClick={() => handleModeChange(m.minutes)}
                   disabled={isRunning}
-                  className={`py-2.5 rounded-xl font-gaming text-sm font-semibold transition-all disabled:cursor-not-allowed ${
+                  className={`py-2.5 rounded-xl font-display text-sm font-semibold transition-all disabled:cursor-not-allowed ${
                     selectedMinutes === m.minutes
-                      ? 'bg-(--accent-cyan)/20 text-(--accent-cyan) border-2 border-(--accent-cyan)/60 shadow-[0_0_12px_rgba(0,229,255,0.2)]'
-                      : 'bg-(--bg-dark) text-(--text-muted) border-2 border-(--border) hover:border-(--accent-cyan)/40 hover:text-(--text-primary) disabled:opacity-35'
+                      ? 'bg-(--accent)/20 text-(--accent) border-2 border-(--accent)/60'
+                      : 'bg-(--bg-dark) text-(--text-muted) border-2 border-(--border) hover:border-(--accent)/40 hover:text-(--text-primary) disabled:opacity-35'
                   }`}
                 >
                   {m.label}
@@ -157,9 +157,9 @@ function PomodoroModal({ onClose }: { onClose: () => void }) {
                     >
                       <CheckCircle2
                         className="w-20 h-20"
-                        style={{ color: 'var(--accent-green)' }}
+                        style={{ color: 'var(--positive)' }}
                       />
-                      <span className="font-gaming text-base text-(--accent-green)">
+                      <span className="font-display text-base text-(--positive)">
                         {t('pomodoro.completed')}
                       </span>
                     </motion.div>
@@ -172,7 +172,7 @@ function PomodoroModal({ onClose }: { onClose: () => void }) {
                         {pad(minutesDisplay)}:{pad(secondsDisplay)}
                       </span>
                       <span
-                        className="font-gaming tracking-widest uppercase text-sm"
+                        className="font-display tracking-widest uppercase text-sm"
                         style={{ color: ringColor }}
                       >
                         {isRunning ? t('pomodoro.running') : started ? t('pomodoro.paused') : t('pomodoro.ready')}
@@ -188,22 +188,22 @@ function PomodoroModal({ onClose }: { onClose: () => void }) {
 
             {completed ? (
               <div className="text-center space-y-4">
-                <p className="text-lg font-gaming text-(--text-primary)">
+                <p className="text-lg font-display text-(--text-primary)">
                   {t('pomodoro.sessionAdded', { minutes: selectedMinutes })}
                 </p>
                 <div className="flex gap-3">
                   <button
                     type="button"
                     onClick={handleReset}
-                    className="flex-1 py-3 rounded-xl border-2 border-(--border) text-(--text-muted) font-gaming font-semibold hover:bg-(--bg-dark) hover:text-(--text-primary) transition-colors"
+                    className="flex-1 py-3 rounded-xl border-2 border-(--border) text-(--text-muted) font-display font-semibold hover:bg-(--bg-dark) hover:text-(--text-primary) transition-colors"
                   >
                     {t('pomodoro.newSession')}
                   </button>
                   <button
                     type="button"
                     onClick={handleClose}
-                    className="flex-1 py-3 rounded-xl font-gaming font-bold text-base hover:opacity-90 transition-opacity"
-                    style={{ background: 'var(--accent-green)', color: 'var(--bg-dark)' }}
+                    className="flex-1 py-3 rounded-xl font-display font-bold text-base hover:opacity-90 transition-opacity"
+                    style={{ background: 'var(--positive)', color: 'var(--bg-dark)' }}
                   >
                     {t('pomodoro.close')}
                   </button>
@@ -217,7 +217,7 @@ function PomodoroModal({ onClose }: { onClose: () => void }) {
                     value={topic}
                     onChange={(e) => setTopic(e.target.value)}
                     placeholder={t('pomodoro.topicPlaceholder')}
-                    className="w-full px-4 py-3 rounded-xl bg-(--bg-dark) border-2 border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan)/60 focus:outline-none transition-colors placeholder:text-(--text-muted)/60"
+                    className="w-full px-4 py-3 rounded-xl bg-(--bg-dark) border-2 border-(--border) text-(--text-primary) font-display focus:border-(--accent)/60 focus:outline-none transition-colors placeholder:text-(--text-muted)/60"
                   />
                 </div>
 
@@ -228,10 +228,10 @@ function PomodoroModal({ onClose }: { onClose: () => void }) {
                         key={cat}
                         type="button"
                         onClick={() => setTopic((prev) => (prev === cat ? '' : cat))}
-                        className={`px-3 py-1.5 rounded-lg font-gaming text-sm transition-colors border ${
+                        className={`px-3 py-1.5 rounded-lg font-display text-sm transition-colors border ${
                           topic === cat
-                            ? 'bg-(--accent-cyan)/20 text-(--accent-cyan) border-(--accent-cyan)/50'
-                            : 'bg-(--bg-dark) text-(--text-muted) border-(--border) hover:border-(--accent-cyan)/40 hover:text-(--text-primary)'
+                            ? 'bg-(--accent)/20 text-(--accent) border-(--accent)/50'
+                            : 'bg-(--bg-dark) text-(--text-muted) border-(--border) hover:border-(--accent)/40 hover:text-(--text-primary)'
                         }`}
                       >
                         {cat}
@@ -246,10 +246,10 @@ function PomodoroModal({ onClose }: { onClose: () => void }) {
                       key={opt.value}
                       type="button"
                       onClick={() => setSessionType(opt.value)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-gaming text-sm transition-colors border ${
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-display text-sm transition-colors border ${
                         sessionType === opt.value
-                          ? 'bg-(--accent-cyan)/20 text-(--accent-cyan) border-(--accent-cyan)/50'
-                          : 'bg-(--bg-dark) text-(--text-muted) border-(--border) hover:border-(--accent-cyan)/40 hover:text-(--text-primary)'
+                          ? 'bg-(--accent)/20 text-(--accent) border-(--accent)/50'
+                          : 'bg-(--bg-dark) text-(--text-muted) border-(--border) hover:border-(--accent)/40 hover:text-(--text-primary)'
                       }`}
                     >
                       <opt.icon className="w-3.5 h-3.5" />
@@ -271,13 +271,13 @@ function PomodoroModal({ onClose }: { onClose: () => void }) {
                   <button
                     type="button"
                     onClick={isRunning ? pause : startOrResume}
-                    className="flex-1 flex items-center justify-center gap-3 h-14 rounded-xl font-gaming font-bold text-lg hover:opacity-90 active:scale-[0.98] transition-all"
+                    className="flex-1 flex items-center justify-center gap-3 h-14 rounded-xl font-display font-bold text-lg hover:opacity-90 active:scale-[0.98] transition-all"
                     style={{
-                      background: isRunning ? 'var(--accent-amber)' : 'var(--accent-cyan)',
+                      background: isRunning ? 'var(--warning)' : 'var(--accent)',
                       color: 'var(--bg-dark)',
                       boxShadow: isRunning
                         ? '0 0 20px rgba(255,193,7,0.35)'
-                        : '0 0 20px rgba(0,229,255,0.35)',
+                        : '0 0 20px rgba(130,167,207,0.35)',
                     }}
                   >
                     {isRunning ? (
@@ -313,14 +313,14 @@ export function PomodoroCardButton() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="w-full flex items-center justify-between px-5 py-5 rounded-xl border border-(--accent-cyan)/30 bg-(--accent-cyan)/5 hover:bg-(--accent-cyan)/10 hover:border-(--accent-cyan)/60 transition-all group"
+        className="w-full flex items-center justify-between px-5 py-5 rounded-xl border border-(--accent)/30 bg-(--accent)/5 hover:bg-(--accent)/10 hover:border-(--accent)/60 transition-all group"
       >
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-(--accent-cyan)/15 flex items-center justify-center group-hover:bg-(--accent-cyan)/25 transition-colors shrink-0">
-            <Timer className="w-6 h-6 text-(--accent-cyan)" />
+          <div className="w-12 h-12 rounded-full bg-(--accent)/15 flex items-center justify-center group-hover:bg-(--accent)/25 transition-colors shrink-0">
+            <Timer className="w-6 h-6 text-(--accent)" />
           </div>
           <div className="text-left">
-            <p className="font-gaming font-bold text-(--text-primary) text-base tracking-wide">
+            <p className="font-display font-bold text-(--text-primary) text-base tracking-wide">
               {t('pomodoro.cardTitle')}
             </p>
             <p className="text-sm text-(--text-muted) mt-0.5">
@@ -328,8 +328,8 @@ export function PomodoroCardButton() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 text-(--accent-cyan) opacity-70 group-hover:opacity-100 transition-opacity">
-          <span className="font-gaming text-sm hidden sm:block">{t('pomodoro.run')}</span>
+        <div className="flex items-center gap-2 text-(--accent) opacity-70 group-hover:opacity-100 transition-opacity">
+          <span className="font-display text-sm hidden sm:block">{t('pomodoro.run')}</span>
           <Play className="w-5 h-5" />
         </div>
       </button>
@@ -350,7 +350,7 @@ export function PomodoroInlineButton({ className }: { className?: string }) {
         onClick={() => setOpen(true)}
         className={
           className ??
-          'flex items-center gap-1.5 rounded-lg border border-(--accent-cyan)/30 bg-(--accent-cyan)/10 px-3 py-1.5 text-sm font-gaming text-(--accent-cyan) transition-colors hover:bg-(--accent-cyan)/20'
+          'flex items-center gap-1.5 rounded-lg border border-(--accent)/30 bg-(--accent)/10 px-3 py-1.5 text-sm font-display text-(--accent) transition-colors hover:bg-(--accent)/20'
         }
         title={t('pomodoro.inlineButtonTitle')}
       >

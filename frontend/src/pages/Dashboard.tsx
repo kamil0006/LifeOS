@@ -56,7 +56,7 @@ function DonutTooltip(props: { active?: boolean; payload?: readonly unknown[]; t
       }}
     >
       <p className="font-medium text-base">{item?.name ?? ''}</p>
-      <p className="text-sm text-(--accent-cyan)">
+      <p className="text-sm text-(--accent)">
         {(item?.value ?? kwota ?? 0).toLocaleString('pl-PL')} zł ({pct}%)
       </p>
     </motion.div>
@@ -172,10 +172,10 @@ export function Dashboard() {
         className="flex flex-wrap items-end justify-between gap-3"
       >
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-(--text-primary) font-gaming tracking-wider">
+          <h1 className="text-2xl sm:text-3xl font-bold text-(--text-primary) font-display tracking-wider">
             {t('title')}
           </h1>
-          <p className="text-sm sm:text-base text-(--text-muted) mt-1 font-gaming tracking-wide">
+          <p className="text-sm sm:text-base text-(--text-muted) mt-1 font-display tracking-wide">
             {!useApiFinance ? t('demoData') : t('subtitle')}
           </p>
         </div>
@@ -187,11 +187,11 @@ export function Dashboard() {
         <motion.div variants={getDashboardTileVariants(reduceMotion, 1)} className="min-w-0">
           <Card
             animateEntrance={false}
-            className="border-(--accent-green)/20 max-md:p-4 hover:border-(--accent-green)/40 hover:shadow-[0_0_15px_rgba(0,255,157,0.08)]"
+            className="border-(--positive)/20 max-md:p-4 hover:border-(--positive)/40"
           >
-            <p className="truncate text-sm text-(--text-muted) font-gaming">{t('income')}</p>
-            <p className="truncate text-sm text-(--text-muted) font-gaming">{kpiPeriodLabel}</p>
-            <p className="text-base sm:text-2xl font-bold text-(--accent-green) mt-1 font-gaming drop-shadow-[0_0_8px_rgba(0,255,157,0.3)] break-all leading-tight">
+            <p className="truncate text-sm text-(--text-muted) font-display">{t('income')}</p>
+            <p className="truncate text-sm text-(--text-muted) font-display">{kpiPeriodLabel}</p>
+            <p className="text-base sm:text-2xl font-bold text-(--positive) mt-1 font-display break-all leading-tight">
               {chartFilteredData.incomeTotal.toLocaleString('pl-PL')} <span className="text-xs sm:text-base">zł</span>
             </p>
           </Card>
@@ -199,11 +199,11 @@ export function Dashboard() {
         <motion.div variants={getDashboardTileVariants(reduceMotion, 2)} className="min-w-0">
           <Card
             animateEntrance={false}
-            className="border-(--accent-magenta)/20 max-md:p-4 hover:border-(--accent-magenta)/40 hover:shadow-[0_0_15px_rgba(255,0,212,0.08)]"
+            className="border-(--tx-expense)/20 max-md:p-4 hover:border-(--tx-expense)/40"
           >
-            <p className="truncate text-sm text-(--text-muted) font-gaming">{t('expenses')}</p>
-            <p className="truncate text-sm text-(--text-muted) font-gaming">{kpiPeriodLabel}</p>
-            <p className="text-base sm:text-2xl font-bold text-(--accent-magenta) mt-1 font-gaming drop-shadow-[0_0_8px_rgba(255,0,212,0.3)] break-all leading-tight">
+            <p className="truncate text-sm text-(--text-muted) font-display">{t('expenses')}</p>
+            <p className="truncate text-sm text-(--text-muted) font-display">{kpiPeriodLabel}</p>
+            <p className="text-base sm:text-2xl font-bold text-(--tx-expense) mt-1 font-display break-all leading-tight">
               {chartFilteredData.expensesTotal.toLocaleString('pl-PL')} <span className="text-xs sm:text-base">zł</span>
             </p>
           </Card>
@@ -213,17 +213,17 @@ export function Dashboard() {
             animateEntrance={false}
             className={`max-md:p-4 ${
               chartFilteredData.balance >= 0
-                ? 'border-(--accent-cyan)/20 hover:border-(--accent-cyan)/40'
+                ? 'border-(--accent)/20 hover:border-(--accent)/40'
                 : 'border-[#e74c3c]/30 hover:border-[#e74c3c]/50'
             }`}
           >
-            <p className="truncate text-sm text-(--text-muted) font-gaming">{t('balance')}</p>
-            <p className="truncate text-sm text-(--text-muted) font-gaming">{kpiPeriodLabel}</p>
+            <p className="truncate text-sm text-(--text-muted) font-display">{t('balance')}</p>
+            <p className="truncate text-sm text-(--text-muted) font-display">{kpiPeriodLabel}</p>
             <p
-              className={`text-base sm:text-2xl font-bold mt-1 font-gaming break-all leading-tight ${
+              className={`text-base sm:text-2xl font-bold mt-1 font-display break-all leading-tight ${
                 chartFilteredData.balance >= 0
-                  ? 'text-(--accent-cyan) drop-shadow-[0_0_8px_rgba(0,229,255,0.3)]'
-                  : 'text-[#e74c3c] drop-shadow-[0_0_8px_rgba(231,76,60,0.3)]'
+                  ? 'text-(--accent)'
+                  : 'text-[#e74c3c]'
               }`}
             >
               {chartFilteredData.balance >= 0 ? '+' : ''}
@@ -251,12 +251,12 @@ export function Dashboard() {
               >
                 <defs>
                   <linearGradient id="colorWydatki" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#ff00d4" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="#ff00d4" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#c98a9b" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#c98a9b" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="colorPrzychody" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#00ff9d" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="#00ff9d" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#63b28f" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#63b28f" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -281,7 +281,7 @@ export function Dashboard() {
                 <Area
                   type="monotone"
                   dataKey="wydatki"
-                  stroke="#ff00d4"
+                  stroke="#c98a9b"
                   strokeWidth={2}
                   fillOpacity={1}
                   fill="url(#colorWydatki)"
@@ -290,7 +290,7 @@ export function Dashboard() {
                 <Area
                   type="monotone"
                   dataKey="przychody"
-                  stroke="#00ff9d"
+                  stroke="#63b28f"
                   strokeWidth={2}
                   fillOpacity={1}
                   fill="url(#colorPrzychody)"
@@ -319,7 +319,7 @@ export function Dashboard() {
           action={chartPeriod ? <ChartPeriodSelector /> : undefined}
         >
           {!isMobile && (
-            <p className="mb-3 shrink-0 text-sm text-(--text-muted) font-gaming tracking-wide">
+            <p className="mb-3 shrink-0 text-sm text-(--text-muted) font-display tracking-wide">
               {t('clickCategoryHint')}
             </p>
           )}
@@ -351,7 +351,7 @@ export function Dashboard() {
                       <DonutTooltip active={active} payload={payload} total={chartFilteredData.expensesTotal} />
                     )}
                     offset={isMobile ? 30 : 70}
-                    cursor={{ fill: 'rgba(0,229,255,0.06)' }}
+                    cursor={{ fill: 'rgba(130,167,207,0.06)' }}
                   />
                   <Legend
                     verticalAlign="bottom"
@@ -364,10 +364,10 @@ export function Dashboard() {
               </ResponsiveContainer>
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <div className="text-center w-20 sm:w-24">
-                    <p className="text-sm sm:text-lg font-bold text-(--accent-cyan) font-gaming drop-shadow-[0_0_8px_rgba(0,229,255,0.3)] leading-tight">
+                    <p className="text-sm sm:text-lg font-bold text-(--accent) font-display leading-tight">
                       {chartFilteredData.expensesTotal.toLocaleString('pl-PL')} zł
                     </p>
-                    <p className="text-xs text-(--text-muted) font-gaming mt-0.5">{t('total')}</p>
+                    <p className="text-xs text-(--text-muted) font-display mt-0.5">{t('total')}</p>
                   </div>
                 </div>
               </>

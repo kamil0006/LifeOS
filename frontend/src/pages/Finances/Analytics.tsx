@@ -56,7 +56,7 @@ function AnalyticsInsightTile({
           <Icon className={`h-5 w-5 ${iconClass}`} />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-base text-(--text-muted) font-gaming mb-1">{eyebrow}</p>
+          <p className="text-base text-(--text-muted) font-display mb-1">{eyebrow}</p>
           <p className="text-base text-(--text-primary) leading-snug">{body}</p>
         </div>
       </div>
@@ -80,7 +80,7 @@ function DonutTooltip(props: { active?: boolean; payload?: readonly unknown[]; t
       }}
     >
       <p className="font-medium text-base">{item?.name ?? ''}</p>
-      <p className="text-sm text-(--accent-cyan)">
+      <p className="text-sm text-(--accent)">
         {(item?.value ?? kwota ?? 0).toLocaleString('pl-PL')} zł ({pct}%)
       </p>
     </div>
@@ -463,7 +463,7 @@ export function Analytics() {
       </div>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 lg:gap-6">
-        <Card title={t('analytics.insightsTitle')} className="border-(--accent-cyan)/20 lg:col-span-2 max-md:p-4">
+        <Card title={t('analytics.insightsTitle')} className="border-(--accent)/20 lg:col-span-2 max-md:p-4">
           <p className="mb-4 text-base text-(--text-muted)">
             {isMobile
               ? t('analytics.insightsDescMobile')
@@ -475,34 +475,34 @@ export function Analytics() {
               icon={UtensilsCrossed}
               eyebrow={t('analytics.foodCategoryEyebrow')}
               body={insights.foodLine}
-              accentBorder="border-l-(--accent-amber)/65"
-              iconClass="text-(--accent-amber)"
+              accentBorder="border-l-(--warning)/65"
+              iconClass="text-(--warning)"
             />
             <AnalyticsInsightTile
               icon={Receipt}
               eyebrow={t('analytics.biggestExpenseEyebrow')}
               body={insights.biggestLine}
-              accentBorder="border-l-(--accent-magenta)/60"
-              iconClass="text-(--accent-magenta)"
+              accentBorder="border-l-(--tx-expense)/60"
+              iconClass="text-(--tx-expense)"
             />
             <AnalyticsInsightTile
               icon={CalendarDays}
               eyebrow={t('analytics.weekdayEyebrow')}
               body={insights.weekdayLine}
-              accentBorder="border-l-(--accent-cyan)/60"
-              iconClass="text-(--accent-cyan)"
+              accentBorder="border-l-(--accent)/60"
+              iconClass="text-(--accent)"
             />
             <AnalyticsInsightTile
               icon={PiggyBank}
               eyebrow={t('analytics.fixedCostsEyebrow')}
               body={insights.fixedLine}
-              accentBorder="border-l-(--accent-green)/55"
-              iconClass="text-(--accent-green)"
+              accentBorder="border-l-(--positive)/55"
+              iconClass="text-(--positive)"
             />
           </div>
         </Card>
 
-        <Card title={t('analytics.cardVsCashTitle')} className="border-(--accent-cyan)/20 lg:col-span-2 max-md:p-4">
+        <Card title={t('analytics.cardVsCashTitle')} className="border-(--accent)/20 lg:col-span-2 max-md:p-4">
           <p className="mb-4 text-base text-(--text-muted)">
             {t('analytics.cardVsCashDesc')}
           </p>
@@ -516,29 +516,29 @@ export function Analytics() {
                 icon={CreditCard}
                 eyebrow={t('analytics.expensesEyebrow', { method: t('transactions.card').toLowerCase() })}
                 body={`${paymentBreakdown.expenseCard.toLocaleString('pl-PL')} zł`}
-                accentBorder="border-l-(--accent-magenta)/60"
-                iconClass="text-(--accent-magenta)"
+                accentBorder="border-l-(--tx-expense)/60"
+                iconClass="text-(--tx-expense)"
               />
               <AnalyticsInsightTile
                 icon={Wallet}
                 eyebrow={t('analytics.expensesEyebrow', { method: t('transactions.cash').toLowerCase() })}
                 body={`${paymentBreakdown.expenseCash.toLocaleString('pl-PL')} zł`}
-                accentBorder="border-l-(--accent-magenta)/40"
-                iconClass="text-(--accent-magenta)"
+                accentBorder="border-l-(--tx-expense)/40"
+                iconClass="text-(--tx-expense)"
               />
               <AnalyticsInsightTile
                 icon={CreditCard}
                 eyebrow={t('analytics.incomeEyebrow', { method: t('transactions.card').toLowerCase() })}
                 body={`${paymentBreakdown.incomeCard.toLocaleString('pl-PL')} zł`}
-                accentBorder="border-l-(--accent-green)/55"
-                iconClass="text-(--accent-green)"
+                accentBorder="border-l-(--positive)/55"
+                iconClass="text-(--positive)"
               />
               <AnalyticsInsightTile
                 icon={Wallet}
                 eyebrow={t('analytics.incomeEyebrow', { method: t('transactions.cash').toLowerCase() })}
                 body={`${paymentBreakdown.incomeCash.toLocaleString('pl-PL')} zł`}
-                accentBorder="border-l-(--accent-green)/35"
-                iconClass="text-(--accent-green)"
+                accentBorder="border-l-(--positive)/35"
+                iconClass="text-(--positive)"
               />
             </div>
           )}
@@ -550,12 +550,12 @@ export function Analytics() {
               <AreaChart data={chartData}>
                 <defs>
                   <linearGradient id="colorWydatki" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#ff00d4" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="#ff00d4" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#c98a9b" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#c98a9b" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="colorPrzychody" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#00ff9d" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="#00ff9d" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#63b28f" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#63b28f" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -571,8 +571,8 @@ export function Analytics() {
                   formatter={(value: number | undefined) => [value != null ? `${value} zł` : '', '']}
                 />
                 {!isMobile && <Legend />}
-                <Area type="monotone" dataKey="wydatki" stroke="#ff00d4" strokeWidth={2} fillOpacity={1} fill="url(#colorWydatki)" name={t('overview.expenses')} activeDot={false} />
-                <Area type="monotone" dataKey="przychody" stroke="#00ff9d" strokeWidth={2} fillOpacity={1} fill="url(#colorPrzychody)" name={t('overview.income')} activeDot={false} />
+                <Area type="monotone" dataKey="wydatki" stroke="#c98a9b" strokeWidth={2} fillOpacity={1} fill="url(#colorWydatki)" name={t('overview.expenses')} activeDot={false} />
+                <Area type="monotone" dataKey="przychody" stroke="#63b28f" strokeWidth={2} fillOpacity={1} fill="url(#colorPrzychody)" name={t('overview.income')} activeDot={false} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -623,7 +623,7 @@ export function Analytics() {
                 </ResponsiveContainer>
                 <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
                   <div className="w-24 text-center">
-                    <p className="text-base font-bold leading-tight text-(--accent-cyan) font-gaming sm:text-lg">
+                    <p className="text-base font-bold leading-tight text-(--accent) font-display sm:text-lg">
                       {expensesTotal.toLocaleString('pl-PL')} zł
                     </p>
                     <p className="mt-0.5 text-xs text-(--text-muted)">{t('analytics.totalShort')}</p>
@@ -648,8 +648,8 @@ export function Analytics() {
               <AreaChart data={chartData}>
                 <defs>
                   <linearGradient id="colorBilans" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#00e5ff" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="#00e5ff" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#82a7cf" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#82a7cf" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -680,7 +680,7 @@ export function Analytics() {
                 <Area
                   type="monotone"
                   dataKey="bilansNarastająco"
-                  stroke="#00e5ff"
+                  stroke="#82a7cf"
                   strokeWidth={2}
                   fillOpacity={1}
                   fill="url(#colorBilans)"
@@ -712,7 +712,7 @@ export function Analytics() {
                   }}
                   formatter={(value: number | undefined) => [value != null ? `${value} zł` : '', t('overview.expenses')]}
                 />
-                <Bar dataKey="kwota" fill="#ff00d4" fillOpacity={0.8} radius={[4, 4, 0, 0]} name={t('overview.expenses')} activeBar={false} />
+                <Bar dataKey="kwota" fill="#c98a9b" fillOpacity={0.8} radius={[4, 4, 0, 0]} name={t('overview.expenses')} activeBar={false} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -732,7 +732,7 @@ export function Analytics() {
                     className="flex items-center justify-between gap-3 border-b border-(--border)/40 py-2 last:border-0"
                   >
                     <span className="min-w-0 truncate text-sm text-(--text-primary)">{row.fullName ?? row.nazwa}</span>
-                    <span className="shrink-0 text-sm font-semibold tabular-nums text-(--accent-magenta)">
+                    <span className="shrink-0 text-sm font-semibold tabular-nums text-(--tx-expense)">
                       {row.kwota.toLocaleString('pl-PL')} zł
                     </span>
                   </li>
@@ -758,7 +758,7 @@ export function Analytics() {
                     ]}
                     labelFormatter={() => ''}
                   />
-                  <Bar dataKey="kwota" fill="#ff00d4" fillOpacity={0.8} radius={[0, 4, 4, 0]} name={t('transactions.colAmount')} activeBar={false} />
+                  <Bar dataKey="kwota" fill="#c98a9b" fillOpacity={0.8} radius={[0, 4, 4, 0]} name={t('transactions.colAmount')} activeBar={false} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

@@ -143,7 +143,7 @@ const SessionForm = memo(function SessionForm({
           <button
             type="button"
             onClick={() => setShowCatManager((v) => !v)}
-            className="text-sm text-(--text-muted) transition-colors hover:text-(--accent-cyan)"
+            className="text-sm text-(--text-muted) transition-colors hover:text-(--accent)"
           >
             {showCatManager ? t('common.closeCategories') : t('common.manageCategories')}
           </button>
@@ -649,13 +649,13 @@ export function LearningTime() {
       <Card className="max-md:p-4">
         <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
-            <Target className="h-5 w-5 text-(--accent-cyan)" />
-            <span className="font-gaming tracking-wide text-(--text-primary)">{t('time.weekGoalTitle')}</span>
+            <Target className="h-5 w-5 text-(--accent)" />
+            <span className="font-display tracking-wide text-(--text-primary)">{t('time.weekGoalTitle')}</span>
           </div>
           <button
             type="button"
             onClick={() => setShowGoalEdit(true)}
-            className="flex min-h-11 items-center gap-1.5 self-start rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-sm text-(--text-muted) transition-colors hover:border-(--accent-cyan)/50 hover:text-(--accent-cyan) sm:min-h-0 sm:py-1.5"
+            className="flex min-h-11 items-center gap-1.5 self-start rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-sm text-(--text-muted) transition-colors hover:border-(--accent)/50 hover:text-(--accent) sm:min-h-0 sm:py-1.5"
             title={t('time.changeGoal')}
           >
             <Target className="h-3.5 w-3.5" />
@@ -671,17 +671,17 @@ export function LearningTime() {
                 width: `${goalPercent}%`,
                 background:
                   goalPercent >= 100
-                    ? 'var(--accent-green)'
+                    ? 'var(--positive)'
                     : goalPercent >= 50
-                      ? 'var(--accent-cyan)'
-                      : 'var(--accent-amber)',
+                      ? 'var(--accent)'
+                      : 'var(--warning)',
               }}
             />
           </div>
           <span className="whitespace-nowrap text-sm font-mono text-(--text-muted)">
             {formatMinutes(weekProgress)} / {formatMinutes(weeklyGoalMinutes)}
           </span>
-          <span className="w-10 text-right text-sm font-gaming text-(--accent-cyan)">{goalPercent}%</span>
+          <span className="w-10 text-right text-sm font-display text-(--accent)">{goalPercent}%</span>
         </div>
         <div className="space-y-2">
           <div className="grid grid-cols-3 gap-2">
@@ -690,7 +690,7 @@ export function LearningTime() {
                 key={mins}
                 type="button"
                 onClick={() => setQuickMinutes(mins)}
-                className="flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-lg border border-(--accent-cyan)/30 bg-(--accent-cyan)/10 px-2 py-2 text-sm font-gaming text-(--accent-cyan) transition-colors hover:bg-(--accent-cyan)/20 sm:flex-row sm:gap-1.5 sm:px-3"
+                className="flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-lg border border-(--accent)/30 bg-(--accent)/10 px-2 py-2 text-sm font-display text-(--accent) transition-colors hover:bg-(--accent)/20 sm:flex-row sm:gap-1.5 sm:px-3"
               >
                 <Plus className="h-3.5 w-3.5 shrink-0" />
                 <span>{label}</span>
@@ -699,7 +699,7 @@ export function LearningTime() {
           </div>
           <div className="grid grid-cols-2 gap-2">
             <PomodoroInlineButton
-              className={`flex min-h-11 w-full items-center justify-center gap-1.5 rounded-lg border border-(--accent-cyan)/30 bg-(--accent-cyan)/10 px-3 py-2 text-sm font-gaming text-(--accent-cyan) transition-colors hover:bg-(--accent-cyan)/20${showAddForm ? ' col-span-2' : ''}`}
+              className={`flex min-h-11 w-full items-center justify-center gap-1.5 rounded-lg border border-(--accent)/30 bg-(--accent)/10 px-3 py-2 text-sm font-display text-(--accent) transition-colors hover:bg-(--accent)/20${showAddForm ? ' col-span-2' : ''}`}
             />
             {!showAddForm && (
               <button
@@ -746,10 +746,10 @@ export function LearningTime() {
                   className="flex items-start justify-between gap-2 rounded-lg border border-(--border) bg-(--bg-dark)/50 px-3 py-2.5 sm:items-center"
                 >
                   <div className="flex min-w-0 flex-1 items-start gap-3">
-                    <TypeIcon className="mt-0.5 h-4 w-4 shrink-0 text-(--accent-cyan) sm:mt-0" />
+                    <TypeIcon className="mt-0.5 h-4 w-4 shrink-0 text-(--accent) sm:mt-0" />
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="min-w-0 flex-1 truncate font-gaming text-(--text-primary)" title={s.topic}>
+                        <p className="min-w-0 flex-1 truncate font-display text-(--text-primary)" title={s.topic}>
                           {s.topic}
                         </p>
                         {s.category && (
@@ -759,7 +759,7 @@ export function LearningTime() {
                         )}
                       </div>
                       <p className="text-sm text-(--text-muted)">
-                        <span className="font-mono text-(--accent-cyan)">{formatMinutes(s.minutes)}</span>
+                        <span className="font-mono text-(--accent)">{formatMinutes(s.minutes)}</span>
                         <span className="ml-2">{s.date}</span>
                         {typeOpt && <span className="ml-2 opacity-60">• {t(`sessionType.${typeOpt.value}`)}</span>}
                         {s.note && <span className="ml-2">• {s.note}</span>}
@@ -769,7 +769,7 @@ export function LearningTime() {
                   <div className="flex shrink-0 items-center gap-1">
                     <button
                       onClick={() => setEditingSession(s)}
-                      className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-(--text-muted) transition-colors hover:bg-(--accent-cyan)/10 hover:text-(--accent-cyan) sm:min-h-0 sm:min-w-0 sm:p-1.5"
+                      className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-(--text-muted) transition-colors hover:bg-(--accent)/10 hover:text-(--accent) sm:min-h-0 sm:min-w-0 sm:p-1.5"
                       aria-label={t('time.editAria')}
                     >
                       <Pencil className="h-4 w-4" />
@@ -801,8 +801,8 @@ export function LearningTime() {
               <AreaChart data={trendData}>
                 <defs>
                   <linearGradient id="colorMinuty" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#00e5ff" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="#00e5ff" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#82a7cf" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#82a7cf" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -823,7 +823,7 @@ export function LearningTime() {
                 <Area
                   type="monotone"
                   dataKey="minuty"
-                  stroke="#00e5ff"
+                  stroke="#82a7cf"
                   strokeWidth={2}
                   fillOpacity={1}
                   fill="url(#colorMinuty)"

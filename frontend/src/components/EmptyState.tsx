@@ -22,7 +22,7 @@ export function EmptyState({ icon: Icon, title, description, action, className =
       <div className={`rounded-xl bg-(--bg-dark) border border-(--border) flex items-center justify-center ${compact ? 'w-10 h-10 mb-2' : 'w-14 h-14 mb-4'}`}>
         <Icon className={compact ? 'w-5 h-5 text-(--text-muted)' : 'w-7 h-7 text-(--text-muted)'} />
       </div>
-      <h3 className={`font-semibold text-(--text-primary) font-gaming tracking-wide ${compact ? 'text-sm' : 'text-base'}`}>
+      <h3 className={`font-semibold text-(--text-primary) font-display tracking-wide ${compact ? 'text-sm' : 'text-base'}`}>
         {title}
       </h3>
       {description && (

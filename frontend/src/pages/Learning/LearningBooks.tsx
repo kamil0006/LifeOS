@@ -51,8 +51,8 @@ function StatusBadge({ status }: { status: ReadingStatus }) {
   const { t } = useTranslation('learning')
   const bgMap: Record<ReadingStatus, string> = {
     chce_przeczytac: 'bg-(--bg-dark) text-(--text-muted) border border-(--border)',
-    czytam: 'bg-(--accent-cyan)/10 text-(--accent-cyan) border border-(--accent-cyan)/30',
-    przeczytane: 'bg-(--accent-green)/10 text-(--accent-green) border border-(--accent-green)/30',
+    czytam: 'bg-(--accent)/10 text-(--accent) border border-(--accent)/30',
+    przeczytane: 'bg-(--positive)/10 text-(--positive) border border-(--positive)/30',
   }
   const labelKeys: Record<ReadingStatus, string> = {
     chce_przeczytac: 'statusWantToRead',
@@ -60,7 +60,7 @@ function StatusBadge({ status }: { status: ReadingStatus }) {
     przeczytane: 'statusRead',
   }
   return (
-    <span className={`px-2 py-0.5 rounded text-xs font-gaming ${bgMap[status]}`}>
+    <span className={`px-2 py-0.5 rounded text-xs font-display ${bgMap[status]}`}>
       {t(`books.${labelKeys[status]}`)}
     </span>
   )
@@ -69,7 +69,7 @@ function StatusBadge({ status }: { status: ReadingStatus }) {
 function StarRating({ rating }: { rating?: number }) {
   if (!rating) return null
   return (
-    <span className="text-xs text-(--accent-amber) font-mono">
+    <span className="text-xs text-(--warning) font-mono">
       {'★'.repeat(rating)}{'☆'.repeat(5 - rating)}
     </span>
   )
@@ -166,7 +166,7 @@ const BookAddForm = memo(function BookAddForm({
           <button
             type="button"
             onClick={() => setShowCatManager((v) => !v)}
-            className="text-sm text-(--text-muted) transition-colors hover:text-(--accent-cyan)"
+            className="text-sm text-(--text-muted) transition-colors hover:text-(--accent)"
           >
             {showCatManager ? t('common.closeCategories') : t('common.manageCategories')}
           </button>

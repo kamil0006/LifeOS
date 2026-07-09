@@ -45,13 +45,13 @@ function StatusBadge({ status }: { status: ProjectStatus }) {
   const opt = STATUS_OPTIONS.find((o) => o.value === status)
   const bgMap: Record<ProjectStatus, string> = {
     pomysl: 'bg-(--bg-dark) text-(--text-muted) border border-(--border)',
-    w_trakcie: 'bg-(--accent-cyan)/10 text-(--accent-cyan) border border-(--accent-cyan)/30',
-    mvp: 'bg-(--accent-amber)/10 text-(--accent-amber) border border-(--accent-amber)/30',
-    ukonczony: 'bg-(--accent-green)/10 text-(--accent-green) border border-(--accent-green)/30',
+    w_trakcie: 'bg-(--accent)/10 text-(--accent) border border-(--accent)/30',
+    mvp: 'bg-(--warning)/10 text-(--warning) border border-(--warning)/30',
+    ukonczony: 'bg-(--positive)/10 text-(--positive) border border-(--positive)/30',
     porzucony: 'bg-[#e74c3c]/10 text-[#e74c3c] border border-[#e74c3c]/30',
   }
   return (
-    <span className={`px-2 py-0.5 rounded text-xs font-gaming ${bgMap[status]}`}>
+    <span className={`px-2 py-0.5 rounded text-xs font-display ${bgMap[status]}`}>
       {opt ? t(`projects.${opt.labelKey}`) : status}
     </span>
   )
@@ -62,8 +62,8 @@ function PriorityBadge({ priority }: { priority?: Project['priority'] }) {
   if (!priority) return null
   const map: Record<NonNullable<Project['priority']>, string> = {
     niski: 'text-(--text-muted)',
-    sredni: 'text-(--accent-amber)',
-    wysoki: 'text-(--accent-magenta)',
+    sredni: 'text-(--warning)',
+    wysoki: 'text-(--accent-2)',
   }
   const labelKeys: Record<NonNullable<Project['priority']>, string> = {
     niski: 'priorityLowArrow',
@@ -71,7 +71,7 @@ function PriorityBadge({ priority }: { priority?: Project['priority'] }) {
     wysoki: 'priorityHighArrow',
   }
   return (
-    <span className={`text-xs font-gaming ${map[priority]}`}>{t(`projects.${labelKeys[priority]}`)}</span>
+    <span className={`text-xs font-display ${map[priority]}`}>{t(`projects.${labelKeys[priority]}`)}</span>
   )
 }
 
@@ -400,7 +400,7 @@ export function LearningProjects() {
                           {p.githubUrl && (
                             <SafeExternalLink
                               href={p.githubUrl}
-                              className="p-1.5 rounded-lg text-(--text-muted) hover:text-(--accent-cyan) transition-colors"
+                              className="p-1.5 rounded-lg text-(--text-muted) hover:text-(--accent) transition-colors"
                               title="GitHub"
                             >
                               <Github className="w-4 h-4" />
@@ -411,7 +411,7 @@ export function LearningProjects() {
                               href={p.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="p-1.5 rounded-lg text-(--text-muted) hover:text-(--accent-cyan) transition-colors"
+                              className="p-1.5 rounded-lg text-(--text-muted) hover:text-(--accent) transition-colors"
                               aria-label={t('projects.openAria')}
                             >
                               <ExternalLink className="w-4 h-4" />

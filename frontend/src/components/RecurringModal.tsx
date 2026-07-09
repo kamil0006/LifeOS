@@ -172,7 +172,7 @@ export function RecurringModal({
       panelKey="recurring-panel"
     >
       <div className="flex items-center justify-between mb-5">
-        <h3 className="text-xl font-bold text-(--text-primary) font-gaming">
+        <h3 className="text-xl font-bold text-(--text-primary) font-display">
           {isEdit ? t('transactions.editRecurring') : t('recurringModal.newTitle')}
         </h3>
         <button
@@ -186,7 +186,7 @@ export function RecurringModal({
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('transactionModal.nameLabel')}</label>
+          <label className="block text-base text-(--text-muted) font-display mb-1">{t('transactionModal.nameLabel')}</label>
           <input
             type="text"
             value={name}
@@ -196,12 +196,12 @@ export function RecurringModal({
             }}
             required
             autoFocus={!isEdit}
-            className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
+            className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-display focus:border-(--accent) focus:outline-none"
           />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('transactionModal.amountLabel')}</label>
+            <label className="block text-base text-(--text-muted) font-display mb-1">{t('transactionModal.amountLabel')}</label>
             <div className="flex gap-2">
               <input
                 type="number"
@@ -210,13 +210,13 @@ export function RecurringModal({
                 value={amount}
                 onChange={(e) => updateField('amount', e.target.value)}
                 required
-                className="no-spinners w-full min-w-0 flex-1 px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
+                className="no-spinners w-full min-w-0 flex-1 px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-display focus:border-(--accent) focus:outline-none"
               />
               <select
                 value={currency}
                 onChange={(e) => updateField('currency', e.target.value as Currency)}
                 aria-label={t('recurringModal.currencyLabel')}
-                className="shrink-0 rounded-lg bg-(--bg-dark) border border-(--border) px-2.5 py-2.5 text-base font-gaming text-(--text-primary) focus:border-(--accent-cyan) focus:outline-none"
+                className="shrink-0 rounded-lg bg-(--bg-dark) border border-(--border) px-2.5 py-2.5 text-base font-display text-(--text-primary) focus:border-(--accent) focus:outline-none"
               >
                 {CURRENCIES.map((c) => (
                   <option key={c} value={c}>
@@ -234,7 +234,7 @@ export function RecurringModal({
             )}
           </div>
           <div>
-            <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('recurringModal.dayOfMonthLabel')}</label>
+            <label className="block text-base text-(--text-muted) font-display mb-1">{t('recurringModal.dayOfMonthLabel')}</label>
             <input
               type="text"
               inputMode="numeric"
@@ -247,7 +247,7 @@ export function RecurringModal({
               }}
               placeholder=""
               required
-              className="no-spinners w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-gaming focus:border-(--accent-cyan) focus:outline-none"
+              className="no-spinners w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base font-display focus:border-(--accent) focus:outline-none"
             />
           </div>
         </div>
@@ -271,7 +271,7 @@ export function RecurringModal({
           id="recurring-payment"
         />
         <div>
-          <label className="block text-base text-(--text-muted) font-gaming mb-1">
+          <label className="block text-base text-(--text-muted) font-display mb-1">
             {t('transactionModal.noteLabel')}
           </label>
           <textarea
@@ -280,21 +280,21 @@ export function RecurringModal({
             rows={2}
             maxLength={2000}
             placeholder={t('transactionModal.notePlaceholder')}
-            className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base focus:border-(--accent-cyan) focus:outline-none resize-y"
+            className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base focus:border-(--accent) focus:outline-none resize-y"
           />
         </div>
         <div className="flex gap-2 pt-2">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-lg border border-(--border) text-(--text-muted) font-gaming hover:text-(--text-primary)"
+            className="px-4 py-2 rounded-lg border border-(--border) text-(--text-muted) font-display hover:text-(--text-primary)"
           >
             {t('common:cancel')}
           </button>
           <button
             type="submit"
             disabled={!isPaymentMethod(paymentMethod)}
-            className="px-4 py-2 rounded-lg bg-(--accent-amber)/15 text-(--accent-amber) border border-(--accent-amber)/40 font-gaming hover:bg-(--accent-amber)/25 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 rounded-lg bg-(--warning)/15 text-(--warning) border border-(--warning)/40 font-display hover:bg-(--warning)/25 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isEdit ? t('transactions.saveChanges') : t('common:save')}
           </button>

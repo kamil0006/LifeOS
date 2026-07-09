@@ -36,7 +36,7 @@ export function MobileBottomNav({ onMoreClick }: Props) {
           className={({ isActive }) =>
             `flex flex-1 flex-col items-center justify-center gap-0.5 py-2.5 min-h-[56px] text-xs font-medium transition-colors duration-150 outline-none ${
               isActive
-                ? 'text-(--accent-cyan) drop-shadow-[0_0_6px_rgba(0,229,255,0.5)]'
+                ? 'text-(--accent)'
                 : 'text-(--text-muted) hover:text-(--text-primary)'
             }`
           }

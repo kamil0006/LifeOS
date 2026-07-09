@@ -297,7 +297,7 @@ export function Transactions() {
               setFormType('income')
               setShowForm(true)
             }}
-            className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-(--tx-income)/35 bg-(--tx-income)/15 px-3 font-gaming text-sm tracking-wide text-(--tx-income) transition-colors hover:bg-(--tx-income)/22 sm:flex-none sm:px-4"
+            className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-(--tx-income)/35 bg-(--tx-income)/15 px-3 font-display text-sm tracking-wide text-(--tx-income) transition-colors hover:bg-(--tx-income)/22 sm:flex-none sm:px-4"
           >
             <Plus className="h-4 w-4 shrink-0" />
             <span className="truncate">{t('transactions.addIncome')}</span>
@@ -308,7 +308,7 @@ export function Transactions() {
               setFormType('expense')
               setShowForm(true)
             }}
-            className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-(--tx-expense)/35 bg-(--tx-expense)/15 px-3 font-gaming text-sm tracking-wide text-(--tx-expense) transition-colors hover:bg-(--tx-expense)/22 sm:flex-none sm:px-4"
+            className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-(--tx-expense)/35 bg-(--tx-expense)/15 px-3 font-display text-sm tracking-wide text-(--tx-expense) transition-colors hover:bg-(--tx-expense)/22 sm:flex-none sm:px-4"
           >
             <Plus className="h-4 w-4 shrink-0" />
             <span className="truncate">{t('transactions.addExpense')}</span>
@@ -318,11 +318,11 @@ export function Transactions() {
 
       <Card className="max-md:p-4">
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
-          <h3 className="text-base font-semibold text-(--text-primary) font-gaming tracking-wide">{t('transactions.title')}</h3>
+          <h3 className="text-base font-semibold text-(--text-primary) font-display tracking-wide">{t('transactions.title')}</h3>
           {(drillCategory || dateRange) && (
             <div className="flex flex-wrap items-center gap-2">
               {drillCategory && (
-                <span className="rounded-lg border border-(--accent-cyan)/40 bg-(--accent-cyan)/10 px-2.5 py-1 text-sm text-(--accent-cyan)">
+                <span className="rounded-lg border border-(--accent)/40 bg-(--accent)/10 px-2.5 py-1 text-sm text-(--accent)">
                   {getLabel(drillCategory)}
                 </span>
               )}
@@ -348,7 +348,7 @@ export function Transactions() {
                     ? 'border-(--tx-income)/40 bg-(--tx-income)/18 text-(--tx-income)'
                     : f === 'expense'
                       ? 'border-(--tx-expense)/40 bg-(--tx-expense)/18 text-(--tx-expense)'
-                      : 'border-(--accent-cyan)/40 bg-(--accent-cyan)/20 text-(--accent-cyan)'
+                      : 'border-(--accent)/40 bg-(--accent)/20 text-(--accent)'
                   : 'border-(--border) bg-(--bg-dark) text-(--text-muted) hover:text-(--text-primary)'
               }`}
             >
@@ -410,7 +410,7 @@ export function Transactions() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortBy)}
-              className="min-h-11 min-w-0 w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none"
+              className="min-h-11 min-w-0 w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent)/50 focus:outline-none"
               aria-label={t('transactions.sortAria')}
             >
               <option value="date_desc">{t('transactions.sortDateDesc')}</option>
@@ -482,7 +482,7 @@ export function Transactions() {
                       <button
                         type="button"
                         onClick={() => setNoteTx(tx)}
-                        className="p-2 text-(--text-muted) transition-colors hover:text-(--accent-cyan)"
+                        className="p-2 text-(--text-muted) transition-colors hover:text-(--accent)"
                         title={t('transactions.viewNote')}
                       >
                         <StickyNote className="h-4 w-4" />
@@ -490,7 +490,7 @@ export function Transactions() {
                       <button
                         type="button"
                         onClick={() => handleEdit(tx)}
-                        className="p-2 text-(--text-muted) transition-colors hover:text-(--accent-cyan)"
+                        className="p-2 text-(--text-muted) transition-colors hover:text-(--accent)"
                         title={tx.isScheduled ? t('transactions.editRecurring') : t('common:edit')}
                       >
                         <Pencil className="h-4 w-4" />
@@ -563,7 +563,7 @@ export function Transactions() {
                     <button
                       type="button"
                       onClick={() => setNoteTx(tx)}
-                      className="rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-(--bg-dark) hover:text-(--accent-cyan)"
+                      className="rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-(--bg-dark) hover:text-(--accent)"
                       aria-label={t('transactions.viewNote')}
                     >
                       <StickyNote className="h-4 w-4" />
@@ -571,7 +571,7 @@ export function Transactions() {
                     <button
                       type="button"
                       onClick={() => handleEdit(tx)}
-                      className="rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-(--bg-dark) hover:text-(--accent-cyan)"
+                      className="rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-(--bg-dark) hover:text-(--accent)"
                       aria-label={tx.isScheduled ? t('transactions.editRecurring') : t('common:edit')}
                     >
                       <Pencil className="h-4 w-4" />
@@ -608,7 +608,7 @@ export function Transactions() {
             action={
               <button
                 onClick={() => setShowForm(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-(--accent-cyan)/20 text-(--accent-cyan) border border-(--accent-cyan)/40 font-gaming hover:bg-(--accent-cyan)/30 transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-(--accent)/20 text-(--accent) border border-(--accent)/40 font-display hover:bg-(--accent)/30 transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 {t('transactions.addTransaction')}

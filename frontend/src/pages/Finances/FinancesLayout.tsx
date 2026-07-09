@@ -21,7 +21,7 @@ export function FinancesLayout() {
   return (
     <div className="space-y-5 sm:space-y-6">
       <div>
-        <h1 className="font-gaming text-2xl font-bold tracking-wider text-(--text-primary)">{t('layout.title')}</h1>
+        <h1 className="font-display text-2xl font-bold tracking-wider text-(--text-primary)">{t('layout.title')}</h1>
         <p className="mt-1 text-base text-(--text-muted)">{t('layout.subtitle')}</p>
       </div>
 
@@ -34,7 +34,7 @@ export function FinancesLayout() {
             className={({ isActive }) =>
               `flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg border px-3 py-2.5 text-sm transition-colors sm:px-4 ${
                 isActive
-                  ? 'border-(--border) bg-(--bg-dark) font-gaming tracking-wide text-(--text-primary)'
+                  ? 'border-(--border) bg-(--bg-dark) font-display tracking-wide text-(--text-primary)'
                   : 'border-transparent text-(--text-muted) hover:bg-(--bg-card-hover)/60 hover:text-(--text-primary)'
               }`
             }

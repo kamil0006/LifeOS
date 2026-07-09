@@ -6,7 +6,7 @@ import { EXPENSE_CATEGORY_NONE } from '../../lib/expenseCategoryConstants'
 import { ConfirmDialog } from '../ConfirmDialog'
 
 const PRESET_COLORS = [
-  '#00ff9d', '#00e5ff', '#ffb800', '#ff00d4', '#e57373', '#64b5f6', '#9d4edd',
+  '#63b28f', '#82a7cf', '#c9a35c', '#b58cc4', '#e57373', '#64b5f6', '#9d4edd',
   '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dfe6e9', '#fd79a8',
   '#a29bfe', '#6c5ce7', '#00b894', '#e17055',
 ] as const
@@ -58,11 +58,11 @@ export function ExpenseCategoryPicker({
     <>
       <div className="space-y-2">
       <div>
-        <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('expenseCategoryPicker.categoryLabel')}</label>
+        <label className="block text-base text-(--text-muted) font-display mb-1">{t('expenseCategoryPicker.categoryLabel')}</label>
         <select
           value={selectValue}
           onChange={(e) => onCategoryChange(e.target.value)}
-          className="w-full px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-sm font-gaming focus:border-(--accent-cyan) focus:outline-none"
+          className="w-full px-3 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-sm font-display focus:border-(--accent) focus:outline-none"
         >
           <option value={EXPENSE_CATEGORY_NONE}>{t('expenseCategoryPicker.noneOption')}</option>
           {categories.map((c) => (
@@ -74,8 +74,8 @@ export function ExpenseCategoryPicker({
       </div>
 
       {canManage && (
-        <div className="rounded-md border border-(--accent-cyan)/12 bg-(--bg-dark)/40 p-2.5 space-y-2">
-          <p className="text-sm text-(--text-muted) font-gaming leading-tight">{t('expenseCategoryPicker.categoryListLabel')}</p>
+        <div className="rounded-md border border-(--accent)/12 bg-(--bg-dark)/40 p-2.5 space-y-2">
+          <p className="text-sm text-(--text-muted) font-display leading-tight">{t('expenseCategoryPicker.categoryListLabel')}</p>
 
           {categories.length > 0 && onDeleteCategory && (
             <div className="flex flex-wrap gap-1">
@@ -109,7 +109,7 @@ export function ExpenseCategoryPicker({
                 <button
                   type="button"
                   onClick={() => setShowAddCategory(true)}
-                  className="flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed border-(--border) py-1.5 text-sm text-(--text-muted) font-gaming transition-colors hover:border-(--accent-cyan)/35 hover:text-(--accent-cyan)"
+                  className="flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed border-(--border) py-1.5 text-sm text-(--text-muted) font-display transition-colors hover:border-(--accent)/35 hover:text-(--accent)"
                 >
                   <Plus className="h-3.5 w-3.5 shrink-0" />
                   {t('expenseCategoryPicker.newCategory')}
@@ -121,7 +121,7 @@ export function ExpenseCategoryPicker({
                     value={newCategoryName}
                     onChange={(e) => setNewCategoryName(e.target.value)}
                     placeholder={t('expenseCategoryPicker.namePlaceholder')}
-                    className="w-full px-2 py-1.5 rounded-md bg-(--bg-dark) border border-(--border) text-(--text-primary) text-sm focus:border-(--accent-cyan) focus:outline-none"
+                    className="w-full px-2 py-1.5 rounded-md bg-(--bg-dark) border border-(--border) text-(--text-primary) text-sm focus:border-(--accent) focus:outline-none"
                   />
                   <div className="flex flex-wrap gap-2">
                     {PRESET_COLORS.map((col) => (
@@ -130,7 +130,7 @@ export function ExpenseCategoryPicker({
                         type="button"
                         onClick={() => setNewCategoryColor(col)}
                         className={`relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 transition-all ${
-                          newCategoryColor === col ? 'border-(--accent-cyan)' : 'border-transparent hover:ring-1 hover:ring-white/15'
+                          newCategoryColor === col ? 'border-(--accent)' : 'border-transparent hover:ring-1 hover:ring-white/15'
                         }`}
                         style={{ backgroundColor: col }}
                         title={col}
@@ -163,7 +163,7 @@ export function ExpenseCategoryPicker({
                         setShowAddCategory(false)
                         setNewCategoryName('')
                       }}
-                      className="rounded-md bg-(--accent-cyan)/20 px-2.5 py-1 text-sm text-(--accent-cyan) font-gaming border border-(--accent-cyan)/30 hover:bg-(--accent-cyan)/28"
+                      className="rounded-md bg-(--accent)/20 px-2.5 py-1 text-sm text-(--accent) font-display border border-(--accent)/30 hover:bg-(--accent)/28"
                     >
                       {t('expenseCategoryPicker.add')}
                     </button>

@@ -13,7 +13,7 @@ export type DashboardQuickLinksProps = {
 const LINK_BASE = 11
 
 const linkShell =
-  'group relative rounded-lg border border-(--border) bg-(--bg-card) p-5 transition-[border-color,box-shadow] duration-200 ease-out hover:border-(--accent-cyan)/40 hover:shadow-[0_0_20px_rgba(0,229,255,0.08)] overflow-hidden block'
+  'group relative rounded-lg border border-(--border) bg-(--bg-card) p-5 transition-[border-color,box-shadow] duration-200 ease-out hover:border-(--accent)/40 overflow-hidden block'
 
 export function DashboardQuickLinks({ notesCount, habitsCount, reduceMotion }: DashboardQuickLinksProps) {
   const { t } = useTranslation('dashboard')
@@ -24,33 +24,33 @@ export function DashboardQuickLinks({ notesCount, habitsCount, reduceMotion }: D
     >
       <motion.div variants={getDashboardTileVariants(reduceMotion, LINK_BASE + 0)} className="min-w-0">
         <Link to="/notes" className={linkShell}>
-          <div className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-(--accent-cyan)/40 to-transparent" />
-          <StickyNote className="w-8 h-8 text-(--accent-cyan) mb-2 group-hover:drop-shadow-[0_0_8px_rgba(0,229,255,0.5)]" />
-          <p className="text-base font-semibold text-(--text-primary) font-gaming">{t('linkNotes')}</p>
+          <div className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-(--accent)/40 to-transparent" />
+          <StickyNote className="w-8 h-8 text-(--accent) mb-2 group-" />
+          <p className="text-base font-semibold text-(--text-primary) font-display">{t('linkNotes')}</p>
           <p className="text-sm text-(--text-muted) mt-0.5">{t('notesCount', { count: notesCount })}</p>
         </Link>
       </motion.div>
       <motion.div variants={getDashboardTileVariants(reduceMotion, LINK_BASE + 1)} className="min-w-0">
         <Link to="/calendar" className={linkShell}>
-          <div className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-(--accent-cyan)/40 to-transparent" />
-          <Calendar className="w-8 h-8 text-(--accent-cyan) mb-2 group-hover:drop-shadow-[0_0_8px_rgba(0,229,255,0.5)]" />
-          <p className="text-base font-semibold text-(--text-primary) font-gaming">{t('linkCalendar')}</p>
+          <div className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-(--accent)/40 to-transparent" />
+          <Calendar className="w-8 h-8 text-(--accent) mb-2 group-" />
+          <p className="text-base font-semibold text-(--text-primary) font-display">{t('linkCalendar')}</p>
           <p className="text-sm text-(--text-muted) mt-0.5">{t('linkCalendarDesc')}</p>
         </Link>
       </motion.div>
       <motion.div variants={getDashboardTileVariants(reduceMotion, LINK_BASE + 2)} className="min-w-0">
         <Link to="/learning" className={linkShell}>
-          <div className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-(--accent-cyan)/40 to-transparent" />
-          <GraduationCap className="w-8 h-8 text-(--accent-cyan) mb-2 group-hover:drop-shadow-[0_0_8px_rgba(0,229,255,0.5)]" />
-          <p className="text-base font-semibold text-(--text-primary) font-gaming">{t('linkLearning')}</p>
+          <div className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-(--accent)/40 to-transparent" />
+          <GraduationCap className="w-8 h-8 text-(--accent) mb-2 group-" />
+          <p className="text-base font-semibold text-(--text-primary) font-display">{t('linkLearning')}</p>
           <p className="text-sm text-(--text-muted) mt-0.5">{t('linkLearningDesc')}</p>
         </Link>
       </motion.div>
       <motion.div variants={getDashboardTileVariants(reduceMotion, LINK_BASE + 3)} className="min-w-0">
         <Link to="/habits" className={linkShell}>
-          <div className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-(--accent-cyan)/40 to-transparent" />
-          <Target className="w-8 h-8 text-(--accent-cyan) mb-2 group-hover:drop-shadow-[0_0_8px_rgba(0,229,255,0.5)]" />
-          <p className="text-base font-semibold text-(--text-primary) font-gaming">{t('linkHabits')}</p>
+          <div className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-(--accent)/40 to-transparent" />
+          <Target className="w-8 h-8 text-(--accent) mb-2 group-" />
+          <p className="text-base font-semibold text-(--text-primary) font-display">{t('linkHabits')}</p>
           <p className="text-sm text-(--text-muted) mt-0.5">{t('habitsCount', { count: habitsCount })}</p>
         </Link>
       </motion.div>

@@ -79,10 +79,10 @@ export function Recurring() {
   }, [allScheduled, sortBy])
 
   const sortButtonClass = (key: RecurringSortBy) =>
-    `rounded-lg border px-3 py-2 text-sm font-gaming transition-colors ${
+    `rounded-lg border px-3 py-2 text-sm font-display transition-colors ${
       sortBy === key
-        ? 'border-(--accent-amber)/45 bg-(--accent-amber)/15 text-(--accent-amber)'
-        : 'border-(--border) bg-(--bg-dark) text-(--text-muted) hover:border-(--accent-amber)/25 hover:text-(--text-primary)'
+        ? 'border-(--warning)/45 bg-(--warning)/15 text-(--warning)'
+        : 'border-(--border) bg-(--bg-dark) text-(--text-muted) hover:border-(--warning)/25 hover:text-(--text-primary)'
     }`
 
   const handleAdd = async (data: RecurringFormPayload) => {
@@ -156,9 +156,9 @@ export function Recurring() {
 
   return (
     <div className="space-y-5">
-      <Card className="border-(--accent-amber)/20 max-md:p-4">
+      <Card className="border-(--warning)/20 max-md:p-4">
         <p className="text-base text-(--text-muted)">{t('recurring.monthlyTotal')}</p>
-        <p className="mt-1 text-2xl font-bold font-gaming text-(--accent-amber)">
+        <p className="mt-1 text-2xl font-bold font-display text-(--warning)">
           {total.toLocaleString('pl-PL')} zł
         </p>
         <p className="mt-1 text-sm text-(--text-muted) sm:text-base">{t('recurring.annually', { amount: annualTotal.toLocaleString('pl-PL') })}</p>
@@ -173,7 +173,7 @@ export function Recurring() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as RecurringSortBy)}
-            className="min-h-11 rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent-amber)/50 focus:outline-none"
+            className="min-h-11 rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--warning)/50 focus:outline-none"
           >
             <option value="payment">{t('recurring.sortPayment')}</option>
             <option value="amount">{t('recurring.sortAmount')}</option>
@@ -203,7 +203,7 @@ export function Recurring() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0, x: -20 }}
-                  className="flex flex-col gap-3 rounded-lg border border-(--border) bg-(--bg-dark) p-3.5 transition-colors hover:border-(--accent-amber)/20 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-3"
+                  className="flex flex-col gap-3 rounded-lg border border-(--border) bg-(--bg-dark) p-3.5 transition-colors hover:border-(--warning)/20 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-3"
                 >
                   <div className="flex min-w-0 flex-1 items-start gap-3">
                     <span
@@ -220,7 +220,7 @@ export function Recurring() {
                           </span>
                         ) : null}
                       </p>
-                      <p className="mt-1.5 font-mono text-lg tabular-nums leading-none text-(--accent-amber)">
+                      <p className="mt-1.5 font-mono text-lg tabular-nums leading-none text-(--warning)">
                         {s.currency && s.currency !== 'PLN' && s.originalAmount != null ? (
                           <>
                             −{formatCurrencyAmount(s.originalAmount, s.currency)}{' '}
@@ -245,7 +245,7 @@ export function Recurring() {
                       onClick={() =>
                         void handleUpdate(s.id, { active: !s.active, pausedUntil: null })
                       }
-                      className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg border border-(--border) bg-(--bg-card) px-3 text-sm text-(--text-primary) font-gaming shadow-sm hover:border-(--accent-cyan)/45 hover:bg-(--accent-cyan)/12 hover:text-(--accent-cyan) transition-colors"
+                      className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg border border-(--border) bg-(--bg-card) px-3 text-sm text-(--text-primary) font-display shadow-sm hover:border-(--accent)/45 hover:bg-(--accent)/12 hover:text-(--accent) transition-colors"
                       title={s.active ? t('recurring.pauseTitle') : t('recurring.resumeTitle')}
                     >
                       {s.active ? <Pause className="h-4 w-4 shrink-0" /> : <Play className="h-4 w-4 shrink-0" />}
@@ -266,7 +266,7 @@ export function Recurring() {
                             reminderDaysBefore: e.target.value === '' ? null : Number(e.target.value),
                           })
                         }
-                        className="no-spinners h-7 w-10 rounded bg-(--bg-dark) border border-(--border) px-1 text-center text-base text-(--text-primary) focus:border-(--accent-cyan) focus:outline-none"
+                        className="no-spinners h-7 w-10 rounded bg-(--bg-dark) border border-(--border) px-1 text-center text-base text-(--text-primary) focus:border-(--accent) focus:outline-none"
                         aria-label={t('recurring.reminderDaysAria')}
                       />
                       <span className="whitespace-nowrap text-base text-(--text-muted)">{t('recurring.reminderDaysSuffix')}</span>
@@ -274,7 +274,7 @@ export function Recurring() {
                     <button
                       type="button"
                       onClick={() => setNoteTarget(s)}
-                      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-(--text-muted) hover:bg-(--accent-amber)/10 hover:text-(--accent-amber) transition-colors"
+                      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-(--text-muted) hover:bg-(--warning)/10 hover:text-(--warning) transition-colors"
                       title={t('transactions.viewNote')}
                     >
                       <StickyNote className="h-4 w-4" />
@@ -285,7 +285,7 @@ export function Recurring() {
                         setEditingRecurring(s)
                         setRecurringModalOpen(true)
                       }}
-                      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-(--text-muted) hover:bg-(--accent-amber)/10 hover:text-(--accent-amber) transition-colors"
+                      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-(--text-muted) hover:bg-(--warning)/10 hover:text-(--warning) transition-colors"
                       title={t('common:edit')}
                     >
                       <Pencil className="h-4 w-4" />
@@ -311,7 +311,7 @@ export function Recurring() {
             setEditingRecurring(null)
             setRecurringModalOpen(true)
           }}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-(--accent-amber)/15 text-(--accent-amber) border border-(--accent-amber)/40 font-gaming hover:bg-(--accent-amber)/25 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-(--warning)/15 text-(--warning) border border-(--warning)/40 font-display hover:bg-(--warning)/25 transition-colors"
         >
           <Plus className="w-4 h-4" />
           {t('recurring.addRecurring')}

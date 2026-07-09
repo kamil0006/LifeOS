@@ -47,7 +47,7 @@ export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
         aria-modal="true"
         aria-label={t('drawerAria')}
       >
-        <div className="absolute top-0 left-0 h-px w-full bg-linear-to-r from-transparent via-(--accent-cyan)/50 to-transparent" />
+        <div className="absolute top-0 left-0 h-px w-full bg-linear-to-r from-transparent via-(--accent)/50 to-transparent" />
         <AppNavPanel onNavigate={onClose} mobileClose={onClose} />
       </aside>
     </div>
