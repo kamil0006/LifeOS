@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { getExchangeRates } from '../lib/exchangeRates.js'
 
-/** Publiczny endpoint (bez auth) — kursy walut nie są danymi wrażliwymi, potrzebny też w trybie demo. */
+/** Public endpoint (no auth) — exchange rates are not sensitive data; also needed in demo mode. */
 export const exchangeRatesRouter = Router()
 
 exchangeRatesRouter.get('/', async (_req, res) => {

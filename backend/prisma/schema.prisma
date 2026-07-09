@@ -14,9 +14,9 @@ model User {
   password  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  /// Pierwsze pobranie kategorii wydatków – jednorazowy zestaw domyślnych; brak ponownego seedu po usunięciu wszystkich.
+  /// First fetch of expense categories – one-time default set; no re-seeding after all are deleted.
   financesCategoriesSeededAt DateTime?
-  /// Znacznik czasu ostatniego wykonanego eksportu backupu — do przypomnienia w UI.
+  /// Timestamp of the last completed backup export — for the UI reminder.
   lastBackupAt DateTime?
 
   expenseCategories  ExpenseCategory[]
@@ -44,7 +44,7 @@ model ExpenseCategory {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name      String
-  color     String   // hex, np. "#ff00d4"
+  color     String   // hex, e.g. "#b58cc4"
   createdAt DateTime @default(now())
 
   @@unique([userId, name])
@@ -59,9 +59,9 @@ model Expense {
   amount         Float
   category       String
   date           DateTime
-  /// card | cash — opcjonalne dla starych wpisów sprzed migracji
+  /// card | cash — optional for old entries predating the migration
   paymentMethod  String?
-  /// Opcjonalna notatka do transakcji
+  /// Optional note for the transaction
   note           String?
   createdAt      DateTime @default(now())
 
@@ -74,19 +74,19 @@ model ScheduledExpense {
   userId     String
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name       String
-  amount     Float    // zawsze w PLN — przeliczone wg bieżącego kursu, gdy currency != PLN
+  amount     Float    // always in PLN — converted at the current rate when currency != PLN
   currency   String   @default("PLN") // PLN | USD | EUR
-  originalAmount Float? // kwota w walucie `currency`, gdy currency != PLN
+  originalAmount Float? // amount in the `currency` currency when currency != PLN
   category   String
-  dayOfMonth Int      // 1-31, dzień miesiąca
+  dayOfMonth Int      // 1-31, day of month
   active     Boolean  @default(true)
-  /// card | cash — opcjonalne dla starych wpisów sprzed migracji
+  /// card | cash — optional for old entries predating the migration
   paymentMethod String?
   pausedUntil DateTime? @db.Date
   reminderDaysBefore Int?
-  /// Opcjonalna notatka do stałego wydatku
+  /// Optional note for the recurring expense
   note       String?
-  /// Data zakończenia (soft delete) — wystąpienia po tej dacie nie są generowane, wcześniejsze zostają w historii
+  /// End date (soft delete) — occurrences after this date are not generated; earlier ones stay in history
   endedAt    DateTime?
   createdAt  DateTime @default(now())
 
@@ -133,11 +133,11 @@ model Income {
   amount         Float
   date           DateTime
   recurring      Boolean  @default(false)
-  /// Klucz kategorii jak w Expense (np. nazwa z ExpenseCategory lub pusty string)
+  /// Category key as in Expense (e.g. a name from ExpenseCategory or an empty string)
   category       String   @default("")
-  /// card | cash — opcjonalne dla starych wpisów sprzed migracji
+  /// card | cash — optional for old entries predating the migration
   paymentMethod  String?
-  /// Opcjonalna notatka do transakcji
+  /// Optional note for the transaction
   note           String?
   createdAt      DateTime @default(now())
 
@@ -152,9 +152,9 @@ model Todo {
   text      String
   done      Boolean   @default(false)
   createdAt DateTime  @default(now())
-  /// Data terminu (bez strefy — dzień kalendarzowy)
+  /// Due date (no timezone — calendar day)
   dueDate   DateTime? @db.Date
-  /// Opcjonalna godzina „HH:mm”
+  /// Optional time "HH:mm"
   dueTime   String?
   /// low | medium | high
   priority  String    @default("medium")
@@ -174,9 +174,9 @@ model Event {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   title     String
   date      DateTime
-  time      String?  // np. "14:00"
+  time      String?  // e.g. "14:00"
   category  String?  // Praca, Prywatne, Zdrowie, Rozrywka, Inne
-  color     String?  // hex, np. "#00e5ff"
+  color     String?  // hex, e.g. "#82a7cf"
   notes     String?
   linkedTodoId String?
   createdAt DateTime @default(now())
@@ -194,13 +194,13 @@ model Habit {
   color        String?
   /// daily | weekdays | weekly | monthly
   scheduleType String   @default("daily")
-  /// Dni tygodnia dla scheduleType=weekdays (0 = niedziela ... 6 = sobota).
+  /// Days of the week for scheduleType=weekdays (0 = Sunday ... 6 = Saturday).
   scheduleDays Int[]    @default([])
   weeklyTarget Int?
   monthlyTarget Int?
-  /// Etykieta jednostki (np. km, min) — tylko UI; null = nawyk binarny (tak/nie).
+  /// Unit label (e.g. km, min) — UI only; null = binary habit (yes/no).
   unit         String?
-  /// Opcjonalny dzienny cel liczbowy (np. 10 km). Przy braku — wpis liczy się sumarycznie bez procentu „celu dnia”.
+  /// Optional numeric daily goal (e.g. 10 km). When absent — entries count as totals without a "daily goal" percentage.
   targetPerDay Float?
   createdAt    DateTime @default(now())
   archivedAt   DateTime?
@@ -219,7 +219,7 @@ model HabitCheckIn {
   date      DateTime
   /// done | missed | skipped
   status    String   @default("done")
-  /// Wykonana ilość; null = zaznaczenie bez liczby (kompatybilność / nawyk binarny).
+  /// Completed quantity; null = check-in without a number (compatibility / binary habit).
   value     Float?
   note      String?
   createdAt DateTime @default(now())
@@ -253,9 +253,9 @@ model Note {
   title     String?
   pinned    Boolean  @default(false)
   archivedAt DateTime?
-  /// nowy | do_sprawdzenia | w_realizacji | zrobiony | odrzucony (tylko dla type=idea)
+  /// nowy | do_sprawdzenia | w_realizacji | zrobiony | odrzucony (only for type=idea)
   ideaStatus String  @default("nowy")
-  /// link | ksiazka | artykul | wideo | cytat | inne (tylko dla type=reference)
+  /// link | ksiazka | artykul | wideo | cytat | inne (only for type=reference)
   referenceKind String @default("link")
   referenceUrl String?
   referenceSource String?
@@ -271,7 +271,7 @@ model LearningSession {
   id        String   @id @default(cuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  /// Dzień kalendarzowy "YYYY-MM-DD"
+  /// Calendar day "YYYY-MM-DD"
   date      String
   minutes   Int
   topic     String

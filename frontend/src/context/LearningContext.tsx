@@ -237,7 +237,7 @@ interface LearningContextType {
 
 const LearningContext = createContext<LearningContextType | null>(null)
 
-/** API zwraca null dla pól opcjonalnych; UI oczekuje undefined. */
+/** The API returns null for optional fields; the UI expects undefined. */
 function cleanNulls<T>(row: T): T {
   const out: Record<string, unknown> = {}
   for (const [k, v] of Object.entries(row as Record<string, unknown>)) {

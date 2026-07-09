@@ -5,9 +5,9 @@ type Props = { children: ReactNode }
 type State = { error: Error | null }
 
 /**
- * Globalny error boundary. Zamiast czarnego ekranu (cała apka odmontowana)
- * pokazuje czytelny komunikat z treścią błędu — kluczowe na mobile,
- * gdzie nie ma konsoli deweloperskiej.
+ * Global error boundary. Instead of a black screen (whole app unmounted)
+ * it shows a readable message with the error details — crucial on mobile,
+ * where there is no developer console.
  */
 export class AppErrorBoundary extends Component<Props, State> {
   state: State = { error: null }

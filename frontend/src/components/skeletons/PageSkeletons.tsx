@@ -154,7 +154,7 @@ export function AnalyticsPageSkeleton() {
   )
 }
 
-/** Net worth: okres, podsumowanie, składniki, wykres */
+/** Net worth: period, summary, components, chart */
 export function NetWorthPageSkeleton() {
   return (
     <div className="space-y-6 animate-in fade-in duration-200">

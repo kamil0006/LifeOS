@@ -118,7 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await authApi.logout()
     } catch {
-      // cookie mogło wygasnąć — i tak czyścimy stan lokalny
+      // the cookie may have expired — we clear local state regardless
     }
     queryClient.clear()
     setUser(null)

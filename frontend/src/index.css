@@ -6,7 +6,7 @@
 }
 
 :root {
-  /* Minimalny, stonowany motyw — grafit + stalowy akcent */
+  /* Minimal, muted theme — graphite + steel accent */
   --bg-dark: #111315;
   --bg-card: #17191c;
   --bg-card-hover: #1d2024;
@@ -16,13 +16,13 @@
   --positive: #63b28f;
   --warning: #c9a35c;
   --danger: #e57373;
-  /* Transakcje — stonowane odcienie czytelne na ciemnym tle */
+  /* Transactions — muted shades readable on a dark background */
   --tx-income: #63b28f;
   --tx-expense: #c98a9b;
   --text-primary: #e7e9ec;
   --text-muted: #969ca5;
 
-  /* Mobilny nagłówek — burger, logo, wyszukiwarka */
+  /* Mobile header — burger, logo, search */
   --mobile-header-pad-top: max(0.75rem, env(safe-area-inset-top, 0px));
   --mobile-header-pad-x: max(0.75rem, env(safe-area-inset-left, 0px));
   --mobile-header-pad-right: max(0.75rem, env(safe-area-inset-right, 0px));
@@ -64,7 +64,7 @@ body {
   }
 }
 
-/* Wysokość mobilnego nagłówka (burger + logo + szukaj) — spacer w Layout */
+/* Mobile header height (burger + logo + search) — spacer in Layout */
 .mobile-header-bar {
   box-sizing: border-box;
   min-height: var(--mobile-header-height);
@@ -79,22 +79,22 @@ body {
   height: var(--mobile-header-height);
 }
 
-/* Nagłówki i wyróżnienia — ta sama rodzina, cięższy krój */
+/* Headings and highlights — same family, heavier weight */
 .font-display {
   font-family: 'IBM Plex Sans', system-ui, sans-serif;
 }
 
-/* Input focus — dyskretny pierścień */
+/* Input focus — subtle ring */
 input:focus, select:focus, textarea:focus {
   box-shadow: 0 0 0 1px var(--accent);
 }
 
-/* Usuń białe obramowanie focus po kliknięciu */
+/* Remove the white focus outline after click */
 a:focus, button:focus, [role="button"]:focus {
   outline: none;
 }
 
-/* Pasek przewijania — neutralny (tylko pionowy, w panelach z .scrollbar-theme) */
+/* Scrollbar — neutral (vertical only, in panels with .scrollbar-theme) */
 ::-webkit-scrollbar {
   width: 8px;
   height: 0;
@@ -112,7 +112,7 @@ a:focus, button:focus, [role="button"]:focus {
 ::-webkit-scrollbar-thumb:hover {
   background: #3e444b;
 }
-/* Firefox – główna strona i obszary z overflow */
+/* Firefox – main page and overflow areas */
 html,
 .scrollbar-theme {
   scrollbar-width: thin;
@@ -129,7 +129,7 @@ html,
   height: 0;
 }
 
-/* Global Search – pole wyszukiwania w stylu apki */
+/* Global Search – search field in the app's style */
 .global-search-field {
   display: flex;
   align-items: center;
@@ -158,7 +158,7 @@ html,
   color: var(--text-muted);
 }
 
-/* Ukryj strzałki przy wybranych polach liczbowych */
+/* Hide spinners on selected number inputs */
 input.no-spinners::-webkit-inner-spin-button,
 input.no-spinners::-webkit-outer-spin-button {
   -webkit-appearance: none;
@@ -174,7 +174,7 @@ input[type='date'] {
   color-scheme: dark;
 }
 
-/* Neutralna ikona kalendarza */
+/* Neutral calendar icon */
 input[type='date']::-webkit-calendar-picker-indicator {
   filter: invert(0.75);
   opacity: 0.8;

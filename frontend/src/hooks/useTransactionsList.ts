@@ -24,13 +24,13 @@ export interface Transaction {
 
 const FALLBACK_MONTH_NAMES = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru']
 
-/** Dzisiejsza data lokalna w formacie YYYY-MM-DD (do porównań stringowych z datami transakcji). */
+/** Today's local date in YYYY-MM-DD format (for string comparisons with transaction dates). */
 function todayDateStr(): string {
   const d = new Date()
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-/** Wirtualna transakcja ze stałego wydatku ma pojawić się dopiero w dniu płatności, nie wcześniej. */
+/** A virtual transaction from a recurring expense should appear only on the payment day, not earlier. */
 function excludeFutureScheduled(tx: Transaction[]): Transaction[] {
   const today = todayDateStr()
   return tx.filter((t) => !(t.isScheduled && t.date > today))

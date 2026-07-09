@@ -22,9 +22,9 @@ export interface ScheduledExpenseLike {
   paymentMethod?: PaymentMethod | null
   pausedUntil?: string | null
   note?: string | null
-  /** Data zakończenia (soft delete) — płatności po tej dacie nie są generowane, wcześniejsze zostają. */
+  /** End date (soft delete) — payments after this date are not generated; earlier ones remain. */
   endedAt?: string | null
-  /** Kiedy dodano stały wydatek — nie pokazujemy go w miesiącach sprzed tej daty. */
+  /** When the recurring expense was added — not shown in months before this date. */
   createdAt?: string | Date
 }
 
@@ -35,15 +35,15 @@ export interface MergedExpense extends ExpenseLike {
   originalAmount?: number | null
 }
 
-/** Czy stały koszt jest zakończony (soft delete) przed podaną datą wystąpienia (YYYY-MM-DD)? */
+/** Is the recurring cost ended (soft-deleted) before the given occurrence date (YYYY-MM-DD)? */
 function isEndedBefore(s: ScheduledExpenseLike, date: string): boolean {
   if (!s.endedAt) return false
   return date > s.endedAt.slice(0, 10)
 }
 
-/** Łączy wydatki z zaplanowanymi – generuje wirtualne wydatki na dany miesiąc.
- * Pomija z expenses te, które pokrywają się ze scheduled (ta sama nazwa, ten sam dzień miesiąca).
- * Zakończone stałe koszty (endedAt) generują wystąpienia tylko do daty zakończenia. */
+/** Merges expenses with scheduled ones – generates virtual expenses for a given month.
+ * Skips expenses that overlap with scheduled ones (same name, same day of month).
+ * Ended recurring costs (endedAt) generate occurrences only up to their end date. */
 export function mergeExpensesWithScheduled<E extends ExpenseLike, S extends ScheduledExpenseLike>(
   expenses: E[],
   scheduled: S[],

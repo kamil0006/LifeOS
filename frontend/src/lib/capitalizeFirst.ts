@@ -1,4 +1,4 @@
-/** Pierwsza litera wielka (locale pl), reszta napisu bez zmian. */
+/** Uppercases the first letter (pl locale), rest of the string unchanged. */
 export function capitalizeFirstPl(value: string): string {
   const s = value.trim()
   if (!s) return ''

@@ -1,4 +1,4 @@
-/** Bieżące kursy walut obcych względem PLN (Tabela A NBP) z cache w pamięci. */
+/** Current foreign exchange rates against PLN (NBP Table A) with an in-memory cache. */
 
 export type ForeignCurrency = 'USD' | 'EUR'
 export type Currency = 'PLN' | ForeignCurrency
@@ -8,7 +8,7 @@ interface RateCache {
   fetchedAt: number
 }
 
-const TTL_MS = 6 * 60 * 60 * 1000 // kursy NBP publikowane raz dziennie w dni robocze — 6h wystarcza
+const TTL_MS = 6 * 60 * 60 * 1000 // NBP rates are published once per business day — 6h is enough
 const FALLBACK_RATES: Record<ForeignCurrency, number> = { USD: 4.0, EUR: 4.3 }
 
 const cache: Partial<Record<ForeignCurrency, RateCache>> = {}
@@ -46,7 +46,7 @@ function round2(n: number): number {
   return Math.round(n * 100) / 100
 }
 
-/** Przelicza kwotę w walucie obcej na PLN wg bieżącego kursu; PLN zwraca bez zmian. */
+/** Converts a foreign-currency amount to PLN at the current rate; PLN is returned unchanged. */
 export async function convertToPln(amount: number, currency: Currency): Promise<number> {
   if (currency === 'PLN') return amount
   const rate = await getExchangeRate(currency)

@@ -125,7 +125,7 @@ function getFilteredChildren(item: NavItem, query: string): NavItemChild[] {
   return item.children.filter((c) => normalizeForSearch(c.label).includes(nQuery))
 }
 
-/** Stopka palety: jawne Ctrl / Shift (bez symboli ⌃⌘). */
+/** Palette footer: explicit Ctrl / Shift (no ⌃⌘ symbols). */
 function ShortcutLegend({
   parts,
   accentClass,
@@ -176,7 +176,7 @@ export function GlobalSearch() {
     [navItems, query]
   )
 
-  // Auto-rozwiń sekcje, gdy zapytanie pasuje do podstrony
+  // Auto-expand sections when the query matches a subpage
   useEffect(() => {
     if (!query.trim()) return
     setExpanded((prev) => {

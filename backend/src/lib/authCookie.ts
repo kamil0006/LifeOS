@@ -30,7 +30,7 @@ export function setRefreshCookie(res: Response, refreshToken: string, rememberMe
   })
 }
 
-/** @deprecated użyj setAccessCookie + setRefreshCookie */
+/** @deprecated use setAccessCookie + setRefreshCookie */
 export function setAuthCookie(res: Response, token: string, rememberMe: boolean): void {
   setAccessCookie(res, token)
   setRefreshCookie(res, token, rememberMe)

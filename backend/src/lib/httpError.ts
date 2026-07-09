@@ -1,4 +1,4 @@
-/** Kontrolowany błąd HTTP — obsługiwany przez errorHandler. */
+/** Controlled HTTP error — handled by errorHandler. */
 export class HttpError extends Error {
   constructor(
     public readonly status: number,

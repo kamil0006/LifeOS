@@ -88,7 +88,7 @@ export function NetWorthAccountCreateModal({ isOpen, onClose, kind, onSubmit }: 
       await onSubmit(payload)
       onClose()
     } catch {
-      /* błąd API — modal zostaje otwarty */
+      /* API error — the modal stays open */
     }
   }
 

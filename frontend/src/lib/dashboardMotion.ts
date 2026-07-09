@@ -1,7 +1,7 @@
 import type { Variants } from 'framer-motion'
 import { TODO_ITEM_SPRING } from './todoMotion'
 
-/** Kontener Dashboard: kolejne sekcje odsłaniają się po kolei. */
+/** Dashboard container: sections reveal one after another. */
 export const dashboardContainerVariants: Variants = {
   hidden: { opacity: 0 },
   show: {
@@ -10,7 +10,7 @@ export const dashboardContainerVariants: Variants = {
   },
 }
 
-/** Kierunki wejścia kafelków (cyklicznie) — każdy z innej strony, na końcu jedna spójna siatka. */
+/** Tile entrance directions (cycled) — each from a different side, ending as one cohesive grid. */
 const DIRECTION_OFFSETS = [
   { x: -40, y: 0 },
   { x: 40, y: 0 },
@@ -36,7 +36,7 @@ export function getDashboardTileVariants(reduceMotion: boolean | null, index: nu
   }
 }
 
-/** Sekcja z wieloma kafelkami (Quick stats / linki) — stagger wewnątrz, po kolei z różnych stron. */
+/** Section with multiple tiles (Quick stats / links) — inner stagger, one by one from different sides. */
 export const dashboardSectionStaggerVariants: Variants = {
   hidden: { opacity: 0 },
   show: {

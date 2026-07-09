@@ -7,7 +7,7 @@ export type IdeaStatus =
   | 'odrzucony'
   | 'zrobiony'
 
-/** Kolejność workflow w UI (filtry, select – „Zrobiony” przed „Odrzucony”). */
+/** Workflow order in the UI (filters, select – "Zrobiony" before "Odrzucony"). */
 export const IDEA_STATUS_WORKFLOW_ORDER: IdeaStatus[] = [
   'nowy',
   'do_sprawdzenia',
@@ -31,7 +31,7 @@ export interface Note {
   ideaStatus: IdeaStatus
   referenceKind: ReferenceKind
   referenceUrl: string | null
-  /** Źródło cytatu / opis linku poza polem URL */
+  /** Quote source / link description outside the URL field */
   referenceSource: string | null
 }
 
@@ -39,7 +39,7 @@ const IDEA_STATUSES: IdeaStatus[] = [...IDEA_STATUS_WORKFLOW_ORDER]
 
 const REF_KINDS: ReferenceKind[] = ['link', 'ksiazka', 'artykul', 'wideo', 'cytat', 'inne']
 
-/** Jedna linia do wyświetlania tytułu – bez składni Markdown (linki → tekst anchor). */
+/** Single line for displaying the title – Markdown syntax stripped (links → anchor text). */
 export function stripMarkdownForDisplayTitle(line: string): string {
   let s = line.replace(/\r\n/g, '\n').trim()
   s = s.replace(/^#{1,6}\s+/, '')
@@ -174,7 +174,7 @@ export function createNotePayloadFromInput(input: NoteCreateInput): Omit<Note, '
   }
 }
 
-/** Pełny rekord (np. demo / migracja) → payload bez id/dat */
+/** Full record (e.g. demo / migration) → payload without id/dates */
 export function createNotePayload(partial: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>): Omit<Note, 'id' | 'createdAt' | 'updatedAt'> {
   return createNotePayloadFromInput({
     type: partial.type,

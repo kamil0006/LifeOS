@@ -13,8 +13,8 @@ interface EventModalProps {
   onUpdate?: (id: string, data: Partial<Omit<DemoEvent, 'id'>>) => void
   onDelete?: (id: string) => void
   initialDate?: string // YYYY-MM-DD
-  event?: DemoEvent | null // gdy edycja
-  holidayName?: string // pełna nazwa święta w tym dniu
+  event?: DemoEvent | null // when editing
+  holidayName?: string // full name of the holiday on this day
   categories: EventCategory[]
   onAddCategory: (name: string, color: string) => void
   onUpdateCategory: (id: string, updates: Partial<Pick<EventCategory, 'name' | 'color'>>) => void

@@ -23,10 +23,10 @@ export type IncomeRow = {
 export type ScheduledExpenseRow = {
   id: string
   name: string
-  /** Zawsze w PLN — przeliczone wg bieżącego kursu, gdy currency != PLN. */
+  /** Always in PLN — converted at the current rate when currency != PLN. */
   amount: number
   currency?: Currency
-  /** Kwota w walucie `currency`, gdy currency != PLN. */
+  /** Amount in the `currency` currency when currency != PLN. */
   originalAmount?: number | null
   category: string
   dayOfMonth: number
@@ -35,7 +35,7 @@ export type ScheduledExpenseRow = {
   pausedUntil?: string | null
   reminderDaysBefore?: number | null
   note?: string | null
-  /** Data zakończenia (soft delete) — płatności po tej dacie nie są generowane. */
+  /** End date (soft delete) — payments after this date are not generated. */
   endedAt?: string | null
   createdAt?: string
 }

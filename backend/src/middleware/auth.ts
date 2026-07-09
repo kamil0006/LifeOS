@@ -6,7 +6,7 @@ import { getTokenFromRequest } from '../lib/authCookie.js'
 export interface AuthPayload {
   userId: string
   email: string
-  /** access — API; refresh — tylko odświeżanie sesji */
+  /** access — API; refresh — session refresh only */
   typ?: 'access' | 'refresh'
 }
 

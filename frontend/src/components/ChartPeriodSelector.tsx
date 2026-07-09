@@ -8,7 +8,7 @@ const selectClass =
   'min-h-[40px] shrink-0 cursor-pointer rounded-lg border border-(--border) bg-(--bg-card) px-3 py-2 font-display text-sm tracking-wide text-(--text-primary) transition-colors focus:border-(--accent) focus:outline-none'
 
 interface ChartPeriodSelectorProps {
-  /** Jednolity pasek np. „Okres:” przed przełącznikami */
+  /** Uniform bar, e.g. "Period:", before the toggles */
   leadingLabel?: string
 }
 

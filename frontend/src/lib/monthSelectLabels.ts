@@ -1,4 +1,4 @@
-/** Skrócone nazwy miesięcy — selektory / wykresy (Sty, Lut, …). */
+/** Abbreviated month names — selectors / charts (Sty, Lut, …). */
 export const ROLLING_MONTH_NAMES = [
   'Sty',
   'Lut',
@@ -15,8 +15,8 @@ export const ROLLING_MONTH_NAMES = [
 ] as const
 
 /**
- * Opcje miesiąca: od bieżącego miesiąca w dół do stycznia tego samego roku
- * (bez wieloletniej listy wstecz — np. tylko Sty–Maj 2026 zamiast do czerwca 2024).
+ * Month options: from the current month down to January of the same year
+ * (no multi-year list going back — e.g. only Jan–May 2026 instead of back to June 2024).
  */
 export function buildCurrentYearMonthOptions(
   recalcToken: number,

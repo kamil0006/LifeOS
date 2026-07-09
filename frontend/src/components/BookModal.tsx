@@ -61,7 +61,7 @@ function buildInitialForm(book: Book): BookFormState {
 
 export function BookModal({ book, bookCategories, onSave, onClose }: BookModalProps) {
   const { t } = useTranslation('learning')
-  /** Mała lista — koszt budowy Set przy każdym renderze jest znikomy; useMemo i tak często się przelicza przy nowej referencji `bookCategories`. */
+  /** Small list — the cost of building a Set on each render is negligible; useMemo would recompute on a new `bookCategories` reference anyway. */
   const allCategories = [...new Set([...DEFAULT_CATEGORIES, ...bookCategories])]
 
   const [form, setForm] = useState<BookFormState>(() => buildInitialForm(book))
