@@ -9,7 +9,7 @@ export interface NetWorthAdjustmentEditModalProps {
   onClose: () => void
   title: string
   initialDescription: string
-  /** Kwota korekty (delta salda), jak zapisana w historii */
+  /** Adjustment amount (balance delta), as stored in history */
   initialAmount: number
   onSave: (data: { description: string; amount: number }) => void | Promise<void>
   onDelete: () => void | Promise<void>

@@ -130,7 +130,7 @@ authRouter.post('/login', async (req, res) => {
   }
 })
 
-/** Reset hasła — tylko lokalnie z ALLOW_DEV_RESET=true */
+/** Password reset — local only, with ALLOW_DEV_RESET=true */
 authRouter.post('/reset-password', async (req, res) => {
   if (!isDevResetPasswordAllowed()) {
     return res.status(404).json({ error: 'Nie dostępne' })
@@ -151,7 +151,7 @@ authRouter.get('/me', authMiddleware, (req, res) => {
   res.json({ id: userId, email })
 })
 
-/** Odśwież krótkotrwały access token na podstawie refresh cookie. */
+/** Refresh the short-lived access token based on the refresh cookie. */
 authRouter.post('/refresh', async (req, res) => {
   const refreshToken = getRefreshTokenFromRequest(req)
   if (!refreshToken) {

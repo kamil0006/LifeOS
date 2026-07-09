@@ -37,7 +37,7 @@ const NW_ICON_MAP: Record<string, LucideIcon> = {
   circleDollar: CircleDollarSign,
 }
 
-/** Ikony pod wybór przy dodawaniu aktywa (klucze zapisujemy w koncie / demo). */
+/** Icons to choose from when adding an asset (keys are stored on the account / demo). */
 export const NW_ASSET_ICON_OPTIONS: { key: string; label: string }[] = [
   { key: 'landmark', label: 'Bank, lokata' },
   { key: 'home', label: 'Dom, mieszkanie' },

@@ -47,7 +47,7 @@ import {
 const TAB_IDS: TodoTabFilter[] = ['today', 'upcoming', 'all', 'done']
 const PRIORITY_IDS: TodoPriority[] = ['low', 'medium', 'high']
 
-/** Wyświetlanie: pierwsza litera jak zdania (bez zmiany zapisanego tekstu). */
+/** Display: sentence-case first letter (without changing the stored text). */
 function formatTodoTitleForDisplay(text: string, locale: string): string {
   const s = text.trim()
   if (!s) return text

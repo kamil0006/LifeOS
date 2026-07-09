@@ -10,7 +10,7 @@ export function useFinanceListsQuery() {
   const userId = user?.id ?? ''
   const enabled = sessionReady && isLoggedIn && !isDemoMode
 
-  /** Soft polling: świeże dane gdy karta otwarta dłużej (inna karta / telefon nie wymaga SSE na start). */
+  /** Soft polling: fresh data when the tab stays open longer (another tab / phone doesn't need SSE at startup). */
   const listOptions = {
     enabled: enabled && !!userId,
     refetchInterval: 45_000 as number | false,

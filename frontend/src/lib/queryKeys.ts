@@ -1,4 +1,4 @@
-/** Klucze z segmentem userId — brak mieszania cache między kontami. */
+/** Keys with a userId segment — no cache mixing between accounts. */
 export const queryKeys = {
   root: ['lifeos'] as const,
   expenses: (userId: string) => [...queryKeys.root, 'expenses', userId] as const,

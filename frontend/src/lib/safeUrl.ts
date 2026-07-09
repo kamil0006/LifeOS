@@ -1,4 +1,4 @@
-/** Zezwala tylko na http(s) — chroni przed javascript: / data: w linkach. */
+/** Allows only http(s) — protects against javascript: / data: in links. */
 export function safeHref(href: string | undefined | null): string | undefined {
   if (!href?.trim()) return undefined
   try {

@@ -6,7 +6,7 @@ interface CardProps {
   className?: string
   title?: string
   action?: ReactNode
-  /** false = brak wbudowanego wejścia (animuje rodzic, np. Dashboard z kierunkami) */
+  /** false = no built-in entrance (the parent animates, e.g. Dashboard with directions) */
   animateEntrance?: boolean
 }
 

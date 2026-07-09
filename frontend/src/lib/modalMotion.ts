@@ -7,7 +7,7 @@ export { TODO_ITEM_SPRING, TODO_COLUMN_SPRING } from './todoMotion'
 type MotionDivProps = Pick<HTMLMotionProps<'div'>, 'initial' | 'animate' | 'exit' | 'transition'>
 
 /**
- * Dialogi: spring jak To-do, wejście panelu z boku (`modalPanelPresence`) — bez kolizji z layoutem (x) + ruchem pionowym karty.
+ * Dialogs: spring like To-do, panel entering from the side (`modalPanelPresence`) — no clash with layout (x) + vertical card motion.
  */
 export function useModalMotion(): { backdrop: MotionDivProps; panel: MotionDivProps } {
   const reduceMotion = useReducedMotion()
@@ -36,7 +36,7 @@ export function useModalMotion(): { backdrop: MotionDivProps; panel: MotionDivPr
   return { backdrop, panel }
 }
 
-/** Onboarding: slide jak kolumna Kanban (lewa), zamknięcie jak karta To-do. */
+/** Onboarding: slides like a Kanban column (left), closes like a To-do card. */
 export function useOnboardingMotion(): {
   overlay: MotionDivProps
   stepCard: MotionDivProps

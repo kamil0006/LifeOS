@@ -794,7 +794,7 @@ export function FinancesNetWorth() {
     return () => clearTimeout(t)
   }, [undoInfo])
 
-  /** Skeleton tylko przed pierwszym fetch — nigdy nie zastępuj całej strony podczas refetch/mutacji. */
+  /** Skeleton only before the first fetch — never replace the whole page during refetch/mutation. */
   const showInitialSkeleton =
     useApiFinance &&
     netWorthAccountsQuery.data === undefined &&

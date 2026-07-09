@@ -182,7 +182,7 @@ export function Dashboard() {
         <MonthSelector />
       </motion.div>
 
-      {/* KPI cards – zawsze 3 obok siebie */}
+      {/* KPI cards – always 3 side by side */}
       <div className="grid grid-cols-3 gap-2 sm:gap-4">
         <motion.div variants={getDashboardTileVariants(reduceMotion, 1)} className="min-w-0">
           <Card
@@ -386,7 +386,7 @@ export function Dashboard() {
         <AiWeeklyReport />
       </motion.div>
 
-      {/* Nadchodzące wydarzenia + Quick stats – rozszerzony grid */}
+      {/* Upcoming events + Quick stats – extended grid */}
       <DashboardQuickStats
         upcomingEvents={upcomingEvents}
         todoCount={todoCount}

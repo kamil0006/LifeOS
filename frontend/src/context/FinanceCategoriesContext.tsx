@@ -20,7 +20,7 @@ export interface FinanceCategory {
 const DEMO_STORAGE_KEY = 'lifeos_demo_categories'
 const HIDDEN_BUILTIN_STORAGE_PREFIX = 'lifeos_fin_hidden_builtin:'
 
-/** Nazwy domyślnych kategorii wydatków (jak seed) — do odfiltrowania z `loaded` przy merge. */
+/** Names of the default expense categories (same as seed) — filtered out of `loaded` during merge. */
 const DEFAULT_EXPENSE_NAMES_LOWER = new Set(
   FINANCE_CATEGORIES.filter((c) => c.id !== 'Dochód').map((c) => c.id.toLowerCase())
 )
@@ -45,7 +45,7 @@ function writeHiddenBuiltinSet(userId: string, set: Set<string>) {
   localStorage.setItem(hiddenBuiltinStorageKey(userId), JSON.stringify([...set]))
 }
 
-/** Zapisuje domyślny zestaw (jak pierwszy start) i zwraca obiekty do React Query. */
+/** Saves the default set (like on first start) and returns objects for React Query. */
 function resetDemoCategoriesStorageToDefaults(): FinanceCategory[] {
   const rows = FINANCE_CATEGORIES.filter((c) => c.id !== 'Dochód').map((c) => ({
     name: c.id,
@@ -109,8 +109,8 @@ function builtInExpenseCategories(): FinanceCategory[] {
 }
 
 /**
- * Domyślne kategorie (jak seed); wpisy z API nadpisują te same nazwy.
- * `hidden` — nazwy usunięte przez użytkownika (nie pokazuj nawet jako fallback).
+ * Default categories (same as seed); API entries override matching names.
+ * `hidden` — names deleted by the user (not shown even as fallback).
  */
 function mergeLoadedWithBuiltIn(loaded: FinanceCategory[], hidden: Set<string>): FinanceCategory[] {
   const mergedBase: FinanceCategory[] = []
@@ -134,7 +134,7 @@ export function useFinanceCategories() {
   const { isDemoMode, user, isLoggedIn, sessionReady } = useAuth()
   const queryClient = useQueryClient()
   const userId = user?.id ?? ''
-  /** API tylko przy sesji cookie i poza trybem demo (demo zawsze localStorage). */
+  /** API only with a cookie session and outside demo mode (demo always uses localStorage). */
   const fetchFromApi = sessionReady && isLoggedIn && !isDemoMode
   const key = queryKeys.expenseCategories(userId)
 
@@ -266,7 +266,7 @@ export function useFinanceCategories() {
 
   return {
     categories,
-    /** @deprecated alias — wszystkie kategorie są „własne”; użyj `categories`. */
+    /** @deprecated alias — all categories are "custom"; use `categories`. */
     customCategories: categories,
     getColor,
     getLabel,

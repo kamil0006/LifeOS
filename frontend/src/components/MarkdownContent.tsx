@@ -1,8 +1,8 @@
 import { lazy, Suspense } from 'react'
 import { safeHref } from '../lib/safeUrl'
 
-// react-markdown + remark/rehype/micromark to ~110 KB. Ładujemy je leniwie,
-// żeby nie wciągać tego ciężaru do bundla startowego (Layout montuje NoteModal globalnie).
+// react-markdown + remark/rehype/micromark is ~110 KB. We load it lazily
+// to keep that weight out of the initial bundle (Layout mounts NoteModal globally).
 const ReactMarkdown = lazy(() => import('react-markdown'))
 
 interface MarkdownContentProps {

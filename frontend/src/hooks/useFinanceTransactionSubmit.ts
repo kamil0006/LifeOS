@@ -18,7 +18,7 @@ export type TransactionFormData = {
 export type TransactionUpdateData = TransactionFormData & { recurring?: boolean }
 
 /**
- * Wspólna logika zapisu przychodu/wydatku (Transakcje + skróty globalne).
+ * Shared income/expense saving logic (Transactions + global shortcuts).
  */
 export function useFinanceTransactionSubmit() {
   const { user, isLoggedIn, sessionReady, isDemoMode } = useAuth()

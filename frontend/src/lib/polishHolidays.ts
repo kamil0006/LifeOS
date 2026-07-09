@@ -1,4 +1,4 @@
-/** Polskie święta państwowe – zwraca mapę data (YYYY-MM-DD) -> nazwa święta (tłumaczona przez `t`). */
+/** Polish public holidays – returns a map of date (YYYY-MM-DD) -> holiday name (translated via `t`). */
 
 function pad(n: number) {
   return String(n).padStart(2, '0')
@@ -19,7 +19,7 @@ export type HolidayNameKey =
   | 'pentecost'
   | 'corpusChristi'
 
-/** Oblicza datę Wielkanocy – algorytm Oudina (1940) */
+/** Computes the date of Easter – Oudin's algorithm (1940) */
 function getEasterDate(year: number): { month: number; day: number } {
   const f = Math.floor
   const G = year % 19
@@ -33,12 +33,12 @@ function getEasterDate(year: number): { month: number; day: number } {
   return { month, day }
 }
 
-/** Zwraca święta polskie dla danego roku jako Record<YYYY-MM-DD, nazwa>; `t` tłumaczy nazwy wg `calendar.holidays.*`. */
+/** Returns Polish holidays for a given year as Record<YYYY-MM-DD, name>; `t` translates names via `calendar.holidays.*`. */
 export function getPolishHolidays(year: number, t: (key: string) => string): Record<string, string> {
   const result: Record<string, string> = {}
   const name = (key: HolidayNameKey) => t(`holidays.${key}`)
 
-  // Stałe święta
+  // Fixed holidays
   const fixed: [number, number, HolidayNameKey][] = [
     [1, 1, 'newYear'],
     [1, 6, 'epiphany'],
@@ -55,7 +55,7 @@ export function getPolishHolidays(year: number, t: (key: string) => string): Rec
     result[`${year}-${pad(m)}-${pad(d)}`] = name(key)
   }
 
-  // Święta ruchome (od Wielkanocy)
+  // Movable holidays (relative to Easter)
   const easter = getEasterDate(year)
   const easterDate = new Date(year, easter.month - 1, easter.day)
 

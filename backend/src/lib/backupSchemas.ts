@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
-/** Walidacja danych wgrywanych przy przywracaniu backupu — permisywna co do wolnego tekstu,
- * ale ścisła co do typów i pól, które sterują logiką aplikacji (enumy, ID). */
+/** Validates data uploaded during backup restore — permissive about free text,
+ * but strict about the types and fields that drive app logic (enums, IDs). */
 
 const id = z.string().min(1).max(64)
 const dateVal = z.coerce.date()

@@ -3,7 +3,7 @@ import { useQuickAdd } from '../context/QuickAddContext'
 import { useFinanceCategories } from '../context/FinanceCategoriesContext'
 import { useFinanceTransactionSubmit, type TransactionFormData } from '../hooks/useFinanceTransactionSubmit'
 
-/** Modal dodawania transakcji wywoływany skrótami globalnymi (np. Ctrl+E). */
+/** Transaction-adding modal invoked via global shortcuts (e.g. Ctrl+E). */
 export function GlobalQuickTransaction() {
   const { transactionType, closeTransaction } = useQuickAdd()
   const { submit } = useFinanceTransactionSubmit()

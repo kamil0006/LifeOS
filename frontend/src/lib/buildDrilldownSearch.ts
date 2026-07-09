@@ -1,7 +1,7 @@
 import type { ChartPeriod } from '../context/ChartPeriodContext'
 import { getMonthsInQuarter } from '../context/ChartPeriodContext'
 
-/** Query string dla `/finances/transactions` — drill z dashboardu (wykres kategorii). */
+/** Query string for `/finances/transactions` — drill-down from the dashboard (category chart). */
 export function buildTransactionsDrilldownSearch(
   category: string,
   chartPeriod: { period: ChartPeriod } | null,

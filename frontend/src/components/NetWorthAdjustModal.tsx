@@ -8,9 +8,9 @@ interface NetWorthAdjustModalProps {
   isOpen: boolean
   onClose: () => void
   onSubmit: (position: NetWorthPositionKey, amount: number, isAdd: boolean, description: string) => void
-  /** Gdy ustawione – blokuje zmianę pozycji, edytujemy tylko tę kartę */
+  /** When set – locks the position selection, only this card is edited */
   initialPosition?: NetWorthPositionKey
-  /** Aktualna wartość pozycji – do podglądu przed zatwierdzeniem */
+  /** Current value of the position – shown as a preview before confirming */
   currentValue?: number
 }
 

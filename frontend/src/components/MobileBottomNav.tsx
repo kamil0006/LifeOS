@@ -55,7 +55,7 @@ export function MobileBottomNav({ onMoreClick }: Props) {
         </NavLink>
       ))}
 
-      {/* Przycisk "Więcej" otwiera MobileDrawer */}
+      {/* The "More" button opens MobileDrawer */}
       <button
         type="button"
         onClick={onMoreClick}

@@ -15,7 +15,7 @@ aiRouter.post('/weekly-report', aiRateLimiter, async (req, res) => {
 aiRouter.get('/status', (_req, res) => {
   res.json({
     enabled: isOpenAiReportEnabled(),
-    /** Raport regułowy zawsze dostępny bez wysyłki danych na zewnątrz */
+    /** The rule-based report is always available without sending data externally */
     fallbackAvailable: true,
   })
 })

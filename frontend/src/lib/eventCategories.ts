@@ -1,4 +1,4 @@
-/** Kategorie wydarzeń (domyślne + własne użytkownika). */
+/** Event categories (defaults + user-defined). */
 
 export interface EventCategory {
   id: string

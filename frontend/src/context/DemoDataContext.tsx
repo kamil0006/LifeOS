@@ -19,7 +19,7 @@ export interface DemoIncome {
   amount: number
   date: string
   recurring: boolean
-  /** Jak Expense.category — wspólne kategorie finansów */
+  /** Same as Expense.category — shared finance categories */
   category: string
   paymentMethod?: PaymentMethod
   note?: string | null
@@ -28,7 +28,7 @@ export interface DemoIncome {
 export interface DemoScheduledExpense {
   id: string
   name: string
-  /** Zawsze w PLN — przeliczone wg kursu z chwili zapisu (tryb demo nie odświeża kursu automatycznie). */
+  /** Always in PLN — converted at the rate from the time of saving (demo mode does not auto-refresh rates). */
   amount: number
   currency?: Currency
   originalAmount?: number | null
@@ -39,9 +39,9 @@ export interface DemoScheduledExpense {
   pausedUntil?: string | null
   reminderDaysBefore?: number | null
   note?: string | null
-  /** Data zakończenia (soft delete) — płatności po tej dacie nie są generowane. */
+  /** End date (soft delete) — payments after this date are not generated. */
   endedAt?: string | null
-  /** Kiedy dodano stały wydatek — nie pokazujemy go w miesiącach sprzed tej daty. */
+  /** When the recurring expense was added — not shown in months before this date. */
   createdAt?: string
 }
 
@@ -78,7 +78,7 @@ function getDemoData(year: number) {
   const y = year.toString()
   const pad = (m: number, d: number) => `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
 
-  // Tylko wydatki jednorazowe – Czynsz, Netflix, Spotify, Prąd są w stałych kosztach (scheduled)
+  // One-off expenses only – Czynsz, Netflix, Spotify and Prąd live in recurring costs (scheduled)
   const expenses: DemoExpense[] = [
     { id: '1', name: 'Biedronka', amount: 85.5, category: 'Jedzenie', date: pad(3, 4) },
     { id: '2', name: 'Paliwo', amount: 200, category: 'Transport', date: pad(3, 3) },
@@ -416,7 +416,7 @@ export function DemoDataProvider({ children }: { children: ReactNode }) {
   const deleteScheduledExpense = (id: string) => {
     setScheduledExpenses((prev) => {
       const item = prev.find((x) => x.id === id)
-      // Pierwsze wystąpienie: dzień płatności w miesiącu utworzenia (brak createdAt = koszt ma już historię).
+      // First occurrence: the payment day in the month of creation (missing createdAt = the cost already has history).
       let hasPastOccurrence = true
       if (item?.createdAt) {
         const created = new Date(item.createdAt)
@@ -429,7 +429,7 @@ export function DemoDataProvider({ children }: { children: ReactNode }) {
         )
         hasPastOccurrence = firstOccurrence <= new Date()
       }
-      // Soft delete zachowuje przeszłe płatności w historii; twarde usunięcie tylko gdy nic nie naliczono.
+      // Soft delete keeps past payments in history; hard delete only when nothing was ever charged.
       const next = hasPastOccurrence
         ? prev.map((x) => (x.id === id ? { ...x, endedAt: new Date().toISOString() } : x))
         : prev.filter((x) => x.id !== id)
