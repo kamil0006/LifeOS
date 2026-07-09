@@ -150,6 +150,25 @@ scheduledExpensesRouter.patch('/:id', async (req, res) => {
 scheduledExpensesRouter.delete('/:id', async (req, res) => {
   const userId = getAuthUser(req).userId
   const { id } = req.params
-  await prisma.scheduledExpense.deleteMany({ where: { id, userId } })
+  const existing = await prisma.scheduledExpense.findFirst({ where: { id, userId } })
+  if (!existing) return res.status(204).send()
+
+  // Pierwsze wystąpienie: dzień płatności w miesiącu utworzenia.
+  const created = existing.createdAt
+  const lastDayOfCreatedMonth = new Date(created.getFullYear(), created.getMonth() + 1, 0).getDate()
+  const firstOccurrence = new Date(
+    created.getFullYear(),
+    created.getMonth(),
+    Math.min(existing.dayOfMonth, lastDayOfCreatedMonth),
+    23, 59, 59, 999
+  )
+
+  if (firstOccurrence > new Date()) {
+    // Koszt nie wygenerował jeszcze żadnej płatności — można usunąć na twardo.
+    await prisma.scheduledExpense.delete({ where: { id } })
+  } else {
+    // Soft delete: przeszłe płatności zostają w historii, przyszłe nie są już generowane.
+    await prisma.scheduledExpense.update({ where: { id }, data: { endedAt: new Date() } })
+  }
   res.status(204).send()
 })

@@ -74,7 +74,7 @@
     "editExpense": "Edit expense",
     "deleteConfirmTitle": "Delete transaction?",
     "deleteIncomeDescription": "The income will be permanently deleted. This action cannot be undone.",
-    "deleteRecurringDescription": "This will only delete this month's recurring payment. The recurring cost itself will remain active.",
+    "deleteRecurringDescription": "The recurring cost will be ended — past payments stay in your history, and no future payments will be generated.",
     "deleteExpenseDescription": "The expense will be permanently deleted. This action cannot be undone."
   },
   "recurring": {
@@ -99,7 +99,7 @@
     "reminderDaysSuffix": "days",
     "addRecurring": "Add subscription / recurring cost",
     "deleteConfirmTitle": "Delete?",
-    "deleteConfirmDescription": "The recurring cost will be removed from the list. This action cannot be undone."
+    "deleteConfirmDescription": "The recurring cost will be ended and removed from this list. Past payments stay in your transaction history; no future payments will be generated."
   },
   "netWorth": {
     "periodLabel": "Period:",

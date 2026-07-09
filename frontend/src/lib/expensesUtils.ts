@@ -22,6 +22,8 @@ export interface ScheduledExpenseLike {
   paymentMethod?: PaymentMethod | null
   pausedUntil?: string | null
   note?: string | null
+  /** Data zakończenia (soft delete) — płatności po tej dacie nie są generowane, wcześniejsze zostają. */
+  endedAt?: string | null
   /** Kiedy dodano stały wydatek — nie pokazujemy go w miesiącach sprzed tej daty. */
   createdAt?: string | Date
 }
@@ -33,8 +35,15 @@ export interface MergedExpense extends ExpenseLike {
   originalAmount?: number | null
 }
 
+/** Czy stały koszt jest zakończony (soft delete) przed podaną datą wystąpienia (YYYY-MM-DD)? */
+function isEndedBefore(s: ScheduledExpenseLike, date: string): boolean {
+  if (!s.endedAt) return false
+  return date > s.endedAt.slice(0, 10)
+}
+
 /** Łączy wydatki z zaplanowanymi – generuje wirtualne wydatki na dany miesiąc.
- * Pomija z expenses te, które pokrywają się ze scheduled (ta sama nazwa, ten sam dzień miesiąca). */
+ * Pomija z expenses te, które pokrywają się ze scheduled (ta sama nazwa, ten sam dzień miesiąca).
+ * Zakończone stałe koszty (endedAt) generują wystąpienia tylko do daty zakończenia. */
 export function mergeExpensesWithScheduled<E extends ExpenseLike, S extends ScheduledExpenseLike>(
   expenses: E[],
   scheduled: S[],
@@ -49,7 +58,11 @@ export function mergeExpensesWithScheduled<E extends ExpenseLike, S extends Sche
       const day = parseInt(e.date.split('-')[2], 10)
       const nameLower = e.name.toLowerCase()
       const matchingScheduled = scheduled.find(
-        (s) => s.active && s.name.toLowerCase() === nameLower && s.dayOfMonth === day
+        (s) =>
+          s.active &&
+          s.name.toLowerCase() === nameLower &&
+          s.dayOfMonth === day &&
+          !isEndedBefore(s, e.date)
       )
       return !matchingScheduled
     })
@@ -71,6 +84,7 @@ export function mergeExpensesWithScheduled<E extends ExpenseLike, S extends Sche
       const day = Math.min(s.dayOfMonth, lastDay)
       const date = `${year}-${pad(month + 1)}-${pad(day)}`
       if (s.pausedUntil && s.pausedUntil >= date) return acc
+      if (isEndedBefore(s, date)) return acc
       acc.push({
         id: `scheduled-${s.id}-${date}`,
         name: s.name,

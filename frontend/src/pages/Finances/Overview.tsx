@@ -126,7 +126,7 @@ export function Overview() {
     const now = new Date()
     const currentDay = now.getDate()
     return effectiveScheduled
-      .filter((s) => s.active)
+      .filter((s) => s.active && !s.endedAt)
       .map((s) => ({
         ...s,
         nextDay: s.dayOfMonth >= currentDay ? s.dayOfMonth : s.dayOfMonth,

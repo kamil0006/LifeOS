@@ -86,6 +86,8 @@ model ScheduledExpense {
   reminderDaysBefore Int?
   /// Opcjonalna notatka do stałego wydatku
   note       String?
+  /// Data zakończenia (soft delete) — wystąpienia po tej dacie nie są generowane, wcześniejsze zostają w historii
+  endedAt    DateTime?
   createdAt  DateTime @default(now())
 
   @@index([userId])

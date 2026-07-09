@@ -105,6 +105,41 @@ describe('mergeExpensesWithScheduled', () => {
     expect(notPaused).toHaveLength(1)
   })
 
+  describe('ended (soft-deleted) scheduled expense', () => {
+    // Netflix charged on the 1st, user cancels on the 10th of July 2026
+    const ended = scheduled({ dayOfMonth: 1, endedAt: '2026-07-10T12:00:00.000Z' })
+
+    it('keeps past occurrences up to and including the end date', () => {
+      const july = mergeExpensesWithScheduled([], [ended], JULY, 2026)
+      expect(july).toHaveLength(1)
+      expect(july[0].date).toBe('2026-07-01')
+
+      const june = mergeExpensesWithScheduled([], [ended], JULY - 1, 2026)
+      expect(june).toHaveLength(1)
+    })
+
+    it('generates no occurrences after the end date', () => {
+      const august = mergeExpensesWithScheduled([], [ended], JULY + 1, 2026)
+      expect(august).toHaveLength(0)
+
+      const endedBeforeCharge = scheduled({ dayOfMonth: 15, endedAt: '2026-07-10T12:00:00.000Z' })
+      const july = mergeExpensesWithScheduled([], [endedBeforeCharge], JULY, 2026)
+      expect(july).toHaveLength(0)
+    })
+
+    it('does not suppress a real expense dated after the end date', () => {
+      // user cancelled the recurring cost, then added a one-off with the same name and day
+      const result = mergeExpensesWithScheduled(
+        [expense({ name: 'Rent', date: '2026-08-01' })],
+        [ended],
+        JULY + 1,
+        2026
+      )
+      expect(result).toHaveLength(1)
+      expect(result[0].isScheduled).toBe(false)
+    })
+  })
+
   it('sorts the merged result by date ascending', () => {
     const result = mergeExpensesWithScheduled(
       [expense({ id: 'e1', date: '2026-07-20', name: 'Late' })],

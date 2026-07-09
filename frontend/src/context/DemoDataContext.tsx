@@ -39,6 +39,8 @@ export interface DemoScheduledExpense {
   pausedUntil?: string | null
   reminderDaysBefore?: number | null
   note?: string | null
+  /** Data zakończenia (soft delete) — płatności po tej dacie nie są generowane. */
+  endedAt?: string | null
   /** Kiedy dodano stały wydatek — nie pokazujemy go w miesiącach sprzed tej daty. */
   createdAt?: string
 }
@@ -413,7 +415,24 @@ export function DemoDataProvider({ children }: { children: ReactNode }) {
 
   const deleteScheduledExpense = (id: string) => {
     setScheduledExpenses((prev) => {
-      const next = prev.filter((x) => x.id !== id)
+      const item = prev.find((x) => x.id === id)
+      // Pierwsze wystąpienie: dzień płatności w miesiącu utworzenia (brak createdAt = koszt ma już historię).
+      let hasPastOccurrence = true
+      if (item?.createdAt) {
+        const created = new Date(item.createdAt)
+        const lastDay = new Date(created.getFullYear(), created.getMonth() + 1, 0).getDate()
+        const firstOccurrence = new Date(
+          created.getFullYear(),
+          created.getMonth(),
+          Math.min(item.dayOfMonth, lastDay),
+          23, 59, 59, 999
+        )
+        hasPastOccurrence = firstOccurrence <= new Date()
+      }
+      // Soft delete zachowuje przeszłe płatności w historii; twarde usunięcie tylko gdy nic nie naliczono.
+      const next = hasPastOccurrence
+        ? prev.map((x) => (x.id === id ? { ...x, endedAt: new Date().toISOString() } : x))
+        : prev.filter((x) => x.id !== id)
       try {
         localStorage.setItem(DEMO_SCHEDULED_STORAGE_KEY, JSON.stringify(next))
       } catch {
