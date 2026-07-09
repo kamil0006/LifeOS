@@ -1,10 +1,10 @@
 /**
- * Generuje unikalny identyfikator działający także w kontekście NIE-secure
- * (np. telefon łączący się z dev serverem przez http://192.168.x.x).
+ * Generates a unique identifier that also works in a NON-secure context
+ * (e.g. a phone connecting to the dev server via http://192.168.x.x).
  *
- * `crypto.randomUUID()` istnieje wyłącznie w secure context (HTTPS / localhost).
- * Na zwykłym http na telefonie jest `undefined` i jego wywołanie rzuca wyjątkiem,
- * co bez error boundary wywala całą aplikację (czarny ekran).
+ * `crypto.randomUUID()` exists only in a secure context (HTTPS / localhost).
+ * On plain http on a phone it is `undefined` and calling it throws,
+ * which without an error boundary crashes the whole app (black screen).
  */
 export function safeRandomId(): string {
   const c = typeof globalThis !== 'undefined' ? globalThis.crypto : undefined

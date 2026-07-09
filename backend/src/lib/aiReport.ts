@@ -36,7 +36,7 @@ interface Aggregated {
   goals: { name: string; current: number; target: number; unit: string | null }[]
 }
 
-/** Minimalny zestaw danych wysyłany do OpenAI — bez treści notatek ani pojedynczych transakcji. */
+/** Minimal dataset sent to OpenAI — without note contents or individual transactions. */
 type AiSafePayload = {
   range: Aggregated['range']
   finance: {
@@ -173,7 +173,7 @@ function fmtMinutes(n: number): string {
   return `${h} h ${m} min`
 }
 
-/** Deterministyczne podsumowanie bez AI — używane gdy brak klucza OpenAI. */
+/** Deterministic summary without AI — used when the OpenAI key is missing. */
 export function buildFallbackReport(data: Aggregated): string {
   const lines: string[] = []
   lines.push(`## Podsumowanie tygodnia (${data.range.from} – ${data.range.to})`)

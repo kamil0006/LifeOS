@@ -1,6 +1,6 @@
 /**
- * Domyślne kategorie wydatków (nazwa = wartość pola `category` w Expense / ScheduledExpense).
- * Dochód wyłączony — dotyczy tylko przychodów.
+ * Default expense categories (name = value of the `category` field in Expense / ScheduledExpense).
+ * The income category is excluded — it applies to income only.
  */
 export const DEFAULT_EXPENSE_CATEGORIES_FOR_SEED = [
   { name: 'Jedzenie', color: '#63b28f' },

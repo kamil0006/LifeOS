@@ -4,16 +4,16 @@ import { localISODate } from '../../lib/todoDomain'
 export type TodoDuePickMode = 'inherit' | 'explicit'
 
 export interface TodoDueQuickPickProps {
-  /** „inherit” — przy dodawaniu termin z tekstu (parser); „explicit” — tylko presety/pola. */
+  /** "inherit" — when adding, the due date comes from the text (parser); "explicit" — presets/fields only. */
   mode: TodoDuePickMode
   onModeExplicit: () => void
   quickDueDate: string
   quickDueTime: string
   onChangeQuickDueDate: (v: string) => void
   onChangeQuickDueTime: (v: string) => void
-  /** Ukryj tekst o dziedziczeniu z pola treści (np. w modalu edycji). */
+  /** Hide the text about inheriting from the content field (e.g. in the edit modal). */
   hideInheritHint?: boolean
-  /** Bez własnej ramki — gdy komponent jest w większym panelu (np. Opcje). */
+  /** No own border — when the component sits inside a larger panel (e.g. Options). */
   embedded?: boolean
 }
 
@@ -24,7 +24,7 @@ function addDaysFromToday(delta: number): string {
   return localISODate(d)
 }
 
-/** Presety + natywne pola daty/godziny przy szybkim dodawaniu / edycji zadania. */
+/** Presets + native date/time fields for quick add / task editing. */
 export function TodoDueQuickPick({
   mode,
   onModeExplicit,

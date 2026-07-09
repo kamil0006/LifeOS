@@ -1,12 +1,12 @@
 /**
- * Wspólne parametry ruchu dla sekcji To-do i dialogów (`modalMotion`).
- * Jedna prawda — żeby animacje nie rozjeżdżały się między stroną a modalami.
+ * Shared motion parameters for the To-do section and dialogs (`modalMotion`).
+ * Single source of truth — so animations stay consistent between the page and modals.
  */
 export const TODO_ITEM_SPRING = { type: 'spring' as const, stiffness: 380, damping: 32 }
 
 export const TODO_COLUMN_SPRING = { type: 'spring' as const, stiffness: 320, damping: 34 }
 
-/** Jak wejście wierszy w `itemEnter` (variants) na stronie To-do */
+/** Like the row entrance in `itemEnter` (variants) on the To-do page */
 export const todoItemEnterVariants = {
   hidden: { opacity: 0, y: 16 },
   show: {
@@ -16,7 +16,7 @@ export const todoItemEnterVariants = {
   },
 }
 
-/** Jak pojedyncza karta zadania (poza layoutId) */
+/** Like a single task card (except layoutId) */
 export const todoCardPresence = {
   initial: { opacity: 0, y: 10, scale: 0.98 },
   animate: { opacity: 1, y: 0, scale: 1 },
@@ -25,8 +25,8 @@ export const todoCardPresence = {
 }
 
 /**
- * Panele dialogów: wejście z boku (x), bez drugiego „unoszenia” po slide podstrony (layout).
- * Karty To-do nadal używają `todoCardPresence` (y).
+ * Dialog panels: enter from the side (x), without a second "lift" after the subpage slide (layout).
+ * To-do cards still use `todoCardPresence` (y).
  */
 export const modalPanelPresence = {
   initial: { opacity: 0, x: 22, y: 0, scale: 0.98 },

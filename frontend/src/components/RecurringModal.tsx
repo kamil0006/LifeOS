@@ -17,10 +17,10 @@ function leadingUpperPl(s: string) {
 
 export type RecurringFormPayload = {
   name: string
-  /** Kwota w walucie `currency` — tak jak wpisał użytkownik. */
+  /** Amount in the `currency` currency — exactly as entered by the user. */
   amount: number
   currency: Currency
-  /** Podgląd przeliczenia na PLN (do zapisu w trybie demo, gdzie nie ma backendu liczącego kurs). */
+  /** PLN conversion preview (used for saving in demo mode, where no backend computes the rate). */
   convertedAmount: number | null
   category: string
   dayOfMonth: number
@@ -31,7 +31,7 @@ export type RecurringFormPayload = {
 export type RecurringModalEditing = {
   id: string
   name: string
-  /** Zawsze w PLN. */
+  /** Always in PLN. */
   amount: number
   currency?: Currency
   originalAmount?: number | null

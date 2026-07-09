@@ -10,7 +10,7 @@ export interface QuickParsedTodo {
 
 const CATEGORY_PATTERN = /#(dom|praca|finanse|nauka|zdrowie|inne)\b/gi
 
-/** Parsuje naturalny wpis: „… jutro #finanse !” — bez pełnego NLP, heurystyki. */
+/** Parses natural input: "… jutro #finanse !" — heuristics, no full NLP. */
 export function parseQuickTodoInput(raw: string): QuickParsedTodo {
   let s = raw.trim()
   let category: TodoCategory = 'inne'

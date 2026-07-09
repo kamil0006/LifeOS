@@ -36,7 +36,7 @@ export async function assertBookOwned(userId: string, bookId: string | null | un
   await assertOwned(userId, bookId, (id) => prisma.book.findFirst({ where: { id, userId }, select: { id: true } }), 'Nieprawidłowa książka')
 }
 
-/** Walidacja powiązań todo ↔ event ↔ note w jednym wywołaniu. */
+/** Validates todo ↔ event ↔ note links in a single call. */
 export async function assertTodoLinksOwned(
   userId: string,
   links: { noteId?: string | null; linkedEventId?: string | null }

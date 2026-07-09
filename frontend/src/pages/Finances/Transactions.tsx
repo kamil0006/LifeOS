@@ -143,9 +143,9 @@ export function Transactions() {
       ) {
         const rawDay = parseInt(data.date.split('-')[2] ?? '1', 10)
         const dayOfMonth = Number.isFinite(rawDay) ? Math.min(31, Math.max(1, rawDay)) : 1
-        // Ten formularz pokazuje kwotę już przeliczoną na PLN i nie zna waluty oryginalnej —
-        // edycja tutaj ustawia kwotę wprost w PLN (traci powiązanie z kursem waluty obcej).
-        // Pełna edycja waluty jest dostępna w module Stałe wydatki.
+        // This form shows the amount already converted to PLN and doesn't know the original currency —
+        // editing here sets the amount directly in PLN (losing the link to the foreign exchange rate).
+        // Full currency editing is available in the Recurring costs module.
         if (!useApiFinance && demoData) {
           demoData.updateScheduledExpense(editingTx.scheduledId, {
             name: data.name,

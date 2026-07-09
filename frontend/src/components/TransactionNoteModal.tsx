@@ -6,7 +6,7 @@ import { ModalShell } from './ModalShell'
 export interface TransactionNoteModalProps {
   isOpen: boolean
   onClose: () => void
-  /** Nazwa transakcji, do której należy notatka. */
+  /** Name of the transaction the note belongs to. */
   title: string
   initialNote: string
   onSave: (note: string) => void | Promise<void>

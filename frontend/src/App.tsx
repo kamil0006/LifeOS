@@ -14,9 +14,9 @@ import { Login } from './pages/Login'
 import { useAuth } from './context/AuthContext'
 
 /**
- * Strony ładowane leniwie (code-splitting). Dzięki temu wejście np. na Dashboard
- * nie ściąga kodu Nawyków / Kalendarza / Nauki / recharts itd.
- * Named exporty owijamy w `{ default }`, bo `lazy` wymaga default exportu.
+ * Pages are lazy-loaded (code-splitting). Thanks to this, entering e.g. the Dashboard
+ * doesn't download the code for Habits / Calendar / Learning / recharts etc.
+ * Named exports are wrapped in `{ default }` because `lazy` requires a default export.
  */
 const Dashboard = lazy(() => import('./pages/Dashboard').then((m) => ({ default: m.Dashboard })))
 const FinancesLayout = lazy(() => import('./pages/Finances/FinancesLayout').then((m) => ({ default: m.FinancesLayout })))

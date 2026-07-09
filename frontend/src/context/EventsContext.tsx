@@ -24,7 +24,7 @@ export interface DemoEvent {
   sourceEventId?: string
 }
 
-/** Jedna postać daty w UI i porównaniach (YYYY-MM-DD). */
+/** Single date format for UI and comparisons (YYYY-MM-DD). */
 export function normalizeEventDate(raw: string): string {
   return raw.split('T')[0]
 }

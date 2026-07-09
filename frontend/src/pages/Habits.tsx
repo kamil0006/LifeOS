@@ -42,38 +42,38 @@ import { ConfirmDialog } from '../components/ConfirmDialog'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { TODO_ITEM_SPRING } from '../lib/todoMotion'
 
-/** Gdy nie ma żadnego wpisu — pokazujemy tyle dni kończąc na dziś (bez sztucznej historii). */
+/** When there are no entries — show this many days ending today (no artificial history). */
 const EMPTY_GRID_DAYS = 10
-/** Minimalna historia w siatce — umożliwia przewijanie / suwak także bez starych wpisów. */
+/** Minimum grid history — enables scrolling / the slider even without old entries. */
 const MIN_GRID_HISTORY_DAYS = 90
 const HABIT_GRID_WRAP_CLASS =
   'w-full min-w-0 max-w-full pb-1.5 self-start sm:max-w-[min(100%,27rem)]'
 const HABIT_GRID_COLS = 'grid grid-cols-10 gap-2'
 const HABIT_GRID_CELL = 'h-9 w-9 min-h-9 min-w-9 shrink-0'
-/** Szerokość jednej kolumny przy 10 widocznych dniach (9 × gap-1.5 = 3.375rem). */
+/** Width of one column with 10 visible days (9 × gap-1.5 = 3.375rem). */
 const HABIT_MOBILE_CELL_WIDTH = 'w-[calc((100%-3.375rem)/10)]'
-/** Suma pod kratką: ostatnie tyle dni od dziś. */
+/** Total under the grid: this many most recent days from today. */
 const SUM_LAST_DAYS = 10
-/** Domyślny zakres wykresu nawyku (ostatnie N dni). */
+/** Default habit chart range (last N days). */
 const HABIT_CHART_DEFAULT_DAYS = 30
 
 const HABIT_ACCENT_STORAGE_KEY = 'lifeos-habit-accents-v1'
 
 const CHECK_IN_STATUS_ORDER: HabitCheckInStatus[] = ['done', 'missed', 'skipped']
 
-/** Etykieta statusu dnia — tłumaczona; `t` pochodzi z useTranslation('habits'). */
+/** Day status label — translated; `t` comes from useTranslation('habits'). */
 function checkInStatusLabel(t: TFunction, status: HabitCheckInStatus): string {
   return t(`checkInStatus.${status}`)
 }
 
 const SCHEDULE_TYPE_ORDER: HabitScheduleType[] = ['daily', 'weekdays', 'weekly', 'monthly']
 
-/** Etykieta typu harmonogramu — tłumaczona; `t` pochodzi z useTranslation('habits'). */
+/** Schedule type label — translated; `t` comes from useTranslation('habits'). */
 function scheduleTypeLabel(t: TFunction, type: HabitScheduleType): string {
   return t(`schedule.label.${type}`)
 }
 
-/** Paleta akcentu nawyku (hex); kratka + wykres. Etykiety kolorów — tłumaczone osobno. */
+/** Habit accent palette (hex); grid + chart. Color labels — translated separately. */
 const HABIT_ACCENT_PRESETS = [
   { id: 'green', hex: '#63b28f' },
   { id: 'cyan', hex: '#82a7cf' },
@@ -150,9 +150,9 @@ type HabitChartPoint = {
   /** Dla binarnych (dzienne widoki): ile dni zaliczono w przesuwnym oknie wykresu. */
   rollingDone?: number
 }
-/** Krótkie etykiety dni (getDay(): 0 = ndz … 6 = sob). Angielskie generowane dynamicznie z Intl. */
+/** Short day labels (getDay(): 0 = Sun … 6 = Sat). English ones generated dynamically via Intl. */
 const WEEKDAY_SHORT_PL = ['Nd', 'Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'So']
-/** Do zdań typu „w środę” (odmiana biernika — tylko polski). */
+/** For phrases like "w środę" (accusative inflection — Polish only). */
 const WEEKDAY_ACCUSATIVE_PL = [
   'niedzielę',
   'poniedziałek',
@@ -162,7 +162,7 @@ const WEEKDAY_ACCUSATIVE_PL = [
   'piątek',
   'sobotę',
 ]
-/** Referencyjna niedziela — do generowania angielskich nazw dni przez Intl. */
+/** Reference Sunday — for generating English day names via Intl. */
 const WEEKDAY_REFERENCE_SUNDAY = new Date(2023, 0, 1)
 
 function weekdayShortLabels(language: string): string[] {
@@ -186,7 +186,7 @@ function weekdayDisplayName(language: string, weekdayIdx: number): string {
   return d.toLocaleDateString('en-US', { weekday: 'long' })
 }
 
-/** Przy „cała historia” — powyżej tylu dni wykres dzienny zamieniamy na tygodnie (czytelność). */
+/** For "all history" — above this many days the daily chart switches to weeks (readability). */
 const CHART_ALL_MAX_DAILY_POINTS = 200
 
 function formatLocalYmd(d: Date): string {
@@ -224,8 +224,8 @@ function formatMonthLabel(key: string): string {
 }
 
 /**
- * Zakres: co najmniej MIN_GRID_HISTORY_DAYS dni + ewentualnie starsze dni z wpisów.
- * Okno pokazuje ~10 kolumn naraz; reszta — suwakiem (web) lub przewijaniem (mobile).
+ * Range: at least MIN_GRID_HISTORY_DAYS days + possibly older days from entries.
+ * The window shows ~10 columns at once; the rest via the slider (web) or scrolling (mobile).
  */
 function getHabitGridDates(habit: HabitItem, language: string): { dates: string[]; letters: string[] } {
   const today = new Date()
@@ -326,7 +326,7 @@ function expectedHabitCountInWindow(habit: HabitItem, days: number, scheduledDay
   return scheduledDays
 }
 
-/** Ile razy nawyk był zaliczony w historii w dany dzień tygodnia (0 = ndz … 6 = sob). */
+/** How many times the habit was completed on a given weekday in history (0 = Sun … 6 = Sat). */
 function countCompletionsByWeekday(habit: HabitItem, measurable: boolean): number[] {
   const counts = [0, 0, 0, 0, 0, 0, 0]
   for (const c of habit.checkIns) {
@@ -362,7 +362,7 @@ function goalQuickStep(target: number): number {
   return 1
 }
 
-/** Wysokość zielonego wypełnienia komórki: 0–100% względem celu dnia lub „jest wpis”. */
+/** Height of the cell's green fill: 0–100% relative to the daily goal, or "has an entry". */
 function dayFillPercent(habit: HabitItem, value: number | null | undefined): number {
   if (value == null || value <= 0) return 0
   if (habit.targetPerDay != null && habit.targetPerDay > 0) {
@@ -386,7 +386,7 @@ function sumLastNDays(habit: HabitItem, n: number): number {
   return sum
 }
 
-/** Najdłuższa ciągła seria dni kalendarzowych z dowolnym wpisem. */
+/** Longest continuous streak of calendar days with any entry. */
 function getLongestStreakDays(habit: HabitItem): number {
   const start = getHabitHistoryStart(habit)
   const end = new Date()
@@ -443,8 +443,8 @@ function formatVisibleDateRange(dates: string[]): string {
 }
 
 /**
- * Okno kroczące dla nawyku binarnego na wykresie (dziennie / miesiąc).
- * Szersze niż tydzień — żeby 7 z rzędu nie dawało od razu 100% (pełna skala = zaliczone wszystkie dni w oknie).
+ * Rolling window for a binary habit on the chart (daily / month).
+ * Wider than a week — so 7 in a row doesn't immediately give 100% (full scale = all days in the window completed).
  */
 const BINARY_CHART_ROLLING_DAYS = 14
 
@@ -463,7 +463,7 @@ function binaryRollingWindowMeta(habit: HabitItem, endDate: Date): { pct: number
   return { pct: (done / BINARY_CHART_ROLLING_DAYS) * 100, done }
 }
 
-/** Początek historii do statystyk / „cała historia”: min(createdAt, najstarszy wpis). */
+/** Start of history for stats / "all history": min(createdAt, oldest entry). */
 function getHabitHistoryStart(habit: HabitItem): Date {
   let minYmd = habit.createdAt.split('T')[0]
   if (habit.checkIns.length > 0) {
@@ -475,7 +475,7 @@ function getHabitHistoryStart(habit: HabitItem): Date {
   return d
 }
 
-/** Średnia realizacja 0–100 wg dnia tygodnia (każdy kalendarzowy dzień od startu historii do dziś). */
+/** Average completion 0–100 by weekday (every calendar day from history start until today). */
 function computeWeekdayStats(
   habit: HabitItem,
   measurable: boolean
@@ -660,7 +660,7 @@ function buildHabitChartSeries(
   return out
 }
 
-/** Krótsze etykiety osi X na mobile — sam dzień lub skrócony miesiąc. */
+/** Shorter X-axis labels on mobile — day only or abbreviated month. */
 function formatHabitChartAxisTick(
   label: string,
   index: number,
@@ -1976,9 +1976,9 @@ export function Habits() {
   const [editingGoalId, setEditingGoalId] = useState<string | null>(null)
   const [editingGoal, setEditingGoal] = useState({ name: '', target: '', unit: '', current: '' })
   const [showCompletedGoals, setShowCompletedGoals] = useState(false)
-  /** Rozwinięty panel „środek” nawyku: wykres + rekord serii. */
+  /** Expanded habit "middle" panel: chart + streak record. */
   const [habitExpandedId, setHabitExpandedId] = useState<string | null>(null)
-  /** Zakres czasu wykresu w panelu szczegółów (per nawyk). */
+  /** Chart time range in the details panel (per habit). */
   const [habitChartPeriod, setHabitChartPeriod] = useState<
     Record<string, HabitChartPeriod>
   >({})
@@ -2003,7 +2003,7 @@ export function Habits() {
   const completedGoals = useMemo(() => goals.filter((g) => g.current >= g.target), [goals])
   const visibleGoals = showCompletedGoals ? completedGoals : activeGoals
 
-  /** 0 = najnowsze okno (ostatnie N dni); większa wartość = starsze okno (tylko wstecz w czasie). */
+  /** 0 = newest window (last N days); higher value = older window (backwards in time only). */
   const [habitGridSlider, setHabitGridSlider] = useState<Record<string, number>>({})
 
   const habitDetailPanelVariants = useMemo(

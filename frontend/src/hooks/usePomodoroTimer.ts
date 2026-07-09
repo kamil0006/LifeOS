@@ -38,15 +38,15 @@ function playBeep() {
     schedule(1100, 0.35, 0.3)
     schedule(880, 0.7, 0.5)
   } catch {
-    /* Web Audio lub autoplay niedostępny */
+    /* Web Audio or autoplay unavailable */
   }
 }
 
 type Snapshot = { topic: string; sessionType: SessionType; selectedMinutes: number }
 
 /**
- * Stan i efekty timera Pomodoro + zapis sesji do LearningContext po zakończeniu.
- * UI zostaje w komponencie prezentacyjnym.
+ * Pomodoro timer state and effects + saving the session to LearningContext when finished.
+ * The UI stays in the presentational component.
  */
 export function usePomodoroTimer() {
   const learning = useLearning()

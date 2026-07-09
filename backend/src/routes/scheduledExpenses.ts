@@ -14,7 +14,7 @@ const currencySchema = z.enum(['PLN', 'USD', 'EUR'])
 
 const createSchema = z.object({
   name: z.string().min(1).max(500),
-  /** Kwota w walucie `currency` (dla PLN to jednocześnie kwota końcowa). */
+  /** Amount in the `currency` currency (for PLN this is also the final amount). */
   amount: z.number().positive(),
   currency: currencySchema.default('PLN'),
   category: z.string().max(100),
@@ -36,14 +36,14 @@ const updateSchema = z.object({
   note: z.string().max(2000).nullable().optional(),
 })
 
-/** Przelicza kwotę wpisaną w danej walucie na parę (amount w PLN, originalAmount). */
+/** Converts an amount entered in a given currency into the pair (amount in PLN, originalAmount). */
 async function resolveAmounts(amount: number, currency: Currency): Promise<{ amount: number; originalAmount: number | null; currency: Currency }> {
   if (currency === 'PLN') return { amount, originalAmount: null, currency }
   const pln = await convertToPln(amount, currency)
   return { amount: pln, originalAmount: amount, currency }
 }
 
-/** Odświeża kwoty PLN dla pozycji w walucie obcej wg aktualnego kursu (na żądanie GET). */
+/** Refreshes PLN amounts for foreign-currency items at the current rate (on GET). */
 async function refreshForeignAmounts<
   T extends { id: string; amount: number; currency: string; originalAmount: number | null }
 >(items: T[]): Promise<T[]> {
@@ -153,7 +153,7 @@ scheduledExpensesRouter.delete('/:id', async (req, res) => {
   const existing = await prisma.scheduledExpense.findFirst({ where: { id, userId } })
   if (!existing) return res.status(204).send()
 
-  // Pierwsze wystąpienie: dzień płatności w miesiącu utworzenia.
+  // First occurrence: the payment day in the month of creation.
   const created = existing.createdAt
   const lastDayOfCreatedMonth = new Date(created.getFullYear(), created.getMonth() + 1, 0).getDate()
   const firstOccurrence = new Date(
@@ -164,10 +164,10 @@ scheduledExpensesRouter.delete('/:id', async (req, res) => {
   )
 
   if (firstOccurrence > new Date()) {
-    // Koszt nie wygenerował jeszcze żadnej płatności — można usunąć na twardo.
+    // The cost has not generated any payment yet — safe to hard-delete.
     await prisma.scheduledExpense.delete({ where: { id } })
   } else {
-    // Soft delete: przeszłe płatności zostają w historii, przyszłe nie są już generowane.
+    // Soft delete: past payments stay in history, future ones are no longer generated.
     await prisma.scheduledExpense.update({ where: { id }, data: { endedAt: new Date() } })
   }
   res.status(204).send()

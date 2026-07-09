@@ -17,7 +17,7 @@ export interface ExchangeRatesResponse {
   updatedAt: string
 }
 
-/** Publiczny endpoint (bez auth) — działa też w trybie demo. */
+/** Public endpoint (no auth) — also works in demo mode. */
 export function fetchExchangeRates(): Promise<ExchangeRatesResponse> {
   return api<ExchangeRatesResponse>('/exchange-rates')
 }

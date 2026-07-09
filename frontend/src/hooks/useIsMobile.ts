@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-/** Viewport poniżej breakpointu Tailwind `sm` (640px). */
+/** Viewport below the Tailwind `sm` breakpoint (640px). */
 export function useIsMobile(breakpoint = 640) {
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window === 'undefined') return false

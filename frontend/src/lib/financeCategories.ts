@@ -1,4 +1,4 @@
-/** Kolory kategorii finansowych – spójne z dashboardem (rozrywka różowy itp.) */
+/** Finance category colors – consistent with the dashboard (entertainment mauve, etc.) */
 
 export const FINANCE_CATEGORIES = [
   { id: 'Jedzenie', label: 'Jedzenie', color: '#63b28f' },

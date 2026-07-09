@@ -11,7 +11,7 @@ type LearningModalProps = {
   maxWidth?: string
 }
 
-/** Edycja / szybkie akcje — ModalShell na wszystkich szerokościach. */
+/** Editing / quick actions — ModalShell at all widths. */
 export function LearningModal({
   isOpen,
   onClose,

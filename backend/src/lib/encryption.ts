@@ -6,7 +6,7 @@ const ALGO = 'aes-256-gcm'
 const IV_LEN = 12
 const TAG_LEN = 16
 
-/** Szyfruje tekst przed zapisem do bazy (gdy ENCRYPTION_ENABLED=true). */
+/** Encrypts text before saving to the database (when ENCRYPTION_ENABLED=true). */
 export function encryptField(plaintext: string): string {
   if (!isEncryptionEnabled()) return plaintext
   if (plaintext.startsWith(PREFIX)) return plaintext
@@ -20,7 +20,7 @@ export function encryptField(plaintext: string): string {
   return `${PREFIX}${blob}`
 }
 
-/** Odszyfrowuje pole z bazy; plaintext bez prefiksu przechodzi bez zmian (stare wpisy). */
+/** Decrypts a field from the database; plaintext without the prefix passes through unchanged (old entries). */
 export function decryptField(stored: string): string {
   if (!stored.startsWith(PREFIX)) return stored
   const key = getEncryptionKey()

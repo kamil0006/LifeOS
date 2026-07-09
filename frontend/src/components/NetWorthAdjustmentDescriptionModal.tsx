@@ -6,7 +6,7 @@ import { ModalShell } from './ModalShell'
 export interface NetWorthAdjustmentDescriptionModalProps {
   isOpen: boolean
   onClose: () => void
-  /** Nagłówek, np. nazwa konta lub pozycji */
+  /** Heading, e.g. account or position name */
   title: string
   initialDescription: string
   onSave: (description: string) => void | Promise<void>

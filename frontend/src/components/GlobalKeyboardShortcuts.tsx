@@ -3,8 +3,8 @@ import { useGlobalSearch } from '../context/GlobalSearchContext'
 import { useQuickAdd } from '../context/QuickAddContext'
 
 /**
- * Skróty globalne (po zalogowaniu):
- * Ctrl/⌘+K paleta · Ctrl+E wydatek · Ctrl+I przychód · Ctrl+Shift+Y szybka notatka · Ctrl+Shift+L to-do
+ * Global shortcuts (after login):
+ * Ctrl/⌘+K palette · Ctrl+E expense · Ctrl+I income · Ctrl+Shift+Y quick note · Ctrl+Shift+L to-do
  */
 export function GlobalKeyboardShortcuts() {
   const { toggle, close: closeSearch, isOpen: searchOpen } = useGlobalSearch()
@@ -64,7 +64,7 @@ export function GlobalKeyboardShortcuts() {
         return
       }
 
-      // Ctrl+N / ⌥N często przejmowane przez OS lub przeglądarkę — stabilne: Ctrl+Shift+Y
+      // Ctrl+N / ⌥N is often captured by the OS or browser — stable choice: Ctrl+Shift+Y
       if (key === 'y' && e.shiftKey && !e.altKey) {
         e.preventDefault()
         closeSearch()

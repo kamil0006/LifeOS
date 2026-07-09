@@ -2,8 +2,8 @@ import type { Variants } from 'framer-motion'
 import { TODO_COLUMN_SPRING, TODO_ITEM_SPRING } from './todoMotion'
 
 /**
- * Przejścia między podstronami (Finanse / Nauka / Notatki): jak kolumny Kanban — z boku, czytelny spring.
- * Zastępuje mało widoczny efekt `clipPath` „z dołu”.
+ * Transitions between subpages (Finances / Learning / Notes): like Kanban columns — from the side, readable spring.
+ * Replaces the barely visible bottom-up `clipPath` effect.
  */
 export function getSubpageOutletVariants(reduceMotion: boolean | null): Variants {
   if (reduceMotion) {
@@ -24,7 +24,7 @@ export function getSubpageOutletVariants(reduceMotion: boolean | null): Variants
   }
 }
 
-/** Kontener strony Przegląd (Finanse) — stagger jak na Dashboard. */
+/** Overview page container (Finances) — staggered like the Dashboard. */
 export const overviewPageContainerVariants: Variants = {
   hidden: { opacity: 0 },
   show: {
@@ -33,7 +33,7 @@ export const overviewPageContainerVariants: Variants = {
   },
 }
 
-/** Pojedyncze kafelki przeglądu (np. Finanse Overview): każdy z innej strony, potem jedna siatka. */
+/** Individual overview tiles (e.g. Finances Overview): each from a different side, then one grid. */
 export function getOverviewTileVariants(reduceMotion: boolean | null, index: number): Variants {
   if (reduceMotion) {
     return {

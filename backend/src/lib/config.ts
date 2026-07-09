@@ -1,4 +1,4 @@
-/** Centralna konfiguracja bezpieczeństwa — walidacja przy starcie serwera. */
+/** Central security configuration — validated at server startup. */
 
 const DEV_JWT_FALLBACK = 'dev-secret-change-in-production'
 
@@ -72,7 +72,7 @@ export function getCorsOrigins(): string[] {
   ].filter((o): o is string => Boolean(o))
 }
 
-/** Wywołaj przed startem serwera — rzuca przy nieprawidłowej konfiguracji prod. */
+/** Call before server start — throws on invalid production configuration. */
 export function validateSecurityConfig(): void {
   getJwtSecret()
   getCorsOrigins()

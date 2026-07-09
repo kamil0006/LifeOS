@@ -105,7 +105,7 @@ todosRouter.patch('/:id', async (req, res) => {
   res.json(updated)
 })
 
-/** Usuwa wszystkie ukończone zadania użytkownika (nie archiwizuje). */
+/** Deletes all of the user's completed todos (does not archive). */
 todosRouter.delete('/bulk/completed', async (req, res) => {
   const userId = getAuthUser(req).userId
   await prisma.todo.deleteMany({ where: { userId, done: true } })

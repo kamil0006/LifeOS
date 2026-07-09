@@ -975,7 +975,7 @@ export function Calendar() {
                     item.todo.done ? 'opacity-60' : ''
                   }`}
                 >
-                  {/* Desktop: meta + akcje w jednym rzędzie, zawsze widoczne */}
+                  {/* Desktop: meta + actions in one row, always visible */}
                   <div className="hidden sm:flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2 flex-wrap min-w-0">
                       <span className="inline-flex items-center gap-1 rounded-full border border-[#6b7280]/50 bg-(--bg-card-hover) px-2 py-0.5 text-xs text-(--text-primary)">
@@ -1047,7 +1047,7 @@ export function Calendar() {
                     <span className="mt-1.5 w-2 h-2 rounded-full shrink-0 bg-[#6b7280]" />
                     {item.todo.text}
                   </p>
-                  {/* Mobile: akcje w dwóch rzędach */}
+                  {/* Mobile: actions in two rows */}
                   <div className="mt-3 flex flex-col gap-2 sm:hidden">
                     <div className="flex items-center gap-2">
                       <button

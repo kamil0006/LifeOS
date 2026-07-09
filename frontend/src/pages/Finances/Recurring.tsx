@@ -20,7 +20,7 @@ import type { ScheduledExpenseRow } from '../../lib/financeTypes'
 import type { PaymentMethod } from '../../lib/paymentMethod'
 import { formatCurrencyAmount, type Currency } from '../../lib/currency'
 
-/** Kolejna data płatności (ta sama logika co dotychczasowy podgląd daty). */
+/** Next payment date (same logic as the existing date preview). */
 function getNextPaymentDate(dayOfMonth: number): Date {
   const now = new Date()
   const y = now.getFullYear()
@@ -56,7 +56,7 @@ export function Recurring() {
   const loading = useApiFinance ? financeLoading : false
 
   const allScheduledRaw = useApiFinance ? qScheduled : (demoData?.scheduledExpenses ?? DEMO_SCHEDULED_EXPENSES)
-  // Zakończone (soft delete) nie pojawiają się na liście zarządzania — żyją tylko w historii transakcji
+  // Ended (soft-deleted) costs are hidden from the management list — they live only in transaction history
   const allScheduled = useMemo(() => allScheduledRaw.filter((s) => !s.endedAt), [allScheduledRaw])
   const total = allScheduled.reduce((s, e) => s + e.amount, 0)
   const annualTotal = total * 12
@@ -326,14 +326,14 @@ export function Recurring() {
           onUpdate={async (id, data) => {
             const { convertedAmount, ...rest } = data
             if (!useApiFinance && demoData) {
-              // Tryb demo nie ma backendu liczącego kurs — zapisujemy już przeliczoną kwotę.
+              // Demo mode has no backend to compute the rate — we save the already-converted amount.
               await handleUpdate(id, {
                 ...rest,
                 amount: convertedAmount ?? data.amount,
                 originalAmount: data.currency === 'PLN' ? null : data.amount,
               })
             } else {
-              // API samo przelicza z surowej kwoty w walucie `currency` — nie wysyłamy tu kwoty już przeliczonej.
+              // The API converts from the raw amount in `currency` itself — we don't send an already-converted amount here.
               await handleUpdate(id, rest)
             }
           }}

@@ -45,7 +45,7 @@ export function parseLocalYMD(iso: string): Date {
   return new Date(y, m - 1, d)
 }
 
-/** Data jest wcześniej niż dziś (kalendarz lokalny). */
+/** The date is earlier than today (local calendar). */
 export function isTodoOverdue(dueDate: string | null): boolean {
   if (!dueDate) return false
   return parseLocalYMD(dueDate).getTime() < parseLocalYMD(localISODate()).getTime()
@@ -67,7 +67,7 @@ export function todoDateStatus(dueDate: string | null): TodoDateStatus {
 
 const WEEKDAYS_PL = ['niedziela', 'poniedziałek', 'wtorek', 'środa', 'czwartek', 'piątek', 'sobota']
 
-/** Krótka etykieta terminu po polsku (np. „dziś”, „piątek”, „12 kwi”). */
+/** Short due-date label in Polish (e.g. "dziś", "piątek", "12 kwi"). */
 export function formatTodoDueSummary(dueDate: string | null, dueTime: string | null): string {
   if (!dueDate && !dueTime) return 'Bez terminu'
   const today = localISODate()
@@ -105,7 +105,7 @@ export function isArchivedTodo(t: TodoItem): boolean {
   return !!t.archivedAt
 }
 
-/** Zadanie należy do „kubełka” Dzisiaj (termin dziś lub wcześniej albo brak daty), bez filtrowania po zrobione. */
+/** The task belongs to the Today bucket (due today or earlier, or no date), not filtered by done status. */
 export function todoInTodayBucket(t: TodoItem): boolean {
   if (isArchivedTodo(t)) return false
   const endToday = parseLocalYMD(localISODate())

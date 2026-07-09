@@ -47,9 +47,9 @@ const navSections = [
 ] as const
 
 export type AppNavPanelProps = {
-  /** Wywoływane po przejściu w nawigacji (np. zamknięcie menu mobilnego). */
+  /** Called after navigating (e.g. closing the mobile menu). */
   onNavigate?: () => void
-  /** Gdy ustawione, pokazuje przycisk X (tylko w drawerze mobilnym). */
+  /** When set, shows the X button (mobile drawer only). */
   mobileClose?: () => void
 }
 
