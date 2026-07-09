@@ -22,7 +22,7 @@ export function LearningLayout() {
   return (
     <div className="space-y-5 sm:space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-(--text-primary) font-gaming tracking-wider sm:text-3xl">
+        <h1 className="text-2xl font-bold text-(--text-primary) font-display tracking-wider sm:text-3xl">
           {t('layout.title')}
         </h1>
         <p className="mt-1 text-base text-(--text-muted)">{t('layout.subtitle')}</p>
@@ -37,7 +37,7 @@ export function LearningLayout() {
             className={({ isActive }) =>
               `flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg border px-3 py-2.5 text-sm transition-colors sm:px-4 ${
                 isActive
-                  ? 'border-(--border) bg-(--bg-dark) font-gaming tracking-wide text-(--text-primary)'
+                  ? 'border-(--border) bg-(--bg-dark) font-display tracking-wide text-(--text-primary)'
                   : 'border-transparent text-(--text-muted) hover:bg-(--bg-card-hover)/60 hover:text-(--text-primary)'
               }`
             }

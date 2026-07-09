@@ -44,7 +44,7 @@ function CertStatusBadge({ cert }: { cert: Certification }) {
 
   if (status === 'wygasly') {
     return (
-      <span className="flex items-center gap-1 px-2 py-0.5 rounded text-xs font-gaming bg-[#e74c3c]/10 text-[#e74c3c] border border-[#e74c3c]/30">
+      <span className="flex items-center gap-1 px-2 py-0.5 rounded text-xs font-display bg-[#e74c3c]/10 text-[#e74c3c] border border-[#e74c3c]/30">
         <ShieldOff className="w-3 h-3" />
         {t('certificates.expired')}
       </span>
@@ -52,14 +52,14 @@ function CertStatusBadge({ cert }: { cert: Certification }) {
   }
   if (status === 'wygasa') {
     return (
-      <span className="flex items-center gap-1 px-2 py-0.5 rounded text-xs font-gaming bg-(--accent-amber)/10 text-(--accent-amber) border border-(--accent-amber)/30">
+      <span className="flex items-center gap-1 px-2 py-0.5 rounded text-xs font-display bg-(--warning)/10 text-(--warning) border border-(--warning)/30">
         <ShieldAlert className="w-3 h-3" />
         {t('certificates.expiringIn', { days: daysLeft })}
       </span>
     )
   }
   return (
-    <span className="flex items-center gap-1 px-2 py-0.5 rounded text-xs font-gaming bg-(--accent-green)/10 text-(--accent-green) border border-(--accent-green)/30">
+    <span className="flex items-center gap-1 px-2 py-0.5 rounded text-xs font-display bg-(--positive)/10 text-(--positive) border border-(--positive)/30">
       <ShieldCheck className="w-3 h-3" />
       {t('certificates.valid')}
     </span>
@@ -368,7 +368,7 @@ export function LearningCertificates() {
                           {c.verificationUrl && (
                             <SafeExternalLink
                               href={c.verificationUrl}
-                              className="flex items-center gap-1 px-2 py-1 rounded text-xs font-gaming text-(--accent-cyan) bg-(--accent-cyan)/10 hover:bg-(--accent-cyan)/20 transition-colors border border-(--accent-cyan)/20"
+                              className="flex items-center gap-1 px-2 py-1 rounded text-xs font-display text-(--accent) bg-(--accent)/10 hover:bg-(--accent)/20 transition-colors border border-(--accent)/20"
                               title={t('certificates.verify')}
                             >
                               <ShieldCheck className="w-3 h-3" />
@@ -378,7 +378,7 @@ export function LearningCertificates() {
                           {c.url && (
                             <SafeExternalLink
                               href={c.url}
-                              className="p-1.5 rounded-lg text-(--text-muted) hover:text-(--accent-cyan) transition-colors"
+                              className="p-1.5 rounded-lg text-(--text-muted) hover:text-(--accent) transition-colors"
                               title={t('certificates.openCertificate')}
                             >
                               <ExternalLink className="w-4 h-4" />

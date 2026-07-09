@@ -39,9 +39,9 @@ interface NotesPageProps {
 
 const IDEA_STATUS_BADGE: Record<IdeaStatus, string> = {
   nowy: 'border-sky-400/30 bg-sky-400/8 text-sky-300',
-  do_sprawdzenia: 'border-(--accent-amber)/40 bg-(--accent-amber)/10 text-(--accent-amber)',
+  do_sprawdzenia: 'border-(--warning)/40 bg-(--warning)/10 text-(--warning)',
   w_realizacji: 'border-violet-400/35 bg-violet-500/10 text-violet-300',
-  zrobiony: 'border-(--accent-green)/40 bg-(--accent-green)/10 text-(--accent-green)',
+  zrobiony: 'border-(--positive)/40 bg-(--positive)/10 text-(--positive)',
   odrzucony: 'border-(--border) bg-(--bg-dark)/80 text-(--text-muted)',
 }
 
@@ -153,13 +153,13 @@ export function NotesPage({ type }: NotesPageProps) {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('notesPage.searchPlaceholder')}
-            className="min-h-11 w-full rounded-lg border border-(--border) bg-(--bg-dark) py-2 pr-4 pl-10 text-base text-(--text-primary) placeholder:text-(--text-muted) focus:border-(--accent-cyan)/50 focus:outline-none"
+            className="min-h-11 w-full rounded-lg border border-(--border) bg-(--bg-dark) py-2 pr-4 pl-10 text-base text-(--text-primary) placeholder:text-(--text-muted) focus:border-(--accent)/50 focus:outline-none"
           />
         </div>
         <button
           type="button"
           onClick={() => setIsAddOpen(true)}
-          className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-(--accent-cyan)/45 bg-(--accent-cyan)/18 px-4 font-gaming text-sm tracking-wide text-(--accent-cyan) transition-colors hover:bg-(--accent-cyan)/26"
+          className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-(--accent)/45 bg-(--accent)/18 px-4 font-display text-sm tracking-wide text-(--accent) transition-colors hover:bg-(--accent)/26"
         >
           <Plus className="h-4 w-4" />
           {t('notesPage.add')}
@@ -174,7 +174,7 @@ export function NotesPage({ type }: NotesPageProps) {
               <select
                 value={ideaStatusFilter}
                 onChange={(e) => setIdeaStatusFilter(e.target.value as IdeaStatus | 'wszystkie')}
-                className="min-h-11 rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none"
+                className="min-h-11 rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent)/50 focus:outline-none"
               >
                 <option value="wszystkie">{t('notesPage.allStatuses')}</option>
                 {IDEA_STATUS_WORKFLOW_ORDER.map((k) => (
@@ -193,7 +193,7 @@ export function NotesPage({ type }: NotesPageProps) {
                   <button
                     type="button"
                     onClick={clearUrlTag}
-                    className="text-sm text-(--accent-cyan) hover:underline"
+                    className="text-sm text-(--accent) hover:underline"
                   >
                     {t('notesPage.clearUrlFilter')}
                   </button>
@@ -209,8 +209,8 @@ export function NotesPage({ type }: NotesPageProps) {
                       onClick={() => toggleTag(tag)}
                       className={`shrink-0 rounded-md border px-2.5 py-1.5 text-sm transition-colors ${
                         active
-                          ? 'border-(--accent-cyan)/50 bg-(--accent-cyan)/15 text-(--accent-cyan)'
-                          : 'border-(--border) bg-(--bg-dark) text-(--text-muted) hover:border-(--accent-cyan)/30 hover:text-(--text-primary)'
+                          ? 'border-(--accent)/50 bg-(--accent)/15 text-(--accent)'
+                          : 'border-(--border) bg-(--bg-dark) text-(--text-muted) hover:border-(--accent)/30 hover:text-(--text-primary)'
                       }`}
                     >
                       #{tag}
@@ -225,7 +225,7 @@ export function NotesPage({ type }: NotesPageProps) {
 
       <div className="flex items-baseline justify-between gap-3">
         <p className="text-base text-(--text-muted)">
-          <span className="font-gaming text-(--text-primary)">{typeLabelPlural}</span>
+          <span className="font-display text-(--text-primary)">{typeLabelPlural}</span>
           {' · '}
           {filtered.length} {t('notesPage.countSuffix', { count: filtered.length })}
         </p>
@@ -244,7 +244,7 @@ export function NotesPage({ type }: NotesPageProps) {
             !search && selectedTags.size === 0 ? (
               <button
                 onClick={() => setIsAddOpen(true)}
-                className="inline-flex items-center gap-2 rounded-lg border border-(--accent-cyan)/40 bg-(--accent-cyan)/15 px-4 py-2 font-gaming text-sm text-(--accent-cyan) transition-colors hover:bg-(--accent-cyan)/25"
+                className="inline-flex items-center gap-2 rounded-lg border border-(--accent)/40 bg-(--accent)/15 px-4 py-2 font-display text-sm text-(--accent) transition-colors hover:bg-(--accent)/25"
               >
                 <Plus className="h-4 w-4" />
                 {t('notesPage.add')}
@@ -260,13 +260,13 @@ export function NotesPage({ type }: NotesPageProps) {
             return (
               <article
                 key={note.id}
-                className="rounded-lg border border-(--border)/80 bg-(--bg-card)/25 p-4 transition-colors hover:border-(--accent-cyan)/25"
+                className="rounded-lg border border-(--border)/80 bg-(--bg-card)/25 p-4 transition-colors hover:border-(--accent)/25"
               >
                 <div className="space-y-2.5">
                   <div className="flex flex-wrap items-start gap-2">
                     {note.pinned && (
                       <Pin
-                        className="mt-0.5 h-4 w-4 shrink-0 fill-current text-(--accent-amber)"
+                        className="mt-0.5 h-4 w-4 shrink-0 fill-current text-(--warning)"
                         aria-label={t('notesPage.pinnedAria')}
                       />
                     )}
@@ -301,7 +301,7 @@ export function NotesPage({ type }: NotesPageProps) {
                         <SafeExternalLink
                           href={note.referenceUrl}
                           title={note.referenceUrl}
-                          className="inline-flex items-center gap-1.5 text-(--accent-cyan) hover:underline"
+                          className="inline-flex items-center gap-1.5 text-(--accent) hover:underline"
                         >
                           <ExternalLink className="h-3.5 w-3.5 shrink-0" />
                           {t('notesPage.openLink')}
@@ -333,7 +333,7 @@ export function NotesPage({ type }: NotesPageProps) {
                           onClick={() => togglePin(note.id)}
                           className={`rounded-lg p-2 transition-colors ${
                             note.pinned
-                              ? 'bg-(--accent-amber)/10 text-(--accent-amber)'
+                              ? 'bg-(--warning)/10 text-(--warning)'
                               : 'text-(--text-muted) hover:bg-(--bg-dark) hover:text-(--text-primary)'
                           }`}
                           aria-label={note.pinned ? t('notesPage.unpin') : t('notesPage.pin')}
@@ -345,7 +345,7 @@ export function NotesPage({ type }: NotesPageProps) {
                         <button
                           type="button"
                           onClick={() => setEditingNote(note)}
-                          className="rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-(--bg-dark) hover:text-(--accent-cyan)"
+                          className="rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-(--bg-dark) hover:text-(--accent)"
                           aria-label={t('notesPage.edit')}
                         >
                           <Pencil className="h-4 w-4" />
@@ -355,7 +355,7 @@ export function NotesPage({ type }: NotesPageProps) {
                         <button
                           type="button"
                           onClick={() => setNotePendingArchive(note)}
-                          className="rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-(--bg-dark) hover:text-(--accent-magenta)"
+                          className="rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-(--bg-dark) hover:text-(--accent-2)"
                           aria-label={t('notesPage.archive')}
                         >
                           <Archive className="h-4 w-4" />

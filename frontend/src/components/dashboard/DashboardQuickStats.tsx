@@ -35,7 +35,7 @@ export function DashboardQuickStats({
       className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-6 items-stretch"
     >
       <motion.div variants={getDashboardTileVariants(reduceMotion, TILE_BASE + 0)} className="min-w-0 flex">
-        <Card title={t('upcomingEvents')} className="border-(--accent-cyan)/20 p-3 flex flex-col h-full w-full" animateEntrance={false}>
+        <Card title={t('upcomingEvents')} className="border-(--accent)/20 p-3 flex flex-col h-full w-full" animateEntrance={false}>
           <div className="flex-1 min-h-0">
             {upcomingEvents.length > 0 ? (
               <ul className="space-y-1.5">
@@ -43,12 +43,12 @@ export function DashboardQuickStats({
                   <li key={ev.id} className="flex items-center gap-2">
                     <span
                       className="w-1.5 h-1.5 rounded-full shrink-0"
-                      style={{ backgroundColor: ev.color ?? 'var(--accent-cyan)' }}
+                      style={{ backgroundColor: ev.color ?? 'var(--accent)' }}
                     />
                     <div className="flex-1 min-w-0">
                       <Link
                         to="/calendar"
-                        className="text-sm text-(--text-primary) hover:text-(--accent-cyan) transition-colors truncate block outline-none focus:outline-none"
+                        className="text-sm text-(--text-primary) hover:text-(--accent) transition-colors truncate block outline-none focus:outline-none"
                       >
                         {ev.title}
                       </Link>
@@ -65,28 +65,28 @@ export function DashboardQuickStats({
           </div>
           <Link
             to="/calendar"
-            className="mt-auto pt-2 inline-block text-sm text-(--accent-cyan) hover:underline outline-none focus:outline-none"
+            className="mt-auto pt-2 inline-block text-sm text-(--accent) hover:underline outline-none focus:outline-none"
           >
             {t('viewCalendar')}
           </Link>
         </Card>
       </motion.div>
       <motion.div variants={getDashboardTileVariants(reduceMotion, TILE_BASE + 1)} className="min-w-0 flex">
-        <Card title={t('todoTitle')} className="border-(--accent-amber)/20 p-3 flex flex-col h-full w-full" animateEntrance={false}>
+        <Card title={t('todoTitle')} className="border-(--warning)/20 p-3 flex flex-col h-full w-full" animateEntrance={false}>
           <div className="flex-1 min-h-0">
-            <p className="text-xl sm:text-2xl font-bold text-(--accent-amber) font-gaming drop-shadow-[0_0_10px_rgba(255,184,0,0.3)]">{todoCount}</p>
+            <p className="text-xl sm:text-2xl font-bold text-(--warning) font-display">{todoCount}</p>
             <p className="text-xs sm:text-sm text-(--text-muted) mt-1">{t('activeTasks')}</p>
           </div>
           <Link
             to="/todo"
-            className="mt-auto pt-2 inline-block text-sm text-(--accent-cyan) hover:underline outline-none focus:outline-none"
+            className="mt-auto pt-2 inline-block text-sm text-(--accent) hover:underline outline-none focus:outline-none"
           >
             {t('viewTodo')}
           </Link>
         </Card>
       </motion.div>
       <motion.div variants={getDashboardTileVariants(reduceMotion, TILE_BASE + 2)} className="min-w-0 flex">
-        <Card title={t('activeGoals')} className="border-(--accent-cyan)/20 p-3 flex flex-col h-full w-full" animateEntrance={false}>
+        <Card title={t('activeGoals')} className="border-(--accent)/20 p-3 flex flex-col h-full w-full" animateEntrance={false}>
           <div className="flex-1 min-h-0">
             {goals.length > 0 ? (
               <div className="space-y-2">
@@ -98,7 +98,7 @@ export function DashboardQuickStats({
                       <div className="flex items-center gap-2">
                         <div className="flex-1 h-1.5 rounded-full bg-(--bg-card) overflow-hidden">
                           <div
-                            className="h-full rounded-full bg-linear-to-r from-(--accent-cyan) to-(--accent-green) transition-all"
+                            className="h-full rounded-full bg-linear-to-r from-(--accent) to-(--positive) transition-all"
                             style={{ width: `${pct}%` }}
                           />
                         </div>
@@ -116,24 +116,24 @@ export function DashboardQuickStats({
           </div>
           <Link
             to="/habits"
-            className="mt-auto pt-2 inline-block text-sm text-(--accent-cyan) hover:underline outline-none focus:outline-none"
+            className="mt-auto pt-2 inline-block text-sm text-(--accent) hover:underline outline-none focus:outline-none"
           >
             {goals.length > 0 ? t('viewGoals') : t('addGoal')}
           </Link>
         </Card>
       </motion.div>
       <motion.div variants={getDashboardTileVariants(reduceMotion, TILE_BASE + 3)} className="min-w-0 flex">
-        <Card title={t('habitsToday')} className="border-(--accent-green)/20 p-3 flex flex-col h-full w-full" animateEntrance={false}>
+        <Card title={t('habitsToday')} className="border-(--positive)/20 p-3 flex flex-col h-full w-full" animateEntrance={false}>
           <div className="flex-1 min-h-0">
             {habitsToday.total > 0 ? (
               <>
-                <p className="text-xl sm:text-2xl font-bold text-(--accent-green) font-gaming drop-shadow-[0_0_10px_rgba(0,255,157,0.3)]">
+                <p className="text-xl sm:text-2xl font-bold text-(--positive) font-display">
                   {habitsToday.done}/{habitsToday.total}
                 </p>
                 <p className="text-xs sm:text-sm text-(--text-muted) mt-1">{t('checkedOffToday')}</p>
                 <div className="mt-2 h-1.5 rounded-full bg-(--bg-dark) overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-(--accent-green) transition-all"
+                    className="h-full rounded-full bg-(--positive) transition-all"
                     style={{ width: `${habitsToday.total > 0 ? (habitsToday.done / habitsToday.total) * 100 : 0}%` }}
                   />
                 </div>
@@ -144,7 +144,7 @@ export function DashboardQuickStats({
           </div>
           <Link
             to="/habits"
-            className="mt-auto pt-2 inline-block text-sm text-(--accent-cyan) hover:underline outline-none focus:outline-none"
+            className="mt-auto pt-2 inline-block text-sm text-(--accent) hover:underline outline-none focus:outline-none"
           >
             {t('viewHabits')}
           </Link>

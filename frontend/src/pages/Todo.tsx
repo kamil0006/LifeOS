@@ -69,7 +69,7 @@ function TodoQuickParseHintContent() {
       <p className="leading-relaxed">{t('quickParseHint.intro')}</p>
 
       <section className="space-y-2">
-        <h4 className="font-gaming text-sm tracking-wide text-(--text-primary)">{t('quickParseHint.priorityTitle')}</h4>
+        <h4 className="font-display text-sm tracking-wide text-(--text-primary)">{t('quickParseHint.priorityTitle')}</h4>
         <ul className="space-y-1.5 leading-relaxed">
           <li>
             <code className="text-(--text-primary)">?</code> — {priorityLabel('low')}
@@ -82,7 +82,7 @@ function TodoQuickParseHintContent() {
       </section>
 
       <section className="space-y-2">
-        <h4 className="font-gaming text-sm tracking-wide text-(--text-primary)">{t('quickParseHint.dueTitle')}</h4>
+        <h4 className="font-display text-sm tracking-wide text-(--text-primary)">{t('quickParseHint.dueTitle')}</h4>
         <ul className="space-y-1.5 leading-relaxed">
           <li>
             {t('quickParseHint.dueWordsLabel')}{' '}
@@ -96,7 +96,7 @@ function TodoQuickParseHintContent() {
       </section>
 
       <section className="space-y-2">
-        <h4 className="font-gaming text-sm tracking-wide text-(--text-primary)">{t('quickParseHint.areaTitle')}</h4>
+        <h4 className="font-display text-sm tracking-wide text-(--text-primary)">{t('quickParseHint.areaTitle')}</h4>
         <p className="leading-relaxed">
           {t('quickParseHint.areaHint')}{' '}
           <code className="wrap-break-word text-(--text-primary)">{categoryTags}</code>
@@ -104,7 +104,7 @@ function TodoQuickParseHintContent() {
       </section>
 
       <section className="space-y-2 rounded-lg border border-(--border)/70 bg-(--bg-dark)/40 px-3 py-2.5">
-        <h4 className="font-gaming text-sm tracking-wide text-(--text-primary)">{t('quickParseHint.exampleTitle')}</h4>
+        <h4 className="font-display text-sm tracking-wide text-(--text-primary)">{t('quickParseHint.exampleTitle')}</h4>
         <p>
           <code className="text-(--text-primary)">Zapłacić rachunki jutro 14:30 #finanse !</code>
         </p>
@@ -171,7 +171,7 @@ function TodoQuickParseHint() {
             aria-label={t('quickParseHint.buttonAria')}
             className="absolute right-0 top-[calc(100%+0.35rem)] z-50 w-[min(26rem,calc(100vw-2rem))] max-h-[min(70vh,28rem)] overflow-y-auto rounded-lg border border-(--border) bg-(--bg-card) p-4 shadow-lg"
           >
-            <p className="mb-3 font-gaming text-sm tracking-wide text-(--text-primary)">{t('quickParseHint.title')}</p>
+            <p className="mb-3 font-display text-sm tracking-wide text-(--text-primary)">{t('quickParseHint.title')}</p>
             <TodoQuickParseHintContent />
           </div>
         )}
@@ -187,7 +187,7 @@ function TodoQuickParseHint() {
           zPanel={70}
         >
           <div className="mb-3 flex items-center justify-between gap-2">
-            <span className="font-gaming text-sm tracking-wide text-(--text-primary)">{t('quickParseHint.title')}</span>
+            <span className="font-display text-sm tracking-wide text-(--text-primary)">{t('quickParseHint.title')}</span>
             <button
               type="button"
               onClick={() => setOpen(false)}
@@ -216,10 +216,10 @@ const itemEnter = todoItemEnterVariants
 
 function chipClass(kind: 'priority' | 'date', variant: string) {
   const base =
-    'inline-flex shrink-0 items-center rounded-md border px-2 py-0.5 font-gaming text-xs tracking-wide'
+    'inline-flex shrink-0 items-center rounded-md border px-2 py-0.5 font-display text-xs tracking-wide'
   if (kind === 'priority') {
     if (variant === 'high')
-      return `${base} border-(--accent-amber)/40 bg-(--accent-amber)/10 text-(--accent-amber)`
+      return `${base} border-(--warning)/40 bg-(--warning)/10 text-(--warning)`
     if (variant === 'medium')
       return `${base} border-(--border) bg-(--bg-dark)/60 text-(--text-muted)`
     return `${base} border-(--border) bg-(--bg-dark)/80 text-(--text-muted)`
@@ -293,7 +293,7 @@ function TodoTaskCard({
       {todo.done ? (
         <motion.span
           aria-hidden
-          className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-(--accent-green)/70"
+          className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-(--positive)/70"
           layout
           initial={false}
           animate={{ opacity: 0.45, scaleY: 0.65 }}
@@ -306,7 +306,7 @@ function TodoTaskCard({
             className={`absolute inset-y-2 left-0 w-0.5 rounded-full ${
               todo.dueDate && isTodoOverdue(todo.dueDate)
                 ? 'bg-red-500/75'
-                : 'bg-(--accent-amber)/70'
+                : 'bg-(--warning)/70'
             }`}
             layout
             initial={false}
@@ -324,7 +324,7 @@ function TodoTaskCard({
           }}
           className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg transition-colors ${
             todo.done
-              ? 'text-(--accent-green)'
+              ? 'text-(--positive)'
               : 'border border-(--border) text-(--text-muted) hover:border-(--border) hover:text-(--text-primary)'
           }`}
         >
@@ -345,7 +345,7 @@ function TodoTaskCard({
           <div className="flex flex-wrap items-start justify-between gap-2">
             <span
               className={`text-base font-medium leading-snug ${
-                todo.done ? 'text-(--text-muted) line-through decoration-(--accent-green)/50' : 'text-(--text-primary)'
+                todo.done ? 'text-(--text-muted) line-through decoration-(--positive)/50' : 'text-(--text-primary)'
               }`}
             >
               {formatTodoTitleForDisplay(todo.text, i18n.language === 'pl' ? 'pl-PL' : 'en-US')}
@@ -361,7 +361,7 @@ function TodoTaskCard({
             <p className={compact ? 'mt-0.5' : 'mt-1'}>
               <Link
                 to="/notes/inbox"
-                className="font-gaming text-xs tracking-wide text-(--text-muted) underline-offset-2 hover:text-(--text-primary) hover:underline"
+                className="font-display text-xs tracking-wide text-(--text-muted) underline-offset-2 hover:text-(--text-primary) hover:underline"
                 onClick={(e) => e.stopPropagation()}
               >
                 {t('linkedNote')}
@@ -450,7 +450,7 @@ function TodoEditModal({
       panelKey="todo-edit-panel"
     >
       <div className="mb-4 flex items-center justify-between gap-2">
-        <h3 className="font-gaming text-lg font-bold text-(--text-primary)">{t('editModal.title')}</h3>
+        <h3 className="font-display text-lg font-bold text-(--text-primary)">{t('editModal.title')}</h3>
         <button
           type="button"
           onClick={onClose}
@@ -467,7 +467,7 @@ function TodoEditModal({
             value={text}
             onChange={(e) => setText(e.target.value)}
             rows={3}
-            className="w-full resize-none rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none"
+            className="w-full resize-none rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent)/50 focus:outline-none"
           />
         </div>
         <TodoDueQuickPick
@@ -485,7 +485,7 @@ function TodoEditModal({
             <select
               value={priority}
               onChange={(e) => setPriority(e.target.value as TodoPriority)}
-              className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none"
+              className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent)/50 focus:outline-none"
             >
               {PRIORITY_IDS.map((p) => (
                 <option key={p} value={p}>
@@ -499,7 +499,7 @@ function TodoEditModal({
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value as TodoCategory)}
-              className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none"
+              className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent)/50 focus:outline-none"
             >
               {TODO_CATEGORIES.map((c) => (
                 <option key={c} value={c}>
@@ -522,7 +522,7 @@ function TodoEditModal({
           type="button"
           onClick={save}
           disabled={!text.trim()}
-          className="w-full rounded-lg border border-(--accent-cyan)/40 bg-(--accent-cyan)/20 px-4 py-2.5 font-gaming text-base text-(--accent-cyan) hover:bg-(--accent-cyan)/30 disabled:opacity-40 sm:w-auto"
+          className="w-full rounded-lg border border-(--accent)/40 bg-(--accent)/20 px-4 py-2.5 font-display text-base text-(--accent) hover:bg-(--accent)/30 disabled:opacity-40 sm:w-auto"
         >
           {t('editModal.save')}
         </button>
@@ -657,7 +657,7 @@ export function Todo() {
         return (
           <div key={label ?? 'rest'} className="space-y-2">
             {label && (
-              <h3 className="font-gaming text-base tracking-wide text-(--text-muted)">{label}</h3>
+              <h3 className="font-display text-base tracking-wide text-(--text-muted)">{label}</h3>
             )}
             <AnimatePresence mode="popLayout">
               {items.map((todo) => (
@@ -683,7 +683,7 @@ export function Todo() {
               <button
                 type="button"
                 onClick={() => setUndatedCollapsed((c) => !c)}
-                className="flex w-full items-center justify-between gap-2 rounded-lg border border-transparent px-1 py-0.5 text-left font-gaming text-base tracking-wide text-(--text-muted) transition-colors hover:border-(--border)/60 hover:bg-(--bg-dark)/40 hover:text-(--text-primary)"
+                className="flex w-full items-center justify-between gap-2 rounded-lg border border-transparent px-1 py-0.5 text-left font-display text-base tracking-wide text-(--text-muted) transition-colors hover:border-(--border)/60 hover:bg-(--bg-dark)/40 hover:text-(--text-primary)"
                 aria-expanded={!undatedCollapsed}
               >
                 <span>{t('groupUndated', { count: undated.length })}</span>
@@ -745,15 +745,15 @@ export function Todo() {
           className="pointer-events-none absolute -left-20 -right-20 top-0 h-72 max-w-none overflow-hidden opacity-[0.2] blur-3xl"
           style={{
             background:
-              'radial-gradient(ellipse 80% 60% at 30% 20%, rgba(0,229,255,0.08), transparent 55%), radial-gradient(ellipse 70% 50% at 80% 40%, rgba(255,184,0,0.05), transparent 50%)',
+              'radial-gradient(ellipse 80% 60% at 30% 20%, rgba(130,167,207,0.08), transparent 55%), radial-gradient(ellipse 70% 50% at 80% 40%, rgba(201,163,92,0.05), transparent 50%)',
           }}
         />
       )}
 
       <motion.div variants={itemEnter} className="relative flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <h1 className="font-gaming text-2xl font-bold tracking-wider text-(--text-primary)">TO-DO</h1>
+        <h1 className="font-display text-2xl font-bold tracking-wider text-(--text-primary)">TO-DO</h1>
         {isDemoMode && (
-          <span className="font-gaming text-sm tracking-wide text-(--text-muted)">{t('demoLabel')}</span>
+          <span className="font-display text-sm tracking-wide text-(--text-muted)">{t('demoLabel')}</span>
         )}
       </motion.div>
 
@@ -762,21 +762,21 @@ export function Todo() {
         className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-(--border)/80 bg-(--bg-card)/25 px-3 py-2"
       >
         <p className="min-w-0 text-base text-(--text-muted)">
-          <span className="font-gaming text-(--text-primary)">{t('todayCard.label')}</span>{' '}
+          <span className="font-display text-(--text-primary)">{t('todayCard.label')}</span>{' '}
           {planStats.todosToday} {t('taskWord', { count: planStats.todosToday })} · {planStats.eventsToday}{' '}
           {t('eventWord', { count: planStats.eventsToday })} · {planStats.activeHabits} {t('habitWord', { count: planStats.activeHabits })}
         </p>
         <div className="flex shrink-0 flex-wrap gap-2">
           <Link
             to="/calendar"
-            className="inline-flex items-center gap-1.5 rounded-md border border-(--border) px-2.5 py-1.5 font-gaming text-sm text-(--text-muted) transition-colors hover:border-(--border) hover:bg-(--bg-dark) hover:text-(--text-primary)"
+            className="inline-flex items-center gap-1.5 rounded-md border border-(--border) px-2.5 py-1.5 font-display text-sm text-(--text-muted) transition-colors hover:border-(--border) hover:bg-(--bg-dark) hover:text-(--text-primary)"
           >
             <CalendarDays className="h-3.5 w-3.5" />
             {t('todayCard.calendarLink')}
           </Link>
           <Link
             to="/habits"
-            className="inline-flex items-center gap-1.5 rounded-md border border-(--border) px-2.5 py-1.5 font-gaming text-sm text-(--text-muted) transition-colors hover:border-(--border) hover:bg-(--bg-dark) hover:text-(--text-primary)"
+            className="inline-flex items-center gap-1.5 rounded-md border border-(--border) px-2.5 py-1.5 font-display text-sm text-(--text-muted) transition-colors hover:border-(--border) hover:bg-(--bg-dark) hover:text-(--text-primary)"
           >
             <Target className="h-3.5 w-3.5" />
             {t('todayCard.habitsLink')}
@@ -800,7 +800,7 @@ export function Todo() {
             title={t('addTaskTitle')}
             whileHover={reduceMotion ? undefined : { scale: 1.02 }}
             whileTap={reduceMotion ? undefined : { scale: 0.97 }}
-            className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-(--accent-cyan)/45 bg-(--accent-cyan)/18 px-4 font-gaming text-sm tracking-wide text-(--accent-cyan) shadow-[0_0_0_1px_rgba(0,229,255,0.08)] transition-colors hover:bg-(--accent-cyan)/26"
+            className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-(--accent)/45 bg-(--accent)/18 px-4 font-display text-sm tracking-wide text-(--accent) shadow-[0_0_0_1px_rgba(130,167,207,0.08)] transition-colors hover:bg-(--accent)/26"
             aria-label={t('addTaskTitle')}
           >
             <Plus className="h-5 w-5 shrink-0" />
@@ -810,13 +810,13 @@ export function Todo() {
         <button
           type="button"
           onClick={() => setOptionsOpen((o) => !o)}
-          className="flex w-full items-center justify-center gap-2 rounded-lg border border-(--border) bg-(--bg-card)/30 px-3 py-2.5 font-gaming text-sm tracking-wide text-(--text-muted) transition-colors hover:border-(--border) hover:bg-(--bg-dark) hover:text-(--text-primary) sm:inline-flex sm:w-auto sm:py-2"
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-(--border) bg-(--bg-card)/30 px-3 py-2.5 font-display text-sm tracking-wide text-(--text-muted) transition-colors hover:border-(--border) hover:bg-(--bg-dark) hover:text-(--text-primary) sm:inline-flex sm:w-auto sm:py-2"
           aria-expanded={optionsOpen}
         >
           {optionsOpen ? <ChevronUp className="h-4 w-4 shrink-0" /> : <ChevronDown className="h-4 w-4 shrink-0" />}
           <span>{t('optionsButton')}</span>
           {!optionsOpen && optionsDirty && (
-            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-(--accent-amber)/80" title={t('optionsDirtyHint')} />
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-(--warning)/80" title={t('optionsDirtyHint')} />
           )}
         </button>
         {optionsOpen && (
@@ -883,7 +883,7 @@ export function Todo() {
               key={id}
               type="button"
               onClick={() => setTab(id)}
-              className={`rounded-md border px-2.5 py-1.5 font-gaming text-sm tracking-wide transition-colors ${
+              className={`rounded-md border px-2.5 py-1.5 font-display text-sm tracking-wide transition-colors ${
                 tab === id
                   ? 'border-(--border) bg-(--bg-dark) text-(--text-primary)'
                   : 'border-transparent bg-transparent text-(--text-muted) hover:bg-(--bg-card-hover)/50 hover:text-(--text-primary)'
@@ -898,12 +898,12 @@ export function Todo() {
             <button
               type="button"
               onClick={() => setClearPrompt(true)}
-              className="rounded-md border border-red-500/25 bg-red-500/5 px-2.5 py-1.5 font-gaming text-sm text-red-400/90 hover:bg-red-500/10"
+              className="rounded-md border border-red-500/25 bg-red-500/5 px-2.5 py-1.5 font-display text-sm text-red-400/90 hover:bg-red-500/10"
             >
               {t('clearCompleted')}
             </button>
           )}
-          <label className="flex items-center gap-1.5 whitespace-nowrap font-gaming text-sm text-(--text-muted)">
+          <label className="flex items-center gap-1.5 whitespace-nowrap font-display text-sm text-(--text-muted)">
             {t('areaFieldLabel')}
             <select
               value={categoryFilter}
@@ -925,7 +925,7 @@ export function Todo() {
 
       {tab === 'today' && (
         <motion.div variants={itemEnter} className="space-y-0.5">
-          <h2 className="font-gaming text-lg font-semibold tracking-wide text-(--text-primary)">{t('todaySection.title')}</h2>
+          <h2 className="font-display text-lg font-semibold tracking-wide text-(--text-primary)">{t('todaySection.title')}</h2>
           <p className="text-base text-(--text-muted)">
             {todaySummary.count} {t('taskWord', { count: todaySummary.count })}
             {todaySummary.high > 0 && <>{t('todaySection.highCount', { count: todaySummary.high })}</>}
@@ -935,7 +935,7 @@ export function Todo() {
                 <button
                   type="button"
                   onClick={() => setTab('done')}
-                  className="font-gaming text-(--text-muted) underline-offset-2 hover:text-(--text-primary) hover:underline"
+                  className="font-display text-(--text-muted) underline-offset-2 hover:text-(--text-primary) hover:underline"
                   title={t('todaySection.doneLinkTitle')}
                 >
                   {t('todaySection.doneLink', { count: todayDoneCount })}

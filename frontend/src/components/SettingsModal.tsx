@@ -107,11 +107,11 @@ export function SettingsModal() {
   return (
     <>
       <ModalShell isOpen={isOpen} onClose={close} maxWidth="max-w-lg" backdropKey="settings-backdrop" panelKey="settings-panel">
-        <div className="absolute top-0 left-0 h-px w-full bg-linear-to-r from-transparent via-(--accent-cyan)/45 to-transparent" />
+        <div className="absolute top-0 left-0 h-px w-full bg-linear-to-r from-transparent via-(--accent)/45 to-transparent" />
         <div className="mb-5 flex items-start justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <SettingsIcon className="h-5 w-5 text-(--accent-cyan)" />
-            <h3 className="text-lg font-bold font-gaming tracking-wide text-(--text-primary)">{t('title')}</h3>
+            <SettingsIcon className="h-5 w-5 text-(--accent)" />
+            <h3 className="text-lg font-bold font-display tracking-wide text-(--text-primary)">{t('title')}</h3>
           </div>
           <button
             type="button"
@@ -134,9 +134,9 @@ export function SettingsModal() {
                 key={lng}
                 type="button"
                 onClick={() => void i18n.changeLanguage(lng)}
-                className={`flex-1 rounded-lg border py-2.5 font-gaming transition-colors ${
+                className={`flex-1 rounded-lg border py-2.5 font-display transition-colors ${
                   i18n.language === lng
-                    ? 'border-(--accent-cyan)/45 bg-(--accent-cyan)/15 text-(--accent-cyan)'
+                    ? 'border-(--accent)/45 bg-(--accent)/15 text-(--accent)'
                     : 'border-(--border) text-(--text-muted) hover:bg-(--bg-card-hover) hover:text-(--text-primary)'
                 }`}
               >
@@ -176,7 +176,7 @@ export function SettingsModal() {
                   type="button"
                   onClick={() => void handleExport()}
                   disabled={exportBusy}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-(--accent-cyan)/45 bg-(--accent-cyan)/15 py-2.5 font-gaming text-(--accent-cyan) transition-colors hover:bg-(--accent-cyan)/25 disabled:opacity-50"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-(--accent)/45 bg-(--accent)/15 py-2.5 font-display text-(--accent) transition-colors hover:bg-(--accent)/25 disabled:opacity-50"
                 >
                   <Download className="h-4 w-4" />
                   {exportBusy ? t('exportButtonBusy') : t('exportButton')}
@@ -184,7 +184,7 @@ export function SettingsModal() {
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-(--border) py-2.5 font-gaming text-(--text-muted) transition-colors hover:bg-(--bg-card-hover) hover:text-(--text-primary)"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-(--border) py-2.5 font-display text-(--text-muted) transition-colors hover:bg-(--bg-card-hover) hover:text-(--text-primary)"
                 >
                   <Upload className="h-4 w-4" />
                   {t('importButton')}
@@ -203,7 +203,7 @@ export function SettingsModal() {
               </div>
 
               {error && <p className="text-sm text-[#e74c3c]">{error}</p>}
-              {successMsg && <p className="text-sm text-(--accent-green,#2ecc71)">{successMsg}</p>}
+              {successMsg && <p className="text-sm text-(--positive,#2ecc71)">{successMsg}</p>}
             </div>
           )}
         </section>

@@ -43,7 +43,7 @@ export function TransactionNoteModal({ isOpen, onClose, title, initialNote, onSa
       panelKey="tx-note-panel"
     >
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-bold text-(--text-primary) font-gaming">{t('transactionNoteModal.title')}</h3>
+        <h3 className="text-lg font-bold text-(--text-primary) font-display">{t('transactionNoteModal.title')}</h3>
         <button
           type="button"
           onClick={onClose}
@@ -62,7 +62,7 @@ export function TransactionNoteModal({ isOpen, onClose, title, initialNote, onSa
             rows={5}
             maxLength={2000}
             autoFocus
-            className="w-full px-3 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base focus:border-(--accent-cyan) focus:outline-none resize-y min-h-[110px]"
+            className="w-full px-3 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base focus:border-(--accent) focus:outline-none resize-y min-h-[110px]"
           />
           <p className="text-base text-(--text-muted) mt-1">{text.length}/2000</p>
         </div>
@@ -70,14 +70,14 @@ export function TransactionNoteModal({ isOpen, onClose, title, initialNote, onSa
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-2.5 rounded-lg border border-(--border) text-(--text-muted) font-gaming hover:bg-(--bg-card-hover) transition-colors"
+            className="flex-1 py-2.5 rounded-lg border border-(--border) text-(--text-muted) font-display hover:bg-(--bg-card-hover) transition-colors"
           >
             {t('common:cancel')}
           </button>
           <button
             type="submit"
             disabled={saving}
-            className="flex-1 py-2.5 rounded-lg bg-(--accent-cyan)/20 text-(--accent-cyan) border border-(--accent-cyan)/45 font-gaming hover:bg-(--accent-cyan)/30 transition-colors disabled:opacity-50"
+            className="flex-1 py-2.5 rounded-lg bg-(--accent)/20 text-(--accent) border border-(--accent)/45 font-display hover:bg-(--accent)/30 transition-colors disabled:opacity-50"
           >
             {t('common:save')}
           </button>

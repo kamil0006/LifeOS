@@ -102,7 +102,7 @@ export function BookModal({ book, bookCategories, onSave, onClose }: BookModalPr
       panelKey="book-panel"
     >
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-(--text-primary) font-gaming">{t('books.editTitle')}</h3>
+            <h3 className="text-lg font-bold text-(--text-primary) font-display">{t('books.editTitle')}</h3>
             <button
               onClick={onClose}
               className="p-2 rounded-lg hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-(--text-primary) transition-colors"
@@ -114,38 +114,38 @@ export function BookModal({ book, bookCategories, onSave, onClose }: BookModalPr
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('books.title')}</label>
+              <label className="block text-base text-(--text-muted) font-display mb-1">{t('books.title')}</label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => updateField('title', e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
+                className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-display focus:border-(--accent) focus:outline-none"
                 required
                 autoFocus
               />
             </div>
             <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('books.author')}</label>
+              <label className="block text-base text-(--text-muted) font-display mb-1">{t('books.author')}</label>
               <input
                 type="text"
                 value={author}
                 onChange={(e) => updateField('author', e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
+                className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-display focus:border-(--accent) focus:outline-none"
               />
             </div>
 
             {/* Reading status */}
             <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('books.status')}</label>
+              <label className="block text-base text-(--text-muted) font-display mb-1">{t('books.status')}</label>
               <div className="flex flex-wrap gap-2">
                 {READING_STATUS_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
                     type="button"
                     onClick={() => updateField('status', opt.value)}
-                    className={`px-3 py-1.5 rounded-lg font-gaming text-sm transition-colors ${
+                    className={`px-3 py-1.5 rounded-lg font-display text-sm transition-colors ${
                       status === opt.value
-                        ? 'bg-(--accent-cyan)/20 text-(--accent-cyan) border border-(--accent-cyan)/40'
+                        ? 'bg-(--accent)/20 text-(--accent) border border-(--accent)/40'
                         : 'bg-(--bg-dark) text-(--text-muted) border border-(--border)'
                     }`}
                   >
@@ -156,16 +156,16 @@ export function BookModal({ book, bookCategories, onSave, onClose }: BookModalPr
             </div>
 
             <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('books.category')}</label>
+              <label className="block text-base text-(--text-muted) font-display mb-1">{t('books.category')}</label>
               <div className="flex flex-wrap gap-2">
                 {allCategories.map((cat) => (
                   <button
                     key={cat}
                     type="button"
                     onClick={() => updateField('category', cat)}
-                    className={`px-3 py-1.5 rounded-lg font-gaming text-sm transition-colors ${
+                    className={`px-3 py-1.5 rounded-lg font-display text-sm transition-colors ${
                       category === cat
-                        ? 'bg-(--accent-cyan)/20 text-(--accent-cyan) border border-(--accent-cyan)/40'
+                        ? 'bg-(--accent)/20 text-(--accent) border border-(--accent)/40'
                         : 'bg-(--bg-dark) text-(--text-muted) border border-(--border)'
                     }`}
                   >
@@ -178,60 +178,60 @@ export function BookModal({ book, bookCategories, onSave, onClose }: BookModalPr
             {/* Dates & rating depending on status */}
             {(status === 'czytam' || status === 'przeczytane') && (
               <div>
-                <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('books.startDate')}</label>
+                <label className="block text-base text-(--text-muted) font-display mb-1">{t('books.startDate')}</label>
                 <input
                   type="date"
                   value={startedAt}
                   max="9999-12-31"
                   onChange={(e) => updateField('startedAt', e.target.value)}
-                  className="px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
+                  className="px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-display focus:border-(--accent) focus:outline-none"
                 />
               </div>
             )}
             {status === 'przeczytane' && (
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('books.finishDate')}</label>
+                  <label className="block text-base text-(--text-muted) font-display mb-1">{t('books.finishDate')}</label>
                   <input
                     type="date"
                     value={finishedAt}
                     max="9999-12-31"
                     onChange={(e) => updateField('finishedAt', e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
+                    className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-display focus:border-(--accent) focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('books.rating')}</label>
+                  <label className="block text-base text-(--text-muted) font-display mb-1">{t('books.rating')}</label>
                   <input
                     type="text"
                     inputMode="numeric"
                     value={rating}
                     onChange={(e) => updateField('rating', e.target.value.replace(/\D/g, ''))}
-                    className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-mono focus:border-(--accent-cyan) focus:outline-none"
+                    className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-mono focus:border-(--accent) focus:outline-none"
                   />
                 </div>
               </div>
             )}
 
             <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('books.keyTakeaway')}</label>
+              <label className="block text-base text-(--text-muted) font-display mb-1">{t('books.keyTakeaway')}</label>
               <input
                 type="text"
                 value={keyTakeaway}
                 onChange={(e) => updateField('keyTakeaway', e.target.value)}
                 placeholder={t('books.keyTakeawayPlaceholder')}
-                className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none"
+                className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-display focus:border-(--accent) focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-base text-(--text-muted) font-gaming mb-1">{t('books.notes')}</label>
+              <label className="block text-base text-(--text-muted) font-display mb-1">{t('books.notes')}</label>
               <textarea
                 value={notes}
                 onChange={(e) => updateField('notes', e.target.value)}
                 rows={3}
                 placeholder={t('books.notesPlaceholder')}
-                className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming focus:border-(--accent-cyan) focus:outline-none resize-none"
+                className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-display focus:border-(--accent) focus:outline-none resize-none"
               />
             </div>
 
@@ -239,13 +239,13 @@ export function BookModal({ book, bookCategories, onSave, onClose }: BookModalPr
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 px-4 py-2 rounded-lg border border-(--border) text-(--text-muted) hover:text-(--text-primary) font-gaming transition-colors"
+                className="flex-1 px-4 py-2 rounded-lg border border-(--border) text-(--text-muted) hover:text-(--text-primary) font-display transition-colors"
               >
                 {t('common.cancel')}
               </button>
               <button
                 type="submit"
-                className="flex-1 px-4 py-2 rounded-lg bg-(--accent-cyan) text-(--bg-dark) font-gaming font-bold hover:opacity-90 transition-opacity"
+                className="flex-1 px-4 py-2 rounded-lg bg-(--accent) text-(--bg-dark) font-display font-bold hover:opacity-90 transition-opacity"
               >
                 {t('common.save')}
               </button>

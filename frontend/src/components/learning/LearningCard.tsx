@@ -29,7 +29,7 @@ export function LearningCard({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="font-gaming text-base text-(--text-primary)">{title}</p>
+            <p className="font-display text-base text-(--text-primary)">{title}</p>
             {badge}
           </div>
           {subtitle && <p className="mt-0.5 text-sm text-(--text-muted)">{subtitle}</p>}
@@ -43,7 +43,7 @@ export function LearningCard({
             <button
               type="button"
               onClick={onEdit}
-              className="rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-(--accent-cyan)/10 hover:text-(--accent-cyan)"
+              className="rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-(--accent)/10 hover:text-(--accent)"
               aria-label={t('common.edit')}
             >
               <Pencil className="h-4 w-4" />
@@ -70,7 +70,7 @@ export function LearningCard({
         <div className="flex items-center gap-2">
           <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-(--bg-card)">
             <div
-              className="h-full rounded-full bg-(--accent-cyan) transition-all"
+              className="h-full rounded-full bg-(--accent) transition-all"
               style={{ width: `${progress}%` }}
             />
           </div>

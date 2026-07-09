@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-/** Pulse blocks aligned with Card / dashboard layout (gaming UI). */
+/** Pulse blocks aligned with Card / dashboard layout. */
 
 export function SkeletonPulse({ className = '' }: { className?: string }) {
   return <div className={`animate-pulse rounded-md bg-(--border)/40 ${className}`} aria-hidden />
@@ -15,7 +15,7 @@ export function SkeletonCardShell({ children, className = '' }: { children: Reac
     <div
       className={`relative rounded-lg border border-(--border) bg-(--bg-card) p-5 overflow-hidden ${className}`}
     >
-      <div className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-(--accent-cyan)/20 to-transparent" />
+      <div className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-(--accent)/20 to-transparent" />
       {children}
     </div>
   )

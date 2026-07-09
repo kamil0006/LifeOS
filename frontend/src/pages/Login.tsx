@@ -85,7 +85,7 @@ export function Login() {
   const listItems = [t('listExpenses'), t('listHabits'), t('listOrganize')]
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-(--bg-dark) bg-grid p-6">
+    <div className="min-h-screen flex items-center justify-center bg-(--bg-dark) p-6">
       <div className="w-full max-w-4xl flex flex-col lg:flex-row gap-12 lg:gap-16 items-center">
         {/* Lewa kolumna – branding + demo */}
         <motion.div
@@ -95,13 +95,13 @@ export function Login() {
           className="flex flex-col items-center lg:items-start text-center lg:text-left flex-1"
         >
           <motion.h1
-            className="text-5xl xl:text-6xl font-bold font-gaming tracking-widest"
+            className="text-5xl xl:text-6xl font-bold font-display tracking-widest"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
           >
             <motion.span
-              className="text-(--accent-cyan) drop-shadow-[0_0_12px_rgba(0,229,255,0.6)]"
+              className="text-(--accent)"
               animate={{ opacity: [0.9, 1, 0.9] }}
               transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
             >
@@ -113,7 +113,7 @@ export function Login() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2, duration: 0.5 }}
-            className="text-xl text-(--text-muted) mt-4 font-gaming tracking-wide max-w-md"
+            className="text-xl text-(--text-muted) mt-4 font-display tracking-wide max-w-md"
           >
             {t('tagline')}
           </motion.p>
@@ -127,7 +127,7 @@ export function Login() {
                 className="flex items-center gap-2 justify-center lg:justify-start"
               >
                 <motion.span
-                  className="w-1.5 h-1.5 rounded-full bg-(--accent-cyan) shrink-0"
+                  className="w-1.5 h-1.5 rounded-full bg-(--accent) shrink-0"
                   animate={{ opacity: [0.6, 1, 0.6], scale: [1, 1.2, 1] }}
                   transition={{ duration: 2, repeat: Infinity, delay: i * 0.3 }}
                 />
@@ -138,8 +138,8 @@ export function Login() {
           <motion.button
             type="button"
             onClick={handleDemo}
-            className="mt-10 w-full max-w-xs py-3 rounded-lg bg-(--accent-cyan)/20 text-(--accent-cyan) border border-(--accent-cyan)/50 font-gaming tracking-wider hover:bg-(--accent-cyan)/30 hover:shadow-[0_0_20px_rgba(0,229,255,0.25)] transition-colors"
-            whileHover={{ scale: 1.02, boxShadow: '0 0 24px rgba(0,229,255,0.3)' }}
+            className="mt-10 w-full max-w-xs py-3 rounded-lg bg-(--accent)/20 text-(--accent) border border-(--accent)/50 font-display tracking-wider hover:bg-(--accent)/30 transition-colors"
+            whileHover={{ scale: 1.02, boxShadow: '0 0 24px rgba(130,167,207,0.3)' }}
             whileTap={{ scale: 0.98 }}
             transition={{ duration: 0.4, delay: 0.25 }}
           >
@@ -155,13 +155,13 @@ export function Login() {
           className="w-full max-w-md shrink-0"
         >
           <motion.div
-            className="rounded-lg border border-(--border) bg-(--bg-card) p-6 relative overflow-hidden shadow-[0_0_30px_rgba(0,229,255,0.05)]"
+            className="rounded-lg border border-(--border) bg-(--bg-card) p-6 relative overflow-hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.25 }}
           >
-            <div className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-(--accent-cyan)/50 to-transparent" />
-            <p className="text-base text-(--text-muted) mb-4 font-gaming tracking-wide">
+            <div className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-(--accent)/50 to-transparent" />
+            <p className="text-base text-(--text-muted) mb-4 font-display tracking-wide">
               {isRegister ? t('createAccount') : t('loginPrompt')}
             </p>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -199,7 +199,7 @@ export function Login() {
                     setError('')
                   }}
                   required
-                  className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base focus:border-(--accent-cyan) focus:outline-none"
+                  className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base focus:border-(--accent) focus:outline-none"
                 />
               </div>
               {showReset ? (
@@ -212,12 +212,12 @@ export function Login() {
                       onChange={(e) => setNewPassword(e.target.value)}
                       required
                       minLength={8}
-                      className="w-full px-4 py-2.5 pr-11 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base focus:border-(--accent-cyan) focus:outline-none"
+                      className="w-full px-4 py-2.5 pr-11 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base focus:border-(--accent) focus:outline-none"
                     />
                     <button
                       type="button"
                       onClick={() => setShowNewPassword(!showNewPassword)}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-(--text-muted) hover:text-(--accent-cyan) transition-colors"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-(--text-muted) hover:text-(--accent) transition-colors"
                       tabIndex={-1}
                       aria-label={showNewPassword ? t('hidePassword') : t('showPassword')}
                     >
@@ -240,12 +240,12 @@ export function Login() {
                         }}
                         required
                         minLength={isRegister ? 8 : 1}
-                        className="w-full px-4 py-2.5 pr-11 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base focus:border-(--accent-cyan) focus:outline-none"
+                        className="w-full px-4 py-2.5 pr-11 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base focus:border-(--accent) focus:outline-none"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-(--text-muted) hover:text-(--accent-cyan) transition-colors"
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-(--text-muted) hover:text-(--accent) transition-colors"
                         tabIndex={-1}
                         aria-label={showPassword ? t('hidePassword') : t('showPassword')}
                       >
@@ -269,12 +269,12 @@ export function Login() {
                           }}
                           required
                           minLength={8}
-                          className="w-full px-4 py-2.5 pr-11 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base focus:border-(--accent-cyan) focus:outline-none"
+                          className="w-full px-4 py-2.5 pr-11 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base focus:border-(--accent) focus:outline-none"
                         />
                         <button
                           type="button"
                           onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
-                          className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-(--text-muted) hover:text-(--accent-cyan) transition-colors"
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-(--text-muted) hover:text-(--accent) transition-colors"
                           tabIndex={-1}
                           aria-label={showPasswordConfirm ? t('hidePassword') : t('showPassword')}
                         >
@@ -291,7 +291,7 @@ export function Login() {
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 rounded border-(--border) bg-(--bg-dark) text-(--accent-cyan) focus:ring-(--accent-cyan)/50"
+                    className="w-4 h-4 rounded border-(--border) bg-(--bg-dark) text-(--accent) focus:ring-(--accent)/50"
                   />
                   <span className="text-sm text-(--text-muted)">{t('rememberMe')}</span>
                 </label>
@@ -299,7 +299,7 @@ export function Login() {
               <motion.button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 rounded-lg bg-(--accent-cyan)/15 text-(--accent-cyan) border border-(--accent-cyan)/40 font-gaming tracking-wider hover:bg-(--accent-cyan)/25 hover:shadow-[0_0_20px_rgba(0,229,255,0.2)] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-3 rounded-lg bg-(--accent)/15 text-(--accent) border border-(--accent)/40 font-display tracking-wider hover:bg-(--accent)/25 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 whileHover={!loading ? { scale: 1.01 } : undefined}
                 whileTap={!loading ? { scale: 0.99 } : undefined}
                 transition={{ duration: 0.4, delay: 0.25 }}
@@ -325,7 +325,7 @@ export function Login() {
                   setError('')
                   setSuccess('')
                 }}
-                className="w-full mt-4 text-sm text-(--text-muted) hover:text-(--accent-cyan) transition-colors"
+                className="w-full mt-4 text-sm text-(--text-muted) hover:text-(--accent) transition-colors"
               >
                 {t('backToLogin')}
               </button>
@@ -340,7 +340,7 @@ export function Login() {
                     setShowPassword(false)
                     setShowPasswordConfirm(false)
                   }}
-                  className="w-full mt-4 text-sm text-(--text-muted) hover:text-(--accent-cyan) transition-colors"
+                  className="w-full mt-4 text-sm text-(--text-muted) hover:text-(--accent) transition-colors"
                 >
                   {isRegister ? t('haveAccount') : t('noAccount')}
                 </button>
@@ -352,7 +352,7 @@ export function Login() {
                       setError('')
                       setSuccess('')
                     }}
-                    className="w-full mt-2 text-sm text-(--text-muted) hover:text-(--accent-cyan) transition-colors"
+                    className="w-full mt-2 text-sm text-(--text-muted) hover:text-(--accent) transition-colors"
                   >
                     {t('cannotLogin')}
                   </button>

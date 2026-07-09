@@ -19,22 +19,22 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
       <button
         type="button"
         onClick={onMenuClick}
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-(--border) bg-(--bg-dark) text-(--text-primary) hover:border-(--accent-cyan)/50 hover:text-(--accent-cyan) transition-colors"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-(--border) bg-(--bg-dark) text-(--text-primary) hover:border-(--accent)/50 hover:text-(--accent) transition-colors"
         aria-label={t('openMenuAria')}
       >
         <Menu className="h-5 w-5" aria-hidden />
       </button>
       <Link
         to="/dashboard"
-        className="min-w-0 font-gaming text-lg font-bold tracking-widest outline-none focus:outline-none"
+        className="min-w-0 font-display text-lg font-bold tracking-widest outline-none focus:outline-none"
       >
-        <span className="text-(--accent-cyan) drop-shadow-[0_0_8px_rgba(0,229,255,0.5)]">Life</span>
+        <span className="text-(--accent)">Life</span>
         <span className="text-(--text-primary)">OS</span>
       </Link>
       <button
         type="button"
         onClick={openSearch}
-        className="ml-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-(--border) bg-(--bg-dark) text-(--text-muted) hover:border-(--accent-cyan)/50 hover:text-(--accent-cyan) transition-colors"
+        className="ml-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-(--border) bg-(--bg-dark) text-(--text-muted) hover:border-(--accent)/50 hover:text-(--accent) transition-colors"
         aria-label={t('searchAria')}
       >
         <Search className="h-5 w-5" aria-hidden />

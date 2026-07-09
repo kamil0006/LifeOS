@@ -230,7 +230,7 @@ export function GlobalSearch() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t('search_modal.placeholder')}
-              className="font-gaming"
+              className="font-display"
               autoComplete="off"
               autoCorrect="off"
               spellCheck={false}
@@ -269,11 +269,11 @@ export function GlobalSearch() {
                       ) : (
                         <span className="w-6 shrink-0" />
                       )}
-                      <div className="flex flex-1 items-center gap-3 border-l-2 border-l-transparent px-3 py-2.5 transition-all duration-200 group-hover:border-l-(--accent-cyan)">
-                        <Icon className="h-5 w-5 shrink-0 text-(--accent-cyan)" />
+                      <div className="flex flex-1 items-center gap-3 border-l-2 border-l-transparent px-3 py-2.5 transition-all duration-200 group-hover:border-l-(--accent)">
+                        <Icon className="h-5 w-5 shrink-0 text-(--accent)" />
                         {hasChildren ? (
                           <>
-                            <span className="flex-1 text-base font-gaming text-(--text-primary)">{item.label}</span>
+                            <span className="flex-1 text-base font-display text-(--text-primary)">{item.label}</span>
                             <button
                               type="button"
                               onClick={() => handleSelect(item.route)}
@@ -284,7 +284,7 @@ export function GlobalSearch() {
                           </>
                         ) : (
                           <button type="button" onClick={() => handleSelect(item.route)} className="flex-1 text-left">
-                            <span className="text-base font-gaming text-(--text-primary)">{item.label}</span>
+                            <span className="text-base font-display text-(--text-primary)">{item.label}</span>
                           </button>
                         )}
                       </div>
@@ -308,8 +308,8 @@ export function GlobalSearch() {
                                   onClick={() => handleSelect(child.route)}
                                   className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left transition-colors hover:bg-(--bg-card-hover)"
                                 >
-                                  <ChildIcon className="h-4 w-4 shrink-0 text-(--accent-cyan)/70" />
-                                  <span className="text-sm font-gaming text-(--text-primary)">{child.label}</span>
+                                  <ChildIcon className="h-4 w-4 shrink-0 text-(--accent)/70" />
+                                  <span className="text-sm font-display text-(--text-primary)">{child.label}</span>
                                 </button>
                               )
                             })}
@@ -328,19 +328,19 @@ export function GlobalSearch() {
             <kbd className="rounded border border-(--border) bg-(--bg-dark) px-1.5 py-0.5 font-mono">Esc</kbd> {t('search_modal.escClose')}
           </span>
           <span>
-            <ShortcutLegend parts={['Ctrl', 'K']} accentClass="text-(--accent-cyan)" /> {t('search_modal.shortcutPalette')}
+            <ShortcutLegend parts={['Ctrl', 'K']} accentClass="text-(--accent)" /> {t('search_modal.shortcutPalette')}
           </span>
           <span>
-            <ShortcutLegend parts={['Ctrl', 'E']} accentClass="text-(--accent-magenta)" /> {t('search_modal.shortcutExpense')}
+            <ShortcutLegend parts={['Ctrl', 'E']} accentClass="text-(--tx-expense)" /> {t('search_modal.shortcutExpense')}
           </span>
           <span>
-            <ShortcutLegend parts={['Ctrl', 'I']} accentClass="text-(--accent-green)" /> {t('search_modal.shortcutIncome')}
+            <ShortcutLegend parts={['Ctrl', 'I']} accentClass="text-(--positive)" /> {t('search_modal.shortcutIncome')}
           </span>
           <span>
-            <ShortcutLegend parts={['Ctrl', 'Shift', 'Y']} accentClass="text-(--accent-amber)" /> {t('search_modal.shortcutNote')}
+            <ShortcutLegend parts={['Ctrl', 'Shift', 'Y']} accentClass="text-(--warning)" /> {t('search_modal.shortcutNote')}
           </span>
           <span>
-            <ShortcutLegend parts={['Ctrl', 'Shift', 'L']} accentClass="text-(--accent-cyan)/90" /> {t('search_modal.shortcutTodo')}
+            <ShortcutLegend parts={['Ctrl', 'Shift', 'L']} accentClass="text-(--accent)/90" /> {t('search_modal.shortcutTodo')}
           </span>
         </div>
       </div>

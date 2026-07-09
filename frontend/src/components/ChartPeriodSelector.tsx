@@ -5,7 +5,7 @@ import { useMonth } from '../context/MonthContext'
 const currentYear = new Date().getFullYear()
 
 const selectClass =
-  'min-h-[40px] shrink-0 cursor-pointer rounded-lg border border-(--border) bg-(--bg-card) px-3 py-2 font-gaming text-sm tracking-wide text-(--text-primary) transition-colors focus:border-(--accent-cyan) focus:outline-none'
+  'min-h-[40px] shrink-0 cursor-pointer rounded-lg border border-(--border) bg-(--bg-card) px-3 py-2 font-display text-sm tracking-wide text-(--text-primary) transition-colors focus:border-(--accent) focus:outline-none'
 
 interface ChartPeriodSelectorProps {
   /** Jednolity pasek np. „Okres:” przed przełącznikami */
@@ -30,7 +30,7 @@ export function ChartPeriodSelector({ leadingLabel }: ChartPeriodSelectorProps =
   return (
     <div className="flex w-full max-w-full flex-wrap items-center gap-2">
       {leadingLabel ? (
-        <span className="shrink-0 text-base text-(--text-muted) font-gaming tracking-wide">{leadingLabel}</span>
+        <span className="shrink-0 text-base text-(--text-muted) font-display tracking-wide">{leadingLabel}</span>
       ) : null}
 
       <label htmlFor="chart-period-type" className="sr-only">

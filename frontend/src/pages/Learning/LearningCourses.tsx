@@ -38,11 +38,11 @@ function StatusBadge({ status }: { status: Course['status'] }) {
   const opt = STATUS_OPTIONS.find((o) => o.value === status)
   const bgMap: Record<Course['status'], string> = {
     zaplanowany: 'bg-(--bg-dark) text-(--text-muted) border border-(--border)',
-    w_trakcie: 'bg-(--accent-cyan)/10 text-(--accent-cyan) border border-(--accent-cyan)/30',
-    ukonczony: 'bg-(--accent-green)/10 text-(--accent-green) border border-(--accent-green)/30',
+    w_trakcie: 'bg-(--accent)/10 text-(--accent) border border-(--accent)/30',
+    ukonczony: 'bg-(--positive)/10 text-(--positive) border border-(--positive)/30',
   }
   return (
-    <span className={`px-2 py-0.5 rounded text-xs font-gaming ${bgMap[status]}`}>
+    <span className={`px-2 py-0.5 rounded text-xs font-display ${bgMap[status]}`}>
       {opt ? t(`courses.${opt.labelKey}`) : status}
     </span>
   )
@@ -360,7 +360,7 @@ function CourseCard({
             <button
               type="button"
               onClick={onIncrement}
-              className="flex items-center gap-1 px-2 py-1 rounded text-xs font-gaming text-(--accent-cyan) bg-(--accent-cyan)/10 hover:bg-(--accent-cyan)/20 transition-colors border border-(--accent-cyan)/20"
+              className="flex items-center gap-1 px-2 py-1 rounded text-xs font-display text-(--accent) bg-(--accent)/10 hover:bg-(--accent)/20 transition-colors border border-(--accent)/20"
               title={t('courses.increment')}
             >
               <TrendingUp className="w-3 h-3" />
@@ -371,7 +371,7 @@ function CourseCard({
             <button
               type="button"
               onClick={onResume}
-              className="flex items-center gap-1 px-2 py-1 rounded text-xs font-gaming text-(--accent-amber) bg-(--accent-amber)/10 hover:bg-(--accent-amber)/20 transition-colors border border-(--accent-amber)/20"
+              className="flex items-center gap-1 px-2 py-1 rounded text-xs font-display text-(--warning) bg-(--warning)/10 hover:bg-(--warning)/20 transition-colors border border-(--warning)/20"
               title={t('courses.resume')}
             >
               <RotateCcw className="w-3 h-3" />
@@ -381,7 +381,7 @@ function CourseCard({
           {c.platformUrl && (
             <SafeExternalLink
               href={c.platformUrl}
-              className="p-1.5 rounded-lg text-(--text-muted) hover:text-(--accent-cyan) transition-colors"
+              className="p-1.5 rounded-lg text-(--text-muted) hover:text-(--accent) transition-colors"
               title={c.platform || t('courses.openCourse')}
             >
               <ExternalLink className="w-4 h-4" />
@@ -470,11 +470,11 @@ export function LearningCourses() {
             className="flex items-center justify-between w-full"
           >
             <div className="flex items-center gap-2">
-              <Archive className="w-4 h-4 text-(--accent-green)" />
-              <span className="font-gaming text-(--text-primary) tracking-wide">
+              <Archive className="w-4 h-4 text-(--positive)" />
+              <span className="font-display text-(--text-primary) tracking-wide">
                 {t('courses.archiveTitle')}
               </span>
-              <span className="px-2 py-0.5 rounded-full text-xs font-gaming bg-(--accent-green)/10 text-(--accent-green) border border-(--accent-green)/20">
+              <span className="px-2 py-0.5 rounded-full text-xs font-display bg-(--positive)/10 text-(--positive) border border-(--positive)/20">
                 {completedCourses.length}
               </span>
             </div>

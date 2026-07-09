@@ -75,10 +75,10 @@ export function AppNavPanel({ onNavigate, mobileClose }: AppNavPanelProps) {
             <Link
               to="/dashboard"
               onClick={() => onNavigate?.()}
-              className="block text-xl font-bold tracking-widest font-gaming hover:opacity-90 transition-opacity outline-none focus:outline-none"
+              className="block text-xl font-bold tracking-widest font-display hover:opacity-90 transition-opacity outline-none focus:outline-none"
               title={t('homeAria')}
             >
-              <span className="text-(--accent-cyan) drop-shadow-[0_0_8px_rgba(0,229,255,0.5)]">Life</span>
+              <span className="text-(--accent)">Life</span>
               <span className="text-(--text-primary)">OS</span>
             </Link>
             <p className="text-sm text-(--text-muted) mt-1 font-mono tracking-wider">{t('version')}</p>
@@ -90,7 +90,7 @@ export function AppNavPanel({ onNavigate, mobileClose }: AppNavPanelProps) {
                     openOnboarding()
                     onNavigate?.()
                   }}
-                  className="grid size-11 place-items-center rounded-lg border border-(--border) bg-(--bg-dark) p-0 text-(--text-muted) transition-colors hover:border-(--accent-cyan)/50 hover:text-(--accent-cyan)"
+                  className="grid size-11 place-items-center rounded-lg border border-(--border) bg-(--bg-dark) p-0 text-(--text-muted) transition-colors hover:border-(--accent)/50 hover:text-(--accent)"
                   aria-label={t('tutorialAria')}
                 >
                   <HelpCircle
@@ -107,7 +107,7 @@ export function AppNavPanel({ onNavigate, mobileClose }: AppNavPanelProps) {
                     openSearch()
                     onNavigate?.()
                   }}
-                  className="flex min-h-11 w-full min-w-0 items-center justify-center gap-1.5 rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-sm font-gaming text-(--text-muted) transition-colors hover:border-(--accent-cyan)/50 hover:text-(--accent-cyan)"
+                  className="flex min-h-11 w-full min-w-0 items-center justify-center gap-1.5 rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-sm font-display text-(--text-muted) transition-colors hover:border-(--accent)/50 hover:text-(--accent)"
                 >
                   <Search className="h-3.5 w-3.5 shrink-0" />
                   <span className="truncate">{t('search')}</span>
@@ -119,7 +119,7 @@ export function AppNavPanel({ onNavigate, mobileClose }: AppNavPanelProps) {
             <button
               type="button"
               onClick={mobileClose}
-              className="lg:hidden shrink-0 flex h-11 w-11 items-center justify-center rounded-lg border border-(--border) bg-(--bg-dark) text-(--text-muted) transition-colors hover:border-(--accent-cyan)/50 hover:text-(--accent-cyan)"
+              className="lg:hidden shrink-0 flex h-11 w-11 items-center justify-center rounded-lg border border-(--border) bg-(--bg-dark) text-(--text-muted) transition-colors hover:border-(--accent)/50 hover:text-(--accent)"
               aria-label={t('closeMenuAria')}
             >
               <X className="h-5 w-5" />
@@ -144,19 +144,13 @@ export function AppNavPanel({ onNavigate, mobileClose }: AppNavPanelProps) {
                   className={({ isActive }) =>
                     `flex min-h-[44px] items-center gap-3 rounded-lg border px-4 py-3 outline-none transition-[background-color,color,border-color,box-shadow] duration-200 ease-out focus:outline-none ${
                       isActive
-                        ? 'border border-(--accent-cyan)/40 bg-(--glow-cyan) text-(--accent-cyan) shadow-[0_0_15px_rgba(0,229,255,0.15),0_0_30px_rgba(0,229,255,0.06)]'
+                        ? 'border border-(--accent)/40 bg-(--accent)/10 text-(--accent)'
                         : 'border-transparent text-(--text-muted) hover:bg-(--bg-card-hover) hover:text-(--text-primary)'
                     }`
                   }
                 >
-                  {({ isActive }) => (
-                    <>
-                      <item.icon
-                        className={`h-5 w-5 shrink-0 transition-[filter] duration-200 ${isActive ? 'drop-shadow-[0_0_4px_rgba(0,229,255,0.6)]' : ''}`}
-                      />
-                      <span className="font-medium tracking-wide">{t(item.labelKey)}</span>
-                    </>
-                  )}
+                  <item.icon className="h-5 w-5 shrink-0" />
+                  <span className="font-medium tracking-wide">{t(item.labelKey)}</span>
                 </NavLink>
               ))}
             </div>
@@ -171,7 +165,7 @@ export function AppNavPanel({ onNavigate, mobileClose }: AppNavPanelProps) {
               openSettings()
               onNavigate?.()
             }}
-            className="grid size-11 place-items-center rounded-lg border border-(--border) bg-(--bg-dark) p-0 text-(--text-muted) transition-colors hover:border-(--accent-cyan)/50 hover:text-(--accent-cyan)"
+            className="grid size-11 place-items-center rounded-lg border border-(--border) bg-(--bg-dark) p-0 text-(--text-muted) transition-colors hover:border-(--accent)/50 hover:text-(--accent)"
             aria-label={t('settingsAria')}
           >
             <Settings className="size-[18px] shrink-0 text-current [stroke-linecap:round] [stroke-linejoin:round]" strokeWidth={2} aria-hidden />
@@ -183,7 +177,7 @@ export function AppNavPanel({ onNavigate, mobileClose }: AppNavPanelProps) {
             <button
               type="button"
               onClick={handleLogout}
-              className="flex min-h-[44px] items-center gap-2 text-sm text-(--text-muted) transition-colors hover:text-(--accent-cyan)"
+              className="flex min-h-[44px] items-center gap-2 text-sm text-(--text-muted) transition-colors hover:text-(--accent)"
             >
               <LogOut className="h-3 w-3" />
               {t('exitDemo')}
@@ -197,7 +191,7 @@ export function AppNavPanel({ onNavigate, mobileClose }: AppNavPanelProps) {
             <button
               type="button"
               onClick={handleLogout}
-              className="flex min-h-[44px] items-center gap-2 text-sm text-(--text-muted) transition-colors hover:text-(--accent-cyan)"
+              className="flex min-h-[44px] items-center gap-2 text-sm text-(--text-muted) transition-colors hover:text-(--accent)"
             >
               <LogOut className="h-3 w-3" />
               {t('logout')}
@@ -212,7 +206,7 @@ export function AppNavPanel({ onNavigate, mobileClose }: AppNavPanelProps) {
 export function Sidebar() {
   return (
     <aside className="relative hidden h-full min-h-0 w-64 shrink-0 overflow-hidden border-r border-(--border) bg-(--bg-card)/95 lg:flex lg:flex-col">
-      <div className="absolute top-0 left-0 h-px w-full bg-linear-to-r from-transparent via-(--accent-cyan)/50 to-transparent" />
+      <div className="absolute top-0 left-0 h-px w-full bg-linear-to-r from-transparent via-(--accent)/50 to-transparent" />
       <AppNavPanel />
     </aside>
   )

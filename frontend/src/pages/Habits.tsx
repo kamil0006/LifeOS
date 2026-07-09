@@ -75,10 +75,10 @@ function scheduleTypeLabel(t: TFunction, type: HabitScheduleType): string {
 
 /** Paleta akcentu nawyku (hex); kratka + wykres. Etykiety kolorów — tłumaczone osobno. */
 const HABIT_ACCENT_PRESETS = [
-  { id: 'green', hex: '#00ff9d' },
-  { id: 'cyan', hex: '#00e5ff' },
-  { id: 'magenta', hex: '#ff00d4' },
-  { id: 'amber', hex: '#ffb800' },
+  { id: 'green', hex: '#63b28f' },
+  { id: 'cyan', hex: '#82a7cf' },
+  { id: 'magenta', hex: '#b58cc4' },
+  { id: 'amber', hex: '#c9a35c' },
   { id: 'violet', hex: '#a78bfa' },
   { id: 'emerald', hex: '#34d399' },
   { id: 'lime', hex: '#bef264' },
@@ -351,8 +351,8 @@ function pluralDays(t: TFunction, n: number): string {
 }
 
 function goalStatusChip(t: TFunction, pct: number): { label: string; cls: string } | null {
-  if (pct >= 100) return { label: t('goalStatus.completed'), cls: 'border-(--accent-green)/40 bg-(--accent-green)/10 text-(--accent-green)' }
-  if (pct >= 75) return { label: t('goalStatus.close'), cls: 'border-(--accent-amber)/40 bg-(--accent-amber)/10 text-(--accent-amber)' }
+  if (pct >= 100) return { label: t('goalStatus.completed'), cls: 'border-(--positive)/40 bg-(--positive)/10 text-(--positive)' }
+  if (pct >= 75) return { label: t('goalStatus.close'), cls: 'border-(--warning)/40 bg-(--warning)/10 text-(--warning)' }
   return null
 }
 
@@ -925,7 +925,7 @@ function HabitCreateForm({
             if (e.key === 'Escape') onCancel()
             if (e.key === 'Enter') submit()
           }}
-          className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
+          className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent)/50 focus:outline-none focus:ring-1 focus:ring-(--accent)/25"
           autoFocus={!isMobile}
           placeholder={t('form.namePlaceholder')}
         />
@@ -939,7 +939,7 @@ function HabitCreateForm({
             id="new-habit-category"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
+            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent)/50 focus:outline-none focus:ring-1 focus:ring-(--accent)/25"
             placeholder={t('form.categoryPlaceholder')}
           />
         </div>
@@ -951,7 +951,7 @@ function HabitCreateForm({
             id="new-habit-schedule"
             value={scheduleType}
             onChange={(e) => setScheduleType(e.target.value as HabitScheduleType)}
-            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
+            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent)/50 focus:outline-none focus:ring-1 focus:ring-(--accent)/25"
           >
             {SCHEDULE_TYPE_ORDER.map((value) => (
               <option key={value} value={value}>
@@ -970,7 +970,7 @@ function HabitCreateForm({
               onClick={() => toggleScheduleDayValue(i, setScheduleDays)}
               className={`rounded-lg border px-2 py-2.5 text-base sm:px-3 sm:py-2 ${
                 scheduleDays.includes(i)
-                  ? 'border-(--accent-cyan)/50 bg-(--accent-cyan)/15 text-(--accent-cyan)'
+                  ? 'border-(--accent)/50 bg-(--accent)/15 text-(--accent)'
                   : 'border-(--border) text-(--text-muted)'
               }`}
             >
@@ -1023,7 +1023,7 @@ function HabitCreateForm({
               id="new-habit-unit"
               value={unit}
               onChange={(e) => setUnit(e.target.value)}
-              className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
+              className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent)/50 focus:outline-none focus:ring-1 focus:ring-(--accent)/25"
               placeholder={t('form.unitPlaceholder')}
             />
           </div>
@@ -1037,7 +1037,7 @@ function HabitCreateForm({
               inputMode="decimal"
               value={targetRaw}
               onChange={(e) => setTargetRaw(sanitizeGoalNumber(e.target.value))}
-              className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
+              className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent)/50 focus:outline-none focus:ring-1 focus:ring-(--accent)/25"
               placeholder={t('form.targetPlaceholder')}
             />
           </div>
@@ -1169,7 +1169,7 @@ function GoalCreateForm({
             if (e.key === 'Escape') onCancel()
             if (e.key === 'Enter') submit()
           }}
-          className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
+          className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent)/50 focus:outline-none focus:ring-1 focus:ring-(--accent)/25"
           autoFocus={!isMobile}
           placeholder={t('goalForm.namePlaceholder')}
         />
@@ -1185,7 +1185,7 @@ function GoalCreateForm({
             inputMode="decimal"
             value={current}
             onChange={(e) => setCurrent(sanitizeGoalNumber(e.target.value))}
-            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
+            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent)/50 focus:outline-none focus:ring-1 focus:ring-(--accent)/25"
           />
         </div>
         <div>
@@ -1198,7 +1198,7 @@ function GoalCreateForm({
             inputMode="decimal"
             value={target}
             onChange={(e) => setTarget(sanitizeGoalNumber(e.target.value))}
-            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
+            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent)/50 focus:outline-none focus:ring-1 focus:ring-(--accent)/25"
             placeholder={t('goalForm.targetPlaceholder')}
           />
         </div>
@@ -1210,7 +1210,7 @@ function GoalCreateForm({
             id="new-goal-unit"
             value={unit}
             onChange={(e) => setUnit(e.target.value)}
-            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
+            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent)/50 focus:outline-none focus:ring-1 focus:ring-(--accent)/25"
             placeholder={t('goalForm.unitPlaceholder')}
           />
         </div>
@@ -1219,7 +1219,7 @@ function GoalCreateForm({
         <button
           type="button"
           onClick={submit}
-          className="flex w-full items-center justify-center gap-2 rounded-lg border border-(--accent-cyan)/40 bg-(--accent-cyan)/15 px-4 py-3 text-base text-(--accent-cyan) hover:bg-(--accent-cyan)/25 sm:w-auto sm:py-2"
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-(--accent)/40 bg-(--accent)/15 px-4 py-3 text-base text-(--accent) hover:bg-(--accent)/25 sm:w-auto sm:py-2"
         >
           <Plus className="h-4 w-4 shrink-0" />
           {t('goalForm.submitAdd')}
@@ -1371,7 +1371,7 @@ function HabitDayEditor({
                 onClick={() => setStatus(value)}
                 className={`rounded-lg border px-4 py-3 text-base transition-colors sm:px-3 sm:py-1.5 ${
                   status === value
-                    ? 'border-(--accent-cyan)/50 bg-(--accent-cyan)/15 text-(--accent-cyan)'
+                    ? 'border-(--accent)/50 bg-(--accent)/15 text-(--accent)'
                     : 'border-(--border) text-(--text-muted) hover:bg-(--bg-card)'
                 } ${isMobile ? 'w-full text-left' : ''}`}
               >
@@ -1396,7 +1396,7 @@ function HabitDayEditor({
                 inputMode="decimal"
                 value={valueRaw}
                 onChange={(e) => setValueRaw(sanitizeGoalNumber(e.target.value))}
-                className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25 sm:max-w-xs"
+                className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent)/50 focus:outline-none focus:ring-1 focus:ring-(--accent)/25 sm:max-w-xs"
               />
               {habit.targetPerDay != null && habit.targetPerDay > 0 && (
                 <button
@@ -1423,7 +1423,7 @@ function HabitDayEditor({
             value={note}
             onChange={(e) => setNote(e.target.value)}
             rows={isMobile ? 2 : 3}
-            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
+            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent)/50 focus:outline-none focus:ring-1 focus:ring-(--accent)/25"
             placeholder={t('dayEditor.notePlaceholder')}
           />
         </div>
@@ -1550,7 +1550,7 @@ function HabitEditForm({
           onKeyDown={(e) => {
             if (e.key === 'Escape') onCancel()
           }}
-          className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
+          className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent)/50 focus:outline-none focus:ring-1 focus:ring-(--accent)/25"
           autoFocus={!isMobile}
           placeholder={t('form.namePlaceholder')}
         />
@@ -1567,7 +1567,7 @@ function HabitEditForm({
             id={`edit-habit-category-${habit.id}`}
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
+            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent)/50 focus:outline-none focus:ring-1 focus:ring-(--accent)/25"
             placeholder={t('form.categoryPlaceholder')}
           />
         </div>
@@ -1582,7 +1582,7 @@ function HabitEditForm({
             id={`edit-habit-schedule-${habit.id}`}
             value={scheduleType}
             onChange={(e) => setScheduleType(e.target.value as HabitScheduleType)}
-            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
+            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent)/50 focus:outline-none focus:ring-1 focus:ring-(--accent)/25"
           >
             {SCHEDULE_TYPE_ORDER.map((value) => (
               <option key={value} value={value}>
@@ -1601,7 +1601,7 @@ function HabitEditForm({
               onClick={() => toggleScheduleDayValue(i, setScheduleDays)}
               className={`rounded-lg border px-2 py-2.5 text-base sm:px-3 sm:py-2 ${
                 scheduleDays.includes(i)
-                  ? 'border-(--accent-cyan)/50 bg-(--accent-cyan)/15 text-(--accent-cyan)'
+                  ? 'border-(--accent)/50 bg-(--accent)/15 text-(--accent)'
                   : 'border-(--border) text-(--text-muted)'
               }`}
             >
@@ -1651,7 +1651,7 @@ function HabitEditForm({
               id={`edit-habit-unit-${habit.id}`}
               value={unit}
               onChange={(e) => setUnit(e.target.value)}
-              className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
+              className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent)/50 focus:outline-none focus:ring-1 focus:ring-(--accent)/25"
               placeholder={t('form.unitPlaceholder')}
             />
           </div>
@@ -1668,7 +1668,7 @@ function HabitEditForm({
               inputMode="decimal"
               value={targetRaw}
               onChange={(e) => setTargetRaw(sanitizeGoalNumber(e.target.value))}
-              className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
+              className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2.5 text-base text-(--text-primary) focus:border-(--accent)/50 focus:outline-none focus:ring-1 focus:ring-(--accent)/25"
               placeholder={t('form.targetPlaceholder')}
             />
           </div>
@@ -1803,7 +1803,7 @@ function HabitDayCell({
             : 'border-transparent bg-(--border) hover:bg-(--border)/80'
       } ${
         isSelected
-          ? 'z-10 ring-2 ring-(--accent-cyan) ring-offset-2 ring-offset-(--bg-card)'
+          ? 'z-10 ring-2 ring-(--accent) ring-offset-2 ring-offset-(--bg-card)'
           : ''
       }`}
       title={titleBits.join(' — ')}
@@ -2066,15 +2066,15 @@ export function Habits() {
   return (
     <div className="space-y-6 sm:space-y-8">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-(--text-primary) font-gaming tracking-wider">
+        <h1 className="text-2xl sm:text-3xl font-bold text-(--text-primary) font-display tracking-wider">
           {t('header.title')}
         </h1>
-        <p className="text-base text-(--text-muted) mt-1 font-gaming tracking-wide">
+        <p className="text-base text-(--text-muted) mt-1 font-display tracking-wide">
           {isDemoMode ? t('header.subtitleDemo') : t('header.subtitleNormal')}
         </p>
       </div>
       {/* Nawyki */}
-      <Card title={t('habitsCard.cardTitle')} className="border-(--accent-green)/20 max-md:p-4">
+      <Card title={t('habitsCard.cardTitle')} className="border-(--positive)/20 max-md:p-4">
         <div className="flex flex-col">
           <div className="mb-5 flex flex-wrap items-center gap-2">
             <button
@@ -2082,7 +2082,7 @@ export function Habits() {
               onClick={() => setShowArchivedHabits(false)}
               className={`rounded-lg border px-3 py-2 text-base transition-colors ${
                 !showArchivedHabits
-                  ? 'border-(--border) bg-(--bg-dark) font-gaming tracking-wide text-(--text-primary)'
+                  ? 'border-(--border) bg-(--bg-dark) font-display tracking-wide text-(--text-primary)'
                   : 'border-transparent text-(--text-muted) hover:bg-(--bg-card-hover)/60 hover:text-(--text-primary)'
               }`}
             >
@@ -2093,7 +2093,7 @@ export function Habits() {
               onClick={() => setShowArchivedHabits(true)}
               className={`rounded-lg border px-3 py-2 text-base transition-colors ${
                 showArchivedHabits
-                  ? 'border-(--border) bg-(--bg-dark) font-gaming tracking-wide text-(--text-primary)'
+                  ? 'border-(--border) bg-(--bg-dark) font-display tracking-wide text-(--text-primary)'
                   : 'border-transparent text-(--text-muted) hover:bg-(--bg-card-hover)/60 hover:text-(--text-primary)'
               }`}
             >
@@ -2326,7 +2326,7 @@ export function Habits() {
                       </div>
                     )}
                     {!isEditing && streak > 0 && (
-                      <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-(--accent-amber)/40 bg-(--accent-amber)/10 px-2.5 py-1 text-sm font-medium text-(--accent-amber) max-md:ml-7">
+                      <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-(--warning)/40 bg-(--warning)/10 px-2.5 py-1 text-sm font-medium text-(--warning) max-md:ml-7">
                         <Flame className="h-3.5 w-3.5 shrink-0" aria-hidden />
                         {t('habitsCard.streakLabel', { days: pluralDays(t, streak) })}
                       </span>
@@ -2340,7 +2340,7 @@ export function Habits() {
                         <button
                           type="button"
                           onClick={() => restoreHabit(habit.id)}
-                          className="flex items-center gap-2 rounded-lg border border-(--accent-cyan)/40 bg-(--accent-cyan)/10 px-3 py-2 text-base text-(--accent-cyan) hover:bg-(--accent-cyan)/20"
+                          className="flex items-center gap-2 rounded-lg border border-(--accent)/40 bg-(--accent)/10 px-3 py-2 text-base text-(--accent) hover:bg-(--accent)/20"
                           title={t('habitsCard.restoreTitle')}
                         >
                           <Check className="h-4 w-4" />
@@ -2384,7 +2384,7 @@ export function Habits() {
                               )
                               setEditingHabitColor(habit.color ?? null)
                             }}
-                            className="p-2 text-(--text-muted) hover:text-(--accent-cyan) transition-colors"
+                            className="p-2 text-(--text-muted) hover:text-(--accent) transition-colors"
                             title={t('habitsCard.editTitle')}
                           >
                             <Pencil className="w-4 h-4" />
@@ -2544,7 +2544,7 @@ export function Habits() {
                       className="space-y-6 rounded-lg border border-(--border)/50 bg-(--bg-card)/15 p-4 max-md:space-y-3 max-md:p-3 sm:p-5"
                     >
                       <div className="flex flex-wrap items-center gap-2 text-base text-(--text-primary) max-md:text-sm">
-                        <Award className="h-5 w-5 shrink-0 text-(--accent-amber) max-md:h-4 max-md:w-4" aria-hidden />
+                        <Award className="h-5 w-5 shrink-0 text-(--warning) max-md:h-4 max-md:w-4" aria-hidden />
                         <span>
                           {t('detail.recordStreak', { days: pluralDays(t, longestStreak) })}
                         </span>
@@ -2597,7 +2597,7 @@ export function Habits() {
                         {t('detail.trendLabel')}{' '}
                         <span
                           className={
-                            trend30 >= 0 ? 'text-(--accent-green)' : 'text-red-400'
+                            trend30 >= 0 ? 'text-(--positive)' : 'text-red-400'
                           }
                         >
                           {trend30 >= 0 ? '+' : ''}
@@ -2619,7 +2619,7 @@ export function Habits() {
                                 [habit.id]: e.target.value as HabitChartPeriod,
                               }))
                             }
-                            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25 max-md:min-h-11 sm:w-auto"
+                            className="w-full rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent)/50 focus:outline-none focus:ring-1 focus:ring-(--accent)/25 max-md:min-h-11 sm:w-auto"
                           >
                             <option value="30d">{t('detail.chartOption.d30')}</option>
                             <option value="90d">{t('detail.chartOption.d90')}</option>
@@ -2803,7 +2803,7 @@ export function Habits() {
                                       [habit.id]: e.target.value,
                                     }))
                                   }
-                                  className="w-full max-w-xs rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none focus:ring-1 focus:ring-(--accent-cyan)/25"
+                                  className="w-full max-w-xs rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent)/50 focus:outline-none focus:ring-1 focus:ring-(--accent)/25"
                                 >
                                   {monthOptions.map((month) => (
                                     <option key={month.key} value={month.key}>
@@ -2897,7 +2897,7 @@ export function Habits() {
                                     className={`flex h-8 items-center justify-center rounded-md border text-xs tabular-nums text-(--text-primary) transition-transform hover:scale-105 disabled:cursor-default disabled:hover:scale-100 sm:h-9 ${
                                       measurableEditor?.habitId === habit.id &&
                                       measurableEditor.date === day.date
-                                        ? 'border-(--accent-cyan) ring-2 ring-(--accent-cyan)/50'
+                                        ? 'border-(--accent) ring-2 ring-(--accent)/50'
                                         : 'border-(--border)/40'
                                     }`}
                                     style={{
@@ -3026,7 +3026,7 @@ export function Habits() {
             ) : (
               <button
                 onClick={() => setShowHabitForm(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-(--accent-green)/15 text-(--accent-green) border border-(--accent-green)/40 font-gaming hover:bg-(--accent-green)/25 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-(--positive)/15 text-(--positive) border border-(--positive)/40 font-display hover:bg-(--positive)/25 transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 {t('habitsCard.addHabitButton')}
@@ -3039,7 +3039,7 @@ export function Habits() {
       </Card>
 
       {/* Cele */}
-      <Card title={t('goalsCard.cardTitle')} className="border-(--accent-cyan)/20 max-md:p-4">
+      <Card title={t('goalsCard.cardTitle')} className="border-(--accent)/20 max-md:p-4">
         <div className="space-y-4">
           {/* Filter tabs */}
           <div className="flex flex-wrap items-center gap-2">
@@ -3048,7 +3048,7 @@ export function Habits() {
               onClick={() => setShowCompletedGoals(false)}
               className={`rounded-lg border px-3 py-2 text-base transition-colors ${
                 !showCompletedGoals
-                  ? 'border-(--border) bg-(--bg-dark) font-gaming tracking-wide text-(--text-primary)'
+                  ? 'border-(--border) bg-(--bg-dark) font-display tracking-wide text-(--text-primary)'
                   : 'border-transparent text-(--text-muted) hover:bg-(--bg-card-hover)/60 hover:text-(--text-primary)'
               }`}
             >
@@ -3059,7 +3059,7 @@ export function Habits() {
               onClick={() => setShowCompletedGoals(true)}
               className={`rounded-lg border px-3 py-2 text-base transition-colors ${
                 showCompletedGoals
-                  ? 'border-(--border) bg-(--bg-dark) font-gaming tracking-wide text-(--text-primary)'
+                  ? 'border-(--border) bg-(--bg-dark) font-display tracking-wide text-(--text-primary)'
                   : 'border-transparent text-(--text-muted) hover:bg-(--bg-card-hover)/60 hover:text-(--text-primary)'
               }`}
             >
@@ -3082,7 +3082,7 @@ export function Habits() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: reduceMotion ? 0.12 : 0.2 }}
-                className="rounded-lg border border-(--border) bg-(--bg-dark) p-4 hover:border-(--accent-cyan)/25 transition-colors"
+                className="rounded-lg border border-(--border) bg-(--bg-dark) p-4 hover:border-(--accent)/25 transition-colors"
               >
                 {isEditing ? (
                   <div className="space-y-3">
@@ -3091,7 +3091,7 @@ export function Habits() {
                       <input
                         value={editingGoal.name}
                         onChange={(e) => setEditingGoal((g) => ({ ...g, name: e.target.value }))}
-                        className="w-full rounded-lg border border-(--border) bg-(--bg-card) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none"
+                        className="w-full rounded-lg border border-(--border) bg-(--bg-card) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent)/50 focus:outline-none"
                         autoFocus
                       />
                     </div>
@@ -3105,7 +3105,7 @@ export function Habits() {
                           onChange={(e) =>
                             setEditingGoal((g) => ({ ...g, target: sanitizeGoalNumber(e.target.value) }))
                           }
-                          className="w-full rounded-lg border border-(--border) bg-(--bg-card) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none"
+                          className="w-full rounded-lg border border-(--border) bg-(--bg-card) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent)/50 focus:outline-none"
                         />
                       </div>
                       <div>
@@ -3113,7 +3113,7 @@ export function Habits() {
                         <input
                           value={editingGoal.unit}
                           onChange={(e) => setEditingGoal((g) => ({ ...g, unit: e.target.value }))}
-                          className="w-full rounded-lg border border-(--border) bg-(--bg-card) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none"
+                          className="w-full rounded-lg border border-(--border) bg-(--bg-card) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent)/50 focus:outline-none"
                           placeholder={t('goalsCard.unitPlaceholder')}
                         />
                       </div>
@@ -3127,7 +3127,7 @@ export function Habits() {
                         onChange={(e) =>
                           setEditingGoal((g) => ({ ...g, current: sanitizeGoalNumber(e.target.value) }))
                         }
-                        className="w-full max-w-xs rounded-lg border border-(--border) bg-(--bg-card) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent-cyan)/50 focus:outline-none"
+                        className="w-full max-w-xs rounded-lg border border-(--border) bg-(--bg-card) px-3 py-2 text-base text-(--text-primary) focus:border-(--accent)/50 focus:outline-none"
                       />
                     </div>
                     <div className="flex flex-wrap gap-2 border-t border-(--border)/60 pt-3">
@@ -3146,7 +3146,7 @@ export function Habits() {
                             setEditingGoalId(null)
                           }
                         }}
-                        className="flex items-center gap-1.5 rounded-lg border border-(--accent-cyan)/40 bg-(--accent-cyan)/15 px-4 py-2 text-base text-(--accent-cyan) hover:bg-(--accent-cyan)/25"
+                        className="flex items-center gap-1.5 rounded-lg border border-(--accent)/40 bg-(--accent)/15 px-4 py-2 text-base text-(--accent) hover:bg-(--accent)/25"
                       >
                         <Check className="w-4 h-4" />
                         {t('goalsCard.save')}
@@ -3199,8 +3199,8 @@ export function Habits() {
                           width: `${pct}%`,
                           background:
                             pctRounded >= 100
-                              ? 'var(--accent-green)'
-                              : 'linear-gradient(to right, var(--accent-cyan), var(--accent-green))',
+                              ? 'var(--positive)'
+                              : 'linear-gradient(to right, var(--accent), var(--positive))',
                         }}
                       />
                     </div>
@@ -3226,7 +3226,7 @@ export function Habits() {
                               if (isNowCompleted) setShowCompletedGoals(true)
                             }, isNowCompleted ? 2500 : 5000)
                           }}
-                          className="flex items-center gap-1 rounded-lg border border-(--accent-cyan)/40 bg-(--accent-cyan)/10 px-3 py-1.5 text-base text-(--accent-cyan) hover:bg-(--accent-cyan)/20 transition-colors"
+                          className="flex items-center gap-1 rounded-lg border border-(--accent)/40 bg-(--accent)/10 px-3 py-1.5 text-base text-(--accent) hover:bg-(--accent)/20 transition-colors"
                         >
                           <Plus className="h-3.5 w-3.5 shrink-0" />
                           {step}{goal.unit ? ` ${goal.unit}` : ''}
@@ -3243,7 +3243,7 @@ export function Habits() {
                             current: String(goal.current),
                           })
                         }}
-                        className="p-2 text-(--text-muted) hover:text-(--accent-cyan) transition-colors"
+                        className="p-2 text-(--text-muted) hover:text-(--accent) transition-colors"
                         title={t('goalsCard.editTitle')}
                       >
                         <Pencil className="h-4 w-4" />
@@ -3296,7 +3296,7 @@ export function Habits() {
                   <button
                     type="button"
                     onClick={() => setShowGoalForm(true)}
-                    className="flex items-center gap-2 rounded-lg border border-(--accent-cyan)/40 bg-(--accent-cyan)/15 px-4 py-2 font-gaming text-(--accent-cyan) transition-colors hover:bg-(--accent-cyan)/25"
+                    className="flex items-center gap-2 rounded-lg border border-(--accent)/40 bg-(--accent)/15 px-4 py-2 font-display text-(--accent) transition-colors hover:bg-(--accent)/25"
                   >
                     <Plus className="h-4 w-4" />
                     {t('goalsCard.addGoalButton')}
@@ -3385,7 +3385,7 @@ export function Habits() {
           >
             {goalToast.type === 'completed' ? (
               <>
-                <span className="text-base font-medium text-(--accent-green)">
+                <span className="text-base font-medium text-(--positive)">
                   {t('toast.goalCompleted', { name: goalToast.goalName })}
                 </span>
                 <button
@@ -3412,7 +3412,7 @@ export function Habits() {
                     if (goalToastTimerRef.current) clearTimeout(goalToastTimerRef.current)
                     setGoalToast(null)
                   }}
-                  className="text-sm font-medium text-(--accent-cyan) hover:opacity-80"
+                  className="text-sm font-medium text-(--accent) hover:opacity-80"
                 >
                   {t('toast.undo')}
                 </button>

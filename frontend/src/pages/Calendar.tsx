@@ -344,16 +344,16 @@ export function Calendar() {
         className="flex items-end justify-between gap-3"
       >
         <div className="min-w-0">
-          <h1 className="text-2xl sm:text-3xl font-bold text-(--text-primary) font-gaming tracking-wider">
+          <h1 className="text-2xl sm:text-3xl font-bold text-(--text-primary) font-display tracking-wider">
             {t('title')}
           </h1>
-          <p className="text-sm sm:text-base text-(--text-muted) mt-1 font-gaming tracking-wide">
+          <p className="text-sm sm:text-base text-(--text-muted) mt-1 font-display tracking-wide">
             {t('subtitle')}
           </p>
         </div>
         <button
           onClick={() => openAddModal()}
-          className="flex shrink-0 items-center gap-2 px-3 sm:px-4 py-2 rounded-lg bg-(--accent-cyan) text-(--bg-dark) font-gaming hover:opacity-90 transition-opacity"
+          className="flex shrink-0 items-center gap-2 px-3 sm:px-4 py-2 rounded-lg bg-(--accent) text-(--bg-dark) font-display hover:opacity-90 transition-opacity"
         >
           <Plus className="w-4 h-4" />
           <span className="hidden sm:inline">{t('addEvent')}</span>
@@ -386,12 +386,12 @@ export function Calendar() {
           <div className="flex items-center justify-between sm:justify-start gap-2">
             <button
               onClick={viewMode === 'month' ? prevMonth : prevWeek}
-              className="p-2 rounded-lg hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-(--accent-cyan) transition-colors"
+              className="p-2 rounded-lg hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-(--accent) transition-colors"
               aria-label={viewMode === 'month' ? t('prevMonth') : t('prevWeek')}
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <h2 className="text-base sm:text-xl font-bold text-(--text-primary) font-gaming flex-1 sm:flex-none sm:min-w-[200px] text-center">
+            <h2 className="text-base sm:text-xl font-bold text-(--text-primary) font-display flex-1 sm:flex-none sm:min-w-[200px] text-center">
               {viewMode === 'month'
                 ? `${monthNames[month]} ${year}`
                 : weekDays[0]
@@ -400,7 +400,7 @@ export function Calendar() {
             </h2>
             <button
               onClick={viewMode === 'month' ? nextMonth : nextWeek}
-              className="p-2 rounded-lg hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-(--accent-cyan) transition-colors"
+              className="p-2 rounded-lg hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-(--accent) transition-colors"
               aria-label={viewMode === 'month' ? t('nextMonth') : t('nextWeek')}
             >
               <ChevronRight className="w-5 h-5" />
@@ -413,8 +413,8 @@ export function Calendar() {
             <div className="flex w-full sm:w-auto rounded-lg border border-(--border) p-0.5">
               <button
                 onClick={switchToMonthView}
-                className={`flex flex-1 sm:flex-none items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-gaming transition-colors ${
-                  viewMode === 'month' ? 'bg-(--accent-cyan) text-(--bg-dark)' : 'text-(--text-muted) hover:text-(--text-primary)'
+                className={`flex flex-1 sm:flex-none items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-display transition-colors ${
+                  viewMode === 'month' ? 'bg-(--accent) text-(--bg-dark)' : 'text-(--text-muted) hover:text-(--text-primary)'
                 }`}
               >
                 <CalendarDays className="w-4 h-4" />
@@ -422,8 +422,8 @@ export function Calendar() {
               </button>
               <button
                 onClick={switchToWeekView}
-                className={`flex flex-1 sm:flex-none items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-gaming transition-colors ${
-                  viewMode === 'week' ? 'bg-(--accent-cyan) text-(--bg-dark)' : 'text-(--text-muted) hover:text-(--text-primary)'
+                className={`flex flex-1 sm:flex-none items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-display transition-colors ${
+                  viewMode === 'week' ? 'bg-(--accent) text-(--bg-dark)' : 'text-(--text-muted) hover:text-(--text-primary)'
                 }`}
               >
                 <CalendarRange className="w-4 h-4" />
@@ -437,7 +437,7 @@ export function Calendar() {
           <div className="mb-3 rounded-lg border border-(--border) bg-(--bg-dark) p-3">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
               <div>
-                <h3 className="text-lg font-gaming text-(--text-primary)">{selectedDayHeader?.fullDate}</h3>
+                <h3 className="text-lg font-display text-(--text-primary)">{selectedDayHeader?.fullDate}</h3>
                 <p className="text-base text-(--text-muted)">{selectedDayHeader?.weekday}</p>
               </div>
               <div className="flex items-center gap-2">
@@ -451,7 +451,7 @@ export function Calendar() {
                 </button>
                 <button
                   onClick={() => openAddModal(selectedDayKey)}
-                  className="text-sm px-3 py-1.5 rounded-lg bg-(--accent-cyan) text-(--bg-dark) font-gaming"
+                  className="text-sm px-3 py-1.5 rounded-lg bg-(--accent) text-(--bg-dark) font-display"
                 >
                   {t('addOnThisDay')}
                 </button>
@@ -461,7 +461,7 @@ export function Calendar() {
             <div className="space-y-1">
               {selectedDayTodos.length > 0 && (
                 <div className="mb-2">
-                  <h4 className="text-sm font-gaming text-(--text-muted) uppercase mb-1">{t('tasksHeading')}</h4>
+                  <h4 className="text-sm font-display text-(--text-muted) uppercase mb-1">{t('tasksHeading')}</h4>
                   <div className="space-y-1.5">
                     {selectedDayTodos.map((todo) => (
                       <div
@@ -483,7 +483,7 @@ export function Calendar() {
                           <div className="flex items-center gap-1">
                             <button
                               onClick={() => toggleTodo(todo.id, !todo.done)}
-                              className="p-1 rounded hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-(--accent-cyan)"
+                              className="p-1 rounded hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-(--accent)"
                               title={todo.done ? t('markUndone') : t('markDone')}
                             >
                               {todo.done ? <CheckSquare2 className="w-4 h-4" /> : <Square className="w-4 h-4" />}
@@ -529,7 +529,7 @@ export function Calendar() {
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <span className="mb-1 inline-flex items-center gap-1 rounded-full border border-(--accent-cyan)/40 bg-(--bg-card-hover) px-2 py-0.5 text-xs text-(--text-primary)">
+                      <span className="mb-1 inline-flex items-center gap-1 rounded-full border border-(--accent)/40 bg-(--bg-card-hover) px-2 py-0.5 text-xs text-(--text-primary)">
                         <CalendarDays className="w-3 h-3" />
                         {t('eventBadge')}
                       </span>
@@ -567,19 +567,19 @@ export function Calendar() {
                 <div
                   key={key}
                   className={`rounded-lg border p-3 ${
-                    today ? 'border-(--accent-cyan)/50 bg-(--accent-cyan)/5' : 'border-(--border) bg-(--bg-card)'
+                    today ? 'border-(--accent)/50 bg-(--accent)/5' : 'border-(--border) bg-(--bg-card)'
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2 mb-2">
                     <div className="flex items-baseline gap-2">
-                      <span className={`text-lg font-gaming font-bold ${today ? 'text-(--accent-cyan)' : 'text-(--text-primary)'}`}>
+                      <span className={`text-lg font-display font-bold ${today ? 'text-(--accent)' : 'text-(--text-primary)'}`}>
                         {date.getDate()}
                       </span>
                       <span className="text-sm text-(--text-muted) capitalize">{weekdayLabel}</span>
                     </div>
                     <button
                       onClick={() => openAddModal(key)}
-                      className="shrink-0 p-1.5 rounded-lg border border-(--border) text-(--text-muted) hover:text-(--accent-cyan) active:bg-(--bg-card-hover)"
+                      className="shrink-0 p-1.5 rounded-lg border border-(--border) text-(--text-muted) hover:text-(--accent) active:bg-(--bg-card-hover)"
                       aria-label={t('addOnThisDayAria')}
                     >
                       <Plus className="w-4 h-4" />
@@ -629,7 +629,7 @@ export function Calendar() {
             {dayNames.map((name) => (
               <div
                 key={name}
-                className="bg-(--bg-card) p-2 text-center text-base font-gaming text-(--text-muted) uppercase"
+                className="bg-(--bg-card) p-2 text-center text-base font-display text-(--text-muted) uppercase"
               >
                 {name}
               </div>
@@ -653,8 +653,8 @@ export function Calendar() {
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span
-                      className={`text-base font-gaming w-8 h-8 flex items-center justify-center rounded-full ${
-                        today ? 'bg-(--accent-cyan) text-(--bg-dark) font-bold' : 'text-(--text-primary)'
+                      className={`text-base font-display w-8 h-8 flex items-center justify-center rounded-full ${
+                        today ? 'bg-(--accent) text-(--bg-dark) font-bold' : 'text-(--text-primary)'
                       }`}
                     >
                       {date.getDate()}
@@ -715,7 +715,7 @@ export function Calendar() {
           {dayNames.map((name) => (
             <div
               key={name}
-              className="bg-(--bg-card) p-1 sm:p-2 text-center text-xs sm:text-base font-gaming text-(--text-muted) uppercase"
+              className="bg-(--bg-card) p-1 sm:p-2 text-center text-xs sm:text-base font-display text-(--text-muted) uppercase"
             >
               {name}
             </div>
@@ -748,8 +748,8 @@ export function Calendar() {
                   onClick={() => handleDayClick(key, dayEvents, dayTodos, isCurrentMonth)}
                 >
                   <span
-                    className={`text-sm font-gaming w-7 h-7 flex items-center justify-center rounded-full ${
-                      today ? 'bg-(--accent-cyan) text-(--bg-dark) font-bold' : 'text-(--text-primary)'
+                    className={`text-sm font-display w-7 h-7 flex items-center justify-center rounded-full ${
+                      today ? 'bg-(--accent) text-(--bg-dark) font-bold' : 'text-(--text-primary)'
                     }`}
                   >
                     {day}
@@ -776,9 +776,9 @@ export function Calendar() {
               >
                 <div className="flex items-start justify-between gap-1">
                   <span
-                    className={`text-base font-gaming w-7 h-7 flex items-center justify-center rounded-full shrink-0 ${
+                    className={`text-base font-display w-7 h-7 flex items-center justify-center rounded-full shrink-0 ${
                       today
-                        ? 'bg-(--accent-cyan) text-(--bg-dark) font-bold'
+                        ? 'bg-(--accent) text-(--bg-dark) font-bold'
                         : 'text-(--text-primary)'
                     }`}
                   >
@@ -845,14 +845,14 @@ export function Calendar() {
         {/* Legenda + filtry */}
         <div className="mt-8 pt-6 border-t border-(--border) space-y-5">
           <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-3">
-            <span className="text-sm sm:text-base text-(--text-muted) font-gaming uppercase shrink-0">{t('visibilityLabel')}</span>
+            <span className="text-sm sm:text-base text-(--text-muted) font-display uppercase shrink-0">{t('visibilityLabel')}</span>
             <div className="flex flex-wrap gap-2 sm:gap-2.5">
             <button
               onClick={() => setShowEvents((v) => !v)}
               className={`inline-flex items-center px-3 py-2 sm:px-2.5 sm:py-1 rounded-md border text-sm transition-colors ${
                 showEvents
-                  ? 'border-(--accent-cyan)/50 text-(--accent-cyan) hover:bg-(--bg-card-hover)'
-                  : 'border-(--border) text-(--text-muted) hover:text-(--accent-cyan) hover:border-(--accent-cyan)/50 hover:bg-(--bg-card-hover)'
+                  ? 'border-(--accent)/50 text-(--accent) hover:bg-(--bg-card-hover)'
+                  : 'border-(--border) text-(--text-muted) hover:text-(--accent) hover:border-(--accent)/50 hover:bg-(--bg-card-hover)'
               }`}
             >
               {showEvents ? t('hideEvents') : t('showEvents')}
@@ -861,8 +861,8 @@ export function Calendar() {
               onClick={() => setShowTodos((v) => !v)}
               className={`inline-flex items-center px-3 py-2 sm:px-2.5 sm:py-1 rounded-md border text-sm transition-colors ${
                 showTodos
-                  ? 'border-(--accent-cyan)/50 text-(--accent-cyan) hover:bg-(--bg-card-hover)'
-                  : 'border-(--border) text-(--text-muted) hover:text-(--accent-cyan) hover:border-(--accent-cyan)/50 hover:bg-(--bg-card-hover)'
+                  ? 'border-(--accent)/50 text-(--accent) hover:bg-(--bg-card-hover)'
+                  : 'border-(--border) text-(--text-muted) hover:text-(--accent) hover:border-(--accent)/50 hover:bg-(--bg-card-hover)'
               }`}
             >
               {showTodos ? t('hideTasks') : t('showTasks')}
@@ -870,11 +870,11 @@ export function Calendar() {
             </div>
           </div>
           <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-3">
-            <span className="text-sm sm:text-base text-(--text-muted) font-gaming uppercase shrink-0">{t('categoriesLabel')}</span>
+            <span className="text-sm sm:text-base text-(--text-muted) font-display uppercase shrink-0">{t('categoriesLabel')}</span>
             <div className="flex flex-wrap gap-2 sm:gap-2.5">
             <button
               onClick={openCategoryManagerModal}
-              className="inline-flex items-center px-3 py-2 sm:px-2.5 sm:py-1 rounded-md border border-(--border) text-sm text-(--text-muted) hover:text-(--accent-cyan) hover:border-(--accent-cyan)/50 hover:bg-(--bg-card-hover) transition-colors"
+              className="inline-flex items-center px-3 py-2 sm:px-2.5 sm:py-1 rounded-md border border-(--border) text-sm text-(--text-muted) hover:text-(--accent) hover:border-(--accent)/50 hover:bg-(--bg-card-hover) transition-colors"
             >
               {t('manage')}
             </button>
@@ -883,7 +883,7 @@ export function Calendar() {
                 <button
                   onClick={() => toggleCategoryVisibility(id)}
                   className={`flex items-center gap-1.5 px-3 py-2 sm:px-2 sm:py-1 rounded border ${
-                    isVisible ? 'border-(--accent-cyan)' : 'border-(--border) opacity-50'
+                    isVisible ? 'border-(--accent)' : 'border-(--border) opacity-50'
                   } hover:bg-(--bg-card-hover) transition-colors`}
                   title={isVisible ? t('hideCategory') : t('showCategory')}
                 >
@@ -906,14 +906,14 @@ export function Calendar() {
 
         <div className="mt-8 pt-6 border-t border-(--border)">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-5">
-            <h3 className="text-lg font-gaming text-(--text-primary)">{t('upcoming')}</h3>
+            <h3 className="text-lg font-display text-(--text-primary)">{t('upcoming')}</h3>
             <div className="-mx-1 flex w-full items-center gap-1.5 overflow-x-auto px-1 pb-1 scrollbar-theme sm:w-auto">
               <button
                 type="button"
                 onClick={() => setFeedFilter('all')}
                 className={`shrink-0 rounded-lg border px-3 py-2 text-sm transition-colors ${
                   feedFilter === 'all'
-                    ? 'border-(--border) bg-(--bg-dark) font-gaming tracking-wide text-(--text-primary)'
+                    ? 'border-(--border) bg-(--bg-dark) font-display tracking-wide text-(--text-primary)'
                     : 'border-transparent text-(--text-muted) hover:bg-(--bg-card-hover)/60 hover:text-(--text-primary)'
                 }`}
               >
@@ -924,7 +924,7 @@ export function Calendar() {
                 onClick={() => setFeedFilter('events')}
                 className={`shrink-0 rounded-lg border px-3 py-2 text-sm transition-colors ${
                   feedFilter === 'events'
-                    ? 'border-(--border) bg-(--bg-dark) font-gaming tracking-wide text-(--text-primary)'
+                    ? 'border-(--border) bg-(--bg-dark) font-display tracking-wide text-(--text-primary)'
                     : 'border-transparent text-(--text-muted) hover:bg-(--bg-card-hover)/60 hover:text-(--text-primary)'
                 }`}
               >
@@ -935,7 +935,7 @@ export function Calendar() {
                 onClick={() => setFeedFilter('todos')}
                 className={`shrink-0 rounded-lg border px-3 py-2 text-sm transition-colors ${
                   feedFilter === 'todos'
-                    ? 'border-(--border) bg-(--bg-dark) font-gaming tracking-wide text-(--text-primary)'
+                    ? 'border-(--border) bg-(--bg-dark) font-display tracking-wide text-(--text-primary)'
                     : 'border-transparent text-(--text-muted) hover:bg-(--bg-card-hover)/60 hover:text-(--text-primary)'
                 }`}
               >
@@ -954,7 +954,7 @@ export function Calendar() {
                   onClick={() => openEditModal(item.event)}
                   className="group w-full text-left px-4 py-3.5 rounded-xl border border-(--border)/60 bg-(--bg-dark)/40 hover:bg-(--bg-card-hover) hover:border-(--border) transition-colors"
                 >
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-(--accent-cyan)/40 bg-(--bg-card-hover) px-2.5 py-1 text-xs text-(--text-primary)">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-(--accent)/40 bg-(--bg-card-hover) px-2.5 py-1 text-xs text-(--text-primary)">
                     <CalendarDays className="w-3.5 h-3.5" />
                     {t('eventBadge')}
                   </span>
@@ -996,7 +996,7 @@ export function Calendar() {
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => toggleTodo(item.todo.id, !item.todo.done)}
-                        className="p-1 rounded hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-(--accent-cyan)"
+                        className="p-1 rounded hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-(--accent)"
                         title={item.todo.done ? t('markUndone') : t('markDone')}
                       >
                         {item.todo.done ? <CheckSquare2 className="w-4 h-4" /> : <Square className="w-4 h-4" />}
@@ -1052,7 +1052,7 @@ export function Calendar() {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => toggleTodo(item.todo.id, !item.todo.done)}
-                        className="p-2 rounded-lg border border-(--border) hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-(--accent-cyan) shrink-0"
+                        className="p-2 rounded-lg border border-(--border) hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-(--accent) shrink-0"
                         aria-label={item.todo.done ? t('markUndone') : t('markDone')}
                       >
                         {item.todo.done ? <CheckSquare2 className="w-4 h-4" /> : <Square className="w-4 h-4" />}

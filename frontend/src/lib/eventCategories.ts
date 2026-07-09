@@ -9,8 +9,8 @@ export interface EventCategory {
 }
 
 export const DEFAULT_EVENT_CATEGORIES: EventCategory[] = [
-  { id: 'praca', name: 'Praca', color: '#00e5ff', isVisible: true, isDefault: true },
-  { id: 'prywatne', name: 'Prywatne', color: '#ff00d4', isVisible: true, isDefault: true },
+  { id: 'praca', name: 'Praca', color: '#82a7cf', isVisible: true, isDefault: true },
+  { id: 'prywatne', name: 'Prywatne', color: '#b58cc4', isVisible: true, isDefault: true },
   { id: 'zdrowie', name: 'Zdrowie', color: '#0d9488', isVisible: true, isDefault: true },
   { id: 'rozrywka', name: 'Rozrywka', color: '#d97706', isVisible: true, isDefault: true },
   { id: 'inne', name: 'Inne', color: '#9d4edd', isVisible: true, isDefault: true },
@@ -19,11 +19,11 @@ export const DEFAULT_EVENT_CATEGORIES: EventCategory[] = [
 export const EVENT_CATEGORY_COLOR_OPTIONS = [
   '#f8fafc',
   '#e2e8f0',
-  '#00e5ff',
+  '#82a7cf',
   '#39ff14',
   '#d0ff00',
   '#bc13fe',
-  '#ff00d4',
+  '#b58cc4',
   '#9d4edd',
   '#3b82f6',
   '#d97706',
@@ -48,5 +48,5 @@ export const EVENT_CATEGORY_COLOR_OPTIONS = [
 
 export function getCategoryColor(categoryId?: string | null): string {
   const cat = DEFAULT_EVENT_CATEGORIES.find((c) => c.id === categoryId)
-  return cat?.color ?? '#00e5ff'
+  return cat?.color ?? '#82a7cf'
 }

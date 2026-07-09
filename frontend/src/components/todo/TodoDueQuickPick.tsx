@@ -42,7 +42,7 @@ export function TodoDueQuickPick({
   }
 
   const chip =
-    'min-h-11 w-full rounded-lg border px-3 py-2 font-gaming text-sm tracking-wide transition-colors sm:w-auto sm:min-h-0 sm:py-1.5 shrink-0'
+    'min-h-11 w-full rounded-lg border px-3 py-2 font-display text-sm tracking-wide transition-colors sm:w-auto sm:min-h-0 sm:py-1.5 shrink-0'
 
   return (
     <div

@@ -82,7 +82,7 @@ export function NotesOverview() {
           className="flex w-full items-start gap-2 rounded-lg border border-transparent px-2 py-2 text-left transition-colors hover:border-(--border)/70 hover:bg-(--bg-dark)/40"
         >
           {opts?.showPin && n.pinned && (
-            <Pin className="mt-0.5 h-4 w-4 shrink-0 fill-current text-(--accent-amber)" aria-hidden />
+            <Pin className="mt-0.5 h-4 w-4 shrink-0 fill-current text-(--warning)" aria-hidden />
           )}
           <span className="min-w-0 flex-1">
             <span className="block truncate text-base font-medium text-(--text-primary)">
@@ -132,7 +132,7 @@ export function NotesOverview() {
             <div className="flex flex-wrap gap-2 justify-center">
               <Link
                 to="/notes/inbox"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-(--accent-cyan)/20 text-(--accent-cyan) border border-(--accent-cyan)/40 font-gaming hover:bg-(--accent-cyan)/30 transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-(--accent)/20 text-(--accent) border border-(--accent)/40 font-display hover:bg-(--accent)/30 transition-colors"
               >
                 <Inbox className="w-4 h-4" />
                 {t('overview.openInbox')}
@@ -140,7 +140,7 @@ export function NotesOverview() {
               <button
                 type="button"
                 onClick={() => setModalType('inbox')}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming hover:border-(--accent-cyan)/40 transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-display hover:border-(--accent)/40 transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 {t('overview.addNote')}
@@ -148,7 +148,7 @@ export function NotesOverview() {
               <button
                 type="button"
                 onClick={() => setModalType('idea')}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming hover:border-(--accent-amber)/40 transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-display hover:border-(--warning)/40 transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 {t('overview.addIdea')}
@@ -156,7 +156,7 @@ export function NotesOverview() {
               <button
                 type="button"
                 onClick={() => setModalType('reference')}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-gaming hover:border-(--accent-magenta)/40 transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) font-display hover:border-(--accent-2)/40 transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 {t('overview.addReference')}
@@ -170,13 +170,13 @@ export function NotesOverview() {
   }
 
   const stats = [
-    { icon: Inbox, label: t('typeLabelPlural.inbox'), value: byType.inbox.length, color: 'text-(--accent-cyan)', to: '/notes/inbox' },
-    { icon: Lightbulb, label: t('typeLabelPlural.idea'), value: byType.ideas.length, color: 'text-(--accent-amber)', to: '/notes/ideas' },
+    { icon: Inbox, label: t('typeLabelPlural.inbox'), value: byType.inbox.length, color: 'text-(--accent)', to: '/notes/inbox' },
+    { icon: Lightbulb, label: t('typeLabelPlural.idea'), value: byType.ideas.length, color: 'text-(--warning)', to: '/notes/ideas' },
     {
       icon: BookMarked,
       label: t('typeLabelPlural.reference'),
       value: byType.refs.length,
-      color: 'text-(--accent-magenta)',
+      color: 'text-(--accent-2)',
       to: '/notes/references',
     },
   ]
@@ -196,7 +196,7 @@ export function NotesOverview() {
               <button
                 type="button"
                 onClick={() => setModalType('inbox')}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-(--accent-cyan)/45 bg-(--accent-cyan)/18 px-4 font-gaming text-sm tracking-wide text-(--accent-cyan) transition-colors hover:bg-(--accent-cyan)/26"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-(--accent)/45 bg-(--accent)/18 px-4 font-display text-sm tracking-wide text-(--accent) transition-colors hover:bg-(--accent)/26"
               >
                 <Plus className="h-4 w-4" />
                 {t('overview.addButtonNote')}
@@ -204,7 +204,7 @@ export function NotesOverview() {
               <button
                 type="button"
                 onClick={() => setModalType('idea')}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-(--border) bg-(--bg-dark) px-4 font-gaming text-sm tracking-wide text-(--text-primary) transition-colors hover:border-(--accent-amber)/40 hover:text-(--accent-amber)"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-(--border) bg-(--bg-dark) px-4 font-display text-sm tracking-wide text-(--text-primary) transition-colors hover:border-(--warning)/40 hover:text-(--warning)"
               >
                 <Plus className="h-4 w-4" />
                 {t('overview.addButtonIdea')}
@@ -212,7 +212,7 @@ export function NotesOverview() {
               <button
                 type="button"
                 onClick={() => setModalType('reference')}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-(--border) bg-(--bg-dark) px-4 font-gaming text-sm tracking-wide text-(--text-primary) transition-colors hover:border-(--accent-magenta)/40 hover:text-(--accent-magenta)"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-(--border) bg-(--bg-dark) px-4 font-display text-sm tracking-wide text-(--text-primary) transition-colors hover:border-(--accent-2)/40 hover:text-(--accent-2)"
               >
                 <Plus className="h-4 w-4" />
                 {t('overview.addButtonReference')}
@@ -225,12 +225,12 @@ export function NotesOverview() {
           {stats.map(({ icon: Icon, label, value, color, to }, i) => (
             <motion.div key={label} variants={getOverviewTileVariants(reduceMotion, i + 1)} className="min-w-0">
               <Link to={to} className="block h-full">
-                <Card className="h-full max-md:p-4 transition-colors hover:border-(--accent-cyan)/30" animateEntrance={false}>
+                <Card className="h-full max-md:p-4 transition-colors hover:border-(--accent)/30" animateEntrance={false}>
                   <div className="flex items-center gap-2">
                     <Icon className={`h-5 w-5 ${color}`} />
                     <p className="text-base text-(--text-muted)">{label}</p>
                   </div>
-                  <p className={`mt-2 text-2xl font-bold font-gaming ${color}`}>{value}</p>
+                  <p className={`mt-2 text-2xl font-bold font-display ${color}`}>{value}</p>
                   <p className="mt-0.5 text-sm text-(--text-muted)">{t('overview.activeCount')}</p>
                 </Card>
               </Link>
@@ -261,7 +261,7 @@ export function NotesOverview() {
                   <Link
                     key={tag}
                     to={`/notes/inbox?tag=${encodeURIComponent(tag)}`}
-                    className="rounded-md border border-(--border) bg-(--bg-dark) px-2.5 py-1.5 text-sm text-(--text-muted) transition-colors hover:border-(--accent-cyan)/40 hover:text-(--accent-cyan)"
+                    className="rounded-md border border-(--border) bg-(--bg-dark) px-2.5 py-1.5 text-sm text-(--text-muted) transition-colors hover:border-(--accent)/40 hover:text-(--accent)"
                   >
                     #{tag} <span className="text-(--text-muted)">({count})</span>
                   </Link>

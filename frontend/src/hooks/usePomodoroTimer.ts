@@ -136,9 +136,9 @@ export function usePomodoroTimer() {
   const strokeDashoffset = CIRCUMFERENCE * (1 - progress)
 
   const ringColor = useMemo(() => {
-    if (completed) return 'var(--accent-green)'
-    if (progress > 0.5) return 'var(--accent-cyan)'
-    if (progress > 0.25) return 'var(--accent-amber)'
+    if (completed) return 'var(--positive)'
+    if (progress > 0.5) return 'var(--accent)'
+    if (progress > 0.25) return 'var(--warning)'
     return '#e74c3c'
   }, [completed, progress])
 

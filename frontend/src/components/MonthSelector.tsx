@@ -12,7 +12,7 @@ export function MonthSelector() {
 
   return (
     <div className="flex w-full max-w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-      <label htmlFor="dashboard-month-select" className="shrink-0 text-base text-(--text-muted) font-gaming tracking-wide">
+      <label htmlFor="dashboard-month-select" className="shrink-0 text-base text-(--text-muted) font-display tracking-wide">
         {t('monthLabel')}
       </label>
       <select
@@ -26,7 +26,7 @@ export function MonthSelector() {
             chartPeriodCtx.setMonth(m, y)
           }
         }}
-        className="min-h-[44px] min-w-0 max-w-full flex-1 cursor-pointer rounded-lg border border-(--border) bg-(--bg-card) px-3 py-2 font-gaming tracking-wide text-(--text-primary) focus:border-(--accent-cyan) focus:outline-none sm:min-w-[140px] sm:flex-none"
+        className="min-h-[44px] min-w-0 max-w-full flex-1 cursor-pointer rounded-lg border border-(--border) bg-(--bg-card) px-3 py-2 font-display tracking-wide text-(--text-primary) focus:border-(--accent) focus:outline-none sm:min-w-[140px] sm:flex-none"
       >
         {monthOptions.map((opt) => (
           <option key={`${opt.month}-${opt.year}`} value={`${opt.month}-${opt.year}`}>

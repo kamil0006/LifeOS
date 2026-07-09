@@ -45,11 +45,11 @@ export function UndoToast({ message, duration = 5000, onUndo, onExpire }: UndoTo
     >
       <div className="rounded-lg border border-(--border) bg-(--bg-card) shadow-[0_0_20px_rgba(0,0,0,0.4)] overflow-hidden">
         <div className="flex items-center gap-3 px-4 py-3">
-          <span className="text-sm font-gaming text-(--text-primary)">{message}</span>
+          <span className="text-sm font-display text-(--text-primary)">{message}</span>
           <button
             type="button"
             onClick={onUndo}
-            className="text-sm font-gaming text-(--accent-cyan) hover:opacity-80 transition-opacity whitespace-nowrap"
+            className="text-sm font-display text-(--accent) hover:opacity-80 transition-opacity whitespace-nowrap"
           >
             {t('undo')}
           </button>
@@ -64,7 +64,7 @@ export function UndoToast({ message, duration = 5000, onUndo, onExpire }: UndoTo
         </div>
         <div className="h-0.5 bg-(--border)">
           <div
-            className="h-full bg-(--accent-cyan) transition-none"
+            className="h-full bg-(--accent) transition-none"
             style={{ width: `${progress}%` }}
           />
         </div>

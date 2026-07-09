@@ -156,26 +156,26 @@ const POSITION_CONFIG: {
   {
     key: 'cash',
     icon: Banknote,
-    borderClass: 'border-(--accent-green)/20',
-    iconClass: 'text-(--accent-green)',
-    balanceClass: 'text-(--accent-green)',
-    rowAccentClass: 'border-l-[3px] border-l-(--accent-green)/60 bg-(--accent-green)/5',
+    borderClass: 'border-(--positive)/20',
+    iconClass: 'text-(--positive)',
+    balanceClass: 'text-(--positive)',
+    rowAccentClass: 'border-l-[3px] border-l-(--positive)/60 bg-(--positive)/5',
   },
   {
     key: 'bankAccount',
     icon: CreditCard,
-    borderClass: 'border-(--accent-cyan)/20',
-    iconClass: 'text-(--accent-cyan)',
-    balanceClass: 'text-(--accent-cyan)',
-    rowAccentClass: 'border-l-[3px] border-l-(--accent-cyan)/60 bg-(--accent-cyan)/5',
+    borderClass: 'border-(--accent)/20',
+    iconClass: 'text-(--accent)',
+    balanceClass: 'text-(--accent)',
+    rowAccentClass: 'border-l-[3px] border-l-(--accent)/60 bg-(--accent)/5',
   },
   {
     key: 'assets',
     icon: BarChart3,
-    borderClass: 'border-(--accent-magenta)/20',
-    iconClass: 'text-(--accent-magenta)',
-    balanceClass: 'text-(--accent-magenta)',
-    rowAccentClass: 'border-l-[3px] border-l-(--accent-magenta)/55 bg-(--accent-magenta)/5',
+    borderClass: 'border-(--accent-2)/20',
+    iconClass: 'text-(--accent-2)',
+    balanceClass: 'text-(--accent-2)',
+    rowAccentClass: 'border-l-[3px] border-l-(--accent-2)/55 bg-(--accent-2)/5',
   },
 ]
 
@@ -812,19 +812,19 @@ export function FinancesNetWorth() {
       </div>
 
       <div>
-        <h3 className="text-base font-semibold text-(--text-primary) font-gaming tracking-wide">{t('netWorth.title')}</h3>
+        <h3 className="text-base font-semibold text-(--text-primary) font-display tracking-wide">{t('netWorth.title')}</h3>
         <p className="mt-1 text-base text-(--text-muted)">
           {t('netWorth.subtitle')}
         </p>
       </div>
 
-      <Card title={t('netWorth.summaryTitle')} className="border-(--accent-cyan)/20 max-md:p-4">
+      <Card title={t('netWorth.summaryTitle')} className="border-(--accent)/20 max-md:p-4">
         <div className="space-y-4">
           <div>
             <p className="text-base text-(--text-muted)">{t('netWorth.netWorthLabel')}</p>
             <p
-              className={`mt-1 font-gaming text-2xl font-bold tabular-nums sm:text-3xl ${
-                accountsNetWorth >= 0 ? 'text-(--accent-cyan)' : 'text-[#e74c3c]'
+              className={`mt-1 font-display text-2xl font-bold tabular-nums sm:text-3xl ${
+                accountsNetWorth >= 0 ? 'text-(--accent)' : 'text-[#e74c3c]'
               }`}
             >
               {accountsNetWorth.toLocaleString('pl-PL')} zł
@@ -834,21 +834,21 @@ export function FinancesNetWorth() {
           <dl className="grid gap-3 sm:grid-cols-2">
             <div className="flex justify-between gap-4 border-b border-(--border)/50 pb-2">
               <dt className="text-base text-(--text-muted)">{t('netWorth.assetsLabel')}</dt>
-              <dd className="text-base font-gaming text-(--text-primary) tabular-nums">
+              <dd className="text-base font-display text-(--text-primary) tabular-nums">
                 {assetsTotal.toLocaleString('pl-PL')} zł
               </dd>
             </div>
             <div className="flex justify-between gap-4 border-b border-(--border)/50 pb-2">
               <dt className="text-base text-(--text-muted)">{t('netWorth.liabilitiesLabel')}</dt>
-              <dd className="text-base font-gaming tabular-nums text-[#e74c3c]">
+              <dd className="text-base font-display tabular-nums text-[#e74c3c]">
                 −{liabilitiesTotal.toLocaleString('pl-PL')} zł
               </dd>
             </div>
             <div className="flex justify-between gap-4 border-b border-(--border)/50 pb-2 sm:col-span-2">
               <dt className="text-base text-(--text-muted)">{t('netWorth.periodBalance', { period: cumulativePeriodLabel })}</dt>
               <dd
-                className={`text-base font-gaming tabular-nums ${
-                  cumulativeSavings >= 0 ? 'text-(--accent-green)' : 'text-[#e74c3c]'
+                className={`text-base font-display tabular-nums ${
+                  cumulativeSavings >= 0 ? 'text-(--positive)' : 'text-[#e74c3c]'
                 }`}
               >
                 {cumulativeSavings >= 0 ? '+' : ''}
@@ -857,9 +857,9 @@ export function FinancesNetWorth() {
             </div>
           </dl>
           <div className="flex flex-col gap-2 border-t border-(--border)/50 pt-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-            <div className="inline-flex w-fit max-w-full items-center gap-2 rounded-full border border-(--accent-green)/30 bg-(--accent-green)/10 px-3 py-1.5">
-              <TrendingUp className="h-4 w-4 shrink-0 text-(--accent-green)" />
-              <span className="text-sm font-gaming text-(--accent-green)">
+            <div className="inline-flex w-fit max-w-full items-center gap-2 rounded-full border border-(--positive)/30 bg-(--positive)/10 px-3 py-1.5">
+              <TrendingUp className="h-4 w-4 shrink-0 text-(--positive)" />
+              <span className="text-sm font-display text-(--positive)">
                 {t('netWorth.savingsRate', { pct: periodSavingsRate >= 0 ? periodSavingsRate.toFixed(0) : '0' })}
               </span>
             </div>
@@ -878,7 +878,7 @@ export function FinancesNetWorth() {
           <button
             type="button"
             onClick={() => setAccountCreateKind('asset')}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-(--accent-cyan)/40 bg-(--accent-cyan)/15 px-3 py-2.5 text-sm font-gaming text-(--accent-cyan) transition-colors hover:bg-(--accent-cyan)/25"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-(--accent)/40 bg-(--accent)/15 px-3 py-2.5 text-sm font-display text-(--accent) transition-colors hover:bg-(--accent)/25"
           >
             <Plus className="h-4 w-4 shrink-0" />
             {t('netWorth.addAsset')}
@@ -886,7 +886,7 @@ export function FinancesNetWorth() {
           <button
             type="button"
             onClick={() => setAccountCreateKind('liability')}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#e74c3c]/40 bg-[#e74c3c]/15 px-3 py-2.5 text-sm font-gaming text-[#e74c3c] transition-colors hover:bg-[#e74c3c]/25"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#e74c3c]/40 bg-[#e74c3c]/15 px-3 py-2.5 text-sm font-display text-[#e74c3c] transition-colors hover:bg-[#e74c3c]/25"
           >
             <Plus className="h-4 w-4 shrink-0" />
             {t('netWorth.addLiability')}
@@ -894,7 +894,7 @@ export function FinancesNetWorth() {
         </div>
         <div className="grid gap-6 md:grid-cols-2">
           <div>
-            <h4 className="mb-2 text-base font-semibold text-(--text-primary) font-gaming tracking-wide">{t('netWorth.assetsLabel')}</h4>
+            <h4 className="mb-2 text-base font-semibold text-(--text-primary) font-display tracking-wide">{t('netWorth.assetsLabel')}</h4>
             {useApiFinance ? (
               assetAccounts.length === 0 ? (
                 <p className="text-base text-(--text-muted)">{t('netWorth.noAssets')}</p>
@@ -926,7 +926,7 @@ export function FinancesNetWorth() {
                               accentKey: account.accentKey,
                             })
                           }
-                          className={`rounded-lg border border-(--border) bg-(--bg-dark) px-2.5 py-1.5 text-sm font-gaming text-(--text-muted) transition-colors ${accAccent.editHover}`}
+                          className={`rounded-lg border border-(--border) bg-(--bg-dark) px-2.5 py-1.5 text-sm font-display text-(--text-muted) transition-colors ${accAccent.editHover}`}
                         >
                           {t('netWorth.edit')}
                         </button>
@@ -964,7 +964,7 @@ export function FinancesNetWorth() {
                       <button
                         type="button"
                         onClick={() => handleAdjust(key)}
-                        className="shrink-0 rounded-lg border border-(--border) bg-(--bg-dark) px-2.5 py-1.5 text-sm font-gaming text-(--text-muted) transition-colors hover:border-(--accent-cyan)/40 hover:text-(--accent-cyan)"
+                        className="shrink-0 rounded-lg border border-(--border) bg-(--bg-dark) px-2.5 py-1.5 text-sm font-display text-(--text-muted) transition-colors hover:border-(--accent)/40 hover:text-(--accent)"
                       >
                         {t('netWorth.edit')}
                       </button>
@@ -997,7 +997,7 @@ export function FinancesNetWorth() {
                             accentKey: a.accentKey,
                           })
                         }
-                        className={`rounded-lg border border-(--border) bg-(--bg-dark) px-2.5 py-1.5 text-sm font-gaming text-(--text-muted) transition-colors ${aAccent.editHover}`}
+                        className={`rounded-lg border border-(--border) bg-(--bg-dark) px-2.5 py-1.5 text-sm font-display text-(--text-muted) transition-colors ${aAccent.editHover}`}
                       >
                         {t('netWorth.edit')}
                       </button>
@@ -1019,7 +1019,7 @@ export function FinancesNetWorth() {
             )}
           </div>
           <div>
-            <h4 className="mb-2 text-base font-semibold text-(--text-primary) font-gaming tracking-wide">{t('netWorth.liabilitiesLabel')}</h4>
+            <h4 className="mb-2 text-base font-semibold text-(--text-primary) font-display tracking-wide">{t('netWorth.liabilitiesLabel')}</h4>
             {useApiFinance ? (
               liabilityAccounts.length === 0 ? (
                 <p className="text-base text-(--text-muted)">{t('netWorth.noLiabilitiesApi')}</p>
@@ -1049,7 +1049,7 @@ export function FinancesNetWorth() {
                               iconKey: account.iconKey,
                             })
                           }
-                          className="rounded-lg border border-(--border) bg-(--bg-dark) px-2.5 py-1.5 text-sm font-gaming text-(--text-muted) transition-colors hover:border-rose-400/40 hover:text-[#e74c3c]"
+                          className="rounded-lg border border-(--border) bg-(--bg-dark) px-2.5 py-1.5 text-sm font-display text-(--text-muted) transition-colors hover:border-rose-400/40 hover:text-[#e74c3c]"
                         >
                           {t('netWorth.edit')}
                         </button>
@@ -1097,7 +1097,7 @@ export function FinancesNetWorth() {
                             iconKey: l.iconKey,
                           })
                         }
-                        className="rounded-lg border border-(--border) bg-(--bg-dark) px-2.5 py-1.5 text-sm font-gaming text-(--text-muted) transition-colors hover:border-rose-400/40 hover:text-[#e74c3c]"
+                        className="rounded-lg border border-(--border) bg-(--bg-dark) px-2.5 py-1.5 text-sm font-display text-(--text-muted) transition-colors hover:border-rose-400/40 hover:text-[#e74c3c]"
                       >
                         {t('netWorth.edit')}
                       </button>
@@ -1144,8 +1144,8 @@ export function FinancesNetWorth() {
             <AreaChart data={trendData}>
               <defs>
                 <linearGradient id="colorWartosc" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#00e5ff" stopOpacity={0.4} />
-                  <stop offset="95%" stopColor="#00e5ff" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#82a7cf" stopOpacity={0.4} />
+                  <stop offset="95%" stopColor="#82a7cf" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -1172,7 +1172,7 @@ export function FinancesNetWorth() {
               <Area
                 type="monotone"
                 dataKey="wartość"
-                stroke="#00e5ff"
+                stroke="#82a7cf"
                 strokeWidth={2}
                 fillOpacity={1}
                 fill="url(#colorWartosc)"
@@ -1191,7 +1191,7 @@ export function FinancesNetWorth() {
           <button
             type="button"
             onClick={toggleHistoryCollapsed}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-sm font-gaming text-(--text-muted) hover:border-(--accent-cyan)/30 hover:text-(--text-primary) transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-(--border) bg-(--bg-dark) px-3 py-2 text-sm font-display text-(--text-muted) hover:border-(--accent)/30 hover:text-(--text-primary) transition-colors"
           >
             {historyCollapsed ? <ChevronDown className="h-4 w-4 shrink-0" /> : <ChevronUp className="h-4 w-4 shrink-0" />}
             {historyCollapsed ? t('netWorth.expand') : t('netWorth.collapse')}
@@ -1230,7 +1230,7 @@ export function FinancesNetWorth() {
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
                       <div className="text-right">
-                        <p className={`font-mono text-sm ${row.amount >= 0 ? 'text-(--accent-green)' : 'text-[#e74c3c]'}`}>
+                        <p className={`font-mono text-sm ${row.amount >= 0 ? 'text-(--positive)' : 'text-[#e74c3c]'}`}>
                           {row.amount >= 0 ? '+' : ''}
                           {row.amount.toLocaleString('pl-PL')} zł
                         </p>
@@ -1241,7 +1241,7 @@ export function FinancesNetWorth() {
                       <button
                         type="button"
                         onClick={() => setAdjustmentEdit({ mode: 'api', row })}
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg p-1.5 text-(--text-muted) transition-colors hover:bg-(--bg-card-hover) hover:text-(--accent-cyan)"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg p-1.5 text-(--text-muted) transition-colors hover:bg-(--bg-card-hover) hover:text-(--accent)"
                         title={t('netWorth.editAdjustmentAria')}
                         aria-label={t('netWorth.editAdjustmentAria')}
                       >
@@ -1275,7 +1275,7 @@ export function FinancesNetWorth() {
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
                       <div className="text-right">
-                        <p className={`font-mono text-sm ${row.amount >= 0 ? 'text-(--accent-green)' : 'text-[#e74c3c]'}`}>
+                        <p className={`font-mono text-sm ${row.amount >= 0 ? 'text-(--positive)' : 'text-[#e74c3c]'}`}>
                           {row.amount >= 0 ? '+' : ''}
                           {row.amount.toLocaleString('pl-PL')} zł
                         </p>
@@ -1284,7 +1284,7 @@ export function FinancesNetWorth() {
                       <button
                         type="button"
                         onClick={() => setAdjustmentEdit({ mode: 'demo', row })}
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg p-1.5 text-(--text-muted) transition-colors hover:bg-(--bg-card-hover) hover:text-(--accent-cyan)"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg p-1.5 text-(--text-muted) transition-colors hover:bg-(--bg-card-hover) hover:text-(--accent)"
                         title={t('netWorth.editAdjustmentAria')}
                         aria-label={t('netWorth.editAdjustmentAria')}
                       >
@@ -1437,7 +1437,7 @@ export function FinancesNetWorth() {
             <button
               type="button"
               onClick={handleUndo}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-(--accent-cyan)/20 text-(--accent-cyan) font-gaming text-sm hover:bg-(--accent-cyan)/30 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-(--accent)/20 text-(--accent) font-display text-sm hover:bg-(--accent)/30 transition-colors"
             >
               <Undo2 className="w-4 h-4" />
               {t('netWorth.undo')}

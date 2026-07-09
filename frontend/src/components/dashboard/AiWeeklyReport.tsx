@@ -91,7 +91,7 @@ export function AiWeeklyReport() {
       type="button"
       onClick={generate}
       disabled={loading}
-      className="rounded-lg border border-(--accent-cyan)/40 bg-(--accent-cyan)/10 px-3 py-1.5 text-sm font-medium text-(--accent-cyan) transition-colors hover:bg-(--accent-cyan)/20 disabled:cursor-not-allowed disabled:opacity-60"
+      className="rounded-lg border border-(--accent)/40 bg-(--accent)/10 px-3 py-1.5 text-sm font-medium text-(--accent) transition-colors hover:bg-(--accent)/20 disabled:cursor-not-allowed disabled:opacity-60"
     >
       {loading ? t('aiReport.generating') : report ? t('aiReport.refresh') : t('aiReport.generate')}
     </button>

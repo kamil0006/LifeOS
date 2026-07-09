@@ -31,7 +31,7 @@ export class AppErrorBoundary extends Component<Props, State> {
     return (
       <div className="flex min-h-svh items-center justify-center bg-(--bg-dark) p-6">
         <div className="w-full max-w-md rounded-xl border border-[#e74c3c]/40 bg-(--bg-card) p-6 shadow-xl">
-          <h1 className="font-gaming text-lg font-bold text-[#e74c3c]">{i18n.t('common:errorBoundary.title')}</h1>
+          <h1 className="font-display text-lg font-bold text-[#e74c3c]">{i18n.t('common:errorBoundary.title')}</h1>
           <p className="mt-2 text-base text-(--text-muted)">
             {i18n.t('common:errorBoundary.description')}
           </p>
@@ -42,14 +42,14 @@ export class AppErrorBoundary extends Component<Props, State> {
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="w-full rounded-lg border border-(--border) px-4 py-2.5 font-gaming text-(--text-muted) transition-colors hover:bg-(--bg-card-hover) hover:text-(--text-primary) sm:w-auto"
+              className="w-full rounded-lg border border-(--border) px-4 py-2.5 font-display text-(--text-muted) transition-colors hover:bg-(--bg-card-hover) hover:text-(--text-primary) sm:w-auto"
             >
               {i18n.t('common:errorBoundary.reload')}
             </button>
             <button
               type="button"
               onClick={this.handleReset}
-              className="w-full rounded-lg border border-(--accent-cyan)/45 bg-(--accent-cyan)/15 px-4 py-2.5 font-gaming text-(--accent-cyan) transition-colors hover:bg-(--accent-cyan)/25 sm:w-auto"
+              className="w-full rounded-lg border border-(--accent)/45 bg-(--accent)/15 px-4 py-2.5 font-display text-(--accent) transition-colors hover:bg-(--accent)/25 sm:w-auto"
             >
               {i18n.t('common:errorBoundary.retry')}
             </button>

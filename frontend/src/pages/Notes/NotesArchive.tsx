@@ -11,8 +11,8 @@ import { getNoteDisplayTitle, notePlainExcerpt } from '../../lib/notesModel'
 
 const ARCHIVE_TYPE_BADGE: Record<NoteType, string> = {
   inbox: 'border-sky-400/30 bg-sky-400/8 text-sky-300',
-  idea: 'border-(--accent-amber)/40 bg-(--accent-amber)/10 text-(--accent-amber)',
-  reference: 'border-(--accent-magenta)/40 bg-(--accent-magenta)/10 text-(--accent-magenta)',
+  idea: 'border-(--warning)/40 bg-(--warning)/10 text-(--warning)',
+  reference: 'border-(--accent-2)/40 bg-(--accent-2)/10 text-(--accent-2)',
 }
 
 export function NotesArchive() {
@@ -59,12 +59,12 @@ export function NotesArchive() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t('archive.searchPlaceholder')}
-          className="min-h-11 w-full rounded-lg border border-(--border) bg-(--bg-dark) py-2 pr-4 pl-10 text-base text-(--text-primary) placeholder:text-(--text-muted) focus:border-(--accent-cyan)/50 focus:outline-none"
+          className="min-h-11 w-full rounded-lg border border-(--border) bg-(--bg-dark) py-2 pr-4 pl-10 text-base text-(--text-primary) placeholder:text-(--text-muted) focus:border-(--accent)/50 focus:outline-none"
         />
       </div>
 
       <p className="text-base text-(--text-muted)">
-        <span className="font-gaming text-(--text-primary)">{t('archive.title')}</span>
+        <span className="font-display text-(--text-primary)">{t('archive.title')}</span>
         {' · '}
         {archived.length} {t('archive.countSuffix', { count: archived.length })}
       </p>
@@ -85,7 +85,7 @@ export function NotesArchive() {
           {archived.map((note: Note) => (
             <article
               key={note.id}
-              className="rounded-lg border border-(--border)/80 bg-(--bg-card)/25 p-4 transition-colors hover:border-(--accent-cyan)/25"
+              className="rounded-lg border border-(--border)/80 bg-(--bg-card)/25 p-4 transition-colors hover:border-(--accent)/25"
             >
               <div className="space-y-2.5">
                 <div className="flex flex-wrap items-start gap-2">
@@ -107,7 +107,7 @@ export function NotesArchive() {
                       <SafeExternalLink
                         href={note.referenceUrl}
                         title={note.referenceUrl}
-                        className="inline-flex items-center gap-1.5 text-(--accent-cyan) hover:underline"
+                        className="inline-flex items-center gap-1.5 text-(--accent) hover:underline"
                       >
                         <ExternalLink className="h-3.5 w-3.5 shrink-0" />
                         {t('archive.openLink')}
@@ -137,7 +137,7 @@ export function NotesArchive() {
                       <button
                         type="button"
                         onClick={() => restoreNote(note.id)}
-                        className="rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-(--bg-dark) hover:text-(--accent-cyan)"
+                        className="rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-(--bg-dark) hover:text-(--accent)"
                         aria-label={t('archive.restore')}
                       >
                         <RotateCcw className="h-4 w-4" />
