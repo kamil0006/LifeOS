@@ -1,0 +1,54 @@
+# LifeOS full stack: PostgreSQL + Express API + nginx-served frontend.
+#
+#   docker compose up -d --build   → app at http://localhost:8080
+#   docker compose down            → stop (data survives in the volume)
+#   docker compose down -v         → stop AND wipe the database
+#
+# NODE_ENV is "development" on purpose: production mode sets auth cookies
+# with `secure: true` (HTTPS only), which breaks login over plain
+# http://localhost. For a real HTTPS deployment set NODE_ENV=production,
+# a strong JWT_SECRET (min. 32 chars) and FRONTEND_URL to the public URL.
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: lifeos
+    volumes:
+      - lifeos-db-data:/var/lib/postgresql/data
+    # Host port 5433 (not 5432) so a locally installed PostgreSQL doesn't clash.
+    # Connect from the host with: postgresql://postgres:postgres@localhost:5433/lifeos
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d lifeos"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/lifeos
+      NODE_ENV: development
+      PORT: 3002
+      FRONTEND_URL: http://localhost:8080
+      # JWT_SECRET / ENCRYPTION_* / OPENAI_* can be passed here or via an
+      # env_file when needed; development mode falls back to a dev secret.
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  lifeos-db-data:
