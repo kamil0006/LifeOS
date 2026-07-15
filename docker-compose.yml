@@ -44,6 +44,10 @@ services:
 
   frontend:
     build: ./frontend
+    environment:
+      # Where nginx proxies /api/ requests (see frontend/nginx.conf.template).
+      # On Railway set this to the backend's private address instead.
+      BACKEND_URL: http://backend:3002
     ports:
       - "8080:80"
     depends_on:

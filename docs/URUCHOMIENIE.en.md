@@ -141,3 +141,23 @@ If the backend should run on e.g. **3002** (default in `backend/.env.example`):
 1. `backend/.env`: `PORT=3002`  
 2. `frontend/.env`: `VITE_API_PORT=3002`  
 3. Restart both servers  
+
+---
+
+## Docker (full stack with one command)
+
+Requires Docker. From the project root:
+
+```bash
+docker compose up -d --build
+```
+
+App: http://localhost:8080 (PostgreSQL + API + frontend served by nginx).
+
+- `docker compose down` – stop (database data survives)
+- `docker compose down -v` – stop AND wipe the database
+
+The frontend's nginx proxies `/api/` to the address in the `BACKEND_URL` variable
+(template: `frontend/nginx.conf.template`). In docker-compose it's `http://backend:3002`;
+when deploying e.g. to Railway, set the backend's private address
+(`http://backend.railway.internal:3002`).
