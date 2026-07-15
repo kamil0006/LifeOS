@@ -8,9 +8,12 @@ server {
     gzip on;
     gzip_types text/css application/javascript application/json image/svg+xml;
 
-    # API goes to the backend container (Docker DNS resolves the service name)
+    # API goes to the backend service. BACKEND_URL is substituted at container
+    # startup by the nginx image's envsubst entrypoint (only environment
+    # variables are replaced — nginx runtime vars like $host stay intact).
+    # docker-compose: http://backend:3002 · Railway: http://backend.railway.internal:3002
     location /api/ {
-        proxy_pass http://backend:3002;
+        proxy_pass ${BACKEND_URL};
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
