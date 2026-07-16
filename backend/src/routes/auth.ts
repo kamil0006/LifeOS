@@ -1,4 +1,5 @@
 import { Router, type Response } from 'express'
+import { createHash, randomBytes } from 'node:crypto'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { z } from 'zod'
@@ -6,10 +7,10 @@ import { prisma } from '../lib/prisma.js'
 import { AuthPayload } from '../middleware/auth.js'
 import {
   getJwtSecret,
-  isDevResetPasswordAllowed,
   isProduction,
   isRegistrationEnabled,
 } from '../lib/config.js'
+import { isMailerConfigured, sendPasswordResetEmail } from '../lib/mailer.js'
 import { clearAuthCookies, getRefreshTokenFromRequest, setAccessCookie, setRefreshCookie } from '../lib/authCookie.js'
 import { authMiddleware } from '../middleware/auth.js'
 
@@ -130,20 +131,85 @@ authRouter.post('/login', async (req, res) => {
   }
 })
 
-/** Password reset — local only, with ALLOW_DEV_RESET=true */
+const RESET_TOKEN_TTL_MS = 60 * 60 * 1000 // 1 hour
+
+function hashResetToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex')
+}
+
+/** Request a password reset link. Always responds 200 so the endpoint
+ *  never reveals whether an account exists for the given email. */
+authRouter.post('/forgot-password', async (req, res) => {
+  const neutralResponse = () =>
+    res.json({ ok: true, message: 'Jeśli konto istnieje, wysłaliśmy link do resetu hasła.' })
+
+  let email: string
+  try {
+    email = z.object({ email: z.string().email().max(320) }).parse(req.body).email.trim().toLowerCase()
+  } catch {
+    return res.status(400).json({ error: 'Nieprawidłowy format adresu email' })
+  }
+
+  try {
+    const user = await prisma.user.findUnique({ where: { email } })
+    if (!user) return neutralResponse()
+
+    if (isProduction && !isMailerConfigured()) {
+      console.warn('[auth] forgot-password: RESEND_API_KEY nie jest ustawiony — mail nie zostanie wysłany')
+      return neutralResponse()
+    }
+
+    // The raw token lives only in the emailed link; the DB stores its hash.
+    const token = randomBytes(32).toString('base64url')
+    await prisma.$transaction([
+      prisma.passwordResetToken.deleteMany({ where: { userId: user.id } }),
+      prisma.passwordResetToken.create({
+        data: {
+          userId: user.id,
+          tokenHash: hashResetToken(token),
+          expiresAt: new Date(Date.now() + RESET_TOKEN_TTL_MS),
+        },
+      }),
+    ])
+
+    const base = process.env.FRONTEND_URL?.trim() || 'http://localhost:5173'
+    await sendPasswordResetEmail(user.email, `${base}/reset-password?token=${token}`)
+    return neutralResponse()
+  } catch (e) {
+    console.error('Forgot-password error:', e)
+    // Same neutral answer even on delivery failure — no account enumeration.
+    return neutralResponse()
+  }
+})
+
+/** Set a new password using a single-use token from the reset email. */
 authRouter.post('/reset-password', async (req, res) => {
-  if (!isDevResetPasswordAllowed()) {
-    return res.status(404).json({ error: 'Nie dostępne' })
+  try {
+    const raw = z
+      .object({ token: z.string().min(20).max(200), newPassword: passwordSchema })
+      .parse(req.body)
+
+    const record = await prisma.passwordResetToken.findUnique({
+      where: { tokenHash: hashResetToken(raw.token) },
+    })
+    if (!record || record.usedAt || record.expiresAt < new Date()) {
+      return res.status(400).json({ error: 'Link wygasł lub jest nieprawidłowy. Poproś o nowy.' })
+    }
+
+    const hashed = await bcrypt.hash(raw.newPassword, 12)
+    await prisma.$transaction([
+      prisma.user.update({ where: { id: record.userId }, data: { password: hashed } }),
+      prisma.passwordResetToken.update({ where: { id: record.id }, data: { usedAt: new Date() } }),
+    ])
+    res.json({ ok: true, message: 'Hasło zaktualizowane. Możesz się zalogować.' })
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      const first = e.errors[0]
+      return res.status(400).json({ error: first?.message ?? 'Nieprawidłowe dane' })
+    }
+    console.error('Reset-password error:', e)
+    res.status(500).json({ error: 'Błąd serwera' })
   }
-  const raw = z.object({ email: z.string().email(), newPassword: passwordSchema }).parse(req.body)
-  const email = raw.email.trim().toLowerCase()
-  const user = await prisma.user.findUnique({ where: { email } })
-  if (!user) {
-    return res.status(400).json({ error: 'Nie udało się zresetować hasła' })
-  }
-  const hashed = await bcrypt.hash(raw.newPassword, 12)
-  await prisma.user.update({ where: { id: user.id }, data: { password: hashed } })
-  res.json({ ok: true, message: 'Hasło zaktualizowane. Możesz się zalogować.' })
 })
 
 authRouter.get('/me', authMiddleware, (req, res) => {

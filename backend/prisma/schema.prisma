@@ -37,6 +37,20 @@ model User {
   books       Book[]
   certifications Certification[]
   learningSettings LearningSettings?
+  passwordResetTokens PasswordResetToken[]
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// SHA-256 of the raw token — the raw value exists only in the emailed link.
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
 }
 
 model ExpenseCategory {

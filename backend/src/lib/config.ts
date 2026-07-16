@@ -26,11 +26,6 @@ export function isRegistrationEnabled(): boolean {
   return !isProduction
 }
 
-export function isDevResetPasswordAllowed(): boolean {
-  if (isProduction) return false
-  return process.env.ALLOW_DEV_RESET === 'true'
-}
-
 export function isEncryptionEnabled(): boolean {
   return process.env.ENCRYPTION_ENABLED === 'true'
 }

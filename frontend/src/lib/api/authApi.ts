@@ -15,9 +15,14 @@ export const authApi = {
     }),
   me: () => api<AuthUser>('/auth/me'),
   logout: () => api<void>('/auth/logout', { method: 'POST' }),
-  resetPassword: (email: string, newPassword: string) =>
+  forgotPassword: (email: string) =>
+    api<{ ok: boolean; message: string }>('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    }),
+  resetPassword: (token: string, newPassword: string) =>
     api<{ ok: boolean; message: string }>('/auth/reset-password', {
       method: 'POST',
-      body: JSON.stringify({ email, newPassword }),
+      body: JSON.stringify({ token, newPassword }),
     }),
 }

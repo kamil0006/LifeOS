@@ -89,24 +89,6 @@ describe('isRegistrationEnabled', () => {
   })
 })
 
-describe('isDevResetPasswordAllowed', () => {
-  it('is always false in production, regardless of ALLOW_DEV_RESET', async () => {
-    process.env.NODE_ENV = 'production'
-    process.env.ALLOW_DEV_RESET = 'true'
-    expect((await loadConfig()).isDevResetPasswordAllowed()).toBe(false)
-  })
-
-  it('respects ALLOW_DEV_RESET outside production', async () => {
-    process.env.NODE_ENV = 'development'
-    process.env.ALLOW_DEV_RESET = 'true'
-    expect((await loadConfig()).isDevResetPasswordAllowed()).toBe(true)
-
-    process.env.NODE_ENV = 'development'
-    delete process.env.ALLOW_DEV_RESET
-    expect((await loadConfig()).isDevResetPasswordAllowed()).toBe(false)
-  })
-})
-
 describe('isEncryptionEnabled / getEncryptionKey', () => {
   it('returns null when encryption is disabled', async () => {
     delete process.env.ENCRYPTION_ENABLED

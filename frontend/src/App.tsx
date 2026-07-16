@@ -11,6 +11,7 @@ import { QuickAddProvider } from './context/QuickAddContext'
 import { OnboardingProvider } from './context/OnboardingContext'
 import { SettingsProvider } from './context/SettingsContext'
 import { Login } from './pages/Login'
+import { ResetPassword } from './pages/ResetPassword'
 import { useAuth } from './context/AuthContext'
 
 /**
@@ -58,6 +59,7 @@ function App() {
     return (
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     )
