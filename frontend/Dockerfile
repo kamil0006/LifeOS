@@ -17,6 +17,9 @@ FROM nginx:1.27-alpine
 # proxy at a different backend (e.g. http://backend.railway.internal:3002 on Railway).
 ENV BACKEND_URL=http://backend:3002
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
+# .envsh must be executable or the entrypoint skips it (chmod here because
+# the Windows build context does not carry the executable bit reliably)
+COPY --chmod=755 docker-entrypoint.d/00-resolver.envsh /docker-entrypoint.d/00-resolver.envsh
 COPY --from=build /app/dist /usr/share/nginx/html
 
 EXPOSE 80
