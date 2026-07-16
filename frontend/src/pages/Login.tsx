@@ -6,8 +6,6 @@ import { authApi } from '../lib/api'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 
-const isDev = import.meta.env.DEV
-
 export function Login() {
   const { t } = useTranslation('auth')
   const [isRegister, setIsRegister] = useState(false)
@@ -15,13 +13,11 @@ export function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
-  const [newPassword, setNewPassword] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false)
-  const [showNewPassword, setShowNewPassword] = useState(false)
   const [rememberMe, setRememberMe] = useState(true)
   const { login, register, enterDemoMode } = useAuth()
   const navigate = useNavigate()
@@ -57,10 +53,9 @@ export function Login() {
     const minLoadingMs = 400
     try {
       if (showReset) {
-        await authApi.resetPassword(email.trim().toLowerCase(), newPassword)
-        setSuccess(t('passwordResetSuccess'))
+        await authApi.forgotPassword(email.trim().toLowerCase())
+        setSuccess(t('forgotPasswordSent'))
         setShowReset(false)
-        setNewPassword('')
       } else if (isRegister) {
         await register(email, password, rememberMe)
         navigate('/dashboard')
@@ -162,7 +157,7 @@ export function Login() {
           >
             <div className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-(--accent)/50 to-transparent" />
             <p className="text-base text-(--text-muted) mb-4 font-display tracking-wide">
-              {isRegister ? t('createAccount') : t('loginPrompt')}
+              {showReset ? t('forgotPasswordPrompt') : isRegister ? t('createAccount') : t('loginPrompt')}
             </p>
             <form onSubmit={handleSubmit} className="space-y-4">
               <AnimatePresence mode="wait">
@@ -202,31 +197,7 @@ export function Login() {
                   className="w-full px-4 py-2.5 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base focus:border-(--accent) focus:outline-none"
                 />
               </div>
-              {showReset ? (
-                <div>
-                  <label className="block text-base text-(--text-muted) mb-1">{t('newPassword')}</label>
-                  <div className="relative">
-                    <input
-                      type={showNewPassword ? 'text' : 'password'}
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      required
-                      minLength={8}
-                      className="w-full px-4 py-2.5 pr-11 rounded-lg bg-(--bg-dark) border border-(--border) text-(--text-primary) text-base focus:border-(--accent) focus:outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowNewPassword(!showNewPassword)}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-(--text-muted) hover:text-(--accent) transition-colors"
-                      tabIndex={-1}
-                      aria-label={showNewPassword ? t('hidePassword') : t('showPassword')}
-                    >
-                      {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                  <p className="text-sm text-(--text-muted) mt-1">{t('passwordHint')}</p>
-                </div>
-              ) : (
+              {!showReset && (
                 <>
                   <div>
                     <label className="block text-base text-(--text-muted) mb-1">{t('password')}</label>
@@ -308,11 +279,11 @@ export function Login() {
                   <>
                     <Loader2 className="w-5 h-5 animate-spin shrink-0" />
                     <span>
-                      {showReset ? t('resettingPassword') : isRegister ? t('registering') : t('loggingIn')}
+                      {showReset ? t('sendingResetLink') : isRegister ? t('registering') : t('loggingIn')}
                     </span>
                   </>
                 ) : (
-                  showReset ? t('resetPasswordButton') : isRegister ? t('registerButton') : t('loginButton')
+                  showReset ? t('sendResetLink') : isRegister ? t('registerButton') : t('loginButton')
                 )}
               </motion.button>
             </form>
@@ -321,7 +292,6 @@ export function Login() {
                 type="button"
                 onClick={() => {
                   setShowReset(false)
-                  setShowNewPassword(false)
                   setError('')
                   setSuccess('')
                 }}
@@ -344,7 +314,7 @@ export function Login() {
                 >
                   {isRegister ? t('haveAccount') : t('noAccount')}
                 </button>
-                {isDev && (
+                {!isRegister && (
                   <button
                     type="button"
                     onClick={() => {
@@ -354,7 +324,7 @@ export function Login() {
                     }}
                     className="w-full mt-2 text-sm text-(--text-muted) hover:text-(--accent) transition-colors"
                   >
-                    {t('cannotLogin')}
+                    {t('forgotPassword')}
                   </button>
                 )}
               </>

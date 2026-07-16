@@ -20,6 +20,7 @@ function shouldSkipRefresh(path: string): boolean {
     path.startsWith('/auth/login') ||
     path.startsWith('/auth/register') ||
     path.startsWith('/auth/refresh') ||
+    path.startsWith('/auth/forgot-password') ||
     path.startsWith('/auth/reset-password')
   )
 }
