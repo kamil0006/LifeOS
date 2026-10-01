@@ -76,7 +76,7 @@
     "editExpense": "Edytuj wydatek",
     "deleteConfirmTitle": "Usunąć transakcję?",
     "deleteIncomeDescription": "Przychód zostanie trwale usunięty. Tej operacji nie można cofnąć.",
-    "deleteRecurringDescription": "Stały koszt zostanie zakończony — przeszłe płatności pozostaną w historii, a przyszłe nie będą już naliczane.",
+    "deleteRecurringDescription": "Zostanie usunięta tylko ta płatność, np. naliczona przez pomyłkę. Stały koszt i jego pozostałe płatności zostają bez zmian. Aby zakończyć stały koszt, usuń go w zakładce Stałe koszty.",
     "deleteExpenseDescription": "Wydatek zostanie trwale usunięty. Tej operacji nie można cofnąć."
   },
   "recurring": {

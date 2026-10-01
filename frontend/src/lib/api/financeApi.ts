@@ -64,6 +64,8 @@ type ScheduledExpenseDto = {
   reminderDaysBefore?: number | null
   note?: string | null
   endedAt?: string | null
+  /** Payment dates (YYYY-MM-DD) removed by the user — not generated as payments. */
+  skippedDates?: string[]
   createdAt?: string
 }
 
@@ -94,6 +96,9 @@ export const scheduledExpensesApi = {
     }
   ) => api<ScheduledExpenseDto>(`/scheduled-expenses/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id: string) => api(`/scheduled-expenses/${id}`, { method: 'DELETE' }),
+  /** Removes a single payment of a recurring cost (e.g. one that was never actually paid). */
+  skipOccurrence: (id: string, date: string) =>
+    api<ScheduledExpenseDto>(`/scheduled-expenses/${id}/skip-occurrence`, { method: 'POST', body: JSON.stringify({ date }) }),
 }
 
 export const incomeApi = {

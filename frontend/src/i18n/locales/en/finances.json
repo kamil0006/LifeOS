@@ -74,7 +74,7 @@
     "editExpense": "Edit expense",
     "deleteConfirmTitle": "Delete transaction?",
     "deleteIncomeDescription": "The income will be permanently deleted. This action cannot be undone.",
-    "deleteRecurringDescription": "The recurring cost will be ended — past payments stay in your history, and no future payments will be generated.",
+    "deleteRecurringDescription": "Only this payment will be removed, e.g. one charged by mistake. The recurring cost and its other payments stay unchanged. To end the recurring cost, delete it on the Recurring tab.",
     "deleteExpenseDescription": "The expense will be permanently deleted. This action cannot be undone."
   },
   "recurring": {

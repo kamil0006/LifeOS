@@ -140,6 +140,30 @@ describe('mergeExpensesWithScheduled', () => {
     })
   })
 
+  describe('skipped (removed) payment', () => {
+    it('keeps a payment that was actually made when the cost is ended later the same month', () => {
+      // paid the subscription on the 1st, cancelled it on the 12th
+      const cancelled = scheduled({ dayOfMonth: 1, endedAt: '2026-07-12T10:00:00.000Z' })
+      const july = mergeExpensesWithScheduled([], [cancelled], JULY, 2026)
+      expect(july.map((r) => r.date)).toEqual(['2026-07-01'])
+    })
+
+    it('removes only the payment charged by mistake and keeps the other months', () => {
+      // forgot to cancel: August was generated although it was never paid
+      const forgotten = scheduled({ dayOfMonth: 1, skippedDates: ['2026-08-01'] })
+      expect(mergeExpensesWithScheduled([], [forgotten], JULY + 1, 2026)).toHaveLength(0)
+      expect(mergeExpensesWithScheduled([], [forgotten], JULY, 2026)).toHaveLength(1)
+      expect(mergeExpensesWithScheduled([], [forgotten], JULY + 2, 2026)).toHaveLength(1)
+    })
+
+    it('does not suppress a real expense on a skipped date', () => {
+      const skipped = scheduled({ name: 'Rent', dayOfMonth: 10, skippedDates: ['2026-07-10'] })
+      const result = mergeExpensesWithScheduled([expense({ name: 'Rent', date: '2026-07-10' })], [skipped], JULY, 2026)
+      expect(result).toHaveLength(1)
+      expect(result[0].isScheduled).toBe(false)
+    })
+  })
+
   it('sorts the merged result by date ascending', () => {
     const result = mergeExpensesWithScheduled(
       [expense({ id: 'e1', date: '2026-07-20', name: 'Late' })],

@@ -24,6 +24,8 @@ export interface ScheduledExpenseLike {
   note?: string | null
   /** End date (soft delete) — payments after this date are not generated; earlier ones remain. */
   endedAt?: string | null
+  /** Payment dates (YYYY-MM-DD) removed by the user — not generated as payments. */
+  skippedDates?: string[]
   /** When the recurring expense was added — not shown in months before this date. */
   createdAt?: string | Date
 }
@@ -41,9 +43,15 @@ function isEndedBefore(s: ScheduledExpenseLike, date: string): boolean {
   return date > s.endedAt.slice(0, 10)
 }
 
+/** Was this single payment removed by the user? */
+function isSkipped(s: ScheduledExpenseLike, date: string): boolean {
+  return s.skippedDates?.includes(date) ?? false
+}
+
 /** Merges expenses with scheduled ones – generates virtual expenses for a given month.
  * Skips expenses that overlap with scheduled ones (same name, same day of month).
- * Ended recurring costs (endedAt) generate occurrences only up to their end date. */
+ * Ended recurring costs (endedAt) generate occurrences only up to their end date.
+ * Payments removed by the user (skippedDates) are not generated. */
 export function mergeExpensesWithScheduled<E extends ExpenseLike, S extends ScheduledExpenseLike>(
   expenses: E[],
   scheduled: S[],
@@ -62,7 +70,8 @@ export function mergeExpensesWithScheduled<E extends ExpenseLike, S extends Sche
           s.active &&
           s.name.toLowerCase() === nameLower &&
           s.dayOfMonth === day &&
-          !isEndedBefore(s, e.date)
+          !isEndedBefore(s, e.date) &&
+          !isSkipped(s, e.date)
       )
       return !matchingScheduled
     })
@@ -85,6 +94,7 @@ export function mergeExpensesWithScheduled<E extends ExpenseLike, S extends Sche
       const date = `${year}-${pad(month + 1)}-${pad(day)}`
       if (s.pausedUntil && s.pausedUntil >= date) return acc
       if (isEndedBefore(s, date)) return acc
+      if (isSkipped(s, date)) return acc
       acc.push({
         id: `scheduled-${s.id}-${date}`,
         name: s.name,

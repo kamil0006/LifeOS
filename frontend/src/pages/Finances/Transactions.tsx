@@ -108,9 +108,10 @@ export function Transactions() {
         await invalidateFinanceQueries(queryClient, userId)
       }
     } else if (tx.isScheduled && tx.scheduledId) {
-      if (!useApiFinance && demoData) demoData.deleteScheduledExpense(tx.scheduledId)
+      // Removes only this payment; the recurring cost itself is ended on the Recurring page.
+      if (!useApiFinance && demoData) demoData.skipScheduledOccurrence(tx.scheduledId, tx.date)
       else {
-        await scheduledExpensesApi.delete(tx.scheduledId)
+        await scheduledExpensesApi.skipOccurrence(tx.scheduledId, tx.date)
         await invalidateFinanceQueries(queryClient, userId)
       }
     } else if (!useApiFinance && demoData) demoData.deleteExpense(tx.id)

@@ -7,6 +7,7 @@ import {
   decryptScheduledExpenseRows,
   encryptScheduledExpenseWrite,
 } from '../lib/financeFields.js'
+import { MAX_SKIPPED_DATES } from '../lib/backupSchemas.js'
 import { convertToPln, getExchangeRate, isForeignCurrency, type Currency } from '../lib/exchangeRates.js'
 
 const paymentMethodSchema = z.enum(['card', 'cash'])
@@ -143,6 +144,29 @@ scheduledExpensesRouter.patch('/:id', async (req, res) => {
       ...(data.reminderDaysBefore !== undefined ? { reminderDaysBefore: data.reminderDaysBefore } : {}),
       ...(enc.note !== undefined ? { note: enc.note } : {}),
     },
+  })
+  res.json(decryptScheduledExpenseRow(updated))
+})
+
+const skipOccurrenceSchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+})
+
+/** Removes a single payment (occurrence) of a recurring cost — e.g. one that was never actually paid.
+ * The cost itself and its other payments stay untouched. */
+scheduledExpensesRouter.post('/:id/skip-occurrence', async (req, res) => {
+  const userId = getAuthUser(req).userId
+  const { id } = req.params
+  const { date } = skipOccurrenceSchema.parse(req.body)
+  const existing = await prisma.scheduledExpense.findFirst({ where: { id, userId } })
+  if (!existing) return res.status(404).json({ error: 'Nie znaleziono' })
+  if (existing.skippedDates.includes(date)) return res.json(decryptScheduledExpenseRow(existing))
+  if (existing.skippedDates.length >= MAX_SKIPPED_DATES) {
+    return res.status(400).json({ error: 'TOO_MANY_SKIPPED_DATES' })
+  }
+  const updated = await prisma.scheduledExpense.update({
+    where: { id },
+    data: { skippedDates: { push: date } },
   })
   res.json(decryptScheduledExpenseRow(updated))
 })

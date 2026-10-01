@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
+  MAX_SKIPPED_DATES,
   expenseBackupSchema,
   scheduledExpenseBackupSchema,
   netWorthAccountBackupSchema,
@@ -100,6 +101,20 @@ describe('scheduledExpenseBackupSchema', () => {
     const withoutField = scheduledExpenseBackupSchema.safeParse(valid)
     expect(withoutField.success).toBe(true)
     if (withoutField.success) expect(withoutField.data.endedAt).toBeUndefined()
+  })
+
+  it('keeps skippedDates so restored backups do not revive removed payments', () => {
+    const result = scheduledExpenseBackupSchema.safeParse({ ...valid, skippedDates: ['2026-09-10', '2026-10-10'] })
+    expect(result.success).toBe(true)
+    if (result.success) expect(result.data.skippedDates).toEqual(['2026-09-10', '2026-10-10'])
+  })
+
+  it('rejects malformed skippedDates', () => {
+    expect(scheduledExpenseBackupSchema.safeParse({ ...valid, skippedDates: ['10.09.2026'] }).success).toBe(false)
+    expect(
+      scheduledExpenseBackupSchema.safeParse({ ...valid, skippedDates: Array(MAX_SKIPPED_DATES + 1).fill('2026-09-10') })
+        .success
+    ).toBe(false)
   })
 })
 

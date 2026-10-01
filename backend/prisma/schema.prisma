@@ -102,6 +102,8 @@ model ScheduledExpense {
   note       String?
   /// End date (soft delete) — occurrences after this date are not generated; earlier ones stay in history
   endedAt    DateTime?
+  /// Occurrence dates (YYYY-MM-DD) removed by the user, e.g. charged by mistake — not generated as payments
+  skippedDates String[] @default([])
   createdAt  DateTime @default(now())
 
   @@index([userId])

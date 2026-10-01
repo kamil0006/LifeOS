@@ -8,6 +8,9 @@ const dateVal = z.coerce.date()
 const nullableDate = z.coerce.date().nullable()
 const paymentMethod = z.enum(['card', 'cash']).nullable().optional()
 
+/** Upper bound for skipped payments of one recurring cost (about 50 years of monthly payments). */
+export const MAX_SKIPPED_DATES = 600
+
 export const expenseCategoryBackupSchema = z.object({
   id,
   name: z.string().min(1).max(50),
@@ -41,6 +44,8 @@ export const scheduledExpenseBackupSchema = z.object({
   note: z.string().max(2000).nullable().optional(),
   /** Soft-delete marker — without it, restored backups would revive deleted recurring costs. */
   endedAt: nullableDate.optional(),
+  /** Payments removed by the user — without it, restored backups would revive them. */
+  skippedDates: z.array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).max(MAX_SKIPPED_DATES).optional(),
   createdAt: dateVal,
 })
 

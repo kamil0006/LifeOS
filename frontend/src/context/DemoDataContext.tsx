@@ -41,6 +41,8 @@ export interface DemoScheduledExpense {
   note?: string | null
   /** End date (soft delete) — payments after this date are not generated. */
   endedAt?: string | null
+  /** Payment dates (YYYY-MM-DD) removed by the user — not generated as payments. */
+  skippedDates?: string[]
   /** When the recurring expense was added — not shown in months before this date. */
   createdAt?: string
 }
@@ -69,6 +71,7 @@ interface DemoDataContextType {
   addScheduledExpense: (e: Omit<DemoScheduledExpense, 'id'>) => void
   updateScheduledExpense: (id: string, e: Partial<DemoScheduledExpense>) => void
   deleteScheduledExpense: (id: string) => void
+  skipScheduledOccurrence: (id: string, date: string) => void
   updateNetWorthPosition: (key: NetWorthPositionKey, delta: number) => void
 }
 
@@ -442,6 +445,22 @@ export function DemoDataProvider({ children }: { children: ReactNode }) {
     })
   }
 
+  const skipScheduledOccurrence = (id: string, date: string) => {
+    setScheduledExpenses((prev) => {
+      const next = prev.map((x) =>
+        x.id === id && !(x.skippedDates ?? []).includes(date)
+          ? { ...x, skippedDates: [...(x.skippedDates ?? []), date] }
+          : x
+      )
+      try {
+        localStorage.setItem(DEMO_SCHEDULED_STORAGE_KEY, JSON.stringify(next))
+      } catch {
+        /* ignore */
+      }
+      return next
+    })
+  }
+
   const updateNetWorthPosition = (key: NetWorthPositionKey, delta: number) => {
     setNetWorth((prev) => {
       const next = { ...prev, [key]: Math.max(0, prev[key] + delta) }
@@ -472,6 +491,7 @@ export function DemoDataProvider({ children }: { children: ReactNode }) {
         addScheduledExpense,
         updateScheduledExpense,
         deleteScheduledExpense,
+        skipScheduledOccurrence,
         updateNetWorthPosition,
       }}
     >

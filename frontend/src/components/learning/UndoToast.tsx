@@ -85,16 +85,21 @@ export function useUndoDelete<T extends { id: string }>(onDelete: (id: string) =
   const [pending, setPending] = useState<{ item: T; label: string } | null>(null)
   const timerRef = useRef<number | null>(null)
 
+  // Commits at most once: the timer and the toast's own expiry (or its close button)
+  // can both fire, so a cleared timerRef means the delete was already committed or undone.
   const commit = (id: string) => {
+    if (timerRef.current === null) return
+    clearTimeout(timerRef.current)
+    timerRef.current = null
     onDelete(id)
     setPending(null)
-    timerRef.current = null
   }
 
   const scheduleDelete = (item: T, label: string) => {
     // Flush any previous pending
     if (pending && timerRef.current) {
       clearTimeout(timerRef.current)
+      timerRef.current = null
       onDelete(pending.item.id)
     }
     const tid = window.setTimeout(() => commit(item.id), 5000)

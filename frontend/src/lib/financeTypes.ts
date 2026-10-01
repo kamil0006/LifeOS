@@ -37,5 +37,7 @@ export type ScheduledExpenseRow = {
   note?: string | null
   /** End date (soft delete) — payments after this date are not generated. */
   endedAt?: string | null
+  /** Payment dates (YYYY-MM-DD) removed by the user — not generated as payments. */
+  skippedDates?: string[]
   createdAt?: string
 }
