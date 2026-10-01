@@ -85,6 +85,22 @@ describe('scheduledExpenseBackupSchema', () => {
     const result = scheduledExpenseBackupSchema.safeParse({ ...valid, currency: 'GBP' })
     expect(result.success).toBe(false)
   })
+
+  it('keeps endedAt so restored backups do not revive deleted costs', () => {
+    const result = scheduledExpenseBackupSchema.safeParse({ ...valid, endedAt: '2026-08-15T12:00:00.000Z' })
+    expect(result.success).toBe(true)
+    if (result.success) expect(result.data.endedAt).toEqual(new Date('2026-08-15T12:00:00.000Z'))
+  })
+
+  it('accepts null or missing endedAt for active costs and older backups', () => {
+    const withNull = scheduledExpenseBackupSchema.safeParse({ ...valid, endedAt: null })
+    expect(withNull.success).toBe(true)
+    if (withNull.success) expect(withNull.data.endedAt).toBeNull()
+
+    const withoutField = scheduledExpenseBackupSchema.safeParse(valid)
+    expect(withoutField.success).toBe(true)
+    if (withoutField.success) expect(withoutField.data.endedAt).toBeUndefined()
+  })
 })
 
 describe('netWorthAccountBackupSchema', () => {

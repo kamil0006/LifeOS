@@ -39,6 +39,8 @@ export const scheduledExpenseBackupSchema = z.object({
   pausedUntil: nullableDate.optional(),
   reminderDaysBefore: z.number().int().nullable().optional(),
   note: z.string().max(2000).nullable().optional(),
+  /** Soft-delete marker — without it, restored backups would revive deleted recurring costs. */
+  endedAt: nullableDate.optional(),
   createdAt: dateVal,
 })
 
